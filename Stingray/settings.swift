@@ -11,8 +11,10 @@ import SwiftUI
 final class SettingsManager {
     private let defaults = UserDefaults.standard
     
-    var urlProtocol: String {
-        didSet { defaults.set(urlProtocol, forKey: "URL-protocol") }
+    var urlProtocol: HttpProtocol {
+        didSet {
+            defaults.set(urlProtocol.rawValue, forKey: "URL-protocol")
+        }
     }
     
     var urlHostname: String {
@@ -24,14 +26,14 @@ final class SettingsManager {
     }
     
     init() {
-        self.urlProtocol = defaults.string(forKey: "URL-protocol") ?? "http"
+        self.urlProtocol = HttpProtocol(rawValue: defaults.string(forKey: "URL-protocol") ?? "") ?? .http
         self.urlHostname = defaults.string(forKey: "URL-hostname") ?? ""
         self.urlPort = defaults.string(forKey: "URL-port") ?? "8096"
     }
     
     var url: URL? {
         get {
-            if urlProtocol == "" || urlHostname == "" {
+            if urlHostname == "" {
                 return nil
             }
             return URL(string: "\(urlProtocol)://\(urlHostname):\(urlPort)/")
@@ -40,7 +42,7 @@ final class SettingsManager {
             guard let newURL = newValue else { return }
             
             if let scheme = newURL.scheme {
-                urlProtocol = scheme
+                urlProtocol = HttpProtocol(rawValue: scheme) ?? .http
             }
             if let host = newURL.host {
                 urlHostname = host
@@ -50,4 +52,9 @@ final class SettingsManager {
             }
         }
     }
+}
+
+enum HttpProtocol: String, CaseIterable {
+    case http = "http"
+    case https = "https"
 }
