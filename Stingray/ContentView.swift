@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State var settings: SettingsManager = SettingsManager()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if settings.urlHostname == "" || settings.urlHostname == "" {
+            Text("None")
+        } else {
+            Text("Some: \(settings.url)")
         }
-        .padding()
     }
 }
 
