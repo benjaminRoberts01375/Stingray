@@ -11,10 +11,10 @@ struct ContentView: View {
     @State var settings: SettingsManager = SettingsManager()
     
     var body: some View {
-        if settings.urlHostname == "" || settings.urlHostname == "" {
-            Text("None")
+        if settings.urlHostname == "" {
+            LoginView(settings: $settings)
         } else {
-            Text("Some: \(settings.url)")
+            Text("Logged into server: \(settings.urlHostname)")
         }
     }
 }

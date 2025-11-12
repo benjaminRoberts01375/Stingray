@@ -7,10 +7,28 @@
 
 import SwiftUI
 
+@Observable
 final class SettingsManager {
-    @AppStorage("URL-protocol") var urlProtocol: String = ""
-    @AppStorage("URL-hostname") var urlHostname: String = ""
-    @AppStorage("URL-port") var urlPort: Int = 8096
+    private let defaults = UserDefaults.standard
+    
+    var urlProtocol: String {
+        didSet { defaults.set(urlProtocol, forKey: "URL-protocol") }
+    }
+    
+    var urlHostname: String {
+        didSet { defaults.set(urlHostname, forKey: "URL-hostname") }
+    }
+    
+    var urlPort: String {
+        didSet { defaults.set(urlPort, forKey: "URL-port") }
+    }
+    
+    init() {
+        self.urlProtocol = defaults.string(forKey: "URL-protocol") ?? "http"
+        self.urlHostname = defaults.string(forKey: "URL-hostname") ?? ""
+        self.urlPort = defaults.string(forKey: "URL-port") ?? "8096"
+    }
+    
     var url: URL? {
         get {
             if urlProtocol == "" || urlHostname == "" {
@@ -28,7 +46,7 @@ final class SettingsManager {
                 urlHostname = host
             }
             if let port = newURL.port {
-                urlPort = port
+                urlPort = String(port)
             }
         }
     }
