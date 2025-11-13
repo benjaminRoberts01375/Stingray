@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var jellyfin: JellyfinManager = JellyfinManager()
+    @State var jellyfin: any StreamingService = JellyfinManager()
     
     var body: some View {
-        if jellyfin.userID == "" {
-            LoginView(settings: $jellyfin)
+        if !jellyfin.loggedIn {
+            LoginView(streamingService: $jellyfin)
         } else {
-            Text("Logged into server: \(jellyfin.urlHostname)")
+            Text("Logged into server: \(jellyfin.url?.absoluteString ?? "No URL")")
         }
     }
 }

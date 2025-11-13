@@ -8,7 +8,7 @@
 import SwiftUI
 
 @Observable
-final class JellyfinManager {
+final class JellyfinManager: StreamingService {
     private let defaults = UserDefaults.standard
     
     var urlProtocol: HttpProtocol {
@@ -54,6 +54,8 @@ final class JellyfinManager {
         self.serverID = defaults.string(forKey: DefaultsKeys.serverID.rawValue) ?? ""
     }
     
+    // StreamingProtocol conformance
+    
     var url: URL? {
         get {
             if urlHostname == "" {
@@ -76,11 +78,92 @@ final class JellyfinManager {
         }
     }
     
-    func getHomeScreen() async throws {
+    var loggedIn: Bool {
+        get { self.accessToken != "" }
+    }
+    
+    func login(httpProtocol: HttpProtocol, hostname: String, port: String, username: String, password: String) async throws {
+        // Update URL settings
+        self.urlProtocol = httpProtocol
+        self.urlHostname = hostname
+        self.urlPort = port
+        
         guard let baseURL = self.url else {
             throw APIErrors.invalidBaseURL
         }
+        guard let url = URL(string: "/Users/AuthenticateByName", relativeTo: baseURL) else {
+            throw APIErrors.invalidAuthURL
+        }
         
+        // Create the request body
+        let requestBody: [String: String] = [
+            "Username": username,
+            "Pw": password
+        ]
+        
+        let jsonData: Data
+        do {
+            jsonData = try JSONEncoder().encode(requestBody)
+        } catch {
+            throw APIErrors.encodingFailed(error)
+        }
+        
+        // Create the POST request
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Jellyfin requires this authorization header to identify the client
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        let deviceName = UIDevice.current.name
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        let authHeader = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        
+        request.httpBody = jsonData
+        
+        // Send the request
+        let responseData: Data
+        let response: URLResponse
+        do {
+            (responseData, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw APIErrors.requestFailed(error)
+        }
+        
+        // Verify HTTP status code
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIErrors.invalidResponse(statusCode: 0, message: "Not an HTTP response")
+        }
+        
+        // Get any error codes
+        guard (200...299).contains(httpResponse.statusCode) else {
+            // Try to extract error message from response
+            var errorMessage: String?
+            if let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any] {
+                errorMessage = json["message"] as? String ?? json["Message"] as? String
+            }
+            throw APIErrors.invalidResponse(statusCode: httpResponse.statusCode, message: errorMessage)
+        }
+        
+        // Parse JSON response directly
+        guard let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+              let user = json["User"] as? [String: Any],
+              let userName = user["Name"] as? String,
+              let sessionInfo = json["SessionInfo"] as? [String: Any],
+              let sessionId = sessionInfo["Id"] as? String,
+              let userId = sessionInfo["UserId"] as? String,
+              let accessToken = json["AccessToken"] as? String,
+              let serverId = json["ServerId"] as? String else {
+            throw APIErrors.invalidJSONStructure
+        }
+        
+        // Update settings with response data
+        self.usersName = userName
+        self.sessionID = sessionId
+        self.userID = userId
+        self.accessToken = accessToken
+        self.serverID = serverId
     }
 }
 
