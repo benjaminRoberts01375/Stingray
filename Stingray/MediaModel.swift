@@ -7,16 +7,20 @@
 
 import Foundation
 
+public protocol MediaProtocol: Decodable {
+    var title: String { get }
+    var description: String { get }
+    var logoArtURL: String { get }
+    var boxArtURL: String { get }
+    var backgroundArtURL: String { get }
+}
+
 @Observable
-final class MediaModel {
+final class MediaModel: MediaProtocol {
     var title: String
-    
     var description: String
-    
     var logoArtURL: String
-    
     var boxArtURL: String
-    
     var backgroundArtURL: String
     
     init(title: String, description: String, logoArtURL: String, boxArtURL: String, backgroundArtURL: String) {
