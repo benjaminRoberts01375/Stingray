@@ -75,6 +75,13 @@ final class JellyfinManager {
             }
         }
     }
+    
+    func getHomeScreen() async throws {
+        guard let baseURL = self.url else {
+            throw APIErrors.invalidBaseURL
+        }
+        
+    }
 }
 
 enum HttpProtocol: String, CaseIterable {
@@ -91,4 +98,33 @@ enum DefaultsKeys: String {
     case userID = "User-ID"
     case accessToken = "Access-Token"
     case serverID = "Server-ID"
+}
+
+enum APIErrors: Error, LocalizedError {
+    case invalidBaseURL
+    case invalidAuthURL
+    case encodingFailed(Error)
+    case requestFailed(Error)
+    case invalidResponse(statusCode: Int, message: String?)
+    case invalidJSONStructure
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidBaseURL:
+            return "Invalid base URL configuration"
+        case .invalidAuthURL:
+            return "Could not construct authentication URL"
+        case .encodingFailed(let error):
+            return "Failed to encode request: \(error.localizedDescription)"
+        case .requestFailed(let error):
+            return "Network request failed: \(error.localizedDescription)"
+        case .invalidResponse(let statusCode, let message):
+            if let message = message {
+                return "Server error (\(statusCode)): \(message)"
+            }
+            return "Server returned error code: \(statusCode)"
+        case .invalidJSONStructure:
+            return "Invalid response format from server"
+        }
+    }
 }

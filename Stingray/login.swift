@@ -85,35 +85,8 @@ struct LoginView: View {
 }
 
 extension JellyfinManager {
-    enum SignInError: Error, LocalizedError {
-        case invalidBaseURL
-        case invalidAuthURL
-        case encodingFailed(Error)
-        case requestFailed(Error)
-        case invalidResponse(statusCode: Int, message: String?)
-        case invalidJSONStructure
-        
-        var errorDescription: String? {
-            switch self {
-            case .invalidBaseURL:
-                return "Invalid base URL configuration"
-            case .invalidAuthURL:
-                return "Could not construct authentication URL"
-            case .encodingFailed(let error):
-                return "Failed to encode request: \(error.localizedDescription)"
-            case .requestFailed(let error):
-                return "Network request failed: \(error.localizedDescription)"
-            case .invalidResponse(let statusCode, let message):
-                if let message = message {
-                    return "Server error (\(statusCode)): \(message)"
-                }
-                return "Server returned error code: \(statusCode)"
-            case .invalidJSONStructure:
-                return "Invalid response format from server"
-            }
-        }
-    }
-    
+
+
     func signin(httpProtocol: HttpProtocol, hostname: String, port: String, username: String, password: String) async throws {
         // Update URL settings
         self.urlProtocol = httpProtocol
@@ -121,10 +94,10 @@ extension JellyfinManager {
         self.urlPort = port
         
         guard let baseURL = self.url else {
-            throw SignInError.invalidBaseURL
+            throw APIErrors.invalidBaseURL
         }
         guard let url = URL(string: "/Users/AuthenticateByName", relativeTo: baseURL) else {
-            throw SignInError.invalidAuthURL
+            throw APIErrors.invalidAuthURL
         }
         
         // Create the request body
@@ -137,7 +110,7 @@ extension JellyfinManager {
         do {
             jsonData = try JSONEncoder().encode(requestBody)
         } catch {
-            throw SignInError.encodingFailed(error)
+            throw APIErrors.encodingFailed(error)
         }
         
         // Create the POST request
@@ -160,12 +133,12 @@ extension JellyfinManager {
         do {
             (responseData, response) = try await URLSession.shared.data(for: request)
         } catch {
-            throw SignInError.requestFailed(error)
+            throw APIErrors.requestFailed(error)
         }
         
         // Verify HTTP status code
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw SignInError.invalidResponse(statusCode: 0, message: "Not an HTTP response")
+            throw APIErrors.invalidResponse(statusCode: 0, message: "Not an HTTP response")
         }
         
         // Get any error codes
@@ -175,7 +148,7 @@ extension JellyfinManager {
             if let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any] {
                 errorMessage = json["message"] as? String ?? json["Message"] as? String
             }
-            throw SignInError.invalidResponse(statusCode: httpResponse.statusCode, message: errorMessage)
+            throw APIErrors.invalidResponse(statusCode: httpResponse.statusCode, message: errorMessage)
         }
         
         // Parse JSON response directly
@@ -187,7 +160,7 @@ extension JellyfinManager {
               let userId = sessionInfo["UserId"] as? String,
               let accessToken = json["AccessToken"] as? String,
               let serverId = json["ServerId"] as? String else {
-            throw SignInError.invalidJSONStructure
+            throw APIErrors.invalidJSONStructure
         }
         
         // Update settings with response data
