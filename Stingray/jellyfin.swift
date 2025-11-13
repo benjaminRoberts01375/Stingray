@@ -8,7 +8,7 @@
 import SwiftUI
 
 @Observable
-final class SettingsManager {
+final class JellyfinManager {
     private let defaults = UserDefaults.standard
     
     var urlProtocol: HttpProtocol {

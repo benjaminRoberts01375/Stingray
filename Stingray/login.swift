@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LoginView: View {
-    @Binding var settings: SettingsManager
+    @Binding var jellyfin: JellyfinManager
     @State var httpProcol: HttpProtocol
     @State var httpHostname: String
     @State var httpPort: String
@@ -17,11 +17,11 @@ struct LoginView: View {
     @State var error: String = ""
     @State var awaitingLogin: Bool = false
     
-    init(settings: Binding<SettingsManager>) {
-        _settings = settings
-        _httpProcol = State(initialValue: settings.wrappedValue.urlProtocol)
-        _httpHostname = State(initialValue: settings.wrappedValue.urlHostname)
-        _httpPort = State(initialValue: String(settings.wrappedValue.urlPort))
+    init(jellyfin: Binding<JellyfinManager>) {
+        _jellyfin = jellyfin
+        _httpProcol = State(initialValue: jellyfin.wrappedValue.urlProtocol)
+        _httpHostname = State(initialValue: jellyfin.wrappedValue.urlHostname)
+        _httpPort = State(initialValue: String(jellyfin.wrappedValue.urlPort))
     }
     
     var body: some View {
@@ -64,7 +64,7 @@ struct LoginView: View {
                             awaitingLogin = true
                             error = ""
                             do {
-                                try await settings.signin(httpProtocol: httpProcol, hostname: httpHostname, port: httpPort, username: username, password: password)
+                                try await jellyfin.signin(httpProtocol: httpProcol, hostname: httpHostname, port: httpPort, username: username, password: password)
                             } catch {
                                 self.error = error.localizedDescription
                                 awaitingLogin = false
@@ -80,11 +80,11 @@ struct LoginView: View {
 }
 
 #Preview {
-    @Previewable @State var settings: SettingsManager = SettingsManager()
-    LoginView(settings: $settings)
+    @Previewable @State var jellyfin: JellyfinManager = JellyfinManager()
+    LoginView(jellyfin: $jellyfin)
 }
 
-extension SettingsManager {
+extension JellyfinManager {
     enum SignInError: Error, LocalizedError {
         case invalidBaseURL
         case invalidAuthURL
