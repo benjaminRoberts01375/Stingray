@@ -7,14 +7,20 @@
 
 import SwiftUI
 
+enum LoginState {
+    case loggedOut
+    case loggedIn(any StreamingServiceProtocol)
+}
+
 struct ContentView: View {
-    @State var jellyfin: (any StreamingServiceProtocol)? = nil
+    @State var loginState: LoginState = .loggedOut
     
     var body: some View {
-        if jellyfin == nil {
-            LoginView(streamingService: $jellyfin)
-        } else {
-            Text("Logged into server: \(jellyfin?.url?.absoluteString ?? "No URL")")
+        switch loginState {
+        case .loggedOut:
+            LoginView(loggedIn: $loginState)
+        case .loggedIn(let service):
+            DashboardView(streamingService: service)
         }
     }
 }

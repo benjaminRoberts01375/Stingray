@@ -13,7 +13,7 @@ struct LoginView: View {
         case https = "https"
     }
     
-    @Binding var streamingService: StreamingServiceProtocol?
+    @Binding var loggedIn: LoginState
     @State var httpProcol: HttpProtocol = .http
     @State var httpHostname: String = ""
     @State var httpPort: String = "8096"
@@ -89,12 +89,12 @@ struct LoginView: View {
                 self.error = error.localizedDescription
                 awaitingLogin = false
             }
-            self.streamingService = JellyfinModel(address: url)
+            self.loggedIn = .loggedIn(JellyfinModel(address: url))
         }
     }
 }
 
 #Preview {
-    @Previewable @State var jellyfin: (any StreamingServiceProtocol)? = nil
-    LoginView(streamingService: $jellyfin)
+    @Previewable @State var loginState: LoginState = .loggedOut
+    LoginView(loggedIn: $loginState)
 }
