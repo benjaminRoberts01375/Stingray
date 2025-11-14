@@ -57,6 +57,12 @@ final class JellyfinModel: StreamingServiceProtocol {
         self.sessionID = storageAPI.getSessionID()
         self.accessToken = storageAPI.getAccessToken()
         self.serverID = storageAPI.getServerID()
+        print("URL: \(url?.absoluteString  ?? "None available")")
+        print("User's Name: \(usersName ?? "None available")")
+        print("UserID: \(usersID ?? "None available")")
+        print("SessionID: \(sessionID ?? "None available")")
+        print("Access Token: \(accessToken ?? "None available")")
+        print("ServerID: \(serverID ?? "None available")")
     }
     
     func login(username: String, password: String) async throws {
