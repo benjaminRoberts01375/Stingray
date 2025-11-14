@@ -11,14 +11,16 @@ public protocol MediaProtocol {
     var title: String { get }
     var description: String { get }
     var ImageTags: MediaImages { get }
+    var id: String { get }
 }
 
 @Observable
-final class MediaModel: MediaProtocol, Decodable {
-    var title: String
-    var tagline: String
-    var description: String
-    var ImageTags: MediaImages
+public final class MediaModel: MediaProtocol, Decodable, Identifiable {
+    public var title: String
+    public var tagline: String
+    public var description: String
+    public var ImageTags: MediaImages
+    public var id: String
     
     enum CodingKeys: String, CodingKey {
         case title
