@@ -42,15 +42,20 @@ final class JellyfinModel: StreamingServiceProtocol {
         didSet { storageAPI.setServerID(serverID) }
     }
     
-    init(address: URL) {
+    init(address: URL?) throws {
+        enum AddressError: Error {
+            case badAddress
+        }
+        
+        guard let address = address else { throw AddressError.badAddress }
         self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: address))
         self.storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
         self.url = address
-        self.usersName = nil
-        self.usersID = nil
-        self.sessionID = nil
-        self.accessToken = nil
-        self.serverID = nil
+        self.usersName = storageAPI.getUsersName()
+        self.usersID = storageAPI.getUserID()
+        self.sessionID = storageAPI.getSessionID()
+        self.accessToken = storageAPI.getAccessToken()
+        self.serverID = storageAPI.getServerID()
     }
     
     func login(username: String, password: String) async throws {

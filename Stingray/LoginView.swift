@@ -23,51 +23,63 @@ struct LoginView: View {
     @State var awaitingLogin: Bool = false
     
     var body: some View {
-            VStack {
-                Text("Sign into Jellyfin")
-                    .font(.title)
-                    .fontWeight(.bold)
-                Spacer()
-                HStack {
-                    Picker("Protocol", selection: $httpProcol) {
-                        ForEach(HttpProtocol.allCases, id: \.self) { availableProtocol in
-                            Text(availableProtocol.rawValue).tag(availableProtocol)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    switch httpProcol {
-                    case .http:
-                        TextField("Hostname", text: $httpHostname)
-                        TextField("Port", text: $httpPort)
-                            .keyboardType(.numberPad)
-                    case .https:
-                        TextField("URL", text: $httpHostname)
+        VStack {
+            Text("Sign into Jellyfin")
+                .font(.title)
+                .fontWeight(.bold)
+            Spacer()
+            HStack {
+                Picker("Protocol", selection: $httpProcol) {
+                    ForEach(HttpProtocol.allCases, id: \.self) { availableProtocol in
+                        Text(availableProtocol.rawValue).tag(availableProtocol)
                     }
                 }
-                HStack {
-                    TextField("Username", text: $username)
-                    SecureField("Password", text: $password)
+                .pickerStyle(.menu)
+                switch httpProcol {
+                case .http:
+                    TextField("Hostname", text: $httpHostname)
+                    TextField("Port", text: $httpPort)
+                        .keyboardType(.numberPad)
+                case .https:
+                    TextField("URL", text: $httpHostname)
                 }
-                if error != "" {
-                    Text("Error: \(error)")
-                        .foregroundStyle(.red)
-                        .padding(.vertical)
+            }
+            HStack {
+                TextField("Username", text: $username)
+                SecureField("Password", text: $password)
+            }
+            if error != "" {
+                Text("Error: \(error)")
+                    .foregroundStyle(.red)
+                    .padding(.vertical)
+            }
+            Spacer()
+            HStack {
+                ProgressView()
+                    .opacity(0)
+                Button("Connect") {
+                    setupConnection()
                 }
-                Spacer()
-                HStack {
-                    ProgressView()
-                        .opacity(0)
-                    Button("Connect") {
-                        setupConnection()
-                    }
-                    ProgressView()
-                        .opacity(awaitingLogin ? 1 : 0)
-                }
-                .buttonStyle(.borderedProminent)
+                ProgressView()
+                    .opacity(awaitingLogin ? 1 : 0)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .onAppear {
+            print("Attempting to set up from storage")
+            do {
+                let advancedStorage = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+                print("Token: \(advancedStorage.getAccessToken() ?? "None available")")
+                loggedIn = .loggedIn(try JellyfinModel(address: advancedStorage.getServerURL()))
+            } catch {
+                print("Failed to setup from storage, showing login screen")
+                return
+            }
         }
     }
     
     func setupConnection() {
+        // Setup URL
         var url: URL?
         switch httpProcol {
         case .http:
@@ -79,17 +91,24 @@ struct LoginView: View {
             error = "Invalid URL"
             return
         }
-        let streamingService = JellyfinModel(address: url)
+        
+        // Setup streaming service
+        let streamingService: JellyfinModel
+        do {
+            streamingService = try JellyfinModel(address: url)
+        } catch {
+            self.error = "Unable to setup streaming service"
+            return
+        }
         Task {
             awaitingLogin = true
-            error = ""
             do {
                 try await streamingService.login(username: username, password: password)
             } catch {
                 self.error = error.localizedDescription
                 awaitingLogin = false
             }
-            self.loggedIn = .loggedIn(JellyfinModel(address: url))
+            self.loggedIn = .loggedIn(streamingService)
         }
     }
 }
