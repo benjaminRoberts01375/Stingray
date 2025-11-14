@@ -36,10 +36,25 @@ struct DashboardView: View {
                     }
                     ForEach(libraries.indices, id: \.self) { index in
                         Tab(value: libraries[index].id) {
-                            Text(libraries[index].title)
+                            LibraryView(library: libraries[index], streamingService: streamingService)
                         } label: {
                             Text(libraries[index].title)
                         }
+                    }
+                }
+                .task {
+                    guard let accessToken = streamingService.accessToken else {
+                        libraryStatus = .waiting
+                        return
+                    }
+                    print("Loading media for all libraries...")
+                    do {
+                        for library in libraries {
+                            try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
+                            print("Finished loading media for all libraries")
+                        }
+                    } catch let error {
+                        libraryStatus = .error(error)
                     }
                 }
             }
@@ -47,6 +62,9 @@ struct DashboardView: View {
         .onAppear {
             Task {
                 do {
+                    let libraries = try await streamingService.getLibraries()
+                    libraryStatus = .available(libraries)
+                    print("Loaded \(libraries.count) libraries")
                 } catch {
                     libraryStatus = .error(error)
                 }

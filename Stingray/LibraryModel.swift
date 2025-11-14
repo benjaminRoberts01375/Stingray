@@ -59,4 +59,17 @@ public final class LibraryModel: Library, Decodable {
         print("Title: \(title)")
         print("ID: \(id)")
     }
+    
+    func loadMedia(networkAPI: AdvancedNetworkProtocol, accessToken: String) async throws {
+        print("Loading media for \(self.title)")
+        let incomingMedia = try await networkAPI.getLibraryMedia(accessToken: accessToken, libraryId: self.id, index: 0, count: 2000, sortOrder: .Ascending, sortBy: .SortName)
+        switch self.media {
+        case .unloaded, .waiting, .error:
+            print("Set new media for \(self.title)")
+            media = .available(incomingMedia)
+        case .available(let existingMedia):
+            print("Added new media to \(self.title)")
+            media = .available(existingMedia + incomingMedia)
+        }
+    }
 }
