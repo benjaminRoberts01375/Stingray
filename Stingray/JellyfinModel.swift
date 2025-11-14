@@ -11,6 +11,7 @@ protocol StreamingServiceProtocol {
     var url: URL? { get }
     
     func login(username: String, password: String) async throws
+    func getLibraries() async throws -> [LibraryModel]
 }
 
 @Observable
@@ -65,5 +66,10 @@ final class JellyfinModel: StreamingServiceProtocol {
         self.sessionID = response.sessionId
         self.accessToken = response.accessToken
         self.serverID = response.serverId
+    }
+    
+    func getLibraries() async throws -> [LibraryModel] {
+        guard let accessToken else { throw NetworkError.missingAccessToken }
+        return try await networkAPI.getLibraries(accessToken: accessToken)
     }
 }
