@@ -47,6 +47,45 @@ public enum NetworkError: Error, LocalizedError {
 public protocol AdvancedNetworkProtocol {
     func login(username: String, password: String) async throws -> APILoginResponse
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
+    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel]
+}
+
+public enum LibraryMediaSortOrder: String {
+    case Ascending = "Ascending"
+    case Descending = "Descending"
+}
+
+public enum LibraryMediaSortBy: String {
+    case Default = "Default"
+    case AiredEpisodeOrder = "AiredEpisodeOrder"
+    case Album = "Album"
+    case Artist = "AlbumArtist"
+    case DateCreated = "DateCreated"
+    case OfficialRating = "OfficialRating"
+    case DatePlayed = "DatePlayed"
+    case ReleaseDate = "PremiereDate"
+    case StartDate = "StartDate"
+    /// Sort by user-given aliases and fallback to the original name
+    case SortName = "SortName"
+    /// Sort by the original name
+    case Name = "Name"
+    case Random = "Random"
+    case Runtime = "Runtime"
+    case CommunityRating = "CommunityRating"
+    case ProductionYear = "ProductionYear"
+    case PlayCount = "PlayCount"
+    case CriticRating = "CriticRating"
+    case IsFolder = "IsFolder"
+    case IsPlayed = "IsPlayed"
+    case SeriesSortName = "SeriesSortName"
+    case Bitrate = "VideoBitRate"
+    case AirTime = "AirTime"
+    case Studio = "Studio"
+    case IsFavorite = "IsFavoriteOrLiked"
+    case DateLastContentAdded = "DateLastContentAdded"
+    case SeriesDatePlayed = "SeriesDatePlayed"
+    case ParentIndexNumber = "ParentIndexNumber"
+    case IndexNumber = "IndexNumber"
 }
 
 public struct APILoginResponse: Decodable {
@@ -226,5 +265,26 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         let root: Root = try await network.request(verb: .get, path: "/Library/MediaFolders", headers: ["X-MediaBrowser-Token":accessToken], urlParams: nil, body: nil)
         return root.items
+    }
+    
+    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel] {
+        struct Root: Decodable {
+            let items: [MediaModel]
+            
+            enum CodingKeys: String, CodingKey {
+                case items = "Items"
+            }
+        }
+        
+        let params : [String:String] = [
+            "sortOrder":sortOrder.rawValue,
+            "sortBy":sortBy.rawValue,
+            "startIndex": "\(index)",
+            "limit": "\(count)",
+            "parentId": libraryId
+        ]
+        
+        let response: Root = try await network.request(verb: .get, path: "/Items", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
+        return response.items
     }
 }
