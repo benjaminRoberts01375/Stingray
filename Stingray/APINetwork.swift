@@ -150,7 +150,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
     
     func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]? = nil, urlParams: [String : String]? = nil, body: (any Encodable)? = nil) async throws -> T {
         // Setup URL with path
-        guard var url = self.buildURL(path: path, urlParams: urlParams) else {
+        guard let url = self.buildURL(path: path, urlParams: urlParams) else {
             throw NetworkError.invalidURL
         }
         
