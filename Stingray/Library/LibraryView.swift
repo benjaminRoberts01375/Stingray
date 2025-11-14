@@ -21,7 +21,10 @@ public struct LibraryView: View {
                     .foregroundStyle(.red)
                     .padding(.vertical)
             case .available(let allMedia):
-                LazyVStack(spacing: 20) {
+                let columns = [
+                    GridItem(.adaptive(minimum: 80), spacing: 16)
+                ]
+                LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(allMedia) { media in
                         Button {
                             // This is just for demo purposes
