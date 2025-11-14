@@ -15,11 +15,11 @@ public protocol Library: Identifiable {
 public enum MediaStatus {
     case unloaded
     case waiting
-    case available([MediaProtocol])
+    case available([MediaModel])
     case error(Error)
 }
 
-
+@Observable
 public final class LibraryModel: Library, Decodable {
     public var title: String
     public var media: MediaStatus
@@ -33,11 +33,9 @@ public final class LibraryModel: Library, Decodable {
         print("ID: \(id)")
     }
     
-
-    
     enum CodingKeys: String, CodingKey {
         case title = "Name"
-        case media
+        case media = "media"
         case id = "Id"
     }
     
