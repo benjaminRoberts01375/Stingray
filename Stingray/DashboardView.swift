@@ -15,12 +15,12 @@ struct DashboardView: View {
     }
     
     @State var streamingService: StreamingServiceProtocol
-    @State var libraries: LibraryStatus = .waiting
+    @State var libraryStatus: LibraryStatus = .waiting
     @State private var selectedTab: String = "home"
     
     var body: some View {
         VStack {
-            switch libraries {
+            switch libraryStatus {
             case .waiting:
                 ProgressView()
             case .error(let err):
@@ -47,9 +47,8 @@ struct DashboardView: View {
         .onAppear {
             Task {
                 do {
-                    libraries = .available(try await streamingService.getLibraries())
                 } catch {
-                    libraries = .error(error)
+                    libraryStatus = .error(error)
                 }
             }
         }
