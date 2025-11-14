@@ -8,7 +8,7 @@
 import SwiftUI
 
 public protocol BasicNetworkProtocol {
-    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String: String]?, body: Encodable?) async throws -> T
+    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]?, urlParams: [String : String]?, body: (any Encodable)?) async throws -> T
 }
 
 public enum NetworkRequestType: String {
@@ -101,7 +101,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         self.address = address
     }
     
-    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]?, body: (any Encodable)?) async throws -> T {
+    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]? = nil, urlParams: [String : String]? = nil, body: (any Encodable)? = nil) async throws -> T {
         // Setup URL with path
         guard let url = URL(string: path, relativeTo: address) else {
             throw NetworkError.invalidURL
@@ -210,7 +210,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case items = "Items"
             }
         }
-        let root: Root = try await network.request(verb: .get, path: "/Library/MediaFolders", headers: ["X-MediaBrowser-Token":accessToken], body: nil)
+        let root: Root = try await network.request(verb: .get, path: "/Library/MediaFolders", headers: ["X-MediaBrowser-Token":accessToken], urlParams: nil, body: nil)
         return root.items
     }
 }
