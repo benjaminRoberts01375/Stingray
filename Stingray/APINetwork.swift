@@ -24,6 +24,7 @@ public enum NetworkError: Error, LocalizedError {
     case requestFailedToSend(Error)
     case badResponse(responseCode: Int, response: String?)
     case decodeJSONFailed(Error)
+    case missingAccessToken
     
     public var errorDescription: String? {
         switch self {
@@ -37,6 +38,8 @@ public enum NetworkError: Error, LocalizedError {
             return "Got a bad response from the server. Error: \(responseCode), \(response ?? "Unknown error")"
         case .decodeJSONFailed(let error):
             return "Unable to decode JSON: \(error.localizedDescription)"
+        case .missingAccessToken:
+            return "Missing access token"
         }
     }
 }
@@ -99,6 +102,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         guard let url = URL(string: path, relativeTo: address) else {
             throw NetworkError.invalidURL
         }
+        print("Reaching out to \(url.absoluteString)")
         
         // Setup request
         var request = URLRequest(url: url)
