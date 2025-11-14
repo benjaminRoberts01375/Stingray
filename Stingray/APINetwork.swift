@@ -156,16 +156,19 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
             throw NetworkError.badResponse(responseCode: httpResponse.statusCode, response: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))
         }
         
-        // Decode the JSON response
+        // Decode the JSON response with more helpful errors
         do {
-            // Print the response for debugging
-            if let responseString = String(data: responseData, encoding: .utf8) {
-                print("Response JSON: \(responseString)")
-            }
-            
             let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
             return decodedResponse
-        } catch (let error) {
+        } catch let DecodingError.dataCorrupted(context) {
+            throw NetworkError.decodeJSONFailed(DecodingError.dataCorrupted(context))
+        } catch let DecodingError.keyNotFound(key, context) {
+            throw NetworkError.decodeJSONFailed(DecodingError.keyNotFound(key, context))
+        } catch let DecodingError.valueNotFound(value, context) {
+            throw NetworkError.decodeJSONFailed(DecodingError.valueNotFound(value, context))
+        } catch let DecodingError.typeMismatch(type, context)  {
+            throw NetworkError.decodeJSONFailed(DecodingError.typeMismatch(type, context))
+        } catch {
             throw NetworkError.decodeJSONFailed(error)
         }
     }
