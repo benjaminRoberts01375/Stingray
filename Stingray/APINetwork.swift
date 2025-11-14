@@ -103,9 +103,20 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
     
     func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]? = nil, urlParams: [String : String]? = nil, body: (any Encodable)? = nil) async throws -> T {
         // Setup URL with path
-        guard let url = URL(string: path, relativeTo: address) else {
+        guard var url = URL(string: path, relativeTo: address) else {
             throw NetworkError.invalidURL
         }
+        
+        // Add query parameters if provided
+        if let urlParams = urlParams, !urlParams.isEmpty {
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
+            components?.queryItems = urlParams.map { URLQueryItem(name: $0.key, value: $0.value) }
+            guard let urlWithParams = components?.url else {
+                throw NetworkError.invalidURL
+            }
+            url = urlWithParams
+        }
+        
         print("Reaching out to \(url.absoluteString)")
         
         // Setup request
@@ -202,7 +213,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             "Username": username,
             "Pw": password
         ]
-        return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, body: requestBody)
+        return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, urlParams: nil, body: requestBody)
     }
     
     func getLibraries(accessToken: String) async throws -> [LibraryModel] {
