@@ -91,7 +91,7 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     }
     
     func getUserID() -> String? {
-        return storage.getString(.accessToken)
+        return storage.getString(.userID)
     }
     func setUserID(_ id: String?) {
         storage.setString(.userID, value: id ?? "")
