@@ -56,6 +56,10 @@ public struct APILoginResponse: Decodable {
     let accessToken: String
     let serverId: String
     
+    var description: String {
+        return "User's name: \(userName), SessionID: \(sessionId), userID: \(userId), accessToken: \(accessToken), serverID: \(serverId)"
+    }
+    
     enum CodingKeys: String, CodingKey {
         case user = "User"
         case sessionInfo = "SessionInfo"
