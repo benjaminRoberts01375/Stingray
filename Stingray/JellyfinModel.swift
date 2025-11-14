@@ -9,6 +9,9 @@ import Foundation
 
 protocol StreamingServiceProtocol {
     var url: URL? { get }
+    var accessToken: String? { get }
+    var networkAPI: AdvancedNetworkProtocol { get }
+    var storageAPI: AdvancedStorageProtocol { get }
     
     func login(username: String, password: String) async throws
     func getLibraries() async throws -> [LibraryModel]
