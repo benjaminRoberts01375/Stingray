@@ -28,7 +28,7 @@ final class JellyfinModel: StreamingServiceProtocol {
     }
     
     var usersID: String? {
-        didSet { storageAPI.setUsersName(usersID) }
+        didSet { storageAPI.setUserID(usersID) }
     }
     
     var sessionID: String? {
