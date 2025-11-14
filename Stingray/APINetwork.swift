@@ -46,7 +46,7 @@ public enum NetworkError: Error, LocalizedError {
 
 public protocol AdvancedNetworkProtocol {
     func login(username: String, password: String) async throws -> APILoginResponse
-    func getLibraries(accessToken: String) async throws
+    func getLibraries(accessToken: String) async throws -> [LibraryModel]
 }
 
 public struct APILoginResponse: Decodable {
@@ -198,7 +198,15 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, body: requestBody)
     }
     
-    func getLibraries(accessToken: String) async throws {
-//        return try await network.request(verb: .get, path: "/Library/MediaFolders", headers: ["X-MediaBrowser-Token":accessToken], body: nil)
+    func getLibraries(accessToken: String) async throws -> [LibraryModel] {
+        struct Root: Decodable {
+            let items: [LibraryModel]
+            
+            enum CodingKeys: String, CodingKey {
+                case items = "Items"
+            }
+        }
+        let root: Root = try await network.request(verb: .get, path: "/Library/MediaFolders", headers: ["X-MediaBrowser-Token":accessToken], body: nil)
+        return root.items
     }
 }
