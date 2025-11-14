@@ -16,7 +16,7 @@ struct DashboardView: View {
     
     @State var streamingService: StreamingServiceProtocol
     @State var libraries: LibraryStatus = .waiting
-    
+    @State private var selectedTab: String = "home"
     
     var body: some View {
         VStack {
@@ -28,8 +28,19 @@ struct DashboardView: View {
                     .foregroundStyle(.red)
                 
             case .available(let libraries):
-                ForEach(libraries.indices, id: \.self) { index in
-                    Text(libraries[index].title)
+                TabView(selection: $selectedTab) {
+                    Tab(value: "home") {
+                        Text("Home")
+                    } label: {
+                        Text("Home")
+                    }
+                    ForEach(libraries.indices, id: \.self) { index in
+                        Tab(value: libraries[index].id) {
+                            Text(libraries[index].title)
+                        } label: {
+                            Text(libraries[index].title)
+                        }
+                    }
                 }
             }
         }
