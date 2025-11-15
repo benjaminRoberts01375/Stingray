@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MediaCard: View {
-    @State var media: MediaModel
+    let media: MediaModel
     let streamingService: StreamingServiceProtocol
     
     var body: some View {
