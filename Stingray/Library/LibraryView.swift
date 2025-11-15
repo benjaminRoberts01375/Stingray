@@ -10,6 +10,8 @@ import SwiftUI
 public struct LibraryView: View {
     @State var library: LibraryModel
     let streamingService: StreamingServiceProtocol
+    let cardWidth = CGFloat(250)
+    let cardSpacing = CGFloat(42)
     
     public var body: some View {
         ScrollView {
@@ -22,16 +24,15 @@ public struct LibraryView: View {
                     .padding(.vertical)
             case .available(let allMedia):
                 let columns = [
-                    GridItem(.adaptive(minimum: 80), spacing: 16)
+                    GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
                 ]
-                LazyVGrid(columns: columns, spacing: 16) {
+                LazyVGrid(columns: columns, spacing: cardSpacing) {
                     ForEach(allMedia) { media in
                         Button {
                             // This is just for demo purposes
                         } label: {
-                            Text(media.title)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
+                            MediaCard(media: media, streamingService: streamingService)
+                                .frame(width: cardWidth)
                         }
                         .buttonStyle(.card)
                     }

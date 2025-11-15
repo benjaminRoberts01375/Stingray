@@ -9,20 +9,36 @@ import SwiftUI
 
 struct MediaCard: View {
     @State var media: MediaModel
-    let streamingServicee: StreamingServiceProtocol
+    let streamingService: StreamingServiceProtocol
     
     var body: some View {
-        VStack {
-            AsyncImage(url: streamingServicee.networkAPI.getMediaImageURL(accessToken: streamingServicee.accessToken ?? "", imageType: .primary, imageID: media.id)) { image in
+        VStack(spacing: 0) {
+            AsyncImage(url: streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .primary, imageID: media.id)) { image in
                 image
                     .resizable()
-                    .scaledToFit()
+                    .scaledToFill()
             } placeholder: {
-                ProgressView()
+                MediaCardLoading()
             }
-            .aspectRatio(2/3, contentMode: .fit)
+            .aspectRatio(3/2, contentMode: .fit)
+            .clipped()
+            
             Text(media.title)
+                .multilineTextAlignment(.center)
                 .lineLimit(2)
+                .padding(5)
+        }
+    }
+}
+
+struct MediaCardLoading: View {
+    var body: some View {
+        ZStack {
+            Color.gray.opacity(0.2)
+            VStack {
+                ProgressView()
+                Text("Getting thumbnail")
+            }
         }
     }
 }
