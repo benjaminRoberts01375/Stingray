@@ -28,6 +28,7 @@ struct MediaCard: View {
                 .lineLimit(2)
                 .padding(5)
         }
+        .id(media.id) // Stabilize view identity
     }
 }
 
