@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B506A9E22EC8341A0086F657 /* BlurHashKit in Frameworks */ = {isa = PBXBuildFile; productRef = B506A9E12EC8341A0086F657 /* BlurHashKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		B5625A4C2EC4EDF500C0507C /* Stingray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stingray.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B506A9E22EC8341A0086F657 /* BlurHashKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Stingray;
 			packageProductDependencies = (
+				B506A9E12EC8341A0086F657 /* BlurHashKit */,
 			);
 			productName = Stingray;
 			productReference = B5625A4C2EC4EDF500C0507C /* Stingray.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = B5625A432EC4EDF500C0507C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B506A9E02EC8341A0086F657 /* XCRemoteSwiftPackageReference "BlurHashKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B5625A4D2EC4EDF500C0507C /* Products */;
 			projectDirPath = "";
@@ -326,6 +335,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B506A9E02EC8341A0086F657 /* XCRemoteSwiftPackageReference "BlurHashKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LePips/BlurHashKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B506A9E12EC8341A0086F657 /* BlurHashKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B506A9E02EC8341A0086F657 /* XCRemoteSwiftPackageReference "BlurHashKit" */;
+			productName = BlurHashKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B5625A442EC4EDF500C0507C /* Project object */;
 }

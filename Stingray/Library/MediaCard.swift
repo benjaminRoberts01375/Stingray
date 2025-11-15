@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 11/14/25.
 //
 
+import BlurHashKit
 import SwiftUI
 
 struct MediaCard: View {
@@ -18,7 +19,14 @@ struct MediaCard: View {
                     .resizable()
                     .scaledToFill()
             } placeholder: {
-                MediaCardLoading()
+                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
+                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 32)) {
+                    Image(uiImage: blurImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    MediaCardLoading()
+                }
             }
             .aspectRatio(3/2, contentMode: .fit)
             .clipped()

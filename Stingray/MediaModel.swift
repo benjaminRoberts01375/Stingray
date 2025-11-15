@@ -20,6 +20,7 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable {
     public var tagline: String
     public var description: String
     public var ImageTags: MediaImages
+    public var imageBlurHashes: MediaImageBlurHashes?
     public var id: String
     
     enum CodingKeys: String, CodingKey {
@@ -28,6 +29,7 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable {
         case taglines = "Taglines"
         case description = "Overview"
         case imageTags = "ImageTags"
+        case imageBlurHashes = "ImageBlurHashes"
     }
     
     public init(from decoder: Decoder) throws {
@@ -45,6 +47,9 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable {
         // ImageTags might be optional as well
         self.ImageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ?? MediaImages(thumbnail: nil, logo: nil, primary: nil)
         
+        // Decode blur hashes if present
+        self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
+        
         self.id = try container.decode(String.self, forKey: .id)
     }
 }
@@ -58,5 +63,29 @@ public struct MediaImages: Decodable {
         case thumbnail = "Thumb"
         case logo = "Logo"
         case primary = "Primary"
+    }
+}
+
+public struct MediaImageBlurHashes: Decodable {
+    var primary: [String: String]?
+    var thumb: [String: String]?
+    var logo: [String: String]?
+    
+    enum CodingKeys: String, CodingKey {
+        case primary = "Primary"
+        case thumb = "Thumb"
+        case logo = "Logo"
+    }
+    
+    /// Helper to get the first blur hash from a dictionary
+    func getBlurHash(for key: CodingKeys) -> String? {
+        switch key {
+        case .primary:
+            return primary?.values.first
+        case .thumb:
+            return thumb?.values.first
+        case .logo:
+            return logo?.values.first
+        }
     }
 }
