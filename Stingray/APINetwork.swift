@@ -311,6 +311,11 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     }
     
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String) -> URL? {
-        network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: nil)
+        let params : [URLQueryItem] = [
+            URLQueryItem(name: "fillWidth", value: "400"),
+            URLQueryItem(name: "quality", value: "95")
+        ]
+        
+        return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
     }
 }
