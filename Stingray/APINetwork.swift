@@ -8,8 +8,8 @@
 import SwiftUI
 
 public protocol BasicNetworkProtocol {
-    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]?, urlParams: [String : String]?, body: (any Encodable)?) async throws -> T
-    func buildURL(path: String, urlParams: [String : String]?) -> URL?
+    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]?, urlParams: [URLQueryItem]?, body: (any Encodable)?) async throws -> T
+    func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
 }
 
 public enum NetworkRequestType: String {
@@ -148,7 +148,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         self.address = address
     }
     
-    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]? = nil, urlParams: [String : String]? = nil, body: (any Encodable)? = nil) async throws -> T {
+    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]? = nil, urlParams: [URLQueryItem]? = nil, body: (any Encodable)? = nil) async throws -> T {
         // Setup URL with path
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
             throw NetworkError.invalidURL
@@ -221,7 +221,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         }
     }
     
-    func buildURL(path: String, urlParams: [String : String]?) -> URL? {
+    func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {
         guard var url = URL(string: path, relativeTo: address) else {
             return nil
         }
@@ -229,10 +229,8 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         // Add query parameters if provided
         if let urlParams = urlParams, !urlParams.isEmpty {
             var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-            components?.queryItems = urlParams.map { URLQueryItem(name: $0.key, value: $0.value) }
-            guard let urlWithParams = components?.url else {
-                return nil
-            }
+            components?.queryItems = urlParams
+            guard let urlWithParams = components?.url else { return nil }
             url = urlWithParams
         }
         
