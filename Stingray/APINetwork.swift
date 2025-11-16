@@ -45,10 +45,16 @@ public enum NetworkError: Error, LocalizedError {
     }
 }
 
+public enum MediaType: String {
+    case collections = "BoxSet"
+    case movies = "Movie"
+    case tv = "Series"
+}
+
 public protocol AdvancedNetworkProtocol {
     func login(username: String, password: String) async throws -> APILoginResponse
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
-    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel]
+    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String) -> URL?
 }
 
@@ -281,7 +287,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return root.items
     }
     
-    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel] {
+    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel] {
         struct Root: Decodable {
             let items: [MediaModel]
             
@@ -289,14 +295,16 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case items = "Items"
             }
         }
-        
-        let params : [String:String] = [
-            "sortOrder":sortOrder.rawValue,
-            "sortBy":sortBy.rawValue,
-            "startIndex": "\(index)",
-            "limit": "\(count)",
-            "parentId": libraryId
+        var params : [URLQueryItem] = [
+            URLQueryItem(name: "sortOrder", value: sortOrder.rawValue),
+            URLQueryItem(name: "sortBy", value: sortBy.rawValue),
+            URLQueryItem(name: "startIndex", value: "\(index)"),
+            URLQueryItem(name: "limit", value: "\(count)"),
+            URLQueryItem(name: "parentId", value: libraryId)
         ]
+        for mediaType in mediaTypes ?? [] {
+            params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
+        }
         
         let response: Root = try await network.request(verb: .get, path: "/Items", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
         return response.items
