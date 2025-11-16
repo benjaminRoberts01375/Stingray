@@ -51,10 +51,11 @@ struct DashboardView: View {
                     do {
                         for library in libraries {
                             try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
-                            print("Finished loading media for all libraries")
                         }
+                        print("Finished loading media for all libraries")
                     } catch let error {
                         libraryStatus = .error(error)
+                        print("Failed to load library: \(error.localizedDescription)")
                     }
                 }
             }
