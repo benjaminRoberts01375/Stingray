@@ -59,15 +59,13 @@ struct DashboardView: View {
                 }
             }
         }
-        .onAppear {
-            Task {
-                do {
-                    let libraries = try await streamingService.getLibraries()
-                    libraryStatus = .available(libraries)
-                    print("Loaded \(libraries.count) libraries")
-                } catch {
-                    libraryStatus = .error(error)
-                }
+        .task {
+            do {
+                let libraries = try await streamingService.getLibraries()
+                libraryStatus = .available(libraries)
+                print("Loaded \(libraries.count) libraries")
+            } catch {
+                libraryStatus = .error(error)
             }
         }
     }
