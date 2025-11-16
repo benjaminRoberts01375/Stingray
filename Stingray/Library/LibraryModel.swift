@@ -29,8 +29,6 @@ public final class LibraryModel: Library, Decodable {
         self.title = title
         self.media = .unloaded
         self.id = id
-        print("Title: \(title)")
-        print("ID: \(id)")
     }
     
     enum CodingKeys: String, CodingKey {
