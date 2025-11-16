@@ -11,11 +11,18 @@ import SwiftUI
 struct MediaCard: View {
     let media: MediaModel
     let streamingService: StreamingServiceProtocol
+    let url: URL?
+    
+    init(media: MediaModel, streamingService: StreamingServiceProtocol) {
+        self.media = media
+        self.streamingService = streamingService
+        self.url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .primary, imageID: media.id)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
             if media.ImageTags.primary != nil {
-                AsyncImage(url: streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .primary, imageID: media.id)) { image in
+                AsyncImage(url: url) { image in
                     image
                         .resizable()
                         .scaledToFill()
