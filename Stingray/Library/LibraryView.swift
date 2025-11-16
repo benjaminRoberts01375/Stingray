@@ -32,12 +32,11 @@ public struct LibraryView: View {
                             // This is just for demo purposes
                         } label: {
                             MediaCard(media: media, streamingService: streamingService)
-                                .frame(width: cardWidth)
+                                .frame(width: cardWidth, height: 470)
                         }
                         .buttonStyle(.card)
                     }
                 }
-                .padding()
             }
         }
     }
