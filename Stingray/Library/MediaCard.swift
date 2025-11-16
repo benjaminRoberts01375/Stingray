@@ -29,17 +29,16 @@ struct MediaCard: View {
                         MediaCardLoading()
                     }
                 }
-                .aspectRatio(3/2, contentMode: .fit)
-                .clipped()
             } else {
                 MediaCardNoImage()
-                    .aspectRatio(3/2, contentMode: .fit)
             }
-            
             Text(media.title)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .padding(5)
+                .truncationMode(.tail)
+                .padding(.horizontal, 5)
+                .padding(.top, 5)
+            Spacer()
         }
         .id(media.id) // Stabilize view identity
     }
