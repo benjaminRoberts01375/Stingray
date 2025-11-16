@@ -56,8 +56,6 @@ public final class LibraryModel: Library, Decodable {
             throw error
         }
         self.media = .unloaded // Don't even try to decode media here
-        print("Title: \(title)")
-        print("ID: \(id)")
     }
     
     func loadMedia(networkAPI: AdvancedNetworkProtocol, accessToken: String) async throws {
