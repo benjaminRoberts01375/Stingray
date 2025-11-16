@@ -10,8 +10,8 @@ import SwiftUI
 public struct LibraryView: View {
     @State var library: LibraryModel
     let streamingService: StreamingServiceProtocol
-    let cardWidth = CGFloat(250)
-    let cardSpacing = CGFloat(42)
+    let cardWidth = CGFloat(200)
+    let cardSpacing = CGFloat(50)
     
     public var body: some View {
         ScrollView {
@@ -32,7 +32,7 @@ public struct LibraryView: View {
                             // This is just for demo purposes
                         } label: {
                             MediaCard(media: media, streamingService: streamingService)
-                                .frame(width: cardWidth, height: 470)
+                                .frame(width: cardWidth, height: 370)
                         }
                         .buttonStyle(.card)
                     }
