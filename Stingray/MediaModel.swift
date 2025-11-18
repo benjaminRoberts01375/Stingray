@@ -15,13 +15,21 @@ public protocol MediaProtocol {
 }
 
 @Observable
-public final class MediaModel: MediaProtocol, Decodable, Identifiable {
+public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable {
     public var title: String
     public var tagline: String
     public var description: String
     public var ImageTags: MediaImages
     public var imageBlurHashes: MediaImageBlurHashes?
     public var id: String
+    
+    public static func == (lhs: MediaModel, rhs: MediaModel) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -54,7 +62,7 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable {
     }
 }
 
-public struct MediaImages: Decodable {
+public struct MediaImages: Decodable, Equatable, Hashable {
     var thumbnail: String?
     var logo: String?
     var primary: String?
@@ -66,7 +74,7 @@ public struct MediaImages: Decodable {
     }
 }
 
-public struct MediaImageBlurHashes: Decodable {
+public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
     var primary: [String: String]?
     var thumb: [String: String]?
     var logo: [String: String]?
