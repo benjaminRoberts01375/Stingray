@@ -28,7 +28,7 @@ struct DetailMovieView: View {
                             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                             .clipped()
                     } placeholder: {
-                        if let blurHash = media.imageBlurHashes?.getBlurHash(for: .thumb),
+                        if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
                            let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 32)) {
                             Image(uiImage: blurImage)
                                 .resizable()

@@ -78,11 +78,13 @@ public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
     var primary: [String: String]?
     var thumb: [String: String]?
     var logo: [String: String]?
+    var backdrop: [String: String]?
     
     enum CodingKeys: String, CodingKey {
         case primary = "Primary"
         case thumb = "Thumb"
         case logo = "Logo"
+        case backdrop = "Backdrop"
     }
     
     /// Helper to get the first blur hash from a dictionary
@@ -94,6 +96,8 @@ public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
             return thumb?.values.first
         case .logo:
             return logo?.values.first
+        case .backdrop:
+            return backdrop?.values.first
         }
     }
 }
