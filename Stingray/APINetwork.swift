@@ -55,7 +55,7 @@ public protocol AdvancedNetworkProtocol {
     func login(username: String, password: String) async throws -> APILoginResponse
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
     func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
-    func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String) -> URL?
+    func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -100,6 +100,7 @@ public enum MediaImageType: String {
     case thumbnail = "Thumb"
     case logo = "Logo"
     case primary = "Primary"
+    case backdrop = "Backdrop"
 }
 
 public struct APILoginResponse: Decodable {
@@ -310,9 +311,9 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return response.items
     }
     
-    func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String) -> URL? {
+    func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL? {
         let params : [URLQueryItem] = [
-            URLQueryItem(name: "fillWidth", value: "400"),
+            URLQueryItem(name: "fillWidth", value: String(width)),
             URLQueryItem(name: "quality", value: "95")
         ]
         

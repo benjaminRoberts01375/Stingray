@@ -10,13 +10,11 @@ import SwiftUI
 
 struct MediaCard: View {
     let media: MediaModel
-    let streamingService: StreamingServiceProtocol
     let url: URL?
     
     init(media: MediaModel, streamingService: StreamingServiceProtocol) {
         self.media = media
-        self.streamingService = streamingService
-        self.url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .primary, imageID: media.id)
+        self.url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .primary, imageID: media.id, width: 400)
     }
     
     var body: some View {
