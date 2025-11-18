@@ -19,45 +19,50 @@ struct DashboardView: View {
     @State private var selectedTab: String = "home"
     
     var body: some View {
-        VStack {
-            switch libraryStatus {
-            case .waiting:
-                ProgressView()
-            case .error(let err):
-                Text("Error loading libraries: \(err.localizedDescription)")
-                    .foregroundStyle(.red)
-                
-            case .available(let libraries):
-                TabView(selection: $selectedTab) {
-                    Tab(value: "home") {
-                        Text("Home")
-                    } label: {
-                        Text("Home")
-                    }
-                    ForEach(libraries.indices, id: \.self) { index in
-                        Tab(value: libraries[index].id) {
-                            LibraryView(library: libraries[index], streamingService: streamingService)
+        NavigationStack {
+            VStack {
+                switch libraryStatus {
+                case .waiting:
+                    ProgressView()
+                case .error(let err):
+                    Text("Error loading libraries: \(err.localizedDescription)")
+                        .foregroundStyle(.red)
+                    
+                case .available(let libraries):
+                    TabView(selection: $selectedTab) {
+                        Tab(value: "home") {
+                            Text("Home")
                         } label: {
-                            Text(libraries[index].title)
+                            Text("Home")
+                        }
+                        ForEach(libraries.indices, id: \.self) { index in
+                            Tab(value: libraries[index].id) {
+                                LibraryView(library: libraries[index], streamingService: streamingService)
+                            } label: {
+                                Text(libraries[index].title)
+                            }
+                        }
+                    }
+                    .task {
+                        guard let accessToken = streamingService.accessToken else {
+                            libraryStatus = .waiting
+                            return
+                        }
+                        print("Loading media for all libraries...")
+                        do {
+                            for library in libraries {
+                                try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
+                            }
+                            print("Finished loading media for all libraries")
+                        } catch let error {
+                            libraryStatus = .error(error)
+                            print("Failed to load library: \(error.localizedDescription)")
                         }
                     }
                 }
-                .task {
-                    guard let accessToken = streamingService.accessToken else {
-                        libraryStatus = .waiting
-                        return
-                    }
-                    print("Loading media for all libraries...")
-                    do {
-                        for library in libraries {
-                            try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
-                        }
-                        print("Finished loading media for all libraries")
-                    } catch let error {
-                        libraryStatus = .error(error)
-                        print("Failed to load library: \(error.localizedDescription)")
-                    }
-                }
+            }
+            .navigationDestination(for: MediaModel.self) { media in
+                DetailMovieView(media: media, streamingService: streamingService)
             }
         }
         .task {
