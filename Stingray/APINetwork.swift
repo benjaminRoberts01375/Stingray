@@ -326,6 +326,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "playSessionID", value: "true")
         ]
         
-        return network.buildURL(path: "/Videos/\(contentID)/main.m3u8", urlParams: nil)
+        return network.buildURL(path: "/Videos/\(contentID)/main.m3u8", urlParams: params)
     }
 }
