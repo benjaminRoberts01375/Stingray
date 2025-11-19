@@ -29,6 +29,7 @@ struct PlayerView: View {
                 return
             }
             self.player = AVPlayer(playerItem: playerItem)
+            self.player?.play()
         }
     }
 }
