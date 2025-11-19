@@ -249,7 +249,14 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
     
     func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {
         guard let url = buildURL(path: path, urlParams: urlParams) else { return nil }
-        let asset = AVURLAsset(url: url, options: headers)
+        
+        // Configure asset options with proper HTTP headers
+        var options: [String: Any] = [:]
+        if let headers = headers {
+            options["AVURLAssetHTTPHeaderFieldsKey"] = headers
+        }
+        
+        let asset = AVURLAsset(url: url, options: options)
         return AVPlayerItem(asset: asset)
     }
 }
