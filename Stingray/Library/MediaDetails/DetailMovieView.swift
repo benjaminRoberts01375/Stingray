@@ -11,6 +11,7 @@ import SwiftUI
 struct DetailMovieView: View {
     let media: MediaModel
     let backgroundImageURL: URL?
+    @State var opacity: Double = 0
     
     init (media: MediaModel, streamingService: StreamingServiceProtocol) {
         self.media = media
@@ -20,6 +21,16 @@ struct DetailMovieView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
+                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
+                    Image(uiImage: blurImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+                        .clipped()
+                } else {
+                    MediaCardLoading()
+                }
                 if media.ImageTags.thumbnail != nil {
                     AsyncImage(url: backgroundImageURL) { image in
                         image
@@ -27,17 +38,14 @@ struct DetailMovieView: View {
                             .aspectRatio(contentMode: .fill)
                             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                             .clipped()
+                            .opacity(opacity)
+                            .onAppear {
+                                withAnimation(.easeOut(duration: 0.5)) {
+                                    opacity = 1
+                                }
+                            }
                     } placeholder: {
-                        if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
-                           let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 32)) {
-                            Image(uiImage: blurImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-                                .clipped()
-                        } else {
-                            MediaCardLoading()
-                        }
+                        EmptyView()
                     }
                 }
             }
