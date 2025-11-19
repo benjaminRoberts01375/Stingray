@@ -5,7 +5,7 @@
 //  Created by Ben Roberts on 11/13/25.
 //
 
-import Foundation
+import AVKit
 
 protocol StreamingServiceProtocol {
     var url: URL? { get }
@@ -15,6 +15,7 @@ protocol StreamingServiceProtocol {
     
     func login(username: String, password: String) async throws
     func getLibraries() async throws -> [LibraryModel]
+    func getStreamingContent(media: any MediaProtocol) -> AVPlayerItem?
 }
 
 @Observable
@@ -80,5 +81,10 @@ final class JellyfinModel: StreamingServiceProtocol {
     func getLibraries() async throws -> [LibraryModel] {
         guard let accessToken else { throw NetworkError.missingAccessToken }
         return try await networkAPI.getLibraries(accessToken: accessToken)
+    }
+    
+    func getStreamingContent(media: any MediaProtocol) -> AVPlayerItem? {
+        guard let accessToken = accessToken else { return nil }
+        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: media.id)
     }
 }

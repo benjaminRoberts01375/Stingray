@@ -11,8 +11,8 @@ import SwiftUI
 struct PlayerView: View {
     @State var vm: PlayerViewModel
     
-    init(contentURL: URL, authToken: String) {
-        self.vm = .init(contentURL: contentURL, authToken: authToken)
+    init(streamingService: StreamingServiceProtocol, media: MediaProtocol) {
+        self.vm = .init(streamingService: streamingService, media: media)
     }
     
     var body: some View {
@@ -24,8 +24,12 @@ struct PlayerView: View {
 final class PlayerViewModel {
     let player: AVPlayer?
     
-    init(contentURL: URL, authToken: String) {
-        player = AVPlayer(url: contentURL)
-//        let item = AVPlayerItem(url: contentURL)
+    init(streamingService: StreamingServiceProtocol, media: MediaProtocol) { // Shout out to https://stackoverflow.com/questions/15456130/add-custom-header-field-in-request-of-avplayer/54068128#54068128
+        guard let playerItem = streamingService.getStreamingContent(media: media)
+        else {
+            player = nil
+            return
+        }
+        self.player = AVPlayer(playerItem: playerItem)
     }
 }

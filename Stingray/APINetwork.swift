@@ -5,11 +5,13 @@
 //  Created by Ben Roberts on 11/13/25.
 //
 
+import AVKit
 import SwiftUI
 
 public protocol BasicNetworkProtocol {
     func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]?, urlParams: [URLQueryItem]?, body: (any Encodable)?) async throws -> T
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
+    func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem?
 }
 
 public enum NetworkRequestType: String {
@@ -56,7 +58,7 @@ public protocol AdvancedNetworkProtocol {
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
     func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getStreamingContentURL(contentID: String) -> URL?
+    func getStreamingContent(accessToken: String, contentID: String) -> AVPlayerItem?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -244,6 +246,12 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         
         return url
     }
+    
+    func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {
+        guard let url = buildURL(path: path, urlParams: urlParams) else { return nil }
+        let asset = AVURLAsset(url: url, options: headers)
+        return AVPlayerItem(asset: asset)
+    }
 }
 
 final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
@@ -321,11 +329,10 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
-    func getStreamingContentURL(contentID: String) -> URL? {
+    func getStreamingContent(accessToken: String, contentID: String) -> AVPlayerItem? {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "playSessionID", value: "true")
         ]
-        
-        return network.buildURL(path: "/Videos/\(contentID)/main.m3u8", urlParams: params)
+        return network.buildAVPlayerItem(path: "/Videos/\(contentID)/main.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token":accessToken])
     }
 }

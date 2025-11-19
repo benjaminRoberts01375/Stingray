@@ -58,10 +58,7 @@ struct DetailMovieView: View {
         .ignoresSafeArea()
         .toolbar(.hidden, for: .tabBar)
         .fullScreenCover(isPresented: $showPlayer) {
-            if let contentURL = media.getContentURL(streamingService: streamingService) {
-                PlayerView(contentURL: contentURL, authToken: streamingService.accessToken ?? "")
-                    .onAppear { print(contentURL.absoluteString) }
-            }
+            PlayerView(streamingService: streamingService, media: media)
         }
     }
 }
