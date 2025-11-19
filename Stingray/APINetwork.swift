@@ -58,7 +58,7 @@ public protocol AdvancedNetworkProtocol {
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
     func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getStreamingContent(accessToken: String, contentID: String) -> AVPlayerItem?
+    func getStreamingContent(accessToken: String, contentID: String, sessionID: String) -> AVPlayerItem?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -329,9 +329,9 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
-    func getStreamingContent(accessToken: String, contentID: String) -> AVPlayerItem? {
+    func getStreamingContent(accessToken: String, contentID: String, sessionID: String) -> AVPlayerItem? {
         let params : [URLQueryItem] = [
-            URLQueryItem(name: "playSessionID", value: "true")
+            URLQueryItem(name: "playSessionID", value: sessionID)
         ]
         return network.buildAVPlayerItem(path: "/Videos/\(contentID)/main.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token":accessToken])
     }
