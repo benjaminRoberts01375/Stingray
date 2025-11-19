@@ -64,6 +64,11 @@ struct DashboardView: View {
             .navigationDestination(for: MediaModel.self) { media in
                 DetailMovieView(media: media, streamingService: streamingService)
             }
+            .navigationDestination(for: MediaModel.self) { media in
+                if streamingService.url != nil {
+                    PlayerView(contentURL: media.getContentURL(streamingService: streamingService))
+                }
+            }
         }
         .task {
             do {

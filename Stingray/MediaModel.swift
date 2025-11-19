@@ -60,6 +60,10 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable 
         
         self.id = try container.decode(String.self, forKey: .id)
     }
+    
+    func getContentURL(streamingService: StreamingServiceProtocol) -> URL? {
+        return streamingService.networkAPI.getStreamingContentURL(contentID: id)
+    }
 }
 
 public struct MediaImages: Decodable, Equatable, Hashable {

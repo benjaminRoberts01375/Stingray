@@ -11,10 +11,13 @@ import SwiftUI
 struct DetailMovieView: View {
     let media: MediaModel
     let backgroundImageURL: URL?
-    @State var opacity: Double = 0
+    let streamingService: StreamingServiceProtocol
+    @State var opacity: Double
     
     init (media: MediaModel, streamingService: StreamingServiceProtocol) {
         self.media = media
+        self.streamingService = streamingService
+        self.opacity = 0
         self.backgroundImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .backdrop, imageID: media.id, width: 0)
     }
     
@@ -43,6 +46,9 @@ struct DetailMovieView: View {
                     } placeholder: {
                         EmptyView()
                     }
+                }
+                NavigationLink(value: media) {
+                    Text("Play \(media.title)")
                 }
             }
         }
