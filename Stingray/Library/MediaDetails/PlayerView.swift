@@ -11,8 +11,8 @@ import SwiftUI
 struct PlayerView: View {
     @State var vm: PlayerViewModel
     
-    init(contentURL: URL) {
-        self.vm = .init(contentURL: contentURL)
+    init(contentURL: URL, authToken: String) {
+        self.vm = .init(contentURL: contentURL, authToken: authToken)
     }
     
     var body: some View {
@@ -24,7 +24,7 @@ struct PlayerView: View {
 final class PlayerViewModel {
     let player: AVPlayer?
     
-    init(contentURL: URL) {
+    init(contentURL: URL, authToken: String) {
         player = AVPlayer(url: contentURL)
 //        let item = AVPlayerItem(url: contentURL)
     }
