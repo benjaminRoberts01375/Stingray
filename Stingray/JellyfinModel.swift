@@ -84,9 +84,7 @@ final class JellyfinModel: StreamingServiceProtocol {
     }
     
     func getStreamingContent(media: any MediaProtocol) -> AVPlayerItem? {
-        guard let accessToken = accessToken,
-        let sessionID = sessionID
-        else { return nil }
-        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: media.id, sessionID: sessionID)
+        guard let accessToken = accessToken else { return nil }
+        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: media.id)
     }
 }
