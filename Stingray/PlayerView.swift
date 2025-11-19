@@ -31,5 +31,6 @@ struct PlayerView: View {
             self.player = AVPlayer(playerItem: playerItem)
             self.player?.play()
         }
+        .ignoresSafeArea(.all)
     }
 }
