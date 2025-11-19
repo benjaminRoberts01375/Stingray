@@ -48,9 +48,7 @@ struct DetailMovieView: View {
                         EmptyView()
                     }
                 }
-                Button {
-                    showPlayer = true
-                } label: {
+                NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
                     Text("Play \(media.title)")
                 }
             }
