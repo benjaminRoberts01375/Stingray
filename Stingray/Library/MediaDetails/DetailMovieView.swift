@@ -33,9 +33,7 @@ struct DetailMovieView: View {
                     AsyncImage(url: backgroundImageURL) { image in
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
                             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-                            .clipped()
                             .opacity(opacity)
                             .onAppear {
                                 withAnimation(.easeOut(duration: 0.5)) {
