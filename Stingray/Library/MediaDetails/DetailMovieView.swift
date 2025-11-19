@@ -13,6 +13,7 @@ struct DetailMovieView: View {
     let backgroundImageURL: URL?
     let streamingService: StreamingServiceProtocol
     @State var opacity: Double
+    @State private var showPlayer = false
     
     init (media: MediaModel, streamingService: StreamingServiceProtocol) {
         self.media = media
@@ -47,12 +48,20 @@ struct DetailMovieView: View {
                         EmptyView()
                     }
                 }
-                NavigationLink(value: media) {
+                Button {
+                    showPlayer = true
+                } label: {
                     Text("Play \(media.title)")
                 }
             }
         }
         .ignoresSafeArea()
         .toolbar(.hidden, for: .tabBar)
+        .fullScreenCover(isPresented: $showPlayer) {
+            if let contentURL = media.getContentURL(streamingService: streamingService) {
+                PlayerView(contentURL: contentURL, authToken: streamingService.accessToken ?? "")
+                    .onAppear { print(contentURL.absoluteString) }
+            }
+        }
     }
 }
