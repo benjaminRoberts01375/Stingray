@@ -88,11 +88,11 @@ public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
     }
     
     /// Helper to get the first blur hash from a dictionary
-    func getBlurHash(for key: CodingKeys) -> String? {
+    func getBlurHash(for key: MediaImageType) -> String? {
         switch key {
         case .primary:
             return primary?.values.first
-        case .thumb:
+        case .thumbnail:
             return thumb?.values.first
         case .logo:
             return logo?.values.first
