@@ -28,8 +28,6 @@ struct DetailMovieView: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                         .clipped()
-                } else {
-                    MediaCardLoading()
                 }
                 if media.ImageTags.thumbnail != nil {
                     AsyncImage(url: backgroundImageURL) { image in
