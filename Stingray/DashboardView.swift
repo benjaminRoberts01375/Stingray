@@ -61,9 +61,6 @@ struct DashboardView: View {
                     }
                 }
             }
-            .navigationDestination(for: MediaModel.self) { media in
-                DetailMovieView(media: media, streamingService: streamingService)
-            }
         }
         .task {
             do {
