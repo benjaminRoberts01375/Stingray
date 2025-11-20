@@ -91,7 +91,7 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable {
     }
 }
 
-public struct MediaImages: Decodable, Equatable, Hashable, MediaImagesProtocol {
+public struct MediaImages: Decodable, Equatable, MediaImagesProtocol {
     public var thumbnail: String?
     public var logo: String?
     public var primary: String?
