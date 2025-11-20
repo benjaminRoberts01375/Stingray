@@ -92,10 +92,6 @@ struct DetailMediaView: View {
                             }
                         }
                     }
-                    
-                    Image(systemName: "chevron.down")
-                        .foregroundStyle(.gray)
-                        .frame(height: 20)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
