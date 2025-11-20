@@ -13,13 +13,13 @@ struct DetailMediaView: View {
     let backgroundImageURL: URL?
     let logoImageURL: URL?
     let streamingService: StreamingServiceProtocol
-    @State var opacity: Double
+    @State private var backgroundOpacity: Double = 0
+    @State private var logoOpacity: Double = 0
     private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
         self.streamingService = streamingService
-        self.opacity = 0
         let accessToken = streamingService.accessToken ?? ""
         self.backgroundImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .backdrop, imageID: media.id, width: 0)
         self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .logo, imageID: media.id, width: 0)
@@ -41,10 +41,10 @@ struct DetailMediaView: View {
                         image
                             .resizable()
                             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-                            .opacity(opacity)
+                            .opacity(backgroundOpacity)
                             .onAppear {
                                 withAnimation(.easeOut(duration: 0.5)) {
-                                    opacity = 1
+                                    backgroundOpacity = 1
                                 }
                             }
                     } placeholder: {
@@ -58,6 +58,12 @@ struct DetailMediaView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
+                                .opacity(logoOpacity)
+                                .onAppear {
+                                    withAnimation(.easeOut(duration: 0.5)) {
+                                        logoOpacity = 1
+                                    }
+                                }
                         } placeholder: {
                             EmptyView()
                         }
