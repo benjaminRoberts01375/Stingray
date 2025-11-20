@@ -192,7 +192,7 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     }
 }
 
-public enum StreamType: String, Decodable, Equatable, Hashable {
+public enum StreamType: String, Decodable, Equatable {
     case video = "Video"
     case audio = "Audio"
     case subtitle = "Subtitle"
