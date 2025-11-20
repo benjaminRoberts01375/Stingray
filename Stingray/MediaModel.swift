@@ -10,11 +10,14 @@ import Foundation
 // MARK: Protocols
 public protocol MediaProtocol: Identifiable {
     var title: String { get }
+    var tagline: String { get }
     var description: String { get }
     var ImageTags: any MediaImagesProtocol { get }
     var id: String { get }
     var mediaSources: [any MediaSourceProtocol] { get }
     var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
+    var genres: [String] { get }
+    var maturity: String? { get }
 }
 
 public protocol MediaImagesProtocol {
@@ -57,6 +60,8 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var id: String
     public var mediaSources: [any MediaSourceProtocol]
+    public var genres: [String]
+    public var maturity: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -66,6 +71,8 @@ public final class MediaModel: MediaProtocol, Decodable {
         case imageTags = "ImageTags"
         case imageBlurHashes = "ImageBlurHashes"
         case mediaSources = "MediaSources"
+        case genres = "Genres"
+        case maturity = "OfficialRating"
     }
     
     public init(from decoder: Decoder) throws {
@@ -90,6 +97,10 @@ public final class MediaModel: MediaProtocol, Decodable {
         
         // Decode media sources - may not exist for all items
         self.mediaSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
+        
+        self.genres = try container.decode([String].self, forKey: .genres)
+        
+        self.maturity = try container.decodeIfPresent(String.self, forKey: .maturity)
     }
 }
 
