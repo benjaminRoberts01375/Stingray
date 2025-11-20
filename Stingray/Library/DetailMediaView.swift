@@ -1,5 +1,5 @@
 //
-//  DetailMovieView.swift
+//  DetailMediaView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 11/17/25.
@@ -8,7 +8,7 @@
 import BlurHashKit
 import SwiftUI
 
-struct DetailMovieView: View {
+struct DetailMediaView: View {
     let media: any MediaProtocol
     let backgroundImageURL: URL?
     let streamingService: StreamingServiceProtocol

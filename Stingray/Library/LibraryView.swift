@@ -28,7 +28,7 @@ public struct LibraryView: View {
                 ]
                 LazyVGrid(columns: columns, spacing: cardSpacing) {
                     ForEach(allMedia) { media in
-                        NavigationLink(destination: DetailMovieView(media: media, streamingService: streamingService)) {
+                        NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService)) {
                             MediaCard(media: media, streamingService: streamingService)
                                 .frame(width: cardWidth, height: 370)
                         }
