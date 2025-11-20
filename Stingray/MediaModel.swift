@@ -47,7 +47,7 @@ public protocol MediaStreamProtocol: Identifiable {
     var bitrate: Int? { get }
 }
 
-public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable {
+public final class MediaModel: MediaProtocol, Decodable, Identifiable {
     public var title: String
     public var tagline: String
     public var description: String
@@ -55,14 +55,6 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable 
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var id: String
     public var mediaSources: [any MediaSourceProtocol]
-    
-    public static func == (lhs: MediaModel, rhs: MediaModel) -> Bool {
-        lhs.id == rhs.id
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
