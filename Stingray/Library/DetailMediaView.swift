@@ -14,7 +14,6 @@ struct DetailMediaView: View {
     let logoImageURL: URL?
     let streamingService: StreamingServiceProtocol
     @State var opacity: Double
-    @State private var showPlayer = false
     private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
