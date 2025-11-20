@@ -58,7 +58,7 @@ public protocol AdvancedNetworkProtocol {
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
     func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getStreamingContent(accessToken: String, contentID: String, streamID: String) -> AVPlayerItem?
+    func getStreamingContent(accessToken: String, contentID: String, streamID: String, bitrate: Int) -> AVPlayerItem?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -249,7 +249,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
     
     func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {
         guard let url = buildURL(path: path, urlParams: urlParams) else { return nil }
-        
+        print(url.absoluteString)
         // Configure asset options with proper HTTP headers
         var options: [String: Any] = [:]
         if let headers = headers {
@@ -337,12 +337,13 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
-    func getStreamingContent(accessToken: String, contentID: String, streamID: String) -> AVPlayerItem? {
+    func getStreamingContent(accessToken: String, contentID: String, streamID: String, bitrate: Int) -> AVPlayerItem? {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "playSessionID", value: UUID().uuidString),
             URLQueryItem(name: "mediaSourceID", value: streamID),
             URLQueryItem(name: "audioCodec", value: "mp3"),
-            URLQueryItem(name: "videoCodec", value: "h264")
+            URLQueryItem(name: "videoCodec", value: "h264"),
+            URLQueryItem(name: "videoBitRate", value: String(bitrate))
         ]
         return network.buildAVPlayerItem(path: "/Videos/\(contentID)/master.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token":accessToken])
     }

@@ -34,6 +34,7 @@ public protocol MediaStreamProtocol: Identifiable {
     var title: String? { get }
     var displayTitle: String { get }
     var type: StreamType { get }
+    var bitrate: Int? { get }
 }
 
 @Observable
@@ -171,12 +172,14 @@ public struct MediaStream: Decodable, Equatable, Hashable, MediaStreamProtocol {
     public var title: String?
     public var displayTitle: String
     public var type: StreamType
+    public var bitrate: Int?
     
     enum CodingKeys: String, CodingKey {
         case id = "Index"
         case title = "Title"
         case displayTitle = "DisplayTitle"
         case type = "Type"
+        case bitrate = "BitRate"
     }
     
     public init(from decoder: Decoder) throws {
@@ -185,6 +188,7 @@ public struct MediaStream: Decodable, Equatable, Hashable, MediaStreamProtocol {
         self.title = try container.decodeIfPresent(String.self, forKey: .title)
         self.displayTitle = try container.decode(String.self, forKey: .displayTitle)
         self.type = try container.decode(StreamType.self, forKey: .type)
+        self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
     }
 }
 
