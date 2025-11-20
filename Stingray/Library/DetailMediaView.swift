@@ -85,8 +85,12 @@ struct DetailMediaView: View {
                         Text(items.joined(separator: " • "))
                     }
                     
-                    NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
-                        Text("Play \(media.title)")
+                    HStack {
+                        ForEach(media.mediaSources, id: \.id) { source in
+                            NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)) {
+                                Text("Play \(source.name)")
+                            }
+                        }
                     }
                     
                     Image(systemName: "chevron.down")

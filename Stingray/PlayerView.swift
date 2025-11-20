@@ -11,7 +11,7 @@ import SwiftUI
 struct PlayerView: View {
     @State private var player: AVPlayer?
     let streamingService: StreamingServiceProtocol
-    let media: any MediaProtocol
+    let mediaSource: any MediaSourceProtocol
     
     var body: some View {
         VStack {
@@ -23,7 +23,7 @@ struct PlayerView: View {
             }
         }
         .task {
-            guard let playerItem = streamingService.getStreamingContent(media: media)
+            guard let playerItem = streamingService.getStreamingContent(mediaSource: mediaSource)
             else {
                 player = nil
                 return
