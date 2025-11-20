@@ -27,7 +27,7 @@ struct DetailMediaView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .topLeading) {
+            ZStack(alignment: .center) {
                 if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
                     Image(uiImage: blurImage)
@@ -51,9 +51,9 @@ struct DetailMediaView: View {
                         EmptyView()
                     }
                 }
-                Color.black.opacity(0.4)
                 
-                VStack(alignment: .leading, spacing: 15) {
+                VStack(alignment: .center, spacing: 15) {
+                    Spacer()
                     VStack(alignment: .center) {
                         AsyncImage(url: logoImageURL) { image in
                             image
@@ -66,7 +66,10 @@ struct DetailMediaView: View {
                     }
                     Text(media.tagline)
                         .italic()
-                        .frame(maxWidth: 800, alignment: .leading)
+                        .frame(maxWidth: 800, alignment: .center)
+                    NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
+                        Text("Play \(media.title)")
+                    }
                     HStack(spacing: 0) {
                         if let maturity = media.maturity {
                             Text("\(maturity) • ")
@@ -78,10 +81,8 @@ struct DetailMediaView: View {
                             Text(media.genres.prefix(3).joined(separator: ", "))
                         }
                     }
-                    NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
-                        Text("Play \(media.title)")
-                    }
                 }
+                .shadow(color: .black, radius: 10)
                 .padding()
             }
         }
