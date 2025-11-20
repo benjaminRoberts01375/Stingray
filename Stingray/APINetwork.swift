@@ -317,7 +317,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "sortBy", value: sortBy.rawValue),
             URLQueryItem(name: "startIndex", value: "\(index)"),
             URLQueryItem(name: "limit", value: "\(count)"),
-            URLQueryItem(name: "parentId", value: libraryId)
+            URLQueryItem(name: "parentId", value: libraryId),
+            URLQueryItem(name: "fields", value: "MediaSources")
         ]
         for mediaType in mediaTypes ?? [] {
             params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
