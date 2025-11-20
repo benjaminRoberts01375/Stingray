@@ -74,7 +74,7 @@ struct DetailMediaView: View {
                             .frame(maxWidth: 800, alignment: .center)
                     }
                     
-                    if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty {
+                    if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
                         let items: [String] = [
                             media.maturity,
                             media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
