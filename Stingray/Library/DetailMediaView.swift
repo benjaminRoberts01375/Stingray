@@ -78,7 +78,8 @@ struct DetailMediaView: View {
                         let items: [String] = [
                             media.maturity,
                             media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                            media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", ")
+                            media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
+                            media.duration?.roundedTime()
                         ].compactMap { $0 }
                         
                         Text(items.joined(separator: " • "))
