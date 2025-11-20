@@ -73,9 +73,7 @@ struct DetailMediaView: View {
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: 800, alignment: .center)
                     }
-                    NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
-                        Text("Play \(media.title)")
-                    }
+                    
                     if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty {
                         let items: [String] = [
                             media.maturity,
@@ -85,6 +83,11 @@ struct DetailMediaView: View {
                         
                         Text(items.joined(separator: " • "))
                     }
+                    
+                    NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
+                        Text("Play \(media.title)")
+                    }
+                    
                     Image(systemName: "chevron.down")
                         .foregroundStyle(.gray)
                         .frame(height: 20)
