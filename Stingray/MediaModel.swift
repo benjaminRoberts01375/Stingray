@@ -7,6 +7,7 @@
 
 import Foundation
 
+// MARK: Protocols
 public protocol MediaProtocol: Identifiable {
     var title: String { get }
     var description: String { get }
@@ -47,6 +48,7 @@ public protocol MediaStreamProtocol: Identifiable {
     var bitrate: Int? { get }
 }
 
+// MARK: Concrete types
 public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
     public var tagline: String
@@ -159,11 +161,6 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
     
     public static func == (lhs: MediaSource, rhs: MediaSource) -> Bool {
         lhs.id == rhs.id && lhs.name == rhs.name
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-        hasher.combine(name)
     }
 }
 
