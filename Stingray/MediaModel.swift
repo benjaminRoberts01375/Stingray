@@ -18,6 +18,7 @@ public protocol MediaProtocol: Identifiable {
     var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
     var genres: [String] { get }
     var maturity: String? { get }
+    var releaseDate: Date? { get }
 }
 
 public protocol MediaImagesProtocol {
@@ -62,6 +63,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var mediaSources: [any MediaSourceProtocol]
     public var genres: [String]
     public var maturity: String?
+    public var releaseDate: Date?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -73,6 +75,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         case mediaSources = "MediaSources"
         case genres = "Genres"
         case maturity = "OfficialRating"
+        case releaseDate = "PremiereDate"
     }
     
     public init(from decoder: Decoder) throws {
@@ -101,6 +104,14 @@ public final class MediaModel: MediaProtocol, Decodable {
         self.genres = try container.decode([String].self, forKey: .genres)
         
         self.maturity = try container.decodeIfPresent(String.self, forKey: .maturity)
+        
+        if let dateString = try container.decodeIfPresent(String.self, forKey: .releaseDate) {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            self.releaseDate = formatter.date(from: dateString)
+        } else {
+            self.releaseDate = nil
+        }
     }
 }
 
