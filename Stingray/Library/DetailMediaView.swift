@@ -107,7 +107,7 @@ struct DetailMediaView: View {
                                 startRadius: 0,
                                 endRadius: titleShadowSize
                             )
-                            .opacity(0.8)
+                            .opacity(0.9)
                         )
                         .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
                         .offset(y: titleShadowSize)
