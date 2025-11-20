@@ -130,7 +130,7 @@ public struct MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesPr
     }
 }
 
-public struct MediaSource: Decodable, Equatable, Hashable, MediaSourceProtocol {
+public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var id: String
     public var name: String
     public var videoStreams: [any MediaStreamProtocol]
