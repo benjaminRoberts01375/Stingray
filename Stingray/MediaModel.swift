@@ -103,7 +103,7 @@ public struct MediaImages: Decodable, Equatable, MediaImagesProtocol {
     }
 }
 
-public struct MediaImageBlurHashes: Decodable, Equatable, Hashable, MediaImageBlurHashesProtocol {
+public struct MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesProtocol {
     public var primary: [String: String]?
     public var thumb: [String: String]?
     public var logo: [String: String]?
