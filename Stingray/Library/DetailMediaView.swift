@@ -11,6 +11,7 @@ import SwiftUI
 struct DetailMediaView: View {
     let media: any MediaProtocol
     let backgroundImageURL: URL?
+    let logoImageURL: URL?
     let streamingService: StreamingServiceProtocol
     @State var opacity: Double
     @State private var showPlayer = false
@@ -19,7 +20,9 @@ struct DetailMediaView: View {
         self.media = media
         self.streamingService = streamingService
         self.opacity = 0
-        self.backgroundImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .backdrop, imageID: media.id, width: 0)
+        let accessToken = streamingService.accessToken ?? ""
+        self.backgroundImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .backdrop, imageID: media.id, width: 0)
+        self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .logo, imageID: media.id, width: 0)
     }
     
     var body: some View {
@@ -48,24 +51,38 @@ struct DetailMediaView: View {
                         EmptyView()
                     }
                 }
+                Color.black.opacity(0.4)
                 
-                VStack {
+                VStack(alignment: .leading, spacing: 15) {
+                    VStack(alignment: .center) {
+                        AsyncImage(url: logoImageURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } placeholder: {
+                            EmptyView()
+                        }
+                        .frame(width: 400)
+                    }
+                    Text(media.tagline)
+                        .italic()
+                        .frame(maxWidth: 800, alignment: .leading)
+                    HStack(spacing: 0) {
+                        if let maturity = media.maturity {
+                            Text("\(maturity) • ")
+                        }
+                        if let date = media.releaseDate {
+                            Text("\(String(Calendar.current.component(.year, from: date))) • ")
+                        }
+                        if media.genres.count > 0 {
+                            Text(media.genres.prefix(3).joined(separator: ", "))
+                        }
+                    }
                     NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
                         Text("Play \(media.title)")
                     }
-                    Text("Keys:")
-                    ForEach(media.mediaSources, id: \.id) { source in
-                        ForEach(source.videoStreams, id: \.id) { video in
-                            Text("\(video.displayTitle)")
-                        }
-                        ForEach(source.audioStreams, id: \.id) { audio in
-                            Text("\(audio.displayTitle)")
-                        }
-                        ForEach(source.subtitleStreams, id: \.id) { subtitles in
-                            Text("\(subtitles.displayTitle)")
-                        }
-                    }
                 }
+                .padding()
             }
         }
         .ignoresSafeArea()
