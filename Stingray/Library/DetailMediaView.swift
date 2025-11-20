@@ -27,7 +27,7 @@ struct DetailMediaView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .center) {
+            ZStack(alignment: .bottom) {
                 if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
                     Image(uiImage: blurImage)
