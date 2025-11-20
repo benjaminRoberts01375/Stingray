@@ -47,7 +47,7 @@ public enum NetworkError: Error, LocalizedError {
     }
 }
 
-public enum MediaType: String {
+public enum MediaType: String, Decodable {
     case collections = "BoxSet"
     case movies = "Movie"
     case tv = "Series"

@@ -19,6 +19,7 @@ public protocol MediaProtocol: Identifiable {
     var genres: [String] { get }
     var maturity: String? { get }
     var releaseDate: Date? { get }
+    var mediaType: MediaType { get }
 }
 
 public protocol MediaImagesProtocol {
@@ -64,6 +65,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var genres: [String]
     public var maturity: String?
     public var releaseDate: Date?
+    public var mediaType: MediaType
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -76,6 +78,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         case genres = "Genres"
         case maturity = "OfficialRating"
         case releaseDate = "PremiereDate"
+        case mediaType = "Type"
     }
     
     public init(from decoder: Decoder) throws {
@@ -104,6 +107,8 @@ public final class MediaModel: MediaProtocol, Decodable {
         self.genres = try container.decode([String].self, forKey: .genres)
         
         self.maturity = try container.decodeIfPresent(String.self, forKey: .maturity)
+        
+        self.mediaType = try container.decode(MediaType.self, forKey: .mediaType)
         
         if let dateString = try container.decodeIfPresent(String.self, forKey: .releaseDate) {
             let formatter = ISO8601DateFormatter()
