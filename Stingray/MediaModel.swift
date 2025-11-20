@@ -167,7 +167,7 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
     }
 }
 
-public struct MediaStream: Decodable, Equatable, Hashable, MediaStreamProtocol {
+public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var id: Int
     public var title: String?
     public var displayTitle: String
