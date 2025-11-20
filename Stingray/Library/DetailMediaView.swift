@@ -15,6 +15,7 @@ struct DetailMediaView: View {
     let streamingService: StreamingServiceProtocol
     @State var opacity: Double
     @State private var showPlayer = false
+    private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
@@ -51,9 +52,7 @@ struct DetailMediaView: View {
                         EmptyView()
                     }
                 }
-                
                 VStack(alignment: .center, spacing: 15) {
-                    Spacer()
                     VStack(alignment: .center) {
                         AsyncImage(url: logoImageURL) { image in
                             image
@@ -66,6 +65,7 @@ struct DetailMediaView: View {
                     }
                     Text(media.tagline)
                         .italic()
+                        .multilineTextAlignment(.center)
                         .frame(maxWidth: 800, alignment: .center)
                     NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
                         Text("Play \(media.title)")
@@ -82,14 +82,27 @@ struct DetailMediaView: View {
                         }
                     }
                 }
-                .shadow(color: .black, radius: 10)
                 .padding()
+                .background(alignment: .bottom) {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(stops: [
+                                    .init(color: .black, location: 0),
+                                    .init(color: .black.opacity(0), location: 1)
+                                ]),
+                                center: UnitPoint(x: 0.5, y: 0.5),
+                                startRadius: 0,
+                                endRadius: titleShadowSize
+                            )
+                            .opacity(0.8)
+                        )
+                        .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
+                        .offset(y: titleShadowSize)
+                }
             }
         }
         .ignoresSafeArea()
         .toolbar(.hidden, for: .tabBar)
-        .fullScreenCover(isPresented: $showPlayer) {
-            PlayerView(streamingService: streamingService, media: media)
-        }
     }
 }
