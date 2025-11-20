@@ -74,17 +74,13 @@ struct DetailMediaView: View {
                         Text("Play \(media.title)")
                     }
                     if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty {
-                        HStack(spacing: 0) {
-                            if let maturity = media.maturity {
-                                Text("\(maturity) • ")
-                            }
-                            if let date = media.releaseDate {
-                                Text("\(String(Calendar.current.component(.year, from: date))) • ")
-                            }
-                            if !media.genres.isEmpty {
-                                Text(media.genres.prefix(3).joined(separator: ", "))
-                            }
-                        }
+                        let items: [String] = [
+                            media.maturity,
+                            media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                            media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", ")
+                        ].compactMap { $0 }
+                        
+                        Text(items.joined(separator: " • "))
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
