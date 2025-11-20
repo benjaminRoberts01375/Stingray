@@ -42,10 +42,9 @@ struct DetailMediaView: View {
                             .resizable()
                             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                             .opacity(backgroundOpacity)
+                            .animation(.easeOut(duration: 0.5), value: backgroundOpacity)
                             .onAppear {
-                                withAnimation(.easeOut(duration: 0.5)) {
-                                    backgroundOpacity = 1
-                                }
+                                backgroundOpacity = 1
                             }
                     } placeholder: {
                         EmptyView()
@@ -59,10 +58,9 @@ struct DetailMediaView: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .opacity(logoOpacity)
+                                .animation(.easeOut(duration: 0.5), value: logoOpacity)
                                 .onAppear {
-                                    withAnimation(.easeOut(duration: 0.5)) {
-                                        logoOpacity = 1
-                                    }
+                                    logoOpacity = 1
                                 }
                         } placeholder: {
                             EmptyView()
