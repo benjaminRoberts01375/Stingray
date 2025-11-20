@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol Library: Identifiable {
+public protocol LibraryProtocol: Identifiable {
     var title: String { get }
     var media: MediaStatus { get }
 }
@@ -20,7 +20,7 @@ public enum MediaStatus {
 }
 
 @Observable
-public final class LibraryModel: Library, Decodable {
+public final class LibraryModel: LibraryProtocol, Decodable {
     public var title: String
     public var media: MediaStatus
     public var id: String

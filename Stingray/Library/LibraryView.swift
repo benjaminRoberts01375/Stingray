@@ -8,7 +8,7 @@
 import SwiftUI
 
 public struct LibraryView: View {
-    @State var library: LibraryModel
+    @State var library: any LibraryProtocol
     let streamingService: StreamingServiceProtocol
     let cardWidth = CGFloat(200)
     let cardSpacing = CGFloat(50)
