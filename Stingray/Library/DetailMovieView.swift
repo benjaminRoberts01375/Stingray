@@ -9,13 +9,13 @@ import BlurHashKit
 import SwiftUI
 
 struct DetailMovieView: View {
-    let media: MediaModel
+    let media: any MediaProtocol
     let backgroundImageURL: URL?
     let streamingService: StreamingServiceProtocol
     @State var opacity: Double
     @State private var showPlayer = false
     
-    init (media: MediaModel, streamingService: StreamingServiceProtocol) {
+    init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
         self.streamingService = streamingService
         self.opacity = 0

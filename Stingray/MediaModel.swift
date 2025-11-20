@@ -13,12 +13,22 @@ public protocol MediaProtocol: Identifiable {
     var ImageTags: any MediaImagesProtocol { get }
     var id: String { get }
     var mediaSources: [any MediaSourceProtocol] { get }
+    var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
 }
 
 public protocol MediaImagesProtocol {
     var thumbnail: String? { get }
     var logo: String? { get }
     var primary: String? { get }
+}
+
+public protocol MediaImageBlurHashesProtocol {
+    var primary: [String: String]? { get }
+    var thumb: [String: String]? { get }
+    var logo: [String: String]? { get }
+    var backdrop: [String: String]? { get }
+    
+    func getBlurHash(for key: MediaImageType) -> String?
 }
 
 public protocol MediaSourceProtocol: Identifiable {
@@ -43,7 +53,7 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable 
     public var tagline: String
     public var description: String
     public var ImageTags: any MediaImagesProtocol
-    public var imageBlurHashes: MediaImageBlurHashes?
+    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var id: String
     public var mediaSources: [any MediaSourceProtocol]
     
@@ -102,11 +112,11 @@ public struct MediaImages: Decodable, Equatable, Hashable, MediaImagesProtocol {
     }
 }
 
-public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
-    var primary: [String: String]?
-    var thumb: [String: String]?
-    var logo: [String: String]?
-    var backdrop: [String: String]?
+public struct MediaImageBlurHashes: Decodable, Equatable, Hashable, MediaImageBlurHashesProtocol {
+    public var primary: [String: String]?
+    public var thumb: [String: String]?
+    public var logo: [String: String]?
+    public var backdrop: [String: String]?
     
     enum CodingKeys: String, CodingKey {
         case primary = "Primary"
@@ -115,8 +125,7 @@ public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
         case backdrop = "Backdrop"
     }
     
-    /// Helper to get the first blur hash from a dictionary
-    func getBlurHash(for key: MediaImageType) -> String? {
+    public func getBlurHash(for key: MediaImageType) -> String? {
         switch key {
         case .primary:
             return primary?.values.first
