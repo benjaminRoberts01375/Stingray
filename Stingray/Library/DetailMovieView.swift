@@ -48,8 +48,23 @@ struct DetailMovieView: View {
                         EmptyView()
                     }
                 }
-                NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
-                    Text("Play \(media.title)")
+                
+                VStack {
+                    NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
+                        Text("Play \(media.title)")
+                    }
+                    Text("Keys:")
+                    ForEach(media.mediaSources, id: \.id) { source in
+                        ForEach(source.videoStreams, id: \.id) { video in
+                            Text("\(video.displayTitle)")
+                        }
+                        ForEach(source.audioStreams, id: \.id) { audio in
+                            Text("\(audio.displayTitle)")
+                        }
+                        ForEach(source.subtitleStreams, id: \.id) { subtitles in
+                            Text("\(subtitles.displayTitle)")
+                        }
+                    }
                 }
             }
         }
