@@ -53,7 +53,8 @@ struct DetailMediaView: View {
                     }
                 }
                 VStack(alignment: .center, spacing: 15) {
-                    VStack(alignment: .center) {
+                    Spacer()
+                    if logoImageURL != nil {
                         AsyncImage(url: logoImageURL) { image in
                             image
                                 .resizable()
@@ -63,25 +64,30 @@ struct DetailMediaView: View {
                         }
                         .frame(width: 400)
                     }
-                    Text(media.tagline)
-                        .italic()
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 800, alignment: .center)
+                    if !media.tagline.isEmpty {
+                        Text(media.tagline)
+                            .italic()
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 800, alignment: .center)
+                    }
                     NavigationLink(destination: PlayerView(streamingService: streamingService, media: media)) {
                         Text("Play \(media.title)")
                     }
-                    HStack(spacing: 0) {
-                        if let maturity = media.maturity {
-                            Text("\(maturity) • ")
-                        }
-                        if let date = media.releaseDate {
-                            Text("\(String(Calendar.current.component(.year, from: date))) • ")
-                        }
-                        if media.genres.count > 0 {
-                            Text(media.genres.prefix(3).joined(separator: ", "))
+                    if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty {
+                        HStack(spacing: 0) {
+                            if let maturity = media.maturity {
+                                Text("\(maturity) • ")
+                            }
+                            if let date = media.releaseDate {
+                                Text("\(String(Calendar.current.component(.year, from: date))) • ")
+                            }
+                            if !media.genres.isEmpty {
+                                Text(media.genres.prefix(3).joined(separator: ", "))
+                            }
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
                 .background(alignment: .bottom) {
                     Circle()
