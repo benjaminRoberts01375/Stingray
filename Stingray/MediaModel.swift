@@ -47,7 +47,6 @@ public protocol MediaStreamProtocol: Identifiable {
     var bitrate: Int? { get }
 }
 
-@Observable
 public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable {
     public var title: String
     public var tagline: String
