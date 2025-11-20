@@ -11,18 +11,18 @@ import SwiftUI
 struct PlayerView: View {
     @State private var player: AVPlayer?
     let streamingService: StreamingServiceProtocol
-    let media: MediaProtocol
+    let media: any MediaProtocol
     
     var body: some View {
         VStack {
             if let player {
-                VideoPlayer(player: player)
+                AVPlayerViewControllerRepresentable(
+                    player: player,
+                    transportBarCustomMenuItems: makeTransportBarItems()
+                )
             }
         }
         .task {
-            // Use the task modifier to defer creating the player to ensure
-            // SwiftUI creates it only once when it first presents the view.
-            // Shout out to https://stackoverflow.com/questions/15456130/add-custom-header-field-in-request-of-avplayer/54068128#54068128
             guard let playerItem = streamingService.getStreamingContent(media: media)
             else {
                 player = nil
@@ -32,5 +32,39 @@ struct PlayerView: View {
             self.player?.play()
         }
         .ignoresSafeArea(.all)
+    }
+    
+    private func makeTransportBarItems() -> [UIMenuElement] {
+        [
+            UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
+                UIAction(title: "English") { _ in print("English selected") },
+                UIAction(title: "Spanish") { _ in print("Spanish selected") },
+                UIAction(title: "Off") { _ in print("Off selected") }
+            ]),
+            UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: [
+                UIAction(title: "English") { _ in print("English audio") },
+                UIAction(title: "Japanese") { _ in print("Japanese audio") }
+            ]),
+            UIAction(title: "Next Episode", image: UIImage(systemName: "forward.end")) { _ in
+                print("Next episode tapped")
+            }
+        ]
+    }
+}
+
+struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    let player: AVPlayer
+    let transportBarCustomMenuItems: [UIMenuElement]
+    
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.showsPlaybackControls = true
+        controller.transportBarCustomMenuItems = transportBarCustomMenuItems
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+        uiViewController.transportBarCustomMenuItems = transportBarCustomMenuItems
     }
 }
