@@ -7,11 +7,33 @@
 
 import Foundation
 
-public protocol MediaProtocol {
+public protocol MediaProtocol: Identifiable {
     var title: String { get }
     var description: String { get }
-    var ImageTags: MediaImages { get }
+    var ImageTags: any MediaImagesProtocol { get }
     var id: String { get }
+    var mediaSources: [any MediaSourceProtocol] { get }
+}
+
+public protocol MediaImagesProtocol {
+    var thumbnail: String? { get }
+    var logo: String? { get }
+    var primary: String? { get }
+}
+
+public protocol MediaSourceProtocol: Identifiable {
+    var id: String { get }
+    var name: String { get }
+    var videoStreams: [any MediaStreamProtocol] { get }
+    var audioStreams: [any MediaStreamProtocol] { get }
+    var subtitleStreams: [any MediaStreamProtocol] { get }
+}
+
+public protocol MediaStreamProtocol: Identifiable {
+    var id: Int { get }
+    var title: String? { get }
+    var displayTitle: String { get }
+    var type: StreamType { get }
 }
 
 @Observable
@@ -19,9 +41,10 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable 
     public var title: String
     public var tagline: String
     public var description: String
-    public var ImageTags: MediaImages
+    public var ImageTags: any MediaImagesProtocol
     public var imageBlurHashes: MediaImageBlurHashes?
     public var id: String
+    public var mediaSources: [any MediaSourceProtocol]
     
     public static func == (lhs: MediaModel, rhs: MediaModel) -> Bool {
         lhs.id == rhs.id
@@ -38,6 +61,7 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable 
         case description = "Overview"
         case imageTags = "ImageTags"
         case imageBlurHashes = "ImageBlurHashes"
+        case mediaSources = "MediaSources"
     }
     
     public init(from decoder: Decoder) throws {
@@ -59,13 +83,16 @@ public final class MediaModel: MediaProtocol, Decodable, Identifiable, Hashable 
         self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
         
         self.id = try container.decode(String.self, forKey: .id)
+        
+        // Decode media sources - may not exist for all items
+        self.mediaSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
     }
 }
 
-public struct MediaImages: Decodable, Equatable, Hashable {
-    var thumbnail: String?
-    var logo: String?
-    var primary: String?
+public struct MediaImages: Decodable, Equatable, Hashable, MediaImagesProtocol {
+    public var thumbnail: String?
+    public var logo: String?
+    public var primary: String?
     
     enum CodingKeys: String, CodingKey {
         case thumbnail = "Thumb"
@@ -100,4 +127,69 @@ public struct MediaImageBlurHashes: Decodable, Equatable, Hashable {
             return backdrop?.values.first
         }
     }
+}
+
+public struct MediaSource: Decodable, Equatable, Hashable, MediaSourceProtocol {
+    public var id: String
+    public var name: String
+    public var videoStreams: [any MediaStreamProtocol]
+    public var audioStreams: [any MediaStreamProtocol]
+    public var subtitleStreams: [any MediaStreamProtocol]
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case name = "Name"
+        case mediaStreams = "MediaStreams"
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        
+        // Decode all media streams
+        let allStreams = try container.decodeIfPresent([MediaStream].self, forKey: .mediaStreams) ?? []
+        
+        // Separate streams by type
+        self.videoStreams = allStreams.filter { $0.type == .video }
+        self.audioStreams = allStreams.filter { $0.type == .audio }
+        self.subtitleStreams = allStreams.filter { $0.type == .subtitle }
+    }
+    
+    public static func == (lhs: MediaSource, rhs: MediaSource) -> Bool {
+        lhs.id == rhs.id && lhs.name == rhs.name
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+    }
+}
+
+public struct MediaStream: Decodable, Equatable, Hashable, MediaStreamProtocol {
+    public var id: Int
+    public var title: String?
+    public var displayTitle: String
+    public var type: StreamType
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "Index"
+        case title = "Title"
+        case displayTitle = "DisplayTitle"
+        case type = "Type"
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(Int.self, forKey: .id)
+        self.title = try container.decodeIfPresent(String.self, forKey: .title)
+        self.displayTitle = try container.decode(String.self, forKey: .displayTitle)
+        self.type = try container.decode(StreamType.self, forKey: .type)
+    }
+}
+
+public enum StreamType: String, Decodable, Equatable, Hashable {
+    case video = "Video"
+    case audio = "Audio"
+    case subtitle = "Subtitle"
 }
