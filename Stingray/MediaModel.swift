@@ -52,6 +52,7 @@ public protocol MediaStreamProtocol: Identifiable {
     var displayTitle: String { get }
     var type: StreamType { get }
     var bitrate: Int? { get }
+    var codec: String { get }
 }
 
 // MARK: Concrete types
@@ -204,6 +205,7 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var displayTitle: String
     public var type: StreamType
     public var bitrate: Int?
+    public var codec: String
     
     enum CodingKeys: String, CodingKey {
         case id = "Index"
@@ -211,6 +213,7 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
         case displayTitle = "DisplayTitle"
         case type = "Type"
         case bitrate = "BitRate"
+        case codec = "Codec"
     }
     
     public init(from decoder: Decoder) throws {
@@ -220,6 +223,7 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
         self.displayTitle = try container.decode(String.self, forKey: .displayTitle)
         self.type = try container.decode(StreamType.self, forKey: .type)
         self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
+        self.codec = try container.decode(String.self, forKey: .codec)
     }
 }
 
