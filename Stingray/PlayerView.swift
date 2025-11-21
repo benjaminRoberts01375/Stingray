@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PlayerView: View {
     @State private var player: AVPlayer?
+    @State private var selectedSubtitleID: Int?
     let streamingService: StreamingServiceProtocol
     let mediaSource: any MediaSourceProtocol
     
@@ -29,13 +30,19 @@ struct PlayerView: View {
     private func makeTransportBarItems() -> [UIMenuElement] {
         [
             UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
-                UIAction(title: "None") { _ in
-                    newPlayer(subtitleID: nil)
-                }
+                {
+                    let action = UIAction(title: "None") { _ in
+                        newPlayer(subtitleID: nil)
+                    }
+                    action.state = selectedSubtitleID == nil ? .on : .off
+                    return action
+                }()
             ] + mediaSource.subtitleStreams.map({ subtitleStream in
-                UIAction(title: subtitleStream.title) { _ in
+                let action = UIAction(title: subtitleStream.title) { _ in
                     newPlayer(subtitleID: subtitleStream.id)
                 }
+                action.state = selectedSubtitleID == subtitleStream.id ? .on : .off
+                return action
             })),
             UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: [
                 UIAction(title: "English") { _ in print("English audio") },
@@ -57,6 +64,7 @@ struct PlayerView: View {
             player = nil
             return
         }
+        self.selectedSubtitleID = subtitleID
         self.player = AVPlayer(playerItem: playerItem)
         if let currentTime {
             self.player?.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
