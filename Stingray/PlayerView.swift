@@ -28,7 +28,11 @@ struct PlayerView: View {
     
     private func makeTransportBarItems() -> [UIMenuElement] {
         [
-            UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: mediaSource.subtitleStreams.map({ subtitleStream in
+            UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
+                UIAction(title: "None") { _ in
+                    newPlayer(subtitleID: nil)
+                }
+            ] + mediaSource.subtitleStreams.map({ subtitleStream in
                 UIAction(title: subtitleStream.title) { _ in
                     newPlayer(subtitleID: subtitleStream.id)
                 }
