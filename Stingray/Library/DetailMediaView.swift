@@ -92,11 +92,20 @@ struct DetailMediaView: View {
                 }
             }
         }
-        .ignoresSafeArea()
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
             focusedSourceID = media.mediaSources.first?.id
         }
+        .fullScreenCover(isPresented: $showMetadata) {
+            MediaMetadataView(media: media, streamingService: streamingService)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea()
+        }
+        .ignoresSafeArea()
+    }
+}
 
 struct MediaLogoView: View {
     @State private var logoOpacity: Double = 0
@@ -140,5 +149,80 @@ struct MediaLogoView: View {
         }
     }
 }
+
+struct MediaMetadataView: View {
+    let media: any MediaProtocol
+    private let logoImageURL: URL?
+    private let streamingService: any StreamingServiceProtocol
+    
+    init(media: any MediaProtocol, streamingService: any StreamingServiceProtocol) {
+        self.media = media
+        self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .logo, imageID: media.id, width: 0)
+        self.streamingService = streamingService
+    }
+    
+    var body: some View {
+        VStack {
+            VStack {
+                MediaLogoView(media: media, logoImageURL: logoImageURL)
+                    .padding(.bottom)
+                Text(media.description == "" ? "No description" : media.description)
+            }
+            .frame(width: 1000)
+            Spacer()
+            VStack {
+                ScrollView(.horizontal) {
+                    HStack {
+                        ForEach(media.people, id: \.id) { person in
+                            Button { /* Temp Workaround */ } label: {
+                                VStack {
+                                    ActorImage(media: media, streamingService: streamingService, person: person)
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        .frame(width: 300)
+                                    Text(person.name)
+                                        .multilineTextAlignment(.center)
+                                        .font(.headline)
+                                    Text(person.role)
+                                        .multilineTextAlignment(.center)
+                                        .font(.caption)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                        }
+                    }
+                }
+                .padding()
+                .scrollClipDisabled(true)
+            }
+            .frame(minWidth: 400)
+        }
+    }
+}
+
+struct ActorImage: View {
+    let media: any MediaProtocol
+    let streamingService: any StreamingServiceProtocol
+    let person: any MediaPersonProtocol
+    @State private var imageOpacity: Double = 0
+    
+    var body: some View {
+        ZStack {
+            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 30, height: 45)) {
+                Image(uiImage: blurImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            }
+            if let accessToken = streamingService.accessToken, let url = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .primary, imageID: person.id, width: 0) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    EmptyView()
+                }
+            }
+        }
     }
 }
