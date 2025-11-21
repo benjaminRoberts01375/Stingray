@@ -86,6 +86,6 @@ final class JellyfinModel: StreamingServiceProtocol {
     func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem? {
         guard let accessToken = accessToken else { return nil }
         print("Subtitle stream IDs \(mediaSource.subtitleStreams.map{ "\($0.id) - \($0.codec)" }.joined(separator: ", "))")
-        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, streamID: String(mediaSource.id), bitrate: mediaSource.videoStreams[0].bitrate, subtitleID: subtitleID, audioID: audioID, videoID: videoID)
+        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, bitrate: mediaSource.videoStreams[0].bitrate, subtitleID: subtitleID, audioID: audioID, videoID: videoID)
     }
 }
