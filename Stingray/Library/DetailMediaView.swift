@@ -16,6 +16,7 @@ struct DetailMediaView: View {
     @State private var backgroundOpacity: Double = 0
     @State private var logoOpacity: Double = 0
     @State private var showMetadata: Bool = false
+    @FocusState private var focusedSourceID: String?
     private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
@@ -99,6 +100,7 @@ struct DetailMediaView: View {
                             NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)) {
                                 Text("Play \(source.name)")
                             }
+                            .focused($focusedSourceID, equals: source.id)
                         }
                     }
                 }
@@ -125,5 +127,8 @@ struct DetailMediaView: View {
         }
         .ignoresSafeArea()
         .toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            focusedSourceID = media.mediaSources.first?.id
+        }
     }
 }
