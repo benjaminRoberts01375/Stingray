@@ -58,7 +58,7 @@ public protocol AdvancedNetworkProtocol {
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
     func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getStreamingContent(accessToken: String, contentID: String, streamID: String, bitrate: Int, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem?
+    func getStreamingContent(accessToken: String, contentID: String, streamID: String, bitrate: Int?, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -340,18 +340,26 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
-    func getStreamingContent(accessToken: String, contentID: String, streamID: String, bitrate: Int, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem? {
-        let params : [URLQueryItem] = [
+    func getStreamingContent(accessToken: String, contentID: String, streamID: String, bitrate: Int?, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem? {
+        var params: [URLQueryItem] = [
             URLQueryItem(name: "playSessionID", value: UUID().uuidString),
             URLQueryItem(name: "mediaSourceID", value: streamID),
-            URLQueryItem(name: "audioCodec", value: "mp3"),
-            URLQueryItem(name: "videoCodec", value: "h264"),
-            URLQueryItem(name: "videoBitRate", value: String(bitrate)),
-            URLQueryItem(name: "SubtitleMethod", value: "Encode"), // Burning in subtitles on everything for now
-            subtitleID != nil ? URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID ?? 0)) : nil, // Burning in subtitles on everything for now
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
-            URLQueryItem(name: "videoStreamIndex", value: String(videoID))
-        ].compactMap{$0}
-        return network.buildAVPlayerItem(path: "/Videos/\(contentID)/master.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token":accessToken])
+            URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
+            // Let Jellyfin decide based on client capabilities
+            URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,flac,alac,mp3,opus"),
+            URLQueryItem(name: "videoCodec", value: "h264,hevc,vp9,av1"),
+        ]
+        
+        if let bitrate = bitrate {
+            params.append(URLQueryItem(name: "videoBitRate", value: String(bitrate)))
+        }
+        
+        if let subtitleID = subtitleID {
+            params.append(URLQueryItem(name: "SubtitleMethod", value: "Encode"))
+            params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
+        }
+        
+        return network.buildAVPlayerItem(path: "/Videos/\(contentID)/master.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token": accessToken])
     }
 }
