@@ -43,32 +43,32 @@ struct DashboardView: View {
                             }
                         }
                     }
-                    .task {
-                        guard let accessToken = streamingService.accessToken else {
-                            libraryStatus = .waiting
-                            return
-                        }
-                        print("Loading media for all libraries...")
-                        do {
-                            for library in libraries {
-                                try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
-                            }
-                            print("Finished loading media for all libraries")
-                        } catch let error {
-                            libraryStatus = .error(error)
-                            print("Failed to load library: \(error.localizedDescription)")
-                        }
-                    }
                 }
             }
         }
         .task {
+            print("Checking library status")
+            guard case .waiting = libraryStatus else {
+                print("No need for libraries")
+                return
+            }
+            print("Getting libraries")
             do {
                 let libraries = try await streamingService.getLibraries()
                 libraryStatus = .available(libraries)
-                print("Loaded \(libraries.count) libraries")
+                print("Loaded \(libraries.count) libraries. Attempting to load library content...")
+                guard let accessToken = streamingService.accessToken else {
+                    print("No access token provided")
+                    libraryStatus = .waiting
+                    return
+                }
+                for library in libraries {
+                    try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
+                }
+                print("Finished loading media for all libraries")
             } catch {
                 libraryStatus = .error(error)
+                print("Failed to get libraries: \(error.localizedDescription)")
             }
         }
     }
