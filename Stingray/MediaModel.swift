@@ -52,6 +52,8 @@ public protocol MediaPersonProtocol {
     var name: String { get }
     var role: String { get }
     var type: String { get }
+    var image: String? { get }
+    var imageHashes: MediaImageBlurHashes? { get }
 }
 
 public protocol MediaStreamProtocol: Identifiable {
@@ -244,12 +246,16 @@ public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var name: String
     public var role: String
     public var type: String
+    public var image: String?
+    public var imageHashes: MediaImageBlurHashes?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
         case role = "Role"
         case type = "Type"
+        case image = "PrimaryImageTag"
+        case imageHashes = "ImageBlurHashes"
     }
 }
 
