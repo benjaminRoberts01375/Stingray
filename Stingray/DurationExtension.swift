@@ -11,8 +11,8 @@ extension Duration {
         let hours = totalSeconds / 3600
         let minutes = (totalSeconds % 3600) / 60
         if hours > 0 {
-            return "\(hours)hr \(minutes)mins"
+            return "\(hours)\(hours != 1 ? " hours" : " hour") \(minutes)\(minutes != 1 ? " minutes" : " minute")"
         }
-        return "\(minutes)mins"
+        return "\(minutes)\(minutes != 1 ? " minutes" : " minute")"
     }
 }
