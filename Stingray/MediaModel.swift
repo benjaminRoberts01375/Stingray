@@ -48,8 +48,7 @@ public protocol MediaSourceProtocol: Identifiable {
 
 public protocol MediaStreamProtocol: Identifiable {
     var id: Int { get }
-    var title: String? { get }
-    var displayTitle: String { get }
+    var title: String { get }
     var type: StreamType { get }
     var bitrate: Int? { get }
     var codec: String { get }
@@ -201,16 +200,14 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
 
 public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var id: Int
-    public var title: String?
-    public var displayTitle: String
+    public var title: String
     public var type: StreamType
     public var bitrate: Int?
     public var codec: String
     
     enum CodingKeys: String, CodingKey {
         case id = "Index"
-        case title = "Title"
-        case displayTitle = "DisplayTitle"
+        case title = "DisplayTitle"
         case type = "Type"
         case bitrate = "BitRate"
         case codec = "Codec"
@@ -219,8 +216,7 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(Int.self, forKey: .id)
-        self.title = try container.decodeIfPresent(String.self, forKey: .title)
-        self.displayTitle = try container.decode(String.self, forKey: .displayTitle)
+        self.title = try container.decode(String.self, forKey: .title)
         self.type = try container.decode(StreamType.self, forKey: .type)
         self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
         self.codec = try container.decode(String.self, forKey: .codec)

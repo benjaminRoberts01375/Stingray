@@ -15,7 +15,7 @@ protocol StreamingServiceProtocol {
     
     func login(username: String, password: String) async throws
     func getLibraries() async throws -> [LibraryModel]
-    func getStreamingContent(mediaSource: any MediaSourceProtocol) -> AVPlayerItem?
+    func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?) -> AVPlayerItem?
 }
 
 @Observable
@@ -83,8 +83,9 @@ final class JellyfinModel: StreamingServiceProtocol {
         return try await networkAPI.getLibraries(accessToken: accessToken)
     }
     
-    func getStreamingContent(mediaSource: any MediaSourceProtocol) -> AVPlayerItem? {
+    func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?) -> AVPlayerItem? {
         guard let accessToken = accessToken else { return nil }
-        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, streamID: String(mediaSource.id), bitrate: mediaSource.videoStreams[0].bitrate ?? 6000)
+        print("Subtitle stream IDs \(mediaSource.subtitleStreams.map{ "\($0.id) - \($0.codec)" }.joined(separator: ", "))")
+        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, streamID: String(mediaSource.id), bitrate: mediaSource.videoStreams[0].bitrate ?? 6000, subtitleID: subtitleID)
     }
 }
