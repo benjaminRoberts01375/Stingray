@@ -12,6 +12,7 @@ struct PlayerView: View {
     @State private var player: AVPlayer?
     @State private var selectedSubtitleID: Int?
     @State private var selectedAudioID: Int
+    @State private var selectedVideoID: Int
     let streamingService: StreamingServiceProtocol
     let mediaSource: any MediaSourceProtocol
     
@@ -21,6 +22,7 @@ struct PlayerView: View {
         self.streamingService = streamingService
         self.mediaSource = mediaSource
         self.selectedAudioID = mediaSource.audioStreams.first?.id ?? 0
+        self.selectedVideoID = mediaSource.videoStreams.first?.id ?? 0
     }
     
     var body: some View {
@@ -32,7 +34,7 @@ struct PlayerView: View {
                 )
             }
         }
-        .task { newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID) }
+        .task { newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID) }
         .ignoresSafeArea(.all)
     }
     
@@ -41,23 +43,30 @@ struct PlayerView: View {
             UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
                 {
                     let action = UIAction(title: "None") { _ in
-                        newPlayer(subtitleID: nil, audioID: selectedAudioID)
+                        newPlayer(subtitleID: nil, audioID: selectedAudioID, videoID: selectedVideoID)
                     }
                     action.state = selectedSubtitleID == nil ? .on : .off
                     return action
                 }()
             ] + mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
-                    newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID)
+                    newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID, videoID: selectedVideoID)
                 }
                 action.state = selectedSubtitleID == subtitleStream.id ? .on : .off
                 return action
             })),
             UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: mediaSource.audioStreams.map({ audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
-                    newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id)
+                    newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID)
                 }
                 action.state = selectedAudioID == audioStream.id ? .on : .off
+                return action
+            })),
+            UIMenu(title: "Video", image: UIImage(systemName: "monitor"), children: mediaSource.videoStreams.map({ videoStream in
+                let action = UIAction(title: videoStream.title) { _ in
+                    newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id)
+                }
+                action.state = selectedAudioID == videoStream.id ? .on : .off
                 return action
             })),
             //            UIAction(title: "Next Episode", image: UIImage(systemName: "forward.end")) { _ in
@@ -66,12 +75,12 @@ struct PlayerView: View {
         ]
     }
     
-    private func newPlayer(subtitleID: Int?, audioID: Int) {
+    private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int) {
         let currentTime = player?.currentTime()
         if let existingPlayer = player {
             existingPlayer.pause()
         }
-        guard let playerItem = streamingService.getStreamingContent(mediaSource: mediaSource, subtitleID: subtitleID, audioID: audioID)
+        guard let playerItem = streamingService.getStreamingContent(mediaSource: mediaSource, subtitleID: subtitleID, audioID: audioID, videoID: videoID)
         else {
             player = nil
             return
