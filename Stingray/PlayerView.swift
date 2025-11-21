@@ -61,6 +61,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         controller.player = player
         controller.showsPlaybackControls = true
         controller.transportBarCustomMenuItems = transportBarCustomMenuItems
+        controller.allowedSubtitleOptionLanguages = .init(["nerd"])
         return controller
     }
     
