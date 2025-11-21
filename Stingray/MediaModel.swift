@@ -21,6 +21,7 @@ public protocol MediaProtocol: Identifiable {
     var releaseDate: Date? { get }
     var mediaType: MediaType { get }
     var duration: Duration? { get }
+    var people: [MediaPersonProtocol] { get }
 }
 
 public protocol MediaImagesProtocol {
@@ -46,6 +47,13 @@ public protocol MediaSourceProtocol: Identifiable {
     var subtitleStreams: [any MediaStreamProtocol] { get }
 }
 
+public protocol MediaPersonProtocol {
+    var id: String { get }
+    var name: String { get }
+    var role: String { get }
+    var type: String { get }
+}
+
 public protocol MediaStreamProtocol: Identifiable {
     var id: Int { get }
     var title: String { get }
@@ -69,6 +77,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var releaseDate: Date?
     public var mediaType: MediaType
     public var duration: Duration?
+    public var people: [any MediaPersonProtocol]
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -83,6 +92,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         case releaseDate = "PremiereDate"
         case mediaType = "Type"
         case duration = "RunTimeTicks"
+        case people = "People"
     }
     
     public init(from decoder: Decoder) throws {
@@ -125,6 +135,8 @@ public final class MediaModel: MediaProtocol, Decodable {
         } else {
             self.releaseDate = nil
         }
+        
+        self.people = try container.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []
     }
 }
 
@@ -224,6 +236,20 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
         self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
         self.codec = try container.decode(String.self, forKey: .codec)
         self.isDefault = try container.decode(Bool.self, forKey: .isDefault)
+    }
+}
+
+public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
+    public var id: String
+    public var name: String
+    public var role: String
+    public var type: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case name = "Name"
+        case role = "Role"
+        case type = "Type"
     }
 }
 
