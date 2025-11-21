@@ -18,11 +18,11 @@ struct PlayerView: View {
     
     init(player: AVPlayer? = nil, streamingService: StreamingServiceProtocol, mediaSource: any MediaSourceProtocol) {
         self.player = player
-        self.selectedSubtitleID = nil
         self.streamingService = streamingService
         self.mediaSource = mediaSource
-        self.selectedAudioID = mediaSource.audioStreams.first?.id ?? 0
-        self.selectedVideoID = mediaSource.videoStreams.first?.id ?? 0
+        self.selectedSubtitleID = mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.subtitleStreams.first?.id ?? 1)
+        self.selectedAudioID = mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
+        self.selectedVideoID = mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1)
     }
     
     var body: some View {
