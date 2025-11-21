@@ -22,15 +22,7 @@ struct PlayerView: View {
                 )
             }
         }
-        .task {
-            guard let playerItem = streamingService.getStreamingContent(mediaSource: mediaSource)
-            else {
-                player = nil
-                return
-            }
-            self.player = AVPlayer(playerItem: playerItem)
-            self.player?.play()
-        }
+        .task { newPlayer() }
         .ignoresSafeArea(.all)
     }
     
@@ -49,6 +41,19 @@ struct PlayerView: View {
                 print("Next episode tapped")
             }
         ]
+    }
+    
+    private func newPlayer() {
+        if let existingPlayer = player {
+            existingPlayer.pause()
+        }
+        guard let playerItem = streamingService.getStreamingContent(mediaSource: mediaSource)
+        else {
+            player = nil
+            return
+        }
+        self.player = AVPlayer(playerItem: playerItem)
+        self.player?.play()
     }
 }
 
