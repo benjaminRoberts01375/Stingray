@@ -15,6 +15,7 @@ struct DetailMediaView: View {
     let streamingService: StreamingServiceProtocol
     @State private var backgroundOpacity: Double = 0
     @State private var logoOpacity: Double = 0
+    @State private var showMetadata: Bool = false
     private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
@@ -52,38 +53,46 @@ struct DetailMediaView: View {
                 }
                 VStack(alignment: .center, spacing: 15) {
                     Spacer()
-                    if logoImageURL != nil {
-                        AsyncImage(url: logoImageURL) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .opacity(logoOpacity)
-                                .animation(.easeOut(duration: 0.5), value: logoOpacity)
-                                .onAppear {
-                                    logoOpacity = 1
+                    Button {
+                        showMetadata = true
+                    } label: {
+                        VStack(spacing: 15) {
+                            if logoImageURL != nil {
+                                AsyncImage(url: logoImageURL) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .opacity(logoOpacity)
+                                        .animation(.easeOut(duration: 0.5), value: logoOpacity)
+                                        .onAppear {
+                                            logoOpacity = 1
+                                        }
+                                } placeholder: {
+                                    EmptyView()
                                 }
-                        } placeholder: {
-                            EmptyView()
+                                .frame(width: 400)
+                            }
+                            if !media.tagline.isEmpty {
+                                Text(media.tagline)
+                                    .italic()
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: 800, alignment: .center)
+                            }
+                            
+                            if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
+                                let items: [String] = [
+                                    media.maturity,
+                                    media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                                    media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
+                                    media.duration?.roundedTime()
+                                ].compactMap { $0 }
+                                
+                                Text(items.joined(separator: " • "))
+                            }
                         }
-                        .frame(width: 400)
                     }
-                    if !media.tagline.isEmpty {
-                        Text(media.tagline)
-                            .italic()
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: 800, alignment: .center)
-                    }
-                    
-                    if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
-                        let items: [String] = [
-                            media.maturity,
-                            media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                            media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                            media.duration?.roundedTime()
-                        ].compactMap { $0 }
-                        
-                        Text(items.joined(separator: " • "))
-                    }
+                    .buttonStyle(.plain)
+                    .padding(.vertical)
                     
                     HStack {
                         ForEach(media.mediaSources, id: \.id) { source in
