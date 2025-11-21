@@ -57,40 +57,7 @@ struct DetailMediaView: View {
                     Button {
                         showMetadata = true
                     } label: {
-                        VStack(spacing: 15) {
-                            if logoImageURL != nil {
-                                AsyncImage(url: logoImageURL) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .opacity(logoOpacity)
-                                        .animation(.easeOut(duration: 0.5), value: logoOpacity)
-                                        .onAppear {
-                                            logoOpacity = 1
-                                        }
-                                } placeholder: {
-                                    EmptyView()
-                                }
-                                .frame(width: 400)
-                            }
-                            if !media.tagline.isEmpty {
-                                Text(media.tagline)
-                                    .italic()
-                                    .multilineTextAlignment(.center)
-                                    .frame(maxWidth: 800, alignment: .center)
-                            }
-                            
-                            if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
-                                let items: [String] = [
-                                    media.maturity,
-                                    media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                                    media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                                    media.duration?.roundedTime()
-                                ].compactMap { $0 }
-                                
-                                Text(items.joined(separator: " • "))
-                            }
-                        }
+                        MediaLogoView(media: media, logoImageURL: logoImageURL)
                     }
                     .buttonStyle(.plain)
                     .padding(.vertical)
@@ -130,5 +97,48 @@ struct DetailMediaView: View {
         .onAppear {
             focusedSourceID = media.mediaSources.first?.id
         }
+
+struct MediaLogoView: View {
+    @State private var logoOpacity: Double = 0
+    let media: any MediaProtocol
+    let logoImageURL: URL?
+    
+    var body: some View {
+        VStack(spacing: 15) {
+            if logoImageURL != nil {
+                AsyncImage(url: logoImageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .opacity(logoOpacity)
+                        .animation(.easeOut(duration: 0.5), value: logoOpacity)
+                        .onAppear {
+                            logoOpacity = 1
+                        }
+                } placeholder: {
+                    EmptyView()
+                }
+                .frame(width: 400)
+            }
+            if !media.tagline.isEmpty {
+                Text(media.tagline)
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 800, alignment: .center)
+            }
+            
+            if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
+                let items: [String] = [
+                    media.maturity,
+                    media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                    media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
+                    media.duration?.roundedTime()
+                ].compactMap { $0 }
+                
+                Text(items.joined(separator: " • "))
+            }
+        }
+    }
+}
     }
 }
