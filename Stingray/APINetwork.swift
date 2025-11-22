@@ -47,10 +47,37 @@ public enum NetworkError: Error, LocalizedError {
     }
 }
 
-public enum MediaType: String, Decodable {
-    case collections = "BoxSet"
-    case movies = "Movie"
-    case tv = "Series"
+public enum MediaType: Decodable {
+    case collections
+    case movies
+    case tv
+    
+    public init (from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let stringValue = try container.decode(String.self)
+        
+        switch stringValue {
+        case MediaType.collections.rawValue:
+            self = .collections
+        case MediaType.movies.rawValue:
+            self = .movies
+        case MediaType.tv.rawValue:
+            self = .tv
+        default:
+            fatalError("Unknown media type: \(stringValue)")
+        }
+    }
+    
+    var rawValue: String {
+        switch self {
+        case .collections:
+            return "BoxSet"
+        case .movies:
+            return "Movie"
+        case .tv:
+            return "Series"
+        }
+    }
 }
 
 public protocol AdvancedNetworkProtocol {
