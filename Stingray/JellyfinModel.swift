@@ -88,4 +88,9 @@ final class JellyfinModel: StreamingServiceProtocol {
         print("Subtitle stream IDs \(mediaSource.subtitleStreams.map{ "\($0.id) - \($0.codec)" }.joined(separator: ", "))")
         return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, bitrate: mediaSource.videoStreams[0].bitrate, subtitleID: subtitleID, audioID: audioID, videoID: videoID)
     }
+    
+    func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
+        guard let accessToken else { return [] }
+        return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
+    }
 }

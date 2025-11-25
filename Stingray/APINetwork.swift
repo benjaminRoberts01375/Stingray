@@ -26,7 +26,7 @@ public enum NetworkError: Error, LocalizedError {
     case encodeJSONFailed(Error)
     case requestFailedToSend(Error)
     case badResponse(responseCode: Int, response: String?)
-    case decodeJSONFailed(Error)
+    case decodeJSONFailed(Error, url: URL?)
     case missingAccessToken
     
     public var errorDescription: String? {
@@ -39,8 +39,24 @@ public enum NetworkError: Error, LocalizedError {
             return "The request failed to send: \(error.localizedDescription)"
         case .badResponse(let responseCode, let response):
             return "Got a bad response from the server. Error: \(responseCode), \(response ?? "Unknown error")"
-        case .decodeJSONFailed(let error):
-            return "Unable to decode JSON: \(error.localizedDescription)"
+        case .decodeJSONFailed(let error, let url):
+            let urlString = url?.absoluteString ?? "unknown URL"
+            // Provide detailed information about decoding errors
+            if let decodingError = error as? DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let context):
+                    return "Unable to decode JSON from \(urlString): Missing key '\(key.stringValue)' at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))"
+                case .valueNotFound(let type, let context):
+                    return "Unable to decode JSON from \(urlString): Missing value of type '\(type)' at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))"
+                case .typeMismatch(let type, let context):
+                    return "Unable to decode JSON from \(urlString): Type mismatch for '\(type)' at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> ")). \(context.debugDescription)"
+                case .dataCorrupted(let context):
+                    return "Unable to decode JSON from \(urlString): Data corrupted at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> ")). \(context.debugDescription)"
+                @unknown default:
+                    return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
+                }
+            }
+            return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
         case .missingAccessToken:
             return "Missing access token"
         }
@@ -50,7 +66,7 @@ public enum NetworkError: Error, LocalizedError {
 public enum MediaType: Decodable {
     case collections
     case movies
-    case tv
+    case tv([TVSeason]?)
     
     public init (from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -61,8 +77,8 @@ public enum MediaType: Decodable {
             self = .collections
         case MediaType.movies.rawValue:
             self = .movies
-        case MediaType.tv.rawValue:
-            self = .tv
+        case "Series":
+            self = .tv(nil)
         default:
             fatalError("Unknown media type: \(stringValue)")
         }
@@ -86,6 +102,7 @@ public protocol AdvancedNetworkProtocol {
     func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
     func getStreamingContent(accessToken: String, contentID: String, bitrate: Int?, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem?
+    func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason]
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -246,15 +263,15 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
             let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
             return decodedResponse
         } catch let DecodingError.dataCorrupted(context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.dataCorrupted(context))
+            throw NetworkError.decodeJSONFailed(DecodingError.dataCorrupted(context), url: url)
         } catch let DecodingError.keyNotFound(key, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.keyNotFound(key, context))
+            throw NetworkError.decodeJSONFailed(DecodingError.keyNotFound(key, context), url: url)
         } catch let DecodingError.valueNotFound(value, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.valueNotFound(value, context))
+            throw NetworkError.decodeJSONFailed(DecodingError.valueNotFound(value, context), url: url)
         } catch let DecodingError.typeMismatch(type, context)  {
-            throw NetworkError.decodeJSONFailed(DecodingError.typeMismatch(type, context))
+            throw NetworkError.decodeJSONFailed(DecodingError.typeMismatch(type, context), url: url)
         } catch {
-            throw NetworkError.decodeJSONFailed(error)
+            throw NetworkError.decodeJSONFailed(error, url: url)
         }
     }
     
@@ -357,6 +374,76 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         
         let response: Root = try await network.request(verb: .get, path: "/Items", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
+        print("Prepping for tv decode if needed")
+        for item in response.items {
+            switch item.mediaType {
+            case .tv(_):
+                print("Season ID: \(item.id)")
+                let seasons = try await getSeasonMedia(accessToken: accessToken, seasonID: item.id)
+                item.mediaType = .tv(seasons)
+            default:
+                break
+            }
+        }
+        return response.items
+    }
+    
+    func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason] {
+        struct Root: Decodable {
+            let items: [TVSeason]
+            
+            init(from decoder: Decoder) throws {
+                print("Decoding seasons")
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
+                var tempSeasons: [TVSeason] = []
+                var standInEpisodeNumber: Int = 0
+                
+                while !seasonsContainer.isAtEnd {
+                    standInEpisodeNumber += 1
+                    let seasonContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
+                    
+                    let episodeID = try seasonContainer.decode(String.self, forKey: .id)
+                    let episodeTitle = try seasonContainer.decode(String.self, forKey: .title)
+                    let episodeNumber = try seasonContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber
+                    let seasonNumber = try seasonContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
+                    let seasonID = try seasonContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? seasonContainer.decode(String.self, forKey: .seriesID)
+                    let seasonTitle = try seasonContainer.decode(String.self, forKey: .seasonTitle)
+                    
+                    if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) {
+                        // Season already exists, append the episode
+                        tempSeasons[seasonIndex].episodes.append(TVEpisode(id: episodeID, title: episodeTitle, episodeNumber: episodeNumber))
+                    } else {
+                        // New season, create it with the first episode
+                        let newSeason = TVSeason(id: seasonID, title: seasonTitle, episodes: [
+                            TVEpisode(id: episodeID, title: episodeTitle, episodeNumber: episodeNumber)
+                        ], seasonNumber: seasonNumber)
+                        tempSeasons.append(newSeason)
+                    }
+                }
+                self.items = tempSeasons
+            }
+            
+            private enum CodingKeys: String, CodingKey {
+                case items = "Items"
+            }
+            
+            private enum SeasonKeys: String, CodingKey {
+                case title = "Name"
+                case id = "Id"
+                case episodeNumber = "IndexNumber"
+                case seasonNumber = "ParentIndexNumber"
+                
+                case seasonID = "SeasonId" // The actual season ID
+                case seasonTitle = "SeasonName" // The actual season name
+                case seriesID = "SeriesId" // Fallback for seasonID if SeasonId is missing
+            }
+        }
+        
+        let params : [URLQueryItem] = [
+            URLQueryItem(name: "enableImages", value: "true")
+        ]
+        let response: Root = try await network.request(verb: .get, path: "/Shows/\(seasonID)/Episodes", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
         return response.items
     }
     

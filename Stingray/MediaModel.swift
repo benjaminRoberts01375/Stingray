@@ -65,6 +65,20 @@ public protocol MediaStreamProtocol: Identifiable {
     var isDefault: Bool { get }
 }
 
+public protocol TVSeasonProtocol: Identifiable {
+    var id: String { get }
+    var title: String { get }
+    var episodes: [any TVEpisodeProtocol] { get }
+    var seasonNumber: Int { get }
+}
+
+public protocol TVEpisodeProtocol: Identifiable {
+    var id: String { get }
+    var blurHashes: MediaImageBlurHashes? { get }
+    var title: String { get }
+    var episodeNumber: Int { get }
+}
+
 // MARK: Concrete types
 public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
@@ -257,6 +271,20 @@ public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
         case image = "PrimaryImageTag"
         case imageHashes = "ImageBlurHashes"
     }
+}
+
+public struct TVSeason: TVSeasonProtocol {
+    public var id: String
+    public var title: String
+    public var episodes: [any TVEpisodeProtocol]
+    public var seasonNumber: Int
+}
+
+public struct TVEpisode: TVEpisodeProtocol {
+    public var id: String
+    public var blurHashes: MediaImageBlurHashes?
+    public var title: String
+    public var episodeNumber: Int
 }
 
 public enum StreamType: String, Decodable, Equatable {

@@ -58,7 +58,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     
     func loadMedia(networkAPI: AdvancedNetworkProtocol, accessToken: String) async throws {
         print("Loading media for \(self.title) with ID \(self.id)")
-        let incomingMedia = try await networkAPI.getLibraryMedia(accessToken: accessToken, libraryId: self.id, index: 0, count: 2000, sortOrder: .Ascending, sortBy: .SortName, mediaTypes: [.movies, .tv])
+        let incomingMedia = try await networkAPI.getLibraryMedia(accessToken: accessToken, libraryId: self.id, index: 0, count: 2000, sortOrder: .Ascending, sortBy: .SortName, mediaTypes: [.movies, .tv(nil)])
         switch self.media {
         case .unloaded, .waiting, .error:
             media = .available(incomingMedia)
