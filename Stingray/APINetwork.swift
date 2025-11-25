@@ -401,23 +401,25 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 
                 while !seasonsContainer.isAtEnd {
                     standInEpisodeNumber += 1
-                    let seasonContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
+                    let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
                     
-                    let episodeID = try seasonContainer.decode(String.self, forKey: .id)
-                    let episodeTitle = try seasonContainer.decode(String.self, forKey: .title)
-                    let episodeNumber = try seasonContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber
-                    let seasonNumber = try seasonContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
-                    let seasonID = try seasonContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? seasonContainer.decode(String.self, forKey: .seriesID)
-                    let seasonTitle = try seasonContainer.decode(String.self, forKey: .seasonTitle)
+                    let episode: TVEpisode = TVEpisode(
+                        id: try episodeContainer.decode(String.self, forKey: .id),
+                        title: try episodeContainer.decode(String.self, forKey: .title),
+                        episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber
+                    )
+                    let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
                     
-                    if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) {
-                        // Season already exists, append the episode
-                        tempSeasons[seasonIndex].episodes.append(TVEpisode(id: episodeID, title: episodeTitle, episodeNumber: episodeNumber))
+                    if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Season already exists, append the episode
+                        tempSeasons[seasonIndex].episodes.append(episode)
                     } else {
                         // New season, create it with the first episode
-                        let newSeason = TVSeason(id: seasonID, title: seasonTitle, episodes: [
-                            TVEpisode(id: episodeID, title: episodeTitle, episodeNumber: episodeNumber)
-                        ], seasonNumber: seasonNumber)
+                        let newSeason = TVSeason(
+                            id: seasonID,
+                            title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
+                            episodes: [episode],
+                            seasonNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
+                        )
                         tempSeasons.append(newSeason)
                     }
                 }
