@@ -77,6 +77,7 @@ public protocol TVEpisodeProtocol: Identifiable {
     var blurHashes: MediaImageBlurHashes? { get }
     var title: String { get }
     var episodeNumber: Int { get }
+    var mediaSources: [any MediaSourceProtocol] { get }
 }
 
 // MARK: Concrete types
@@ -246,12 +247,15 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(Int.self, forKey: .id)
-        self.title = try container.decode(String.self, forKey: .title)
-        self.type = try container.decode(StreamType.self, forKey: .type)
+
+        let rawType = try container.decodeIfPresent(String.self, forKey: .type) ?? ""
+        self.type = StreamType(rawValue: rawType) ?? .unknown
+        
+        self.id = try container.decodeIfPresent(Int.self, forKey: .id) ?? Int.random(in: 0..<Int.max)
+        self.title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
         self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
-        self.codec = try container.decode(String.self, forKey: .codec)
-        self.isDefault = try container.decode(Bool.self, forKey: .isDefault)
+        self.codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
+        self.isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
     }
 }
 
@@ -285,10 +289,12 @@ public struct TVEpisode: TVEpisodeProtocol {
     public var blurHashes: MediaImageBlurHashes?
     public var title: String
     public var episodeNumber: Int
+    public var mediaSources: [any MediaSourceProtocol]
 }
 
 public enum StreamType: String, Decodable, Equatable {
     case video = "Video"
     case audio = "Audio"
     case subtitle = "Subtitle"
+    case unknown
 }

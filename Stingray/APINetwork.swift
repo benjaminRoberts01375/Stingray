@@ -393,7 +393,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             let items: [TVSeason]
             
             init(from decoder: Decoder) throws {
-                print("Decoding seasons")
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
                 var tempSeasons: [TVSeason] = []
@@ -405,8 +404,10 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     
                     let episode: TVEpisode = TVEpisode(
                         id: try episodeContainer.decode(String.self, forKey: .id),
+                        blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
                         title: try episodeContainer.decode(String.self, forKey: .title),
-                        episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber
+                        episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
+                        mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
                     )
                     let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
                     
@@ -435,6 +436,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case id = "Id"
                 case episodeNumber = "IndexNumber"
                 case seasonNumber = "ParentIndexNumber"
+                case blurHashes = "ImageBlurHashes"
+                case mediaSources = "MediaSources"
                 
                 case seasonID = "SeasonId" // The actual season ID
                 case seasonTitle = "SeasonName" // The actual season name
@@ -443,7 +446,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         
         let params : [URLQueryItem] = [
-            URLQueryItem(name: "enableImages", value: "true")
+            URLQueryItem(name: "enableImages", value: "true"),
+            URLQueryItem(name: "fields", value: "MediaSources"),
         ]
         let response: Root = try await network.request(verb: .get, path: "/Shows/\(seasonID)/Episodes", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
         return response.items
