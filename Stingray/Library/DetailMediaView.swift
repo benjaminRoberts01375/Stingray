@@ -32,6 +32,7 @@ struct DetailMediaView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
+                // Background image
                 if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
                     Image(uiImage: blurImage)
@@ -54,11 +55,14 @@ struct DetailMediaView: View {
                         EmptyView()
                     }
                 }
+                // Blurry background
                 Color.clear
                     .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
                     .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
+                // Content
                 VStack(alignment: .center, spacing: 15) {
                     Spacer()
+                    // Basic movie/series data
                     Button {
                         showMetadata = true
                     } label: {
@@ -75,6 +79,8 @@ struct DetailMediaView: View {
                             .focused($focusedSourceID, equals: source.id)
                         }
                     }
+                    
+                    // Show episodes if series
                     switch media.mediaType {
                     case .tv(let seasons): // Show TV episodes
                         if let accessToken = streamingService.accessToken{
