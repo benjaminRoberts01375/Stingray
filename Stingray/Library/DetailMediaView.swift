@@ -17,6 +17,8 @@ struct DetailMediaView: View {
     @State private var logoOpacity: Double = 0
     @State private var showMetadata: Bool = false
     @FocusState private var focusedSourceID: String?
+    @FocusState private var focusedEpisodeID: String?
+    @State private var shouldBlurBackground: Bool = false
     private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
@@ -52,6 +54,9 @@ struct DetailMediaView: View {
                         EmptyView()
                     }
                 }
+                Color.clear
+                    .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
+                    .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
                 VStack(alignment: .center, spacing: 15) {
                     Spacer()
                     Button {
@@ -69,6 +74,38 @@ struct DetailMediaView: View {
                             }
                             .focused($focusedSourceID, equals: source.id)
                         }
+                    }
+                    switch media.mediaType {
+                    case .tv(let seasons): // Show TV episodes
+                        if let accessToken = streamingService.accessToken{
+                            ScrollView(.horizontal) {
+                                HStack {
+                                    ForEach(seasons ?? []) { season in
+                                        ForEach(season.episodes, id: \.id) { episode in
+                                            if let source = episode.mediaSources.first {
+                                                NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)) {
+                                                    VStack(spacing: 0) {
+                                                        EpisodeArtView(episode: episode, accessToken: accessToken, networkAPI: streamingService.networkAPI)
+                                                        Text(episode.title)
+                                                            .multilineTextAlignment(.center)
+                                                            .lineLimit(2)
+                                                            .padding()
+                                                        Spacer(minLength: 0)
+                                                    }
+                                                        .frame(width: 350, height: 300)
+                                                }
+                                                .buttonStyle(.card)
+                                                .focused($focusedEpisodeID, equals: episode.id)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .scrollClipDisabled()
+                            .padding(40)
+                            .ignoresSafeArea()
+                        }
+                    default: EmptyView()
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -90,11 +127,15 @@ struct DetailMediaView: View {
                         .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
                         .offset(y: titleShadowSize)
                 }
+                .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
             }
         }
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
             focusedSourceID = media.mediaSources.first?.id
+        }
+        .onChange(of: focusedEpisodeID) { _, newValue in
+            shouldBlurBackground = newValue != nil
         }
         .fullScreenCover(isPresented: $showMetadata) {
             MediaMetadataView(media: media, streamingService: streamingService)
@@ -221,6 +262,41 @@ struct ActorImage: View {
                         .aspectRatio(contentMode: .fit)
                 } placeholder: {
                     EmptyView()
+                }
+            }
+        }
+    }
+}
+
+struct EpisodeArtView: View {
+    let episode: any TVEpisodeProtocol
+    let accessToken: String
+    let networkAPI: any AdvancedNetworkProtocol
+    
+    @State private var imageOpacity: Double = 0
+    
+    var body: some View {
+        VStack {
+            ZStack {
+                if let blurHash = episode.blurHashes?.getBlurHash(for: .primary),
+                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
+                    Image(uiImage: blurImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                }
+                if let url = networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .primary, imageID: episode.id, width: 800) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .animation(.easeOut(duration: 0.5), value: imageOpacity)
+                            .onAppear {
+                                print("Showing episode image for \(episode.title): \(url.absoluteString)")
+                                imageOpacity = 1
+                            }
+                    } placeholder: {
+                        EmptyView()
+                    }
                 }
             }
         }
