@@ -255,6 +255,9 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
         self.title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
         self.codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
         self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate) ?? 10000
+        if codec == "av1" {
+            self.bitrate = Int(Double(self.bitrate) * 1.75) // AV1 isn't supported, but it's so good that we need way more bits
+        }
         self.isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
     }
 }
