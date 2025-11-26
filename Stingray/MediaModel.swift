@@ -60,7 +60,7 @@ public protocol MediaStreamProtocol: Identifiable {
     var id: Int { get }
     var title: String { get }
     var type: StreamType { get }
-    var bitrate: Int? { get }
+    var bitrate: Int { get }
     var codec: String { get }
     var isDefault: Bool { get }
 }
@@ -232,7 +232,7 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var id: Int
     public var title: String
     public var type: StreamType
-    public var bitrate: Int?
+    public var bitrate: Int
     public var codec: String
     public var isDefault: Bool
     
@@ -253,8 +253,8 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
         
         self.id = try container.decodeIfPresent(Int.self, forKey: .id) ?? Int.random(in: 0..<Int.max)
         self.title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
-        self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
         self.codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
+        self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate) ?? 10000
         self.isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
     }
 }
