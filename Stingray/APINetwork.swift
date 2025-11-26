@@ -470,7 +470,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
             // Let Jellyfin decide based on client capabilities
             URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
-            URLQueryItem(name: "videoCodec", value: "h264,hevc,vp9,av1"),
+            URLQueryItem(name: "videoCodec", value: "h264,hevc,vp9"),
         ]
         
         if let bitrate = bitrate {
