@@ -20,7 +20,7 @@ struct PlayerView: View {
         self.player = player
         self.streamingService = streamingService
         self.mediaSource = mediaSource
-        self.selectedSubtitleID = mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.subtitleStreams.first?.id ?? 1)
+        self.selectedSubtitleID = mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id
         self.selectedAudioID = mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
         self.selectedVideoID = mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1)
     }
@@ -89,7 +89,7 @@ struct PlayerView: View {
             player = nil
             return
         }
-        self.selectedSubtitleID = subtitleID
+        
         self.player = AVPlayer(playerItem: playerItem)
         if let currentTime {
             self.player?.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
