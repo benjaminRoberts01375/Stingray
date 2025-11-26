@@ -43,6 +43,7 @@ struct PlayerView: View {
             UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
                 {
                     let action = UIAction(title: "None") { _ in
+                        self.selectedSubtitleID = nil
                         newPlayer(subtitleID: nil, audioID: selectedAudioID, videoID: selectedVideoID)
                     }
                     action.state = selectedSubtitleID == nil ? .on : .off
@@ -50,6 +51,7 @@ struct PlayerView: View {
                 }()
             ] + mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
+                    self.selectedSubtitleID = subtitleStream.id
                     newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID, videoID: selectedVideoID)
                 }
                 action.state = selectedSubtitleID == subtitleStream.id ? .on : .off
@@ -57,6 +59,7 @@ struct PlayerView: View {
             })),
             UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: mediaSource.audioStreams.map({ audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
+                    self.selectedAudioID = audioStream.id
                     newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID)
                 }
                 action.state = selectedAudioID == audioStream.id ? .on : .off
@@ -64,6 +67,7 @@ struct PlayerView: View {
             })),
             UIMenu(title: "Video", image: UIImage(systemName: "monitor"), children: mediaSource.videoStreams.map({ videoStream in
                 let action = UIAction(title: videoStream.title) { _ in
+                    self.selectedVideoID = videoStream.id
                     newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id)
                 }
                 action.state = selectedVideoID == videoStream.id ? .on : .off
