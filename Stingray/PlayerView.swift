@@ -66,7 +66,7 @@ struct PlayerView: View {
                 let action = UIAction(title: videoStream.title) { _ in
                     newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id)
                 }
-                action.state = selectedAudioID == videoStream.id ? .on : .off
+                action.state = selectedVideoID == videoStream.id ? .on : .off
                 return action
             })),
             //            UIAction(title: "Next Episode", image: UIImage(systemName: "forward.end")) { _ in
