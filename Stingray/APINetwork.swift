@@ -481,7 +481,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "SubtitleMethod", value: "Encode"))
             params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
         }
+        print("Video track: \(videoID), audio track: \(audioID), subtitles: \(String(describing: subtitleID)))")
         
-        return network.buildAVPlayerItem(path: "/Videos/\(contentID)/master.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token": accessToken])
+        return network.buildAVPlayerItem(path: "/Videos/\(contentID)/main.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token": accessToken])
     }
 }
