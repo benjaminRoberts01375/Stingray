@@ -73,7 +73,8 @@ struct DetailMediaView: View {
                     
                     HStack {
                         ForEach(media.mediaSources, id: \.id) { source in
-                            NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)) {
+                            NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)
+                                .id(source.id)) {
                                 Text("Play \(source.name)")
                             }
                             .focused($focusedSourceID, equals: source.id)
@@ -89,7 +90,8 @@ struct DetailMediaView: View {
                                     ForEach(seasons ?? []) { season in
                                         ForEach(season.episodes, id: \.id) { episode in
                                             if let source = episode.mediaSources.first {
-                                                NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)) {
+                                                NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)
+                                                    .id(source.id)) {
                                                     VStack(spacing: 0) {
                                                         EpisodeArtView(episode: episode, accessToken: accessToken, networkAPI: streamingService.networkAPI)
                                                         Text(episode.title)
