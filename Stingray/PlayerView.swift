@@ -15,14 +15,16 @@ struct PlayerView: View {
     @State private var selectedVideoID: Int
     let streamingService: StreamingServiceProtocol
     let mediaSource: any MediaSourceProtocol
+    let seasons: [(any TVSeasonProtocol)]?
     
-    init(player: AVPlayer? = nil, streamingService: StreamingServiceProtocol, mediaSource: any MediaSourceProtocol) {
+    init(player: AVPlayer? = nil, streamingService: StreamingServiceProtocol, mediaSource: any MediaSourceProtocol, seasons: [(any TVSeasonProtocol)]? = nil) {
         self.player = player
         self.streamingService = streamingService
         self.mediaSource = mediaSource
         self.selectedSubtitleID = mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id
         self.selectedAudioID = mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
         self.selectedVideoID = mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1)
+        self.seasons = seasons
     }
     
     var body: some View {

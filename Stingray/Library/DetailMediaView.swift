@@ -204,7 +204,7 @@ fileprivate struct EpisodeSelectorView: View {
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
                         NavigationLink {
-                            PlayerView(streamingService: streamingService, mediaSource: source)
+                            PlayerView(streamingService: streamingService, mediaSource: source, seasons: seasons)
                                 .id(source.id)
                         } label: {
                             VStack(spacing: 0) {
