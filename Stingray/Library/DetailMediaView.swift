@@ -15,7 +15,6 @@ struct DetailMediaView: View {
     let streamingService: StreamingServiceProtocol
     @State private var logoOpacity: Double = 0
     @State private var showMetadata: Bool = false
-    @FocusState private var focusedSourceID: String?
     @FocusState private var focusedEpisodeID: String?
     @State private var shouldBlurBackground: Bool = false
     private let titleShadowSize: CGFloat = 800
@@ -54,7 +53,6 @@ struct DetailMediaView: View {
                         } label: {
                             Text("Play \(source.name)")
                         }
-                        .focused($focusedSourceID, equals: source.id)
                     }
                 }
                 
@@ -94,9 +92,6 @@ struct DetailMediaView: View {
             .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
         }
         .toolbar(.hidden, for: .tabBar)
-        .onAppear {
-            focusedSourceID = media.mediaSources.first?.id
-        }
         .onChange(of: focusedEpisodeID) { _, newValue in
             shouldBlurBackground = newValue != nil
         }
