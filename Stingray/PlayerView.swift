@@ -67,7 +67,7 @@ struct PlayerView: View {
                 action.state = selectedAudioID == audioStream.id ? .on : .off
                 return action
             })),
-            UIMenu(title: "Video", image: UIImage(systemName: "monitor"), children: mediaSource.videoStreams.map({ videoStream in
+            UIMenu(title: "Video", image: UIImage(systemName: "display"), children: mediaSource.videoStreams.map({ videoStream in
                 let action = UIAction(title: videoStream.title) { _ in
                     self.selectedVideoID = videoStream.id
                     newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id)
