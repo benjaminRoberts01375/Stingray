@@ -13,7 +13,6 @@ struct DetailMediaView: View {
     let backgroundImageURL: URL?
     let logoImageURL: URL?
     let streamingService: StreamingServiceProtocol
-    @State private var backgroundOpacity: Double = 0
     @State private var logoOpacity: Double = 0
     @State private var showMetadata: Bool = false
     @FocusState private var focusedSourceID: String?
@@ -30,113 +29,69 @@ struct DetailMediaView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .bottom) {
-                // Background image
-                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
-                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
-                    Image(uiImage: blurImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-                        .clipped()
-                }
-                if media.ImageTags.thumbnail != nil {
-                    AsyncImage(url: backgroundImageURL) { image in
-                        image
-                            .resizable()
-                            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-                            .opacity(backgroundOpacity)
-                            .animation(.easeOut(duration: 0.5), value: backgroundOpacity)
-                            .onAppear {
-                                backgroundOpacity = 1
-                            }
-                    } placeholder: {
-                        EmptyView()
-                    }
-                }
-                // Blurry background
-                Color.clear
-                    .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
-                    .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
-                // Content
-                VStack(alignment: .center, spacing: 15) {
-                    Spacer()
-                    // Basic movie/series data
-                    Button {
-                        showMetadata = true
-                    } label: {
-                        MediaLogoView(media: media, logoImageURL: logoImageURL)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.vertical)
-                    
-                    HStack {
-                        ForEach(media.mediaSources, id: \.id) { source in
-                            NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)
-                                .id(source.id)) {
-                                Text("Play \(source.name)")
-                            }
-                            .focused($focusedSourceID, equals: source.id)
-                        }
-                    }
-                    
-                    // Show episodes if series
-                    switch media.mediaType {
-                    case .tv(let seasons): // Show TV episodes
-                        if let accessToken = streamingService.accessToken{
-                            ScrollView(.horizontal) {
-                                HStack {
-                                    ForEach(seasons ?? []) { season in
-                                        ForEach(season.episodes, id: \.id) { episode in
-                                            if let source = episode.mediaSources.first {
-                                                NavigationLink(destination: PlayerView(streamingService: streamingService, mediaSource: source)
-                                                    .id(source.id)) {
-                                                    VStack(spacing: 0) {
-                                                        EpisodeArtView(episode: episode, accessToken: accessToken, networkAPI: streamingService.networkAPI)
-                                                        Text(episode.title)
-                                                            .multilineTextAlignment(.center)
-                                                            .lineLimit(2)
-                                                            .padding()
-                                                        Spacer(minLength: 0)
-                                                    }
-                                                        .frame(width: 350, height: 300)
-                                                }
-                                                .buttonStyle(.card)
-                                                .focused($focusedEpisodeID, equals: episode.id)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .scrollClipDisabled()
-                            .padding(40)
-                            .ignoresSafeArea()
-                        }
-                    default: EmptyView()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
-                .background(alignment: .bottom) {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .black, location: 0),
-                                    .init(color: .black.opacity(0), location: 1)
-                                ]),
-                                center: UnitPoint(x: 0.5, y: 0.5),
-                                startRadius: 0,
-                                endRadius: titleShadowSize
-                            )
-                            .opacity(0.9)
-                        )
-                        .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
-                        .offset(y: titleShadowSize)
-                }
-                .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
+        ZStack(alignment: .bottom) {
+            GeometryReader { geometry in
+                MediaBackgroundView(media: media, backgroundImageURL: backgroundImageURL, shouldBlurBackground: $shouldBlurBackground, size: geometry.size)
             }
+            VStack(alignment: .center, spacing: 15) {
+                Spacer()
+                
+                // Basic movie/series data
+                Button {
+                    showMetadata = true
+                } label: {
+                    MediaLogoView(media: media, logoImageURL: logoImageURL)
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical)
+                
+                // All versions of a movie
+                HStack {
+                    ForEach(media.mediaSources, id: \.id) { source in
+                        NavigationLink {
+                            PlayerView(streamingService: streamingService, mediaSource: source)
+                                .id(source.id)
+                        } label: {
+                            Text("Play \(source.name)")
+                        }
+                        .focused($focusedSourceID, equals: source.id)
+                    }
+                }
+                
+                // Show episodes if series
+                switch media.mediaType {
+                case .tv(let seasons): // Show TV episodes
+                    if let accessToken = streamingService.accessToken, let seasons = seasons {
+                        ScrollView(.horizontal) {
+                            EpisodeSelectorView(seasons: seasons, accessToken: accessToken, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                        }
+                        .scrollClipDisabled()
+                        .padding(40)
+                        .ignoresSafeArea()
+                    }
+                default: EmptyView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding()
+            .background(alignment: .bottom) {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .black, location: 0),
+                                .init(color: .black.opacity(0), location: 1)
+                            ]),
+                            center: UnitPoint(x: 0.5, y: 0.5),
+                            startRadius: 0,
+                            endRadius: titleShadowSize
+                        )
+                        .opacity(0.9)
+                    )
+                    .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
+                    .offset(y: titleShadowSize)
+            }
+            .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
         }
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
@@ -153,6 +108,44 @@ struct DetailMediaView: View {
                 .ignoresSafeArea()
         }
         .ignoresSafeArea()
+    }
+}
+
+struct MediaBackgroundView: View {
+    let media: any MediaProtocol
+    let backgroundImageURL: URL?
+    @State var backgroundOpacity: Double = 0
+    @Binding var shouldBlurBackground: Bool
+    let size: CGSize
+    
+    var body: some View {
+        // Background image
+        if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+           let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
+            Image(uiImage: blurImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: size.width, height: size.height, alignment: .topLeading)
+                .clipped()
+        }
+        if media.ImageTags.thumbnail != nil {
+            AsyncImage(url: backgroundImageURL) { image in
+                image
+                    .resizable()
+                    .frame(width: size.width, height: size.height, alignment: .topLeading)
+                    .opacity(backgroundOpacity)
+                    .animation(.easeOut(duration: 0.5), value: backgroundOpacity)
+                    .onAppear {
+                        backgroundOpacity = 1
+                    }
+            } placeholder: {
+                EmptyView()
+            }
+        }
+        // Blurry background
+        Color.clear
+            .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
+            .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
     }
 }
 
@@ -194,6 +187,41 @@ struct MediaLogoView: View {
                 ].compactMap { $0 }
                 
                 Text(items.joined(separator: " • "))
+            }
+        }
+    }
+}
+
+struct EpisodeSelectorView: View {
+    let seasons: [any TVSeasonProtocol]
+    let accessToken: String
+    let streamingService: any StreamingServiceProtocol
+    
+    @FocusState.Binding var focusedEpisodeID: String?
+    
+    var body: some View {
+        HStack {
+            ForEach(seasons, id: \.id) { season in
+                ForEach(season.episodes, id: \.id) { episode in
+                    if let source = episode.mediaSources.first {
+                        NavigationLink {
+                            PlayerView(streamingService: streamingService, mediaSource: source)
+                                .id(source.id)
+                        } label: {
+                            VStack(spacing: 0) {
+                                EpisodeArtView(episode: episode, accessToken: accessToken, networkAPI: streamingService.networkAPI)
+                                Text(episode.title)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                                    .padding()
+                                Spacer(minLength: 0)
+                            }
+                            .frame(width: 350, height: 300)
+                        }
+                        .buttonStyle(.card)
+                        .focused($focusedEpisodeID, equals: episode.id)
+                    }
+                }
             }
         }
     }
