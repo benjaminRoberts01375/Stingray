@@ -8,6 +8,7 @@
 import BlurHashKit
 import SwiftUI
 
+// MARK: Main view
 struct DetailMediaView: View {
     let media: any MediaProtocol
     let backgroundImageURL: URL?
@@ -106,10 +107,11 @@ struct DetailMediaView: View {
     }
 }
 
-struct MediaBackgroundView: View {
+// MARK: Background
+fileprivate struct MediaBackgroundView: View {
     let media: any MediaProtocol
     let backgroundImageURL: URL?
-    @State var backgroundOpacity: Double = 0
+    @State private var backgroundOpacity: Double = 0
     @Binding var shouldBlurBackground: Bool
     let size: CGSize
     
@@ -144,7 +146,8 @@ struct MediaBackgroundView: View {
     }
 }
 
-struct MediaLogoView: View {
+// MARK: Movie logo and basics
+fileprivate struct MediaLogoView: View {
     @State private var logoOpacity: Double = 0
     let media: any MediaProtocol
     let logoImageURL: URL?
@@ -187,7 +190,8 @@ struct MediaLogoView: View {
     }
 }
 
-struct EpisodeSelectorView: View {
+// MARK: Episode selector
+fileprivate struct EpisodeSelectorView: View {
     let seasons: [any TVSeasonProtocol]
     let accessToken: String
     let streamingService: any StreamingServiceProtocol
@@ -222,7 +226,8 @@ struct EpisodeSelectorView: View {
     }
 }
 
-struct MediaMetadataView: View {
+// MARK: Fullscreen Metadata
+fileprivate struct MediaMetadataView: View {
     let media: any MediaProtocol
     private let logoImageURL: URL?
     private let streamingService: any StreamingServiceProtocol
@@ -272,7 +277,8 @@ struct MediaMetadataView: View {
     }
 }
 
-struct ActorImage: View {
+// MARK: Actor Photo
+fileprivate struct ActorImage: View {
     let media: any MediaProtocol
     let streamingService: any StreamingServiceProtocol
     let person: any MediaPersonProtocol
@@ -299,7 +305,8 @@ struct ActorImage: View {
     }
 }
 
-struct EpisodeArtView: View {
+// MARK: Episode Art
+fileprivate struct EpisodeArtView: View {
     let episode: any TVEpisodeProtocol
     let accessToken: String
     let networkAPI: any AdvancedNetworkProtocol
