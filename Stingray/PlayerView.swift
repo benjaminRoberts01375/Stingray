@@ -36,7 +36,7 @@ struct PlayerView: View {
                 )
             }
         }
-        .task { newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource) }
+        .task { newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true) }
         .ignoresSafeArea(.all)
     }
     
@@ -46,7 +46,7 @@ struct PlayerView: View {
                 {
                     let action = UIAction(title: "None") { _ in
                         self.selectedSubtitleID = nil
-                        newPlayer(subtitleID: nil, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource)
+                        newPlayer(subtitleID: nil, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
                     }
                     action.state = selectedSubtitleID == nil ? .on : .off
                     return action
@@ -54,7 +54,7 @@ struct PlayerView: View {
             ] + mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
                     self.selectedSubtitleID = subtitleStream.id
-                    newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource)
+                    newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
                 }
                 action.state = selectedSubtitleID == subtitleStream.id ? .on : .off
                 return action
@@ -62,7 +62,7 @@ struct PlayerView: View {
             UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: mediaSource.audioStreams.map({ audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
                     self.selectedAudioID = audioStream.id
-                    newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID, mediaSource: mediaSource)
+                    newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
                 }
                 action.state = selectedAudioID == audioStream.id ? .on : .off
                 return action
@@ -70,7 +70,7 @@ struct PlayerView: View {
             UIMenu(title: "Video", image: UIImage(systemName: "display"), children: mediaSource.videoStreams.map({ videoStream in
                 let action = UIAction(title: videoStream.title) { _ in
                     self.selectedVideoID = videoStream.id
-                    newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id, mediaSource: mediaSource)
+                    newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id, mediaSource: mediaSource, keepTime: true)
                 }
                 action.state = selectedVideoID == videoStream.id ? .on : .off
                 return action
@@ -84,7 +84,7 @@ struct PlayerView: View {
                         self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
                         self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
                         self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
-                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource)
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
                     }
                     action.state = mediaSource.id == episode.mediaSources.first?.id ? .on : .off
                     return action
@@ -97,7 +97,7 @@ struct PlayerView: View {
         return items
     }
     
-    private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int, mediaSource: any MediaSourceProtocol) {
+    private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int, mediaSource: any MediaSourceProtocol, keepTime: Bool) {
         let currentTime = player?.currentTime()
         if let existingPlayer = player {
             existingPlayer.pause()
@@ -109,7 +109,7 @@ struct PlayerView: View {
         }
         
         self.player = AVPlayer(playerItem: playerItem)
-        if let currentTime {
+        if let currentTime, keepTime {
             self.player?.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
         }
         self.player?.play()
