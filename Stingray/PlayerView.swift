@@ -41,6 +41,7 @@ struct PlayerView: View {
     }
     
     private func makeTransportBarItems() -> [UIMenuElement] {
+        // Typical buttons
         var items: [UIMenuElement] = [
             UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
                 {
@@ -77,13 +78,52 @@ struct PlayerView: View {
             })),
         ]
         
+        // TV Season-related buttons
         if let seasons = seasons {
+            print("Running seasons")
+            let allEpisodes = seasons.flatMap(\.episodes)
+            var setPreviousEpisode: Bool = false
+            
+            if let index = allEpisodes.firstIndex(where: { episode in
+                for mediaSource in episode.mediaSources {
+                    if mediaSource.id == self.mediaSource.id { return true }
+                }
+                return false
+            }) {
+                // Next episode
+                if index + 1 < allEpisodes.count {
+                    let episode = allEpisodes[index + 1]
+                    items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
+                        self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
+                        self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
+                        self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        self.mediaSource = episode.mediaSources.first ?? self.mediaSource
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
+                    }), at: 0)
+                }
+                
+                // Previous episode
+                if index - 1 >= 0 {
+                    let episode = allEpisodes[index - 1]
+                    items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.left"), handler: { _ in
+                        self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
+                        self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
+                        self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        self.mediaSource = episode.mediaSources.first ?? self.mediaSource
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
+                    }), at: 0)
+                    setPreviousEpisode = true
+                }
+            }
+
+            // Episode selector
             let seasonItems = seasons.map { season in
                 let episodeActions = season.episodes.map { episode in
                     let action = UIAction(title: episode.title) { _ in
                         self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
                         self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
                         self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        self.mediaSource = episode.mediaSources.first ?? self.mediaSource
                         newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
                     }
                     action.state = mediaSource.id == episode.mediaSources.first?.id ? .on : .off
@@ -92,7 +132,7 @@ struct PlayerView: View {
                 
                 return UIMenu(title: season.title, options: .displayInline, children: episodeActions) // Awful limitation by Apple to only support menus one level deep here
             }
-            items.insert(UIMenu(title: "Seasons", image: UIImage(systemName: "calendar.day.timeline.right"), children: seasonItems), at: 0)
+            items.insert(UIMenu(title: "Seasons", image: UIImage(systemName: "calendar.day.timeline.right"), children: seasonItems), at: setPreviousEpisode ? 1 : 0)
         }
         return items
     }
