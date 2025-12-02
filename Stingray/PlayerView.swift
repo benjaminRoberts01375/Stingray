@@ -75,10 +75,26 @@ struct PlayerView: View {
                 action.state = selectedVideoID == videoStream.id ? .on : .off
                 return action
             })),
-            //            UIAction(title: "Next Episode", image: UIImage(systemName: "forward.end")) { _ in
-            //                print("Next episode tapped")
-            //            }
         ]
+        
+        if let seasons = seasons {
+            let seasonItems = seasons.map { season in
+                let episodeActions = season.episodes.map { episode in
+                    let action = UIAction(title: episode.title) { _ in
+                        self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
+                        self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
+                        self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource)
+                    }
+                    action.state = mediaSource.id == episode.mediaSources.first?.id ? .on : .off
+                    return action
+                }
+                
+                return UIMenu(title: season.title, options: .displayInline, children: episodeActions) // Awful limitation by Apple to only support menus one level deep here
+            }
+            items.insert(UIMenu(title: "Seasons", image: UIImage(systemName: "calendar.day.timeline.right"), children: seasonItems), at: 0)
+        }
+        return items
     }
     
     private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int, mediaSource: any MediaSourceProtocol) {
