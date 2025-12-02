@@ -42,8 +42,11 @@ struct PlayerView: View {
     
     private func makeTransportBarItems() -> [UIMenuElement] {
         // Typical buttons
-        var items: [UIMenuElement] = [
-            UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
+        var items: [UIMenuElement] = []
+        
+        // Add Subtitles menu only if there are subtitle tracks available
+        if !mediaSource.subtitleStreams.isEmpty {
+            items.append(UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
                 {
                     let action = UIAction(title: "None") { _ in
                         self.selectedSubtitleID = nil
@@ -59,24 +62,32 @@ struct PlayerView: View {
                 }
                 action.state = selectedSubtitleID == subtitleStream.id ? .on : .off
                 return action
-            })),
-            UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: mediaSource.audioStreams.map({ audioStream in
+            })))
+        }
+        
+        // Add Audio menu only if there's more than one option
+        if mediaSource.audioStreams.count > 1 {
+            items.append(UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: mediaSource.audioStreams.map({ audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
                     self.selectedAudioID = audioStream.id
                     newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
                 }
                 action.state = selectedAudioID == audioStream.id ? .on : .off
                 return action
-            })),
-            UIMenu(title: "Video", image: UIImage(systemName: "display"), children: mediaSource.videoStreams.map({ videoStream in
+            })))
+        }
+        
+        // Add Video menu only if there's more than one option
+        if mediaSource.videoStreams.count > 1 {
+            items.append(UIMenu(title: "Video", image: UIImage(systemName: "display"), children: mediaSource.videoStreams.map({ videoStream in
                 let action = UIAction(title: videoStream.title) { _ in
                     self.selectedVideoID = videoStream.id
                     newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id, mediaSource: mediaSource, keepTime: true)
                 }
                 action.state = selectedVideoID == videoStream.id ? .on : .off
                 return action
-            })),
-        ]
+            })))
+        }
         
         // TV Season-related buttons
         if let seasons = seasons {
