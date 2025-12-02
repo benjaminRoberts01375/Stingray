@@ -13,8 +13,8 @@ struct PlayerView: View {
     @State private var selectedSubtitleID: Int?
     @State private var selectedAudioID: Int
     @State private var selectedVideoID: Int
+    @State private var mediaSource: any MediaSourceProtocol
     let streamingService: StreamingServiceProtocol
-    let mediaSource: any MediaSourceProtocol
     let seasons: [(any TVSeasonProtocol)]?
     
     init(player: AVPlayer? = nil, streamingService: StreamingServiceProtocol, mediaSource: any MediaSourceProtocol, seasons: [(any TVSeasonProtocol)]? = nil) {
