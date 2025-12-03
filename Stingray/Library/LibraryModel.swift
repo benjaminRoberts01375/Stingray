@@ -56,7 +56,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         self.media = .unloaded // Don't even try to decode media here
     }
     
-    func loadMedia(networkAPI: AdvancedNetworkProtocol, accessToken: String) async throws {
+    func loadMedia(streamingService: any StreamingServiceProtocol) async throws {
         let batchSize = 50
         var currentIndex = 0
         var allMedia: [MediaModel] = []
@@ -68,14 +68,12 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         
         // Keep fetching batches until we get fewer items than the batch size
         while true {
-            let incomingMedia = try await networkAPI.getLibraryMedia(
-                accessToken: accessToken,
-                libraryId: self.id,
+            let incomingMedia = try await streamingService.getLibraryMedia(
+                libraryID: self.id,
                 index: currentIndex,
                 count: batchSize,
                 sortOrder: .Ascending,
-                sortBy: .SortName,
-                mediaTypes: [.movies, .tv(nil)]
+                sortBy: .SortName
             )
             
             allMedia.append(contentsOf: incomingMedia)

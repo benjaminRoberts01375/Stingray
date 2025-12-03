@@ -58,7 +58,7 @@ struct DashboardView: View {
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for library in libraries {
                         group.addTask {
-                            try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: streamingService.accessToken)
+                            try await library.loadMedia(streamingService: streamingService)
                         }
                     }
                     try await group.waitForAll()

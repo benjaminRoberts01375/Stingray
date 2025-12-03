@@ -9,13 +9,12 @@ import AVKit
 
 protocol StreamingServiceProtocol {
     var url: URL? { get }
-    var accessToken: String { get }
-    var networkAPI: AdvancedNetworkProtocol { get }
-    var storageAPI: AdvancedStorageProtocol { get }
     
     func login(username: String, password: String) async throws
     func getLibraries() async throws -> [LibraryModel]
     func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem?
+    func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
+    func getLibraryMedia(libraryID: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel]
 }
 
 @Observable
@@ -89,5 +88,21 @@ final class JellyfinModel: StreamingServiceProtocol {
     
     func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
         return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
+    }
+    
+    func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL? {
+        return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, imageID: imageID, width: width)
+    }
+    
+    func getLibraryMedia(libraryID: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel] {
+        return try await networkAPI.getLibraryMedia(
+            accessToken: accessToken,
+            libraryId: libraryID,
+            index: index,
+            count: count,
+            sortOrder: .Ascending,
+            sortBy: .SortName,
+            mediaTypes: [.movies, .tv(nil)]
+        )
     }
 }

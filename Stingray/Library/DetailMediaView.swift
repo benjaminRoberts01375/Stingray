@@ -23,9 +23,8 @@ struct DetailMediaView: View {
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
         self.streamingService = streamingService
-        let accessToken = streamingService.accessToken
-        self.backgroundImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .backdrop, imageID: media.id, width: 0)
-        self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .logo, imageID: media.id, width: 0)
+        self.backgroundImageURL = streamingService.getImageURL(imageType: .backdrop, imageID: media.id, width: 0)
+        self.logoImageURL = streamingService.getImageURL(imageType: .logo, imageID: media.id, width: 0)
     }
     
     var body: some View {
@@ -66,7 +65,7 @@ struct DetailMediaView: View {
                 case .tv(let seasons): // Show TV episodes
                     if let seasons = seasons {
                         ScrollView(.horizontal) {
-                            EpisodeSelectorView(seasons: seasons, accessToken: streamingService.accessToken, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                            EpisodeSelectorView(seasons: seasons, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
                         }
                         .scrollClipDisabled()
                         .padding(40)
@@ -197,7 +196,6 @@ fileprivate struct MediaLogoView: View {
 // MARK: Episode selector
 fileprivate struct EpisodeSelectorView: View {
     let seasons: [any TVSeasonProtocol]
-    let accessToken: String
     let streamingService: any StreamingServiceProtocol
     
     @FocusState.Binding var focusedEpisodeID: String?
@@ -212,7 +210,7 @@ fileprivate struct EpisodeSelectorView: View {
                                 .id(source.id)
                         } label: {
                             VStack(spacing: 0) {
-                                EpisodeArtView(episode: episode, accessToken: accessToken, networkAPI: streamingService.networkAPI)
+                                EpisodeArtView(episode: episode, streamingService: streamingService)
                                 Text(episode.title)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(2)
@@ -238,7 +236,7 @@ fileprivate struct MediaMetadataView: View {
     
     init(media: any MediaProtocol, streamingService: any StreamingServiceProtocol) {
         self.media = media
-        self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken, imageType: .logo, imageID: media.id, width: 0)
+        self.logoImageURL = streamingService.getImageURL(imageType: .logo, imageID: media.id, width: 0)
         self.streamingService = streamingService
     }
     
@@ -296,7 +294,7 @@ fileprivate struct ActorImage: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             }
-            if let url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken, imageType: .primary, imageID: person.id, width: 0) {
+            if let url = streamingService.getImageURL(imageType: .primary, imageID: person.id, width: 0) {
                 AsyncImage(url: url) { image in
                     image
                         .resizable()
@@ -312,8 +310,7 @@ fileprivate struct ActorImage: View {
 // MARK: Episode Art
 fileprivate struct EpisodeArtView: View {
     let episode: any TVEpisodeProtocol
-    let accessToken: String
-    let networkAPI: any AdvancedNetworkProtocol
+    let streamingService: any StreamingServiceProtocol
     
     @State private var imageOpacity: Double = 0
     
@@ -326,7 +323,7 @@ fileprivate struct EpisodeArtView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                 }
-                if let url = networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .primary, imageID: episode.id, width: 800) {
+                if let url = streamingService.getImageURL(imageType: .primary, imageID: episode.id, width: 800) {
                     AsyncImage(url: url) { image in
                         image
                             .resizable()
