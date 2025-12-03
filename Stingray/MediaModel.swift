@@ -47,6 +47,23 @@ public protocol MediaSourceProtocol: Identifiable {
     var subtitleStreams: [any MediaStreamProtocol] { get }
 }
 
+extension MediaSourceProtocol {
+    func getSimilarStream(baseStream: any MediaStreamProtocol, streamType: StreamType) -> (any MediaStreamProtocol)? {
+        var streams: [any MediaStreamProtocol]
+        switch streamType {
+        case .video:
+            streams = videoStreams
+        case .audio:
+            streams = audioStreams
+        case .subtitle:
+            streams = subtitleStreams
+        case .unknown:
+            return nil
+        }
+        return streams.first { $0.title == baseStream.title}
+    }
+}
+
 public protocol MediaPersonProtocol {
     var id: String { get }
     var name: String { get }

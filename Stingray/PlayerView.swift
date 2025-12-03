@@ -105,9 +105,7 @@ struct PlayerView: View {
                 if index + 1 < allEpisodes.count {
                     let episode = allEpisodes[index + 1]
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
-                        self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
-                        self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
-                        self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        getNewStreamIDs(episode: episode)
                         self.mediaSource = episode.mediaSources.first ?? self.mediaSource
                         newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
                     }), at: 0)
@@ -117,9 +115,7 @@ struct PlayerView: View {
                 if index - 1 >= 0 {
                     let episode = allEpisodes[index - 1]
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.left"), handler: { _ in
-                        self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
-                        self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
-                        self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        getNewStreamIDs(episode: episode)
                         self.mediaSource = episode.mediaSources.first ?? self.mediaSource
                         newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
                     }), at: 0)
@@ -131,9 +127,7 @@ struct PlayerView: View {
             let seasonItems = seasons.map { season in
                 let episodeActions = season.episodes.map { episode in
                     let action = UIAction(title: episode.title) { _ in
-                        self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
-                        self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
-                        self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+                        getNewStreamIDs(episode: episode)
                         self.mediaSource = episode.mediaSources.first ?? self.mediaSource
                         newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
                     }
@@ -146,6 +140,32 @@ struct PlayerView: View {
             items.insert(UIMenu(title: "Seasons", image: UIImage(systemName: "calendar.day.timeline.right"), children: seasonItems), at: setPreviousEpisode ? 1 : 0)
         }
         return items
+    }
+    
+    private func getNewStreamIDs(episode: any TVEpisodeProtocol) {
+        // Get new video stream
+        if let oldVideoStream = mediaSource.videoStreams.first(where: {selectedVideoID == $0.id}),
+           let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video) {
+            self.selectedVideoID = newVideoStream.id
+        } else {
+            self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
+        }
+        // Get new audio stream
+        if let oldAudioStream = mediaSource.audioStreams.first(where: {selectedAudioID == $0.id}),
+           let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio) {
+            self.selectedAudioID = newAudioStream.id
+        } else {
+            self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+        }
+        // Get new subtitle stream - keep it off if it's off
+        if self.selectedSubtitleID != nil {
+            if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: {selectedSubtitleID == $0.id}),
+               let newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle) {
+                self.selectedSubtitleID = newSubtitleStream.id
+            } else {
+                self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
+            }
+        }
     }
     
     private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int, mediaSource: any MediaSourceProtocol, keepTime: Bool) {
