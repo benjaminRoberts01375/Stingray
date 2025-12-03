@@ -8,8 +8,6 @@
 import AVKit
 
 protocol StreamingServiceProtocol {
-    var url: URL? { get }
-    
     func login(username: String, password: String) async throws
     func getLibraries() async throws -> [LibraryModel]
     func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem?
