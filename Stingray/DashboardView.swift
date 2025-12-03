@@ -62,8 +62,13 @@ struct DashboardView: View {
                     libraryStatus = .waiting
                     return
                 }
-                for library in libraries {
-                    try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    for library in libraries {
+                        group.addTask {
+                            try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
+                        }
+                    }
+                    try await group.waitForAll()
                 }
                 print("Finished loading media for all libraries")
             } catch {
