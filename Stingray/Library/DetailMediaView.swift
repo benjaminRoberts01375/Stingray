@@ -23,7 +23,7 @@ struct DetailMediaView: View {
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
         self.streamingService = streamingService
-        let accessToken = streamingService.accessToken ?? ""
+        let accessToken = streamingService.accessToken
         self.backgroundImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .backdrop, imageID: media.id, width: 0)
         self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .logo, imageID: media.id, width: 0)
     }
@@ -60,9 +60,9 @@ struct DetailMediaView: View {
                 // Show episodes if series
                 switch media.mediaType {
                 case .tv(let seasons): // Show TV episodes
-                    if let accessToken = streamingService.accessToken, let seasons = seasons {
+                    if let seasons = seasons {
                         ScrollView(.horizontal) {
-                            EpisodeSelectorView(seasons: seasons, accessToken: accessToken, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                            EpisodeSelectorView(seasons: seasons, accessToken: streamingService.accessToken, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
                         }
                         .scrollClipDisabled()
                         .padding(40)
@@ -234,7 +234,7 @@ fileprivate struct MediaMetadataView: View {
     
     init(media: any MediaProtocol, streamingService: any StreamingServiceProtocol) {
         self.media = media
-        self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .logo, imageID: media.id, width: 0)
+        self.logoImageURL = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken, imageType: .logo, imageID: media.id, width: 0)
         self.streamingService = streamingService
     }
     
@@ -292,7 +292,7 @@ fileprivate struct ActorImage: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             }
-            if let accessToken = streamingService.accessToken, let url = streamingService.networkAPI.getMediaImageURL(accessToken: accessToken, imageType: .primary, imageID: person.id, width: 0) {
+            if let url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken, imageType: .primary, imageID: person.id, width: 0) {
                 AsyncImage(url: url) { image in
                     image
                         .resizable()

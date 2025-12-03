@@ -57,8 +57,6 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     }
     
     func loadMedia(networkAPI: AdvancedNetworkProtocol, accessToken: String) async throws {
-        print("Loading media for \(self.title) with ID \(self.id)")
-        
         let batchSize = 50
         var currentIndex = 0
         var allMedia: [MediaModel] = []
@@ -84,8 +82,6 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             
             // Update the UI after each batch
             media = .available(allMedia)
-            
-            print("Loaded batch starting at index \(currentIndex): \(incomingMedia.count) items (total: \(allMedia.count))")
             
             // If we received fewer items than requested, we've reached the end
             if incomingMedia.count < batchSize {

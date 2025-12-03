@@ -14,7 +14,7 @@ struct MediaCard: View {
     
     init(media: MediaModel, streamingService: StreamingServiceProtocol) {
         self.media = media
-        self.url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken ?? "", imageType: .primary, imageID: media.id, width: 400)
+        self.url = streamingService.networkAPI.getMediaImageURL(accessToken: streamingService.accessToken, imageType: .primary, imageID: media.id, width: 400)
     }
     
     var body: some View {

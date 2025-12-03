@@ -9,7 +9,7 @@ import AVKit
 
 protocol StreamingServiceProtocol {
     var url: URL? { get }
-    var accessToken: String? { get }
+    var accessToken: String { get }
     var networkAPI: AdvancedNetworkProtocol { get }
     var storageAPI: AdvancedStorageProtocol { get }
     
@@ -39,7 +39,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         didSet { storageAPI.setSessionID(sessionID) }
     }
     
-    var accessToken: String? {
+    var accessToken: String {
         didSet { storageAPI.setAccessToken(accessToken)}
     }
     
@@ -54,18 +54,19 @@ final class JellyfinModel: StreamingServiceProtocol {
         
         guard let address = address else { throw AddressError.badAddress }
         self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: address))
-        self.storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+        let storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+        self.storageAPI = storageAPI
         self.url = address
         self.usersName = storageAPI.getUsersName()
         self.usersID = storageAPI.getUserID()
         self.sessionID = storageAPI.getSessionID()
-        self.accessToken = storageAPI.getAccessToken()
+        self.accessToken = storageAPI.getAccessToken() ?? ""
         self.serverID = storageAPI.getServerID()
         print("URL: \(url?.absoluteString  ?? "None available")")
         print("User's Name: \(usersName ?? "None available")")
         print("UserID: \(usersID ?? "None available")")
         print("SessionID: \(sessionID ?? "None available")")
-        print("Access Token: \(accessToken ?? "None available")")
+        print("Access Token: \(accessToken)")
         print("ServerID: \(serverID ?? "None available")")
     }
     
@@ -79,17 +80,14 @@ final class JellyfinModel: StreamingServiceProtocol {
     }
     
     func getLibraries() async throws -> [LibraryModel] {
-        guard let accessToken else { throw NetworkError.missingAccessToken }
         return try await networkAPI.getLibraries(accessToken: accessToken)
     }
     
     func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem? {
-        guard let accessToken = accessToken else { return nil }
         return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, bitrate: mediaSource.videoStreams[0].bitrate, subtitleID: subtitleID, audioID: audioID, videoID: videoID)
     }
     
     func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
-        guard let accessToken else { return [] }
         return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
     }
 }

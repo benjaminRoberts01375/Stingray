@@ -47,7 +47,6 @@ struct DashboardView: View {
             }
         }
         .task {
-            print("Checking library status")
             guard case .waiting = libraryStatus else {
                 print("No need for libraries")
                 return
@@ -56,16 +55,10 @@ struct DashboardView: View {
             do {
                 let libraries = try await streamingService.getLibraries()
                 libraryStatus = .available(libraries)
-                print("Loaded \(libraries.count) libraries. Attempting to load library content...")
-                guard let accessToken = streamingService.accessToken else {
-                    print("No access token provided")
-                    libraryStatus = .waiting
-                    return
-                }
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for library in libraries {
                         group.addTask {
-                            try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: accessToken)
+                            try await library.loadMedia(networkAPI: streamingService.networkAPI, accessToken: streamingService.accessToken)
                         }
                     }
                     try await group.waitForAll()
