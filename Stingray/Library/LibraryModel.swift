@@ -63,6 +63,11 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         var currentIndex = 0
         var allMedia: [MediaModel] = []
         
+        // Preserve existing media if we're adding to it
+        if case .available(let existingMedia) = self.media {
+            allMedia = existingMedia
+        }
+        
         // Keep fetching batches until we get fewer items than the batch size
         while true {
             let incomingMedia = try await networkAPI.getLibraryMedia(
@@ -76,6 +81,10 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             )
             
             allMedia.append(contentsOf: incomingMedia)
+            
+            // Update the UI after each batch
+            media = .available(allMedia)
+            
             print("Loaded batch starting at index \(currentIndex): \(incomingMedia.count) items (total: \(allMedia.count))")
             
             // If we received fewer items than requested, we've reached the end
@@ -84,13 +93,6 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             }
             
             currentIndex += batchSize
-        }
-        
-        switch self.media {
-        case .unloaded, .waiting, .error:
-            media = .available(allMedia)
-        case .available(let existingMedia):
-            media = .available(existingMedia + allMedia)
         }
     }
 }
