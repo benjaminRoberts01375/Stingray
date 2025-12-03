@@ -58,12 +58,39 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     
     func loadMedia(networkAPI: AdvancedNetworkProtocol, accessToken: String) async throws {
         print("Loading media for \(self.title) with ID \(self.id)")
-        let incomingMedia = try await networkAPI.getLibraryMedia(accessToken: accessToken, libraryId: self.id, index: 0, count: 2000, sortOrder: .Ascending, sortBy: .SortName, mediaTypes: [.movies, .tv(nil)])
+        
+        let batchSize = 50
+        var currentIndex = 0
+        var allMedia: [MediaModel] = []
+        
+        // Keep fetching batches until we get fewer items than the batch size
+        while true {
+            let incomingMedia = try await networkAPI.getLibraryMedia(
+                accessToken: accessToken,
+                libraryId: self.id,
+                index: currentIndex,
+                count: batchSize,
+                sortOrder: .Ascending,
+                sortBy: .SortName,
+                mediaTypes: [.movies, .tv(nil)]
+            )
+            
+            allMedia.append(contentsOf: incomingMedia)
+            print("Loaded batch starting at index \(currentIndex): \(incomingMedia.count) items (total: \(allMedia.count))")
+            
+            // If we received fewer items than requested, we've reached the end
+            if incomingMedia.count < batchSize {
+                break
+            }
+            
+            currentIndex += batchSize
+        }
+        
         switch self.media {
         case .unloaded, .waiting, .error:
-            media = .available(incomingMedia)
+            media = .available(allMedia)
         case .available(let existingMedia):
-            media = .available(existingMedia + incomingMedia)
+            media = .available(existingMedia + allMedia)
         }
     }
 }
