@@ -375,14 +375,24 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         
         let response: Root = try await network.request(verb: .get, path: "/Items", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
         print("Prepping for tv decode if needed")
-        for item in response.items {
-            switch item.mediaType {
-            case .tv(_):
-                print("Season ID: \(item.id)")
-                let seasons = try await getSeasonMedia(accessToken: accessToken, seasonID: item.id)
-                item.mediaType = .tv(seasons)
-            default:
-                break
+        try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
+            for (index, item) in response.items.enumerated() {
+                switch item.mediaType {
+                case .tv(_):
+                    // Capture the id before creating the task
+                    let itemId = item.id
+                    group.addTask {
+                        print("Season ID: \(itemId)")
+                        let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
+                        return (index, seasons)
+                    }
+                default:
+                    break
+                }
+            }
+            
+            for try await (index, seasons) in group {
+                response.items[index].mediaType = .tv(seasons)
             }
         }
         return response.items
