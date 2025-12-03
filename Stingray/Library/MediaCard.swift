@@ -70,6 +70,7 @@ struct MediaCardNoImage: View {
                     .font(.system(size: 48))
                     .foregroundStyle(.secondary)
                 Text("No image available")
+                    .multilineTextAlignment(.center)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
