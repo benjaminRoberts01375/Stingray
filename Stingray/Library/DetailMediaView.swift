@@ -52,7 +52,12 @@ struct DetailMediaView: View {
                             PlayerView(streamingService: streamingService, mediaSource: source)
                                 .id(source.id)
                         } label: {
-                            Text("Play \(source.name)")
+                            if source.startTicks > 0 {
+                                Text("Play \(source.name) - \(String(ticks: source.startTicks))")
+                            } else {
+                                Text("Play \(source.name)")
+                            }
+                            
                         }
                     }
                 }
