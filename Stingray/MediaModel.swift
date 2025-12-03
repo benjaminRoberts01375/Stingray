@@ -45,6 +45,7 @@ public protocol MediaSourceProtocol: Identifiable {
     var videoStreams: [any MediaStreamProtocol] { get }
     var audioStreams: [any MediaStreamProtocol] { get }
     var subtitleStreams: [any MediaStreamProtocol] { get }
+    var startTicks: Int { get set }
 }
 
 extension MediaSourceProtocol {
@@ -127,6 +128,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         case mediaType = "Type"
         case duration = "RunTimeTicks"
         case people = "People"
+        case userData = "UserData"
     }
     
     public init(from decoder: Decoder) throws {
@@ -171,6 +173,21 @@ public final class MediaModel: MediaProtocol, Decodable {
         }
         
         self.people = try container.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []
+        
+        // Get current progress if it exists
+        struct UserData: Decodable {
+            let playbackPositionTicks: Int
+            let mediaItemID: String
+            
+            enum CodingKeys: String, CodingKey {
+                case playbackPositionTicks = "PlaybackPositionTicks"
+                case mediaItemID = "ItemId"
+            }
+        }
+        let userDataContainer = try container.decode(UserData.self, forKey: .userData)
+        if let defaultSource = self.mediaSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
+            self.mediaSources[defaultSource].startTicks = userDataContainer.playbackPositionTicks
+        }
     }
 }
 
@@ -219,6 +236,7 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var videoStreams: [any MediaStreamProtocol]
     public var audioStreams: [any MediaStreamProtocol]
     public var subtitleStreams: [any MediaStreamProtocol]
+    public var startTicks: Int
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -238,6 +256,9 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
         self.videoStreams = allStreams.filter { $0.type == .video }
         self.audioStreams = allStreams.filter { $0.type == .audio }
         self.subtitleStreams = allStreams.filter { $0.type == .subtitle }
+        
+        // Default values
+        startTicks = 0
     }
     
     public static func == (lhs: MediaSource, rhs: MediaSource) -> Bool {
