@@ -16,8 +16,9 @@ struct PlayerView: View {
     @State private var mediaSource: any MediaSourceProtocol
     let streamingService: StreamingServiceProtocol
     let seasons: [(any TVSeasonProtocol)]?
+    let defaultStartTime: CMTime
     
-    init(player: AVPlayer? = nil, streamingService: StreamingServiceProtocol, mediaSource: any MediaSourceProtocol, seasons: [(any TVSeasonProtocol)]? = nil) {
+    init(player: AVPlayer? = nil, streamingService: StreamingServiceProtocol, mediaSource: any MediaSourceProtocol, seasons: [(any TVSeasonProtocol)]? = nil, startTicks: Int = 0) {
         self.player = player
         self.streamingService = streamingService
         self.mediaSource = mediaSource
@@ -25,6 +26,7 @@ struct PlayerView: View {
         self.selectedAudioID = mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
         self.selectedVideoID = mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1)
         self.seasons = seasons
+        self.defaultStartTime = CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1)
     }
     
     var body: some View {
@@ -36,7 +38,7 @@ struct PlayerView: View {
                 )
             }
         }
-        .task { newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true) }
+        .task { newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, startTime: defaultStartTime) }
         .ignoresSafeArea(.all)
     }
     
@@ -50,15 +52,17 @@ struct PlayerView: View {
                 {
                     let action = UIAction(title: "None") { _ in
                         self.selectedSubtitleID = nil
-                        newPlayer(subtitleID: nil, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
+                        let startTime: CMTime = player?.currentTime() ?? .zero
+                        newPlayer(subtitleID: nil, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, startTime: startTime)
                     }
                     action.state = selectedSubtitleID == nil ? .on : .off
                     return action
                 }()
             ] + mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
+                    let startTime: CMTime = player?.currentTime() ?? .zero
                     self.selectedSubtitleID = subtitleStream.id
-                    newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
+                    newPlayer(subtitleID: subtitleStream.id, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: mediaSource, startTime: startTime)
                 }
                 action.state = selectedSubtitleID == subtitleStream.id ? .on : .off
                 return action
@@ -69,8 +73,9 @@ struct PlayerView: View {
         if mediaSource.audioStreams.count > 1 {
             items.append(UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: mediaSource.audioStreams.map({ audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
+                    let startTime: CMTime = player?.currentTime() ?? .zero
                     self.selectedAudioID = audioStream.id
-                    newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID, mediaSource: mediaSource, keepTime: true)
+                    newPlayer(subtitleID: selectedSubtitleID, audioID: audioStream.id, videoID: selectedVideoID, mediaSource: mediaSource, startTime: startTime)
                 }
                 action.state = selectedAudioID == audioStream.id ? .on : .off
                 return action
@@ -81,8 +86,9 @@ struct PlayerView: View {
         if mediaSource.videoStreams.count > 1 {
             items.append(UIMenu(title: "Video", image: UIImage(systemName: "display"), children: mediaSource.videoStreams.map({ videoStream in
                 let action = UIAction(title: videoStream.title) { _ in
+                    let startTime: CMTime = player?.currentTime() ?? .zero
                     self.selectedVideoID = videoStream.id
-                    newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id, mediaSource: mediaSource, keepTime: true)
+                    newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: videoStream.id, mediaSource: mediaSource, startTime: startTime)
                 }
                 action.state = selectedVideoID == videoStream.id ? .on : .off
                 return action
@@ -107,7 +113,7 @@ struct PlayerView: View {
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
                         getNewStreamIDs(episode: episode)
                         self.mediaSource = episode.mediaSources.first ?? self.mediaSource
-                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, startTime: .zero)
                     }), at: 0)
                 }
                 
@@ -117,7 +123,7 @@ struct PlayerView: View {
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.left"), handler: { _ in
                         getNewStreamIDs(episode: episode)
                         self.mediaSource = episode.mediaSources.first ?? self.mediaSource
-                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, startTime: .zero)
                     }), at: 0)
                     setPreviousEpisode = true
                 }
@@ -129,7 +135,7 @@ struct PlayerView: View {
                     let action = UIAction(title: episode.title) { _ in
                         getNewStreamIDs(episode: episode)
                         self.mediaSource = episode.mediaSources.first ?? self.mediaSource
-                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, keepTime: false)
+                        newPlayer(subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID, mediaSource: episode.mediaSources.first ?? mediaSource, startTime: .zero)
                     }
                     action.state = mediaSource.id == episode.mediaSources.first?.id ? .on : .off
                     return action
@@ -168,8 +174,7 @@ struct PlayerView: View {
         }
     }
     
-    private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int, mediaSource: any MediaSourceProtocol, keepTime: Bool) {
-        let currentTime = player?.currentTime()
+    private func newPlayer(subtitleID: Int?, audioID: Int, videoID: Int, mediaSource: any MediaSourceProtocol, startTime: CMTime) {
         if let existingPlayer = player {
             existingPlayer.pause()
         }
@@ -180,9 +185,7 @@ struct PlayerView: View {
         }
         
         self.player = AVPlayer(playerItem: playerItem)
-        if let currentTime, keepTime {
-            self.player?.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        }
+        self.player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
         self.player?.play()
     }
 }

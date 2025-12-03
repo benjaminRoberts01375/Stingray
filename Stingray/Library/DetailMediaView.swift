@@ -49,7 +49,7 @@ struct DetailMediaView: View {
                 HStack {
                     ForEach(media.mediaSources, id: \.id) { source in
                         NavigationLink {
-                            PlayerView(streamingService: streamingService, mediaSource: source)
+                            PlayerView(streamingService: streamingService, mediaSource: source, startTicks: source.startTicks)
                                 .id(source.id)
                         } label: {
                             if source.startTicks > 0 {
@@ -57,7 +57,6 @@ struct DetailMediaView: View {
                             } else {
                                 Text("Play \(source.name)")
                             }
-                            
                         }
                     }
                 }
