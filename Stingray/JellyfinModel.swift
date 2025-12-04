@@ -15,7 +15,6 @@ protocol StreamingServiceProtocol {
     func getLibraryMedia(libraryID: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel]
 }
 
-@Observable
 final class JellyfinModel: StreamingServiceProtocol {
     var networkAPI: AdvancedNetworkProtocol
     var storageAPI: AdvancedStorageProtocol
@@ -81,7 +80,8 @@ final class JellyfinModel: StreamingServiceProtocol {
     }
     
     func getStreamingContent(mediaSource: any MediaSourceProtocol, subtitleID: Int?, audioID: Int, videoID: Int) -> AVPlayerItem? {
-        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, bitrate: mediaSource.videoStreams[0].bitrate, subtitleID: subtitleID, audioID: audioID, videoID: videoID)
+        let sessionID = UUID().uuidString
+        return networkAPI.getStreamingContent(accessToken: accessToken, contentID: mediaSource.id, bitrate: mediaSource.videoStreams[0].bitrate, subtitleID: subtitleID, audioID: audioID, videoID: videoID, sessionID: sessionID)
     }
     
     func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
