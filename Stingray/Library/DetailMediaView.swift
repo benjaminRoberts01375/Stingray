@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 11/17/25.
 //
 
+import AVKit
 import BlurHashKit
 import SwiftUI
 
@@ -47,16 +48,7 @@ struct DetailMediaView: View {
                 // All versions of a movie
                 HStack {
                     ForEach(media.mediaSources, id: \.id) { source in
-                        NavigationLink {
-                            PlayerView(streamingService: streamingService, mediaSource: source, startTicks: source.startTicks)
-                                .id(source.id)
-                        } label: {
-                            if source.startTicks > 0 {
-                                Text("Play \(source.name) - \(String(ticks: source.startTicks))")
-                            } else {
-                                Text("Play \(source.name)")
-                            }
-                        }
+                        MovieNavigationView(mediaSource: source, streamingService: streamingService)
                     }
                 }
                 
@@ -107,6 +99,33 @@ struct DetailMediaView: View {
                 .ignoresSafeArea()
         }
         .ignoresSafeArea()
+    }
+}
+
+fileprivate struct MovieNavigationView: View {
+    let mediaSource: any MediaSourceProtocol
+    let streamingService: any StreamingServiceProtocol
+    
+    var body: some View {
+        NavigationLink {
+            PlayerView(
+                vm: PlayerViewModel(
+                    selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                    selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                    mediaSource: mediaSource,
+                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    streamingService: streamingService,
+                    seasons: nil
+                )
+            )
+            .id(mediaSource.id)
+        } label: {
+            if mediaSource.startTicks > 0 {
+                Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
+            } else {
+                Text("Play \(mediaSource.name)")
+            }
+        }
     }
 }
 
@@ -205,26 +224,50 @@ fileprivate struct EpisodeSelectorView: View {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
-                        NavigationLink {
-                            PlayerView(streamingService: streamingService, mediaSource: source, seasons: seasons)
-                                .id(source.id)
-                        } label: {
-                            VStack(spacing: 0) {
-                                EpisodeArtView(episode: episode, streamingService: streamingService)
-                                Text(episode.title)
-                                    .multilineTextAlignment(.center)
-                                    .lineLimit(2)
-                                    .padding()
-                                Spacer(minLength: 0)
-                            }
-                            .frame(width: 350, height: 300)
-                        }
-                        .buttonStyle(.card)
-                        .focused($focusedEpisodeID, equals: episode.id)
+                        EpisodeNavigationView(mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode, focusedEpisodeID: $focusedEpisodeID)
                     }
                 }
             }
         }
+    }
+}
+
+fileprivate struct EpisodeNavigationView: View {
+    let mediaSource: any MediaSourceProtocol
+    let streamingService: any StreamingServiceProtocol
+    let seasons: [any TVSeasonProtocol]
+    let episode: any TVEpisodeProtocol
+    @FocusState.Binding var focusedEpisodeID: String?
+    
+    var body: some View {
+        NavigationLink {
+            PlayerView(
+                vm: (
+                    PlayerViewModel(
+                        selectedSubtitleID: mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id,
+                        selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                        selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                        mediaSource: mediaSource,
+                        startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                        streamingService: streamingService,
+                        seasons: seasons
+                    )
+                )
+            )
+            .id(mediaSource.id)
+        } label: {
+            VStack(spacing: 0) {
+                EpisodeArtView(episode: episode, streamingService: streamingService)
+                Text(episode.title)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding()
+                Spacer(minLength: 0)
+            }
+            .frame(width: 350, height: 300)
+        }
+        .buttonStyle(.card)
+        .focused($focusedEpisodeID, equals: episode.id)
     }
 }
 
