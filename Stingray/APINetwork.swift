@@ -65,7 +65,7 @@ public enum NetworkError: Error, LocalizedError {
 
 public enum MediaType: Decodable {
     case collections
-    case movies
+    case movies([any MediaSourceProtocol])
     case tv([TVSeason]?)
     
     public init (from decoder: Decoder) throws {
@@ -75,8 +75,8 @@ public enum MediaType: Decodable {
         switch stringValue {
         case MediaType.collections.rawValue:
             self = .collections
-        case MediaType.movies.rawValue:
-            self = .movies
+        case "Movie":
+            self = .movies([])
         case "Series":
             self = .tv(nil)
         default:

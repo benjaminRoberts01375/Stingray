@@ -14,7 +14,6 @@ public protocol MediaProtocol: Identifiable {
     var description: String { get }
     var ImageTags: any MediaImagesProtocol { get }
     var id: String { get }
-    var mediaSources: [any MediaSourceProtocol] { get }
     var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
     var genres: [String] { get }
     var maturity: String? { get }
@@ -106,7 +105,6 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var ImageTags: any MediaImagesProtocol
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var id: String
-    public var mediaSources: [any MediaSourceProtocol]
     public var genres: [String]
     public var maturity: String?
     public var releaseDate: Date?
@@ -151,14 +149,23 @@ public final class MediaModel: MediaProtocol, Decodable {
         
         self.id = try container.decode(String.self, forKey: .id)
         
-        // Decode media sources - may not exist for all items
-        self.mediaSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
-        
         self.genres = try container.decode([String].self, forKey: .genres)
         
         self.maturity = try container.decodeIfPresent(String.self, forKey: .maturity)
         
-        self.mediaType = try container.decode(MediaType.self, forKey: .mediaType)
+        // Setup media type which will have different types of content within it (ex. movie or tv seasons)
+        let mediaType = try container.decode(MediaType.self, forKey: .mediaType)
+        switch mediaType {
+        case .movies(_):
+            var movieSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
+            let userDataContainer = try container.decode(UserData.self, forKey: .userData)
+            if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID}) {
+                movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
+            }
+            self.mediaType = .movies(movieSources)
+        default:
+            self.mediaType = mediaType
+        }
         
         if let runtimeTicks = try container.decodeIfPresent(Int.self, forKey: .duration) {
             self.duration = .nanoseconds(100 * runtimeTicks)
@@ -183,10 +190,6 @@ public final class MediaModel: MediaProtocol, Decodable {
                 case playbackPositionTicks = "PlaybackPositionTicks"
                 case mediaItemID = "ItemId"
             }
-        }
-        let userDataContainer = try container.decode(UserData.self, forKey: .userData)
-        if let defaultSource = self.mediaSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
-            self.mediaSources[defaultSource].startTicks = userDataContainer.playbackPositionTicks
         }
     }
 }

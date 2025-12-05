@@ -100,7 +100,7 @@ final class JellyfinModel: StreamingServiceProtocol {
             count: count,
             sortOrder: .Ascending,
             sortBy: .SortName,
-            mediaTypes: [.movies, .tv(nil)]
+            mediaTypes: [.movies([]), .tv(nil)]
         )
     }
 }

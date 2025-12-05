@@ -45,10 +45,17 @@ struct DetailMediaView: View {
                 .buttonStyle(.plain)
                 .padding(.vertical)
                 
-                // All versions of a movie
+                // Buttons for each version of a movie
                 HStack {
-                    ForEach(media.mediaSources, id: \.id) { source in
-                        MovieNavigationView(mediaSource: source, streamingService: streamingService)
+                    switch media.mediaType {
+                    case .collections:
+                        EmptyView()
+                    case .movies(let sources):
+                        ForEach(sources, id: \.id) { source in
+                            MovieNavigationView(mediaSource: source, streamingService: streamingService)
+                        }
+                    case .tv(_):
+                        EmptyView()
                     }
                 }
                 
