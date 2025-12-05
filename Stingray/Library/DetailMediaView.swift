@@ -52,7 +52,7 @@ struct DetailMediaView: View {
                         EmptyView()
                     case .movies(let sources):
                         ForEach(sources, id: \.id) { source in
-                            MovieNavigationView(mediaSource: source, streamingService: streamingService)
+                            MovieNavigationView(mediaID: media.id, mediaSource: source, streamingService: streamingService)
                         }
                     case .tv(_):
                         EmptyView()
@@ -64,7 +64,7 @@ struct DetailMediaView: View {
                 case .tv(let seasons): // Show TV episodes
                     if let seasons = seasons {
                         ScrollView(.horizontal) {
-                            EpisodeSelectorView(seasons: seasons, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                            EpisodeSelectorView(mediaID: media.id, seasons: seasons, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
                         }
                         .scrollClipDisabled()
                         .padding(40)
@@ -110,6 +110,7 @@ struct DetailMediaView: View {
 }
 
 fileprivate struct MovieNavigationView: View {
+    let mediaID: String
     let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
     
@@ -120,6 +121,7 @@ fileprivate struct MovieNavigationView: View {
                     selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
                     selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                     mediaSource: mediaSource,
+                    mediaID: mediaID,
                     startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: nil
@@ -221,6 +223,7 @@ fileprivate struct MediaLogoView: View {
 
 // MARK: Episode selector
 fileprivate struct EpisodeSelectorView: View {
+    let mediaID: String
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
@@ -231,7 +234,7 @@ fileprivate struct EpisodeSelectorView: View {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
-                        EpisodeNavigationView(mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode, focusedEpisodeID: $focusedEpisodeID)
+                        EpisodeNavigationView(mediaID: mediaID, mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode, focusedEpisodeID: $focusedEpisodeID)
                     }
                 }
             }
@@ -240,6 +243,7 @@ fileprivate struct EpisodeSelectorView: View {
 }
 
 fileprivate struct EpisodeNavigationView: View {
+    let mediaID: String
     let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
     let seasons: [any TVSeasonProtocol]
@@ -255,6 +259,7 @@ fileprivate struct EpisodeNavigationView: View {
                         selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
                         selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
+                        mediaID: mediaID,
                         startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                         streamingService: streamingService,
                         seasons: seasons
