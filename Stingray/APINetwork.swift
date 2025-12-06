@@ -103,6 +103,7 @@ public protocol AdvancedNetworkProtocol {
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
     func getStreamingContent(accessToken: String, contentID: String, bitrate: Int?, subtitleID: Int?, audioID: Int, videoID: Int, sessionID: String) -> AVPlayerItem?
     func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason]
+    func updatePlaybackStatus(itemID: String, mediaSourceID: String, audioStreamIndex: Int, subtitleStreamIndex: Int?, playbackPosition: Int, playSessionID: String, userSessionID: String, playbackStatus: PlaybackStatus, accessToken: String) async throws
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -293,7 +294,6 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
     
     func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {
         guard let url = buildURL(path: path, urlParams: urlParams) else { return nil }
-        print(url.absoluteString)
         // Configure asset options with proper HTTP headers
         var options: [String: Any] = [:]
         if let headers = headers {
@@ -375,7 +375,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         
         let response: Root = try await network.request(verb: .get, path: "/Items", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
-        print("Prepping for tv decode if needed")
         try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
             for (index, item) in response.items.enumerated() {
                 switch item.mediaType {
@@ -383,7 +382,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     // Capture the id before creating the task
                     let itemId = item.id
                     group.addTask {
-                        print("Season ID: \(itemId)")
                         let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
                         return (index, seasons)
                     }
@@ -492,8 +490,63 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "SubtitleMethod", value: "Encode"))
             params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
         }
-        print("Video track: \(videoID), audio track: \(audioID), subtitles: \(String(describing: subtitleID)))")
         
         return network.buildAVPlayerItem(path: "/Videos/\(contentID)/main.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token": accessToken])
     }
+    
+    func updatePlaybackStatus(itemID: String, mediaSourceID: String, audioStreamIndex: Int, subtitleStreamIndex: Int?, playbackPosition: Int, playSessionID: String, userSessionID: String, playbackStatus: PlaybackStatus, accessToken: String) async throws {
+        struct PlaybackStatusStats: Encodable {
+            let itemID: String
+            let mediaSourceID: String
+            let audioStreamIndex: Int
+            let subtitleStreamIndex: Int?
+            let positionTicks: Int
+            let playSessionID: String
+            let userSessionID: String
+            let isPaused: Bool
+            
+            enum CodingKeys: String, CodingKey {
+                case itemID = "ItemId"
+                case mediaSourceID = "MediaSourceId"
+                case audioStreamIndex = "AudioStreamIndex"
+                case subtitleStreamIndex = "SubtitleStreamIndex"
+                case positionTicks = "PositionTicks"
+                case playSessionID = "PlaySessionId"
+                case userSessionID = "SessionId"
+                case isPaused = "IsPaused"
+            }
+        }
+        struct EmptyResponse: Decodable {}
+        
+        var isPaused = false
+        let path: String
+        switch playbackStatus {
+        case .play:
+            path = "Sessions/Playing"
+        case .stop:
+            path = "Sessions/Playing/Stopped"
+        case .progressed:
+            path = "Sessions/Playing/Progress"
+        case .paused:
+            path = "Sessions/Playing/Progress"
+            isPaused = true
+        }
+        
+        let stats: PlaybackStatusStats = PlaybackStatusStats(
+            itemID: itemID,
+            mediaSourceID: mediaSourceID,
+            audioStreamIndex: audioStreamIndex,
+            subtitleStreamIndex: subtitleStreamIndex,
+            positionTicks: playbackPosition,
+            playSessionID: playSessionID,
+            userSessionID: userSessionID,
+            isPaused: isPaused,
+        )
+        
+        let _: EmptyResponse = try await network.request(verb: .post, path: path, headers: ["X-MediaBrowser-Token": accessToken], urlParams: nil, body: stats)
+    }
+}
+
+public enum PlaybackStatus {
+    case play, stop, progressed, paused
 }

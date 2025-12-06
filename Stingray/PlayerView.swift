@@ -24,6 +24,7 @@ struct PlayerView: View {
         }
         .task { self.vm.newPlayer(startTime: self.vm.startTime) }
         .ignoresSafeArea(.all)
+        .onDisappear { vm.streamingService.playbackEnd() }
     }
     
     private func makeTransportBarItems() -> [UIMenuElement] {
@@ -78,7 +79,6 @@ struct PlayerView: View {
         
         // TV Season-related buttons
         if let seasons = self.vm.seasons {
-            print("Running seasons")
             let allEpisodes = seasons.flatMap(\.episodes)
             var setPreviousEpisode: Bool = false
             

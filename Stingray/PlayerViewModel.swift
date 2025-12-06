@@ -38,13 +38,12 @@ final class PlayerViewModel {
     public func newPlayer(startTime: CMTime) {
         if let existingPlayer = player {
             existingPlayer.pause()
+            streamingService.playbackEnd()
         }
-        guard let playerItem = streamingService.getStreamingContent(mediaSource: mediaSource, subtitleID: selectedSubtitleID, audioID: selectedAudioID, videoID: selectedVideoID)
-        else {
-            return
-        }
+        guard let player = streamingService.playbackStart(mediaID: mediaID, mediaSource: mediaSource, videoID: selectedVideoID, audioID: selectedAudioID, subtitleID: selectedSubtitleID)
+        else { return }
         
-        self.player = AVPlayer(playerItem: playerItem)
+        self.player = player
         self.player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
         self.player?.play()
     }

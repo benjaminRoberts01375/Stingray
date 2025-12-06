@@ -384,10 +384,7 @@ fileprivate struct EpisodeArtView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .animation(.easeOut(duration: 0.5), value: imageOpacity)
-                            .onAppear {
-                                print("Showing episode image for \(episode.title): \(url.absoluteString)")
-                                imageOpacity = 1
-                            }
+                            .onAppear { imageOpacity = 1 }
                     } placeholder: {
                         EmptyView()
                     }
