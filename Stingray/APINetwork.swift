@@ -410,13 +410,20 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 while !seasonsContainer.isAtEnd {
                     standInEpisodeNumber += 1
                     let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
+                    let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
                     
                     let episode: TVEpisode = TVEpisode(
                         id: try episodeContainer.decode(String.self, forKey: .id),
                         blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
                         title: try episodeContainer.decode(String.self, forKey: .title),
                         episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
-                        mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
+                        mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? [],
+                        lastPlayed: {
+                            guard let dateString = try? userDataContainer.decodeIfPresent(String.self, forKey: .lastPlayedDate) else { return nil }
+                            let formatter = ISO8601DateFormatter()
+                            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                            return formatter.date(from: dateString)
+                        }()
                     )
                     let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
                     
@@ -447,10 +454,15 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case seasonNumber = "ParentIndexNumber"
                 case blurHashes = "ImageBlurHashes"
                 case mediaSources = "MediaSources"
+                case userData = "UserData"
                 
                 case seasonID = "SeasonId" // The actual season ID
                 case seasonTitle = "SeasonName" // The actual season name
                 case seriesID = "SeriesId" // Fallback for seasonID if SeasonId is missing
+            }
+            
+            enum UserData: String, CodingKey {
+                case lastPlayedDate = "LastPlayedDate"
             }
         }
         
