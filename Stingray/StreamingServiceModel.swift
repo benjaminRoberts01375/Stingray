@@ -20,7 +20,7 @@ final class JellyfinModel: StreamingServiceProtocol {
     var networkAPI: AdvancedNetworkProtocol
     var storageAPI: AdvancedStorageProtocol
     
-    var url: URL? {
+    var url: URL {
         didSet { storageAPI.setServerURL(url) }
     }
     
@@ -46,12 +46,7 @@ final class JellyfinModel: StreamingServiceProtocol {
     
     var playerProgress: JellyfinPlayerProgress?
     
-    init(address: URL?) throws {
-        enum AddressError: Error {
-            case badAddress
-        }
-        
-        guard let address = address else { throw AddressError.badAddress }
+    init(address: URL) throws {
         self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: address))
         let storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
         self.storageAPI = storageAPI
@@ -61,7 +56,16 @@ final class JellyfinModel: StreamingServiceProtocol {
         self.sessionID = storageAPI.getSessionID()
         self.accessToken = storageAPI.getAccessToken() ?? ""
         self.serverID = storageAPI.getServerID()
-        print("URL: \(url?.absoluteString  ?? "None available")")
+        
+        // Manually call storage setters during init since didSet won't always trigger >:(
+        storageAPI.setServerURL(address)
+        storageAPI.setUsersName(self.usersName)
+        storageAPI.setUserID(self.usersID)
+        storageAPI.setSessionID(self.sessionID)
+        storageAPI.setAccessToken(self.accessToken)
+        storageAPI.setServerID(self.serverID)
+        
+        print("URL: \(url.absoluteString)")
         print("User's Name: \(usersName ?? "None available")")
         print("UserID: \(usersID ?? "None available")")
         print("SessionID: \(sessionID ?? "None available")")

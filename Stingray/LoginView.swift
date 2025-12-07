@@ -69,7 +69,11 @@ struct LoginView: View {
             print("Attempting to set up from storage")
             do {
                 let advancedStorage = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
-                loggedIn = .loggedIn(try JellyfinModel(address: advancedStorage.getServerURL()))
+                guard let url = advancedStorage.getServerURL() else {
+                    enum AddressError: Error { case badAddress }
+                    throw AddressError.badAddress
+                }
+                loggedIn = .loggedIn(try JellyfinModel(address: url))
             } catch {
                 print("Failed to setup from storage, showing login screen")
                 return

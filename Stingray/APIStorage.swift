@@ -28,7 +28,7 @@ public protocol BasicStorageProtocol {
 
 public protocol AdvancedStorageProtocol {
     func getServerURL() -> URL?
-    func setServerURL(_ url: URL?)
+    func setServerURL(_ url: URL)
     func getUsersName() -> String?
     func setUsersName(_ name: String?)
     func getUserID() -> String?
@@ -79,7 +79,8 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     func getServerURL() -> URL? {
         return storage.getURL(.serverURL)
     }
-    func setServerURL(_ url: URL?) {
+    func setServerURL(_ url: URL) {
+        print("Advanced Storage: Setting URL: \(url.absoluteString)")
         storage.setURL(.serverURL, value: url)
     }
     
