@@ -52,11 +52,11 @@ struct DetailMediaView: View {
                         EmptyView()
                     case .movies(let sources):
                         ForEach(sources, id: \.id) { source in
-                            MovieNavigationView(mediaID: media.id, mediaSource: source, streamingService: streamingService)
+                            MovieNavigationView(mediaSource: source, streamingService: streamingService)
                         }
                     case .tv(let seasons):
                         if let seasons = seasons {
-                            TVNextEpisodeView(mediaID: media.id, seasons: seasons, streamingService: streamingService)
+                            TVNextEpisodeView(seasons: seasons, streamingService: streamingService)
                         }
                     }
                 }
@@ -112,7 +112,6 @@ struct DetailMediaView: View {
 }
 
 fileprivate struct MovieNavigationView: View {
-    let mediaID: String
     let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
     
@@ -123,7 +122,6 @@ fileprivate struct MovieNavigationView: View {
                     selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
                     selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                     mediaSource: mediaSource,
-                    mediaID: mediaID,
                     startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: nil
@@ -225,7 +223,6 @@ fileprivate struct MediaLogoView: View {
 
 // MARK: Next episode selector
 fileprivate struct TVNextEpisodeView: View {
-    let mediaID: String
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
@@ -240,7 +237,6 @@ fileprivate struct TVNextEpisodeView: View {
                         selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
                         selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
-                        mediaID: mediaID,
                         startTime: .zero,
                         streamingService: streamingService,
                         seasons: seasons
@@ -259,7 +255,6 @@ fileprivate struct TVNextEpisodeView: View {
                             selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
                             selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                             mediaSource: mediaSource,
-                            mediaID: mediaID,
                             startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                             streamingService: streamingService,
                             seasons: seasons
@@ -326,7 +321,6 @@ fileprivate struct EpisodeNavigationView: View {
                         selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
                         selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
-                        mediaID: mediaID,
                         startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                         streamingService: streamingService,
                         seasons: seasons

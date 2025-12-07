@@ -14,14 +14,13 @@ final class PlayerViewModel {
     public var selectedSubtitleID: Int?
     public var selectedAudioID: Int
     public var selectedVideoID: Int
-    public var mediaID: String
     public var mediaSource: any MediaSourceProtocol
     public var startTime: CMTime
     
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
     
-    public init(selectedSubtitleID: Int? = nil, selectedAudioID: Int, selectedVideoID: Int, mediaSource: any MediaSourceProtocol, mediaID: String, startTime: CMTime?, streamingService: StreamingServiceProtocol, seasons: [any TVSeasonProtocol]?) {
+    public init(selectedSubtitleID: Int? = nil, selectedAudioID: Int, selectedVideoID: Int, mediaSource: any MediaSourceProtocol, startTime: CMTime?, streamingService: StreamingServiceProtocol, seasons: [any TVSeasonProtocol]?) {
         self.player = nil
         self.selectedSubtitleID = selectedSubtitleID
         self.selectedAudioID = selectedAudioID
@@ -30,7 +29,6 @@ final class PlayerViewModel {
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
         self.seasons = seasons
-        self.mediaID = mediaID
     }
     
     /// Creates a new player based on current state
@@ -40,7 +38,7 @@ final class PlayerViewModel {
             existingPlayer.pause()
             streamingService.playbackEnd()
         }
-        guard let player = streamingService.playbackStart(mediaID: mediaID, mediaSource: mediaSource, videoID: selectedVideoID, audioID: selectedAudioID, subtitleID: selectedSubtitleID)
+        guard let player = streamingService.playbackStart(mediaSource: mediaSource, videoID: selectedVideoID, audioID: selectedAudioID, subtitleID: selectedSubtitleID)
         else { return }
         
         self.player = player

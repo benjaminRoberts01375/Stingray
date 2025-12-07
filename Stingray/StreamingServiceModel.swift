@@ -10,7 +10,7 @@ import AVKit
 protocol StreamingServiceProtocol {
     func login(username: String, password: String) async throws
     func getLibraries() async throws -> [LibraryModel]
-    func playbackStart(mediaID: String, mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
+    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
     func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
     func getLibraryMedia(libraryID: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel]
@@ -102,7 +102,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         )
     }
     
-    func playbackStart(mediaID: String, mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer? {
+    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer? {
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID } ),
               let playerItem = networkAPI.getStreamingContent(
@@ -120,7 +120,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         self.playerProgress = JellyfinPlayerProgress(
             player: player,
             network: networkAPI,
-            mediaID: mediaID,
+            mediaID: mediaSource.id,
             mediaSourceID: mediaSource.id,
             videoID: videoID,
             audioID: audioID,
