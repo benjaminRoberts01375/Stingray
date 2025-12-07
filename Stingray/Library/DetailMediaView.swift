@@ -54,8 +54,10 @@ struct DetailMediaView: View {
                         ForEach(sources, id: \.id) { source in
                             MovieNavigationView(mediaID: media.id, mediaSource: source, streamingService: streamingService)
                         }
-                    case .tv(_):
-                        EmptyView()
+                    case .tv(let seasons):
+                        if let seasons = seasons {
+                            TVNextEpisodeView(mediaID: media.id, seasons: seasons, streamingService: streamingService)
+                        }
                     }
                 }
                 
@@ -218,6 +220,71 @@ fileprivate struct MediaLogoView: View {
                 Text(items.joined(separator: " • "))
             }
         }
+    }
+}
+
+// MARK: Next episode selector
+fileprivate struct TVNextEpisodeView: View {
+    let mediaID: String
+    let seasons: [any TVSeasonProtocol]
+    let streamingService: any StreamingServiceProtocol
+    
+    var body: some View {
+        if let nextEpisode = getNextUp(), let mediaSource = nextEpisode.mediaSources.first {
+            
+            // Always restart episode button
+            NavigationLink {
+                PlayerView(
+                    vm: PlayerViewModel(
+                        selectedSubtitleID: mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id,
+                        selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                        selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                        mediaSource: mediaSource,
+                        mediaID: mediaID,
+                        startTime: .zero,
+                        streamingService: streamingService,
+                        seasons: seasons
+                    )
+                )
+            } label: {
+                Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(nextEpisode.title)")
+            }
+            
+            // If the next episode to play already has progress
+            if mediaSource.startTicks != 0 {
+                NavigationLink {
+                    PlayerView(
+                        vm: PlayerViewModel(
+                            selectedSubtitleID: mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id,
+                            selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                            selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                            mediaSource: mediaSource,
+                            mediaID: mediaID,
+                            startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                            streamingService: streamingService,
+                            seasons: seasons
+                        )
+                    )
+                } label: {
+                    Text("Resume \(nextEpisode.title)")
+                }
+            }
+        }
+    }
+    
+    func getNextUp() -> (any TVEpisodeProtocol)? {
+        let allEpisodes = seasons.flatMap(\.episodes)
+        guard let mostRecentEpisode = (allEpisodes.enumerated().max { $0.element.lastPlayed ?? .distantPast < $1.element.lastPlayed ?? .distantPast }),
+              let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
+        else { return allEpisodes.first }
+        
+        if Double(mostRecentMediaSource.startTicks) < 0.9 * Double(mostRecentEpisode.element.runtimeTicks) ||
+            mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
+            print("Watched \(mostRecentMediaSource.startTicks) of \(mostRecentEpisode.element.runtimeTicks) (\(mostRecentMediaSource.startTicks * 100 / mostRecentEpisode.element.runtimeTicks)%)")
+            return mostRecentEpisode.element
+        }
+        
+        return allEpisodes[mostRecentEpisode.offset + 1]
     }
 }
 
