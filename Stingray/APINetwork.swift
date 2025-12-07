@@ -513,7 +513,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             let itemID: String
             let mediaSourceID: String
             let audioStreamIndex: Int
-            let subtitleStreamIndex: Int?
+            let subtitleStreamIndex: Int
             let positionTicks: Int
             let playSessionID: String
             let userSessionID: String
@@ -550,7 +550,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             itemID: itemID,
             mediaSourceID: mediaSourceID,
             audioStreamIndex: audioStreamIndex,
-            subtitleStreamIndex: subtitleStreamIndex,
+            subtitleStreamIndex: subtitleStreamIndex ?? -1,
             positionTicks: playbackPosition,
             playSessionID: playSessionID,
             userSessionID: userSessionID,
