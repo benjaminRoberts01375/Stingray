@@ -423,7 +423,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                             let formatter = ISO8601DateFormatter()
                             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                             return formatter.date(from: dateString)
-                        }()
+                        }(),
+                        runtimeTicks: try episodeContainer.decode(Int.self, forKey: .episodeRuntimeTicks)
                     )
                     let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
                     
@@ -450,6 +451,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             private enum SeasonKeys: String, CodingKey {
                 case title = "Name"
                 case id = "Id"
+                case episodeRuntimeTicks = "RunTimeTicks"
                 case episodeNumber = "IndexNumber"
                 case seasonNumber = "ParentIndexNumber"
                 case blurHashes = "ImageBlurHashes"
