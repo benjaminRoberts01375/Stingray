@@ -17,7 +17,7 @@ struct DetailMediaView: View {
     let streamingService: StreamingServiceProtocol
     @State private var logoOpacity: Double = 0
     @State private var showMetadata: Bool = false
-    @FocusState private var focusedEpisodeID: String?
+    @FocusState private var focus: ButtonType?
     @State private var shouldBlurBackground: Bool = false
     private let titleShadowSize: CGFloat = 800
     
@@ -44,19 +44,20 @@ struct DetailMediaView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical)
+                .focused($focus, equals: .metadata)
                 
-                // Buttons for each version of a movie
+                // Play buttons
                 HStack {
                     switch media.mediaType {
                     case .collections:
                         EmptyView()
                     case .movies(let sources):
                         ForEach(sources, id: \.id) { source in
-                            MovieNavigationView(mediaSource: source, streamingService: streamingService)
+                            MovieNavigationView(mediaSource: source, streamingService: streamingService, focus: $focus)
                         }
                     case .tv(let seasons):
                         if let seasons = seasons {
-                            TVNextEpisodeView(seasons: seasons, streamingService: streamingService)
+                            TVNextEpisodeView(seasons: seasons, streamingService: streamingService, focus: $focus)
                         }
                     }
                 }
@@ -67,7 +68,7 @@ struct DetailMediaView: View {
                     if let seasons = seasons {
                         ScrollViewReader { scrollProxy in
                             ScrollView(.horizontal) {
-                                EpisodeSelectorView(mediaID: media.id, seasons: seasons, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                                EpisodeSelectorView(mediaID: media.id, seasons: seasons, streamingService: streamingService, focus: $focus)
                             }
                             .scrollClipDisabled()
                             .padding(40)
@@ -104,8 +105,13 @@ struct DetailMediaView: View {
             .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
         }
         .toolbar(.hidden, for: .tabBar)
-        .onChange(of: focusedEpisodeID) { _, newValue in
-            shouldBlurBackground = newValue != nil
+        .onChange(of: focus) { _, newValue in
+            switch focus {
+            case .play, .metadata:
+                shouldBlurBackground = false
+            case .media, nil:
+                shouldBlurBackground = true
+            }
         }
         .fullScreenCover(isPresented: $showMetadata) {
             MediaMetadataView(media: media, streamingService: streamingService)
@@ -121,6 +127,8 @@ struct DetailMediaView: View {
 fileprivate struct MovieNavigationView: View {
     let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
+    
+    @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
         NavigationLink {
@@ -142,6 +150,7 @@ fileprivate struct MovieNavigationView: View {
                 Text("Play \(mediaSource.name)")
             }
         }
+        .focused($focus, equals: .play)
     }
 }
 
@@ -233,6 +242,8 @@ fileprivate struct TVNextEpisodeView: View {
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
+    @FocusState.Binding var focus: ButtonType?
+    
     static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
         let allEpisodes = seasons.flatMap(\.episodes)
         guard let mostRecentEpisode = (allEpisodes.enumerated().max { $0.element.lastPlayed ?? .distantPast < $1.element.lastPlayed ?? .distantPast }),
@@ -267,6 +278,7 @@ fileprivate struct TVNextEpisodeView: View {
             } label: {
                 Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(nextEpisode.title)")
             }
+            .focused($focus, equals: .play)
             
             // If the next episode to play already has progress
             if mediaSource.startTicks != 0 {
@@ -285,6 +297,7 @@ fileprivate struct TVNextEpisodeView: View {
                 } label: {
                     Text("Resume \(nextEpisode.title)")
                 }
+                .focused($focus, equals: .play)
             }
         }
     }
@@ -296,14 +309,15 @@ fileprivate struct EpisodeSelectorView: View {
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
-    @FocusState.Binding var focusedEpisodeID: String?
+    @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
         HStack {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
-                        EpisodeNavigationView(mediaID: mediaID, mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode, focusedEpisodeID: $focusedEpisodeID)
+                        EpisodeNavigationView(mediaID: mediaID, mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode)
+                            .focused($focus, equals: .media)
                     }
                 }
             }
@@ -317,7 +331,6 @@ fileprivate struct EpisodeNavigationView: View {
     let streamingService: any StreamingServiceProtocol
     let seasons: [any TVSeasonProtocol]
     let episode: any TVEpisodeProtocol
-    @FocusState.Binding var focusedEpisodeID: String?
     
     var body: some View {
         NavigationLink {
@@ -347,7 +360,6 @@ fileprivate struct EpisodeNavigationView: View {
             .frame(width: 350, height: 300)
         }
         .buttonStyle(.card)
-        .focused($focusedEpisodeID, equals: episode.id)
     }
 }
 
@@ -460,4 +472,10 @@ fileprivate struct EpisodeArtView: View {
             }
         }
     }
+}
+
+fileprivate enum ButtonType: Hashable {
+    case play
+    case media
+    case metadata
 }
