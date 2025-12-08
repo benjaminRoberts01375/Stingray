@@ -254,6 +254,7 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
         case name = "Name"
         case mediaStreams = "MediaStreams"
         case duration = "RunTimeTicks"
+        case defaultAudioIndex = "DefaultAudioStreamIndex"
     }
     
     public init(from decoder: Decoder) throws {
@@ -267,8 +268,16 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
         
         // Separate streams by type
         self.videoStreams = allStreams.filter { $0.type == .video }
-        self.audioStreams = allStreams.filter { $0.type == .audio }
+        var audioStreams = allStreams.filter { $0.type == .audio }
         self.subtitleStreams = allStreams.filter { $0.type == .subtitle }
+        
+        if let defaultAudioIndex = try container.decodeIfPresent(Int.self, forKey: .defaultAudioIndex) {
+            for i in audioStreams.indices {
+                if audioStreams[i].id == defaultAudioIndex { audioStreams[i].isDefault = true }
+                else { audioStreams[i].isDefault = false }
+            }
+        }
+        self.audioStreams = audioStreams
     }
     
     public static func == (lhs: MediaSource, rhs: MediaSource) -> Bool {
