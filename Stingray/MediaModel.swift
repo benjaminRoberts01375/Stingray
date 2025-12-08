@@ -97,6 +97,7 @@ public protocol TVEpisodeProtocol: Identifiable {
     var episodeNumber: Int { get }
     var mediaSources: [any MediaSourceProtocol] { get }
     var lastPlayed: Date? { get }
+    var overview: String? { get }
 }
 
 // MARK: Concrete types
@@ -341,6 +342,7 @@ public struct TVEpisode: TVEpisodeProtocol {
     public var episodeNumber: Int
     public var mediaSources: [any MediaSourceProtocol]
     public var lastPlayed: Date?
+    public var overview: String?
 }
 
 public enum StreamType: String, Decodable, Equatable {

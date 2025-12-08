@@ -424,6 +424,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                             return formatter.date(from: dateString)
                         }(),
+                        overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
                     )
                     let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
                     if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
@@ -457,6 +458,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case id = "Id"
                 case episodeRuntimeTicks = "RunTimeTicks"
                 case episodeNumber = "IndexNumber"
+                case episodeOverview = "Overview"
                 case seasonNumber = "ParentIndexNumber"
                 case blurHashes = "ImageBlurHashes"
                 case mediaSources = "MediaSources"
@@ -476,6 +478,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "enableImages", value: "true"),
             URLQueryItem(name: "fields", value: "MediaSources"),
+            URLQueryItem(name: "fields", value: "Overview"),
         ]
         let response: Root = try await network.request(verb: .get, path: "/Shows/\(seasonID)/Episodes", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
         return response.items
