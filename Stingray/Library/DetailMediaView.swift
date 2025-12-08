@@ -65,12 +65,19 @@ struct DetailMediaView: View {
                 switch media.mediaType {
                 case .tv(let seasons): // Show TV episodes
                     if let seasons = seasons {
-                        ScrollView(.horizontal) {
-                            EpisodeSelectorView(mediaID: media.id, seasons: seasons, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                        ScrollViewReader { scrollProxy in
+                            ScrollView(.horizontal) {
+                                EpisodeSelectorView(mediaID: media.id, seasons: seasons, streamingService: streamingService, focusedEpisodeID: $focusedEpisodeID)
+                            }
+                            .scrollClipDisabled()
+                            .padding(40)
+                            .ignoresSafeArea()
+                            .task {
+                                if let nextEpisodeID = TVNextEpisodeView.getNextUp(from: seasons)?.id {
+                                    scrollProxy.scrollTo(nextEpisodeID, anchor: .center)
+                                }
+                            }
                         }
-                        .scrollClipDisabled()
-                        .padding(40)
-                        .ignoresSafeArea()
                     }
                 default: EmptyView()
                 }
@@ -226,8 +233,23 @@ fileprivate struct TVNextEpisodeView: View {
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
+    static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
+        let allEpisodes = seasons.flatMap(\.episodes)
+        guard let mostRecentEpisode = (allEpisodes.enumerated().max { $0.element.lastPlayed ?? .distantPast < $1.element.lastPlayed ?? .distantPast }),
+              let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
+        else { return allEpisodes.first }
+        
+        if let durationTicks = mostRecentMediaSource.durationTicks,
+           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) ||
+            mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
+            return mostRecentEpisode.element
+        }
+        
+        return allEpisodes[mostRecentEpisode.offset + 1]
+    }
+    
     var body: some View {
-        if let nextEpisode = getNextUp(), let mediaSource = nextEpisode.mediaSources.first {
+        if let nextEpisode = Self.getNextUp(from: seasons), let mediaSource = nextEpisode.mediaSources.first {
             
             // Always restart episode button
             NavigationLink {
@@ -265,21 +287,6 @@ fileprivate struct TVNextEpisodeView: View {
                 }
             }
         }
-    }
-    
-    func getNextUp() -> (any TVEpisodeProtocol)? {
-        let allEpisodes = seasons.flatMap(\.episodes)
-        guard let mostRecentEpisode = (allEpisodes.enumerated().max { $0.element.lastPlayed ?? .distantPast < $1.element.lastPlayed ?? .distantPast }),
-              let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
-        else { return allEpisodes.first }
-        
-        if Double(mostRecentMediaSource.startTicks) < 0.9 * Double(mostRecentEpisode.element.runtimeTicks) ||
-            mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
-            print("Watched \(mostRecentMediaSource.startTicks) of \(mostRecentEpisode.element.runtimeTicks) (\(mostRecentMediaSource.startTicks * 100 / mostRecentEpisode.element.runtimeTicks)%)")
-            return mostRecentEpisode.element
-        }
-        
-        return allEpisodes[mostRecentEpisode.offset + 1]
     }
 }
 

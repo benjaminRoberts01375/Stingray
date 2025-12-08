@@ -45,6 +45,7 @@ public protocol MediaSourceProtocol: Identifiable {
     var audioStreams: [any MediaStreamProtocol] { get }
     var subtitleStreams: [any MediaStreamProtocol] { get }
     var startTicks: Int { get set }
+    var durationTicks: Int? { get }
 }
 
 extension MediaSourceProtocol {
@@ -96,7 +97,6 @@ public protocol TVEpisodeProtocol: Identifiable {
     var episodeNumber: Int { get }
     var mediaSources: [any MediaSourceProtocol] { get }
     var lastPlayed: Date? { get }
-    var runtimeTicks: Int { get }
 }
 
 // MARK: Concrete types
@@ -241,18 +241,25 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var videoStreams: [any MediaStreamProtocol]
     public var audioStreams: [any MediaStreamProtocol]
     public var subtitleStreams: [any MediaStreamProtocol]
-    public var startTicks: Int
+    private var loadingStartTicks: Int?
+    public var startTicks: Int {
+        get { return loadingStartTicks ?? 0 }
+        set { self.loadingStartTicks = newValue }
+    }
+    public var durationTicks: Int?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
         case mediaStreams = "MediaStreams"
+        case duration = "RunTimeTicks"
     }
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
         self.name = try container.decode(String.self, forKey: .name)
+        self.durationTicks = try container.decodeIfPresent(Int.self, forKey: .duration)
         
         // Decode all media streams
         let allStreams = try container.decodeIfPresent([MediaStream].self, forKey: .mediaStreams) ?? []
@@ -261,9 +268,6 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
         self.videoStreams = allStreams.filter { $0.type == .video }
         self.audioStreams = allStreams.filter { $0.type == .audio }
         self.subtitleStreams = allStreams.filter { $0.type == .subtitle }
-        
-        // Default values
-        startTicks = 0
     }
     
     public static func == (lhs: MediaSource, rhs: MediaSource) -> Bool {
@@ -337,7 +341,6 @@ public struct TVEpisode: TVEpisodeProtocol {
     public var episodeNumber: Int
     public var mediaSources: [any MediaSourceProtocol]
     public var lastPlayed: Date?
-    public var runtimeTicks: Int
 }
 
 public enum StreamType: String, Decodable, Equatable {

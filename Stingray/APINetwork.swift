@@ -412,7 +412,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
                     let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
                     
-                    let episode: TVEpisode = TVEpisode(
+                    var episode: TVEpisode = TVEpisode(
                         id: try episodeContainer.decode(String.self, forKey: .id),
                         blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
                         title: try episodeContainer.decode(String.self, forKey: .title),
@@ -424,9 +424,13 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                             return formatter.date(from: dateString)
                         }(),
-                        runtimeTicks: try episodeContainer.decode(Int.self, forKey: .episodeRuntimeTicks)
                     )
                     let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
+                    if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
+                        for mediaSourceIndex in episode.mediaSources.indices {
+                            episode.mediaSources[mediaSourceIndex].startTicks = playbackTicks
+                        }
+                    }
                     
                     if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Season already exists, append the episode
                         tempSeasons[seasonIndex].episodes.append(episode)
@@ -465,6 +469,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             
             enum UserData: String, CodingKey {
                 case lastPlayedDate = "LastPlayedDate"
+                case playbackPosition = "PlaybackPositionTicks"
             }
         }
         
