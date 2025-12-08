@@ -53,7 +53,7 @@ struct DashboardView: View {
             }
             print("Getting libraries")
             do {
-                let libraries = try await streamingService.getLibraries()
+                let libraries = try await streamingService.getLibraries().filter { $0.title != "Collections" && $0.title != "Playlists" }
                 libraryStatus = .available(libraries)
                 try await withThrowingTaskGroup(of: Void.self) { group in
                     for library in libraries {
