@@ -405,6 +405,17 @@ fileprivate struct EpisodeView: View {
                 .focused($isFocused, equals: true)
                 .padding(.top, isFocused ?? false ? 16 : 0)
                 .animation(.easeOut(duration: 0.4), value: isFocused)
+                .sheet(isPresented: $showDetails) {
+                    VStack {
+                        Spacer()
+                        MediaLogoView(media: media, logoImageURL: logoImageURL)
+                            .padding()
+                        Spacer()
+                        Text(overview)
+                            .padding()
+                        Spacer()
+                    }
+                }
                 .focused($focus, equals: .media)
             }
         }
