@@ -83,7 +83,7 @@ struct DetailMediaView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding()
-            .offset(y: focus == .media ? 0 : 450)
+            .offset(y: focus == .media ? 0 : 550)
             .animation(.smooth(duration: 0.4), value: focus)
             .background(alignment: .bottom) {
                 Circle()
@@ -319,7 +319,7 @@ fileprivate struct EpisodeSelectorView: View {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
-                        EpisodeView(media: media, source: source, streamingService: streamingService, seasons: seasons, episode: episode, focus: $focus)
+                        EpisodeView(logoImageURL: logoImageURL, media: media, source: source, streamingService: streamingService, seasons: seasons, episode: episode, focus: $focus)
                     }
                 }
             }
@@ -365,6 +365,7 @@ fileprivate struct EpisodeNavigationView: View {
 }
 
 fileprivate struct EpisodeView: View {
+    let logoImageURL: URL?
     let media: any MediaProtocol
     let source: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
@@ -388,17 +389,17 @@ fileprivate struct EpisodeView: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(overview)
-                            .lineLimit(3)
+                            .lineLimit(6)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(16)
-                            .background {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.white.opacity(isFocused ?? false ? 0.1 : 0))
-                            }
-                            .padding(-16)
                     }
-                    .frame(width: 400)
+                    .frame(width: 400, height: 200)
+                    .padding(16)
+                    .background {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(isFocused ?? false ? 0.1 : 0))
+                    }
+                    .padding(-16)
                 }
                 .buttonStyle(.plain)
                 .focused($isFocused, equals: true)
