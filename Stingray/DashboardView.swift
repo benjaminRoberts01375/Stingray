@@ -64,6 +64,19 @@ struct DashboardView: View {
                     try await group.waitForAll()
                 }
                 print("Finished loading media for all libraries")
+                var goodLibraries: [LibraryModel] = []
+                for library in libraries {
+                    switch library.media {
+                    case .available(let libraryMedia):
+                        if !libraryMedia.isEmpty {
+                            goodLibraries.append(library)
+                        }
+                    default:
+                        break
+                    }
+                }
+                libraryStatus = .available(goodLibraries)
+                print("Pruned empty libraries")
             } catch {
                 libraryStatus = .error(error)
                 print("Failed to get libraries: \(error.localizedDescription)")
