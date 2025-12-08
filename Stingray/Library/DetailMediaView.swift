@@ -91,7 +91,7 @@ struct DetailMediaView: View {
                     return 0
                 }
             }())
-            .animation(.smooth(duration: 0.4), value: focus)
+            .animation(.smooth(duration: 0.5), value: focus)
             .background(alignment: .bottom) {
                 Circle()
                     .fill(
@@ -196,7 +196,7 @@ fileprivate struct MediaBackgroundView: View {
             // Blurry background
             Color.clear
                 .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
-                .animation(.smooth(duration: 0.4), value: shouldBlurBackground)
+                .animation(.smooth(duration: 0.5), value: shouldBlurBackground)
         }
     }
 }
@@ -412,7 +412,7 @@ fileprivate struct EpisodeView: View {
                 .buttonStyle(.plain)
                 .focused($isFocused, equals: true)
                 .padding(.top, isFocused ?? false ? 16 : 0)
-                .animation(.easeOut(duration: 0.4), value: isFocused)
+                .animation(.easeOut(duration: 0.5), value: isFocused)
                 .sheet(isPresented: $showDetails) {
                     VStack {
                         Spacer()
