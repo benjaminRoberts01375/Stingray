@@ -66,7 +66,7 @@ struct DetailMediaView: View {
                     if let seasons = seasons {
                         ScrollViewReader { scrollProxy in
                             ScrollView(.horizontal) {
-                                EpisodeSelectorView(mediaID: media.id, seasons: seasons, streamingService: streamingService, focus: $focus)
+                                EpisodeSelectorView(media: media, logoImageURL: logoImageURL, seasons: seasons, streamingService: streamingService, focus: $focus)
                             }
                             .scrollClipDisabled()
                             .padding(40)
@@ -83,7 +83,7 @@ struct DetailMediaView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding()
-            .offset(y: focus == .media ? 0 : 300)
+            .offset(y: focus == .media ? 0 : 450)
             .animation(.smooth(duration: 0.4), value: focus)
             .background(alignment: .bottom) {
                 Circle()
@@ -307,7 +307,9 @@ fileprivate struct TVNextEpisodeView: View {
 
 // MARK: Episode selector
 fileprivate struct EpisodeSelectorView: View {
-    let mediaID: String
+    let media: any MediaProtocol
+    let logoImageURL: URL?
+    
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
@@ -318,8 +320,7 @@ fileprivate struct EpisodeSelectorView: View {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
-                        EpisodeNavigationView(mediaID: mediaID, mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode)
-                            .focused($focus, equals: .media)
+                        EpisodeView(media: media, source: source, streamingService: streamingService, seasons: seasons, episode: episode, focus: $focus)
                     }
                 }
             }
@@ -359,9 +360,54 @@ fileprivate struct EpisodeNavigationView: View {
                     .padding()
                 Spacer(minLength: 0)
             }
-            .frame(width: 350, height: 300)
         }
         .buttonStyle(.card)
+    }
+}
+
+fileprivate struct EpisodeView: View {
+    let media: any MediaProtocol
+    let source: any MediaSourceProtocol
+    let streamingService: any StreamingServiceProtocol
+    let seasons: [any TVSeasonProtocol]
+    let episode: any TVEpisodeProtocol
+    
+    @FocusState.Binding var focus: ButtonType?
+    @FocusState private var isFocused: Bool?
+    @State var showDetails = false
+    
+    var body: some View {
+        VStack {
+            EpisodeNavigationView(mediaID: media.id, mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode)
+                .frame(width: 400, height: 325)
+                .focused($focus, equals: .media)
+                .focused($isFocused, equals: true)
+            
+            if let overview = episode.overview {
+                Button {
+                    self.showDetails = true
+                } label: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(overview)
+                            .lineLimit(3)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(16)
+                            .background {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color.white.opacity(isFocused ?? false ? 0.1 : 0))
+                            }
+                            .padding(-16)
+                    }
+                    .frame(width: 400)
+                }
+                .buttonStyle(.plain)
+                .focused($isFocused, equals: true)
+                .padding(.top, isFocused ?? false ? 16 : 0)
+                .animation(.easeOut(duration: 0.4), value: isFocused)
+                .focused($focus, equals: .media)
+            }
+        }
     }
 }
 
