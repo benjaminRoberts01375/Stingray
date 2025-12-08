@@ -392,6 +392,7 @@ fileprivate struct EpisodeView: View {
                             .lineLimit(6)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
                     }
                     .frame(width: 400, height: 200)
                     .padding(16)
