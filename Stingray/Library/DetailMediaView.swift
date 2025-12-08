@@ -85,6 +85,8 @@ struct DetailMediaView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding()
+            .offset(y: focus == .media ? 0 : 300)
+            .animation(.smooth(duration: 0.4), value: focus)
             .background(alignment: .bottom) {
                 Circle()
                     .fill(
