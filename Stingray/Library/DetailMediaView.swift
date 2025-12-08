@@ -30,9 +30,7 @@ struct DetailMediaView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            GeometryReader { geometry in
-                MediaBackgroundView(media: media, backgroundImageURL: backgroundImageURL, shouldBlurBackground: $shouldBlurBackground, size: geometry.size)
-            }
+                MediaBackgroundView(media: media, backgroundImageURL: backgroundImageURL, shouldBlurBackground: $shouldBlurBackground)
             VStack(alignment: .center, spacing: 15) {
                 Spacer()
                 
@@ -163,36 +161,37 @@ fileprivate struct MediaBackgroundView: View {
     let backgroundImageURL: URL?
     @State private var backgroundOpacity: Double = 0
     @Binding var shouldBlurBackground: Bool
-    let size: CGSize
     
     var body: some View {
-        // Background image
-        if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
-           let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
-            Image(uiImage: blurImage)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: size.width, height: size.height, alignment: .topLeading)
-                .clipped()
-        }
-        if media.ImageTags.thumbnail != nil {
-            AsyncImage(url: backgroundImageURL) { image in
-                image
+        GeometryReader { geo in
+            // Background image
+            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
+                Image(uiImage: blurImage)
                     .resizable()
-                    .frame(width: size.width, height: size.height, alignment: .topLeading)
-                    .opacity(backgroundOpacity)
-                    .animation(.easeOut(duration: 0.5), value: backgroundOpacity)
-                    .onAppear {
-                        backgroundOpacity = 1
-                    }
-            } placeholder: {
-                EmptyView()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                    .clipped()
             }
+            if media.ImageTags.thumbnail != nil {
+                AsyncImage(url: backgroundImageURL) { image in
+                    image
+                        .resizable()
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                        .opacity(backgroundOpacity)
+                        .animation(.easeOut(duration: 0.5), value: backgroundOpacity)
+                        .onAppear {
+                            backgroundOpacity = 1
+                        }
+                } placeholder: {
+                    EmptyView()
+                }
+            }
+            // Blurry background
+            Color.clear
+                .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
+                .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
         }
-        // Blurry background
-        Color.clear
-            .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
-            .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
     }
 }
 
