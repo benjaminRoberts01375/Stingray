@@ -102,7 +102,6 @@ struct DetailMediaView: View {
                     .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
                     .offset(y: titleShadowSize)
             }
-            .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
         }
         .toolbar(.hidden, for: .tabBar)
         .task { focus = .play }
@@ -190,7 +189,7 @@ fileprivate struct MediaBackgroundView: View {
             // Blurry background
             Color.clear
                 .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
-                .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
+                .animation(.smooth(duration: 0.4), value: shouldBlurBackground)
         }
     }
 }
