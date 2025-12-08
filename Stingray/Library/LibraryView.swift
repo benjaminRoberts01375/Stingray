@@ -23,16 +23,24 @@ public struct LibraryView: View {
                     .foregroundStyle(.red)
                     .padding(.vertical)
             case .available(let allMedia):
-                let columns = [
-                    GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
-                ]
-                LazyVGrid(columns: columns, spacing: cardSpacing) {
-                    ForEach(allMedia) { media in
-                        NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService)) {
-                            MediaCard(media: media, streamingService: streamingService)
-                                .frame(width: cardWidth, height: 370)
+                if allMedia.count > 0 {
+                    let columns = [
+                        GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
+                    ]
+                    LazyVGrid(columns: columns, spacing: cardSpacing) {
+                        ForEach(allMedia) { media in
+                            NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService)) {
+                                MediaCard(media: media, streamingService: streamingService)
+                                    .frame(width: cardWidth, height: 370)
+                            }
+                            .buttonStyle(.card)
                         }
-                        .buttonStyle(.card)
+                    }
+                } else {
+                    VStack(alignment: .center) {
+                        Text("This library appears to be empty")
+                        Text("Collections, playlists, and music aren't supported")
+                            .opacity(0.5)
                     }
                 }
             }
