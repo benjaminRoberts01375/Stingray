@@ -105,6 +105,7 @@ struct DetailMediaView: View {
             .animation(.easeOut(duration: 0.5), value: shouldBlurBackground)
         }
         .toolbar(.hidden, for: .tabBar)
+        .task { focus = .play }
         .onChange(of: focus) { _, newValue in
             switch focus {
             case .play, .metadata:
