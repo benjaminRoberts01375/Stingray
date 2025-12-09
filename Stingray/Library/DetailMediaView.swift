@@ -419,20 +419,22 @@ fileprivate struct EpisodeView: View {
             .focused($focus, equals: .media)
             .focused($isFocused, equals: true)
             
-            VStack(alignment: .leading) {
-                HStack(spacing: 0) {
-                    if let seasonIndex = (seasons.firstIndex { $0.episodes.contains { $0.id == episode.id } }) {
-                        Text("Season \(seasonIndex + 1), ")
-                    }
-                    Text("Episode \(episode.episodeNumber)")
-                    Spacer()
+            Button {
+                if episode.overview != nil {
+                    self.showDetails = true
                 }
-                .opacity(0.5)
-                
-                if let overview = episode.overview {
-                    Button {
-                        self.showDetails = true
-                    } label: {
+            } label: {
+                VStack(alignment: .leading) {
+                    HStack(spacing: 0) {
+                        if let seasonIndex = (seasons.firstIndex { $0.episodes.contains { $0.id == episode.id } }) {
+                            Text("Season \(seasonIndex + 1), ")
+                        }
+                        Text("Episode \(episode.episodeNumber)")
+                        Spacer()
+                    }
+                    .opacity(episode.overview != nil ? 0.5 : 1)
+                    
+                    if let overview = episode.overview {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(overview)
                                 .lineLimit(5)
@@ -440,36 +442,36 @@ fileprivate struct EpisodeView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
                         }
-                    }
-                    .buttonStyle(.plain)
-                    .sheet(isPresented: $showDetails) {
-                        VStack {
-                            Spacer()
-                            MediaLogoView(media: media, logoImageURL: logoImageURL)
-                                .padding()
-                            Spacer()
-                            Text(overview)
-                                .padding()
-                            Spacer()
+                        .sheet(isPresented: $showDetails) {
+                            VStack {
+                                Spacer()
+                                MediaLogoView(media: media, logoImageURL: logoImageURL)
+                                    .padding()
+                                Spacer()
+                                Text(overview)
+                                    .padding()
+                                Spacer()
+                            }
                         }
+                    } else {
+                        Text("No Description Available")
+                            .opacity(0.5)
                     }
-                } else {
-                    Text("No Description Available")
-                        .opacity(0.5)
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                .frame(width: 400, height: 225)
+                .padding(16)
+                .background {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(isFocused ?? false ? 0.1 : 0))
+                }
+                .padding(-16)
             }
-            .frame(width: 400, height: 225)
-            .padding(16)
-            .background {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(isFocused ?? false ? 0.1 : 0))
-            }
-            .padding(-16)
-            .focused($isFocused, equals: true)
-            .padding(.top, isFocused ?? false ? 16 : 0)
-            .animation(.easeOut(duration: 0.5), value: isFocused)
+            .buttonStyle(.plain)
             .focused($focus, equals: .media)
+            .focused($isFocused, equals: true)
+            .animation(.easeOut(duration: 0.5), value: isFocused)
+            .padding(.top, isFocused ?? false ? 16 : 0)
         }
     }
 }
