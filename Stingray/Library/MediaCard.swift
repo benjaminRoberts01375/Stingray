@@ -19,7 +19,7 @@ struct MediaCard: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            if media.ImageTags.primary != nil {
+            if media.imageTags.primary != nil {
                 AsyncImage(url: url) { image in
                     image
                         .resizable()

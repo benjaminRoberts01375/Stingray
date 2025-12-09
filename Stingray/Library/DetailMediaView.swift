@@ -184,7 +184,7 @@ fileprivate struct MediaBackgroundView: View {
                     .clipped()
                     .accessibilityHint("Placeholder image", isEnabled: false)
             }
-            if media.ImageTags.thumbnail != nil {
+            if media.imageTags.thumbnail != nil {
                 AsyncImage(url: backgroundImageURL) { image in
                     image
                         .resizable()

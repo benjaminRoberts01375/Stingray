@@ -14,7 +14,7 @@ public protocol MediaProtocol: Identifiable {
     var title: String { get }
     var tagline: String { get }
     var description: String { get }
-    var ImageTags: any MediaImagesProtocol { get }
+    var imageTags: any MediaImagesProtocol { get }
     var id: String { get }
     var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
     var genres: [String] { get }
@@ -123,7 +123,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
     public var tagline: String
     public var description: String
-    public var ImageTags: any MediaImagesProtocol
+    public var imageTags: any MediaImagesProtocol
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var id: String
     public var genres: [String]
@@ -163,7 +163,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         self.description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
         
         // ImageTags might be optional as well
-        self.ImageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
+        self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)
         
         // Decode blur hashes if present
