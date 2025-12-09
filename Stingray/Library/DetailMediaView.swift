@@ -419,14 +419,18 @@ fileprivate struct EpisodeView: View {
             .focused($focus, equals: .media)
             .focused($isFocused, equals: true)
             
-            VStack {
+            VStack(alignment: .leading) {
+                Text("Episode \(episode.episodeNumber)")
+                    .multilineTextAlignment(.leading)
+                    .opacity(0.5)
+                Spacer(minLength: 0)
                 if let overview = episode.overview {
                     Button {
                         self.showDetails = true
                     } label: {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(overview)
-                                .lineLimit(6)
+                                .lineLimit(5)
                                 .multilineTextAlignment(.leading)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
@@ -444,7 +448,11 @@ fileprivate struct EpisodeView: View {
                             Spacer()
                         }
                     }
+                } else {
+                    Text("No Description Available")
+                        .opacity(0.5)
                 }
+                Spacer(minLength: 0)
             }
             .frame(width: 400, height: 200)
             .padding(16)
