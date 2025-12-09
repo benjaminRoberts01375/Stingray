@@ -13,7 +13,13 @@ protocol StreamingServiceProtocol {
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
     func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getLibraryMedia(libraryID: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel]
+    func getLibraryMedia(
+        libraryID: String,
+        index: Int,
+        count: Int,
+        sortOrder: LibraryMediaSortOrder,
+        sortBy: LibraryMediaSortBy
+    ) async throws -> [MediaModel]
 }
 
 final class JellyfinModel: StreamingServiceProtocol {
@@ -94,13 +100,19 @@ final class JellyfinModel: StreamingServiceProtocol {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, imageID: imageID, width: width)
     }
     
-    func getLibraryMedia(libraryID: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy) async throws -> [MediaModel] {
+    func getLibraryMedia(
+        libraryID: String,
+        index: Int,
+        count: Int,
+        sortOrder: LibraryMediaSortOrder,
+        sortBy: LibraryMediaSortBy
+    ) async throws -> [MediaModel] {
         return try await networkAPI.getLibraryMedia(
             accessToken: accessToken,
             libraryId: libraryID,
             index: index,
             count: count,
-            sortOrder: .Ascending,
+            sortOrder: .ascending,
             sortBy: .SortName,
             mediaTypes: [.movies([]), .tv(nil)]
         )
@@ -108,7 +120,7 @@ final class JellyfinModel: StreamingServiceProtocol {
     
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer? {
         let sessionID = UUID().uuidString
-        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID } ),
+        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }),
               let playerItem = networkAPI.getStreamingContent(
                 accessToken: accessToken,
                 contentID: mediaSource.id,
@@ -157,7 +169,18 @@ final class JellyfinPlayerProgress {
     private let userSessionID: String
     private let accessToken: String
     
-    init(player: AVPlayer, network: any AdvancedNetworkProtocol, mediaID: String, mediaSourceID: String, videoID: Int, audioID: Int, subtitleID: Int?, playbackSessionID: String, userSessionID: String, accessToken: String) {
+    init(
+        player: AVPlayer,
+        network: any AdvancedNetworkProtocol,
+        mediaID: String,
+        mediaSourceID: String,
+        videoID: Int,
+        audioID: Int,
+        subtitleID: Int?,
+        playbackSessionID: String,
+        userSessionID: String,
+        accessToken: String
+    ) {
         self.player = player
         self.network = network
         self.mediaID = mediaID

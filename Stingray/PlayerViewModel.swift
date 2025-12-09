@@ -10,17 +10,34 @@ import SwiftUI
 
 @Observable
 final class PlayerViewModel {
+    /// Player with formatted URL already set
     public var player: AVPlayer?
+    /// Subtitle identifier from the media source in play
     public var selectedSubtitleID: Int?
+    /// Audio identifier from the media source in play
     public var selectedAudioID: Int
+    /// Video identifier from the media source in play
     public var selectedVideoID: Int
+    /// Media source in play
     public var mediaSource: any MediaSourceProtocol
+    /// Time to start the player at
     public var startTime: CMTime
     
+    /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
+    /// Seasons of a TV show if available (may be a movie)
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
     
-    public init(selectedSubtitleID: Int? = nil, selectedAudioID: Int, selectedVideoID: Int, mediaSource: any MediaSourceProtocol, startTime: CMTime?, streamingService: StreamingServiceProtocol, seasons: [any TVSeasonProtocol]?) {
+    /// Normal init for setting up a player
+    public init(
+        selectedSubtitleID: Int? = nil,
+        selectedAudioID: Int,
+        selectedVideoID: Int,
+        mediaSource: any MediaSourceProtocol,
+        startTime: CMTime?,
+        streamingService: StreamingServiceProtocol,
+        seasons: [any TVSeasonProtocol]?
+    ) {
         self.player = nil
         self.selectedSubtitleID = selectedSubtitleID
         self.selectedAudioID = selectedAudioID
@@ -38,7 +55,12 @@ final class PlayerViewModel {
             existingPlayer.pause()
             streamingService.playbackEnd()
         }
-        guard let player = streamingService.playbackStart(mediaSource: mediaSource, videoID: selectedVideoID, audioID: selectedAudioID, subtitleID: selectedSubtitleID)
+        guard let player = streamingService.playbackStart(
+            mediaSource: mediaSource,
+            videoID: selectedVideoID,
+            audioID: selectedAudioID,
+            subtitleID: selectedSubtitleID
+        )
         else { return }
         
         self.player = player
@@ -50,14 +72,14 @@ final class PlayerViewModel {
     /// - Parameter episode: Episode to advance to
     public func newIDsFromPreviousMedia(episode: any TVEpisodeProtocol) {
         // Get new video stream
-        if let oldVideoStream = mediaSource.videoStreams.first(where: {selectedVideoID == $0.id}),
+        if let oldVideoStream = mediaSource.videoStreams.first(where: { selectedVideoID == $0.id }),
            let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video) {
             self.selectedVideoID = newVideoStream.id
         } else {
             self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
         }
         // Get new audio stream
-        if let oldAudioStream = mediaSource.audioStreams.first(where: {selectedAudioID == $0.id}),
+        if let oldAudioStream = mediaSource.audioStreams.first(where: { selectedAudioID == $0.id }),
            let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio) {
             self.selectedAudioID = newAudioStream.id
         } else {
@@ -65,7 +87,7 @@ final class PlayerViewModel {
         }
         // Get new subtitle stream - keep it off if it's off
         if self.selectedSubtitleID != nil {
-            if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: {selectedSubtitleID == $0.id}),
+            if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { selectedSubtitleID == $0.id }),
                let newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle) {
                 self.selectedSubtitleID = newSubtitleStream.id
             } else {

@@ -23,7 +23,7 @@ public struct LibraryView: View {
                     .foregroundStyle(.red)
                     .padding(.vertical)
             case .available(let allMedia):
-                if allMedia.count > 0 {
+                if !allMedia.isEmpty {
                     let columns = [
                         GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
                     ]

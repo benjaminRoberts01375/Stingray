@@ -8,9 +8,37 @@
 import AVKit
 import SwiftUI
 
+/// A very basic network protocol for sending/receving requests, as well as formatting options
 public protocol BasicNetworkProtocol {
-    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]?, urlParams: [URLQueryItem]?, body: (any Encodable)?) async throws -> T
+    /// Makes a web REST request
+    /// - Parameters:
+    ///   - verb: Type of REST request
+    ///   - path: URL path without hostname, leading slashes, or URL params
+    ///   - headers: Headers to add to request
+    ///   - urlParams: URL paramaters for data fields
+    ///   - body: For sending more advanced data structures like JSON
+    /// - Returns: A formatted response in a Decodable type
+    func request<T: Decodable>(
+        verb: NetworkRequestType,
+        path: String,
+        headers: [String : String]?,
+        urlParams: [URLQueryItem]?,
+        body: (any Encodable)?
+    ) async throws -> T
+    
+    /// Allows simple URL building using the URL type.
+    /// - Parameters:
+    ///   - path: Path to a particular resource without the hostname, leading slashes, or URL params
+    ///   - urlParams: URL params to add to URL
+    /// - Returns: Formatted URL
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
+    
+    /// Build an AVPlayerItem from a URL
+    /// - Parameters:
+    ///   - path: Path to a particular resource without the hostname, leading slashes, or URL params
+    ///   - urlParams: URL params to add to URL
+    ///   - headers: Headers, primarily for authentication
+    /// - Returns: A formatted AVPlayerItem ready for streaming
     func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem?
 }
 
@@ -33,7 +61,7 @@ public enum NetworkError: Error, LocalizedError {
         switch self {
         case .invalidURL:
             return "Invalid URL"
-        case .encodeJSONFailed (let error):
+        case .encodeJSONFailed(let error):
             return "Unable to encode JSON: \(error.localizedDescription)"
         case .requestFailedToSend(let error):
             return "The request failed to send: \(error.localizedDescription)"
@@ -45,13 +73,23 @@ public enum NetworkError: Error, LocalizedError {
             if let decodingError = error as? DecodingError {
                 switch decodingError {
                 case .keyNotFound(let key, let context):
-                    return "Unable to decode JSON from \(urlString): Missing key '\(key.stringValue)' at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))"
+                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
+                    return "Unable to decode JSON from \(urlString): Missing key '\(key.stringValue)' at \(path)"
                 case .valueNotFound(let type, let context):
-                    return "Unable to decode JSON from \(urlString): Missing value of type '\(type)' at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))"
+                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
+                    return "Unable to decode JSON from \(urlString): Missing value of type '\(type)' at \(path)"
                 case .typeMismatch(let type, let context):
-                    return "Unable to decode JSON from \(urlString): Type mismatch for '\(type)' at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> ")). \(context.debugDescription)"
+                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
+                    return """
+                        Unable to decode JSON from \(urlString): Type mismatch for '\(type)' at \(path). \
+                        \(context.debugDescription)
+                        """
                 case .dataCorrupted(let context):
-                    return "Unable to decode JSON from \(urlString): Data corrupted at \(context.codingPath.map { $0.stringValue }.joined(separator: " -> ")). \(context.debugDescription)"
+                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
+                    return """
+                        Unable to decode JSON from \(urlString): Data corrupted at \(path). \
+                        \(context.debugDescription)
+                        """
                 @unknown default:
                     return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
                 }
@@ -96,18 +134,96 @@ public enum MediaType: Decodable {
     }
 }
 
+/// Defines a network that is reliant on primitives already created by `BasicNetworkProtocol`
 public protocol AdvancedNetworkProtocol {
+    /// Log-in a user via a username and password
+    /// - Parameters:
+    ///   - username: User's username
+    ///   - password: User's password
+    /// - Returns: Credentials and user data from server
     func login(username: String, password: String) async throws -> APILoginResponse
+    /// Gets all libraries from a server
+    /// - Parameter accessToken: Access token for the server
+    /// - Returns: Libraries
     func getLibraries(accessToken: String) async throws -> [LibraryModel]
-    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel]
+    /// Gets all media for a given library in chunks
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - libraryId: Library identifier
+    ///   - index: Start of a chunk
+    ///   - count: How much to request in a single request
+    ///   - sortOrder: Ascending/descending
+    ///   - sortBy: Metadata to sort by
+    ///   - mediaTypes: Allowed media types from the server
+    /// - Returns: Library media content
+    func getLibraryMedia(
+        accessToken: String,
+        libraryId: String,
+        index: Int,
+        count: Int,
+        sortOrder: LibraryMediaSortOrder,
+        sortBy: LibraryMediaSortBy,
+        mediaTypes: [MediaType]?
+    ) async throws -> [MediaModel]
+    /// Generates a URL for an image
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - imageType: Type of image (ex. poster)
+    ///   - imageID: ID of the image
+    ///   - width: Ideal width of the image
+    /// - Returns: Formatted URL if possible
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getStreamingContent(accessToken: String, contentID: String, bitrate: Int?, subtitleID: Int?, audioID: Int, videoID: Int, sessionID: String) -> AVPlayerItem?
+    /// Generates a player for a media stream
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - contentID: The media source ID
+    ///   - bitrate: Target bitrate
+    ///   - subtitleID: Subtitles to be used (nil for none)
+    ///   - audioID: Audio ID to be used
+    ///   - videoID: Video ID to be used
+    ///   - sessionID: A one-off token to not be reused when changing settings
+    /// - Returns: Player ready for streaming
+    func getStreamingContent(
+        accessToken: String,
+        contentID: String,
+        bitrate: Int?,
+        subtitleID: Int?,
+        audioID: Int,
+        videoID: Int,
+        sessionID: String
+    ) -> AVPlayerItem?
+    /// Get all media data for a seasons
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - seasonID: ID of the season
+    /// - Returns: Season data
     func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason]
-    func updatePlaybackStatus(itemID: String, mediaSourceID: String, audioStreamIndex: Int, subtitleStreamIndex: Int?, playbackPosition: Int, playSessionID: String, userSessionID: String, playbackStatus: PlaybackStatus, accessToken: String) async throws
+    /// Updates the server about the current playback status
+    /// - Parameters:
+    ///   - itemID: Media ID of the currently played content
+    ///   - mediaSourceID: Media source ID of the currently played content
+    ///   - audioStreamIndex: Index for audio playback
+    ///   - subtitleStreamIndex: Index for subtitle playback
+    ///   - playbackPosition: Current playback position in ticks
+    ///   - playSessionID: A one-off token to not be reused when changing settings
+    ///   - userSessionID: User session ID provided by the server
+    ///   - playbackStatus: Current state of playback (ex. paused, stopped, playing)
+    ///   - accessToken: Access token provided by the server
+    func updatePlaybackStatus(
+        itemID: String,
+        mediaSourceID: String,
+        audioStreamIndex: Int,
+        subtitleStreamIndex: Int?,
+        playbackPosition: Int,
+        playSessionID: String,
+        userSessionID: String,
+        playbackStatus: PlaybackStatus,
+        accessToken: String
+    ) async throws
 }
 
 public enum LibraryMediaSortOrder: String {
-    case Ascending = "Ascending"
+    case ascending = "Ascending"
     case Descending = "Descending"
 }
 
@@ -203,7 +319,13 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         self.address = address
     }
     
-    func request<T: Decodable>(verb: NetworkRequestType, path: String, headers: [String : String]? = nil, urlParams: [URLQueryItem]? = nil, body: (any Encodable)? = nil) async throws -> T {
+    func request<T: Decodable>(
+        verb: NetworkRequestType,
+        path: String,
+        headers: [String : String]? = nil,
+        urlParams: [URLQueryItem]? = nil,
+        body: (any Encodable)? = nil
+    ) async throws -> T {
         // Setup URL with path
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
             throw NetworkError.invalidURL
@@ -235,7 +357,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
                 jsonData = try JSONEncoder().encode(body)
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type") // Set JSON as content type
                 request.httpBody = jsonData
-            } catch (let error) {
+            } catch {
                 throw NetworkError.encodeJSONFailed(error)
             }
         }
@@ -245,7 +367,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         let response: URLResponse
         do {
             (responseData, response) = try await URLSession.shared.data(for: request)
-        } catch (let error) {
+        } catch {
             throw NetworkError.requestFailedToSend(error)
         }
         
@@ -256,7 +378,10 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
         
         // Verify non-bad status code
         if !(200...299).contains(httpResponse.statusCode) {
-            throw NetworkError.badResponse(responseCode: httpResponse.statusCode, response: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))
+            throw NetworkError.badResponse(
+                responseCode: httpResponse.statusCode,
+                response: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+            )
         }
         
         // Decode the JSON response with more helpful errors
@@ -269,7 +394,7 @@ final class JellyfinBasicNetwork: BasicNetworkProtocol {
             throw NetworkError.decodeJSONFailed(DecodingError.keyNotFound(key, context), url: url)
         } catch let DecodingError.valueNotFound(value, context) {
             throw NetworkError.decodeJSONFailed(DecodingError.valueNotFound(value, context), url: url)
-        } catch let DecodingError.typeMismatch(type, context)  {
+        } catch let DecodingError.typeMismatch(type, context) {
             throw NetworkError.decodeJSONFailed(DecodingError.typeMismatch(type, context), url: url)
         } catch {
             throw NetworkError.decodeJSONFailed(error, url: url)
@@ -344,11 +469,25 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case items = "Items"
             }
         }
-        let root: Root = try await network.request(verb: .get, path: "/Library/MediaFolders", headers: ["X-MediaBrowser-Token":accessToken], urlParams: nil, body: nil)
+        let root: Root = try await network.request(
+            verb: .get,
+            path: "/Library/MediaFolders",
+            headers: ["X-MediaBrowser-Token":accessToken],
+            urlParams: nil,
+            body: nil
+        )
         return root.items
     }
     
-    func getLibraryMedia(accessToken: String, libraryId: String, index: Int, count: Int, sortOrder: LibraryMediaSortOrder, sortBy: LibraryMediaSortBy, mediaTypes: [MediaType]?) async throws -> [MediaModel] {
+    func getLibraryMedia(
+        accessToken: String,
+        libraryId: String,
+        index: Int,
+        count: Int,
+        sortOrder: LibraryMediaSortOrder,
+        sortBy: LibraryMediaSortBy,
+        mediaTypes: [MediaType]?
+    ) async throws -> [MediaModel] {
         struct Root: Decodable {
             let items: [MediaModel]
             
@@ -374,11 +513,17 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
         }
         
-        let response: Root = try await network.request(verb: .get, path: "/Items", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
+        let response: Root = try await network.request(
+            verb: .get,
+            path: "/Items",
+            headers: ["X-MediaBrowser-Token":accessToken],
+            urlParams: params,
+            body: nil
+        )
         try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
             for (index, item) in response.items.enumerated() {
                 switch item.mediaType {
-                case .tv(_):
+                case .tv:
                     // Capture the id before creating the task
                     let itemId = item.id
                     group.addTask {
@@ -419,14 +564,19 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
                         mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? [],
                         lastPlayed: {
-                            guard let dateString = try? userDataContainer.decodeIfPresent(String.self, forKey: .lastPlayedDate) else { return nil }
+                            guard let dateString = try? userDataContainer.decodeIfPresent(
+                                String.self,
+                                forKey: .lastPlayedDate
+                            ) else { return nil }
                             let formatter = ISO8601DateFormatter()
                             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                             return formatter.date(from: dateString)
                         }(),
                         overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
                     )
-                    let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ?? episodeContainer.decode(String.self, forKey: .seriesID)
+                    let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
+                    episodeContainer.decode(String.self, forKey: .seriesID)
+                    
                     if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
                         for mediaSourceIndex in episode.mediaSources.indices {
                             episode.mediaSources[mediaSourceIndex].startTicks = playbackTicks
@@ -478,9 +628,15 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "enableImages", value: "true"),
             URLQueryItem(name: "fields", value: "MediaSources"),
-            URLQueryItem(name: "fields", value: "Overview"),
+            URLQueryItem(name: "fields", value: "Overview")
         ]
-        let response: Root = try await network.request(verb: .get, path: "/Shows/\(seasonID)/Episodes", headers: ["X-MediaBrowser-Token":accessToken], urlParams: params, body: nil)
+        let response: Root = try await network.request(
+            verb: .get,
+            path: "/Shows/\(seasonID)/Episodes",
+            headers: ["X-MediaBrowser-Token":accessToken],
+            urlParams: params,
+            body: nil
+        )
         return response.items
     }
     
@@ -493,7 +649,15 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
-    func getStreamingContent(accessToken: String, contentID: String, bitrate: Int?, subtitleID: Int?, audioID: Int, videoID: Int, sessionID: String) -> AVPlayerItem? {
+    func getStreamingContent(
+        accessToken: String,
+        contentID: String,
+        bitrate: Int?,
+        subtitleID: Int?,
+        audioID: Int,
+        videoID: Int,
+        sessionID: String
+    ) -> AVPlayerItem? {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "playSessionID", value: sessionID),
             URLQueryItem(name: "mediaSourceID", value: contentID),
@@ -501,7 +665,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
             // Let Jellyfin decide based on client capabilities
             URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
-            URLQueryItem(name: "videoCodec", value: "h264,hevc,vp9"),
+            URLQueryItem(name: "videoCodec", value: "h264,hevc,vp9")
         ]
         
         if let bitrate = bitrate {
@@ -513,10 +677,24 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
         }
         
-        return network.buildAVPlayerItem(path: "/Videos/\(contentID)/main.m3u8", urlParams: params, headers: ["X-MediaBrowser-Token": accessToken])
+        return network.buildAVPlayerItem(
+            path: "/Videos/\(contentID)/main.m3u8",
+            urlParams: params,
+            headers: ["X-MediaBrowser-Token": accessToken]
+        )
     }
     
-    func updatePlaybackStatus(itemID: String, mediaSourceID: String, audioStreamIndex: Int, subtitleStreamIndex: Int?, playbackPosition: Int, playSessionID: String, userSessionID: String, playbackStatus: PlaybackStatus, accessToken: String) async throws {
+    func updatePlaybackStatus(
+        itemID: String,
+        mediaSourceID: String,
+        audioStreamIndex: Int,
+        subtitleStreamIndex: Int?,
+        playbackPosition: Int,
+        playSessionID: String,
+        userSessionID: String,
+        playbackStatus: PlaybackStatus,
+        accessToken: String
+    ) async throws {
         struct PlaybackStatusStats: Encodable {
             let itemID: String
             let mediaSourceID: String
@@ -565,10 +743,24 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             isPaused: isPaused,
         )
         
-        let _: EmptyResponse = try await network.request(verb: .post, path: path, headers: ["X-MediaBrowser-Token": accessToken], urlParams: nil, body: stats)
+        let _: EmptyResponse = try await network.request(
+            verb: .post,
+            path: path,
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: nil,
+            body: stats
+        )
     }
 }
 
+/// Denotes playback status of a player
 public enum PlaybackStatus {
-    case play, stop, progressed, paused
+    /// The player is currently playing
+    case play
+    /// The player is currently stopped and will not resume
+    case stop
+    /// The player has made some progress
+    case progressed
+    /// The player is temporarily paused
+    case paused
 }

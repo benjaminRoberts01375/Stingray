@@ -12,10 +12,15 @@ public protocol LibraryProtocol: Identifiable {
     var media: MediaStatus { get }
 }
 
+/// Denotes the current status of loading media in a library
 public enum MediaStatus {
+    /// An unloaded state of the library, ready to be triggered
     case unloaded
+    /// Waiting for the server to respond
     case waiting
+    /// Library content is available
     case available([MediaModel])
+    /// Loading library content failed with an error
     case error(Error)
 }
 
@@ -72,7 +77,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
                 libraryID: self.id,
                 index: currentIndex,
                 count: batchSize,
-                sortOrder: .Ascending,
+                sortOrder: .ascending,
                 sortBy: .SortName
             )
             

@@ -16,28 +16,74 @@ public enum BasicNetworkKeys: String {
     case serverID = "serverID"
 }
 
+/// A protocol for abstracting access to local storage via key-value pairs
 public protocol BasicStorageProtocol {
-    
+    /// Get a `String` from local storage
+    /// - Parameter key: The key where the data might be stored
+    /// - Returns: The found string
     func getString(_ key: BasicNetworkKeys) -> String?
+    /// Set a `String` into local storage
+    /// - Parameters:
+    ///   - key: The key where data is to be stored
+    ///   - value: Text to set
     func setString(_ key: BasicNetworkKeys, value: String)
+    /// Get a URL from local storage
+    /// - Parameter key: The key where the data might be stored
+    /// - Returns: The found `URL`
     func getURL(_ key: BasicNetworkKeys) -> URL?
+    /// Set a `URL` into local storage
+    /// - Parameters:
+    ///   - key: The key where data is to be stored
+    ///   - value: `URL` to set
     func setURL(_ key: BasicNetworkKeys, value: URL?)
+    /// Set a `Boolean` into local storage
+    /// - Parameters:
+    ///   - key: The key where data is to be stored
+    ///   - value: `Boolean` to set
     func setBool(_ key: BasicNetworkKeys, value: Bool)
+    /// Get a `Boolean` from local storage
+    /// - Parameter key: The key where the data might be stored
+    /// - Returns: The found `Boolean`
     func getBool(_ key: BasicNetworkKeys) -> Bool
 }
 
+/// A protocol for abstracting advanced storage actions
 public protocol AdvancedStorageProtocol {
+    /// Get the streaming service URL from storage
+    /// - Returns: The server's URL
     func getServerURL() -> URL?
+    /// Set the streaming service URL in storage
+    /// - Parameter url: URL to set
     func setServerURL(_ url: URL)
+    /// Get the user's name from storage
+    /// - Returns: The user's name
     func getUsersName() -> String?
+    /// Set the user's name into storage
+    /// - Parameter name: The user's name
     func setUsersName(_ name: String?)
+    /// Get the userID from storage
+    /// - Returns: The userID
     func getUserID() -> String?
+    /// Set the userID into storage
+    /// - Parameter id: The userID
     func setUserID(_ id: String?)
+    /// Get the sessionID from storage
+    /// - Returns: The sessionID
     func getSessionID() -> String?
+    /// Set the sessionID into storage
+    /// - Parameter id: The sessionID
     func setSessionID(_ id: String?)
+    /// Get the server access token from storage
+    /// - Returns: The access token
     func getAccessToken() -> String?
+    /// Set the server access token into storage
+    /// - Parameter token: The access token
     func setAccessToken(_ token: String?)
+    /// Get the serverID from storage
+    /// - Returns: The serverID
     func getServerID() -> String?
+    /// Set the serverID into storage
+    /// - Parameter id: The serverID
     func setServerID(_ id: String?)
 }
 

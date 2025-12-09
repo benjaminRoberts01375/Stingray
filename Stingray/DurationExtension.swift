@@ -6,6 +6,8 @@
 //
 
 extension Duration {
+    /// Rounds a duration into a neatly formatted string.
+    /// - Returns: A neatly formatted string.
     public func roundedTime() -> String {
         let totalSeconds = Int(self.components.seconds)
         let hours = totalSeconds / 3600

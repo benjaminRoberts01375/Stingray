@@ -55,26 +55,38 @@ struct PlayerView: View {
         
         // Add Audio menu only if there's more than one option
         if self.vm.mediaSource.audioStreams.count > 1 {
-            items.append(UIMenu(title: "Audio", image: UIImage(systemName: "speaker.wave.2"), children: self.vm.mediaSource.audioStreams.map({ audioStream in
-                let action = UIAction(title: audioStream.title) { _ in
-                    self.vm.selectedAudioID = audioStream.id
-                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
-                }
-                action.state = self.vm.selectedAudioID == audioStream.id ? .on : .off
-                return action
-            })))
+            items.append(
+                UIMenu(
+                    title: "Audio",
+                    image: UIImage(systemName: "speaker.wave.2"),
+                    children: self.vm.mediaSource.audioStreams.map({ audioStream in
+                        let action = UIAction(title: audioStream.title) { _ in
+                            self.vm.selectedAudioID = audioStream.id
+                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                        }
+                        action.state = self.vm.selectedAudioID == audioStream.id ? .on : .off
+                        return action
+                    })
+                )
+            )
         }
         
         // Add Video menu only if there's more than one option
         if self.vm.mediaSource.videoStreams.count > 1 {
-            items.append(UIMenu(title: "Video", image: UIImage(systemName: "display"), children: self.vm.mediaSource.videoStreams.map({ videoStream in
-                let action = UIAction(title: videoStream.title) { _ in
-                    self.vm.selectedVideoID = videoStream.id
-                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
-                }
-                action.state = self.vm.selectedVideoID == videoStream.id ? .on : .off
-                return action
-            })))
+            items.append(
+                UIMenu(
+                    title: "Video",
+                    image: UIImage(systemName: "display"),
+                    children: self.vm.mediaSource.videoStreams.map({ videoStream in
+                        let action = UIAction(title: videoStream.title) { _ in
+                            self.vm.selectedVideoID = videoStream.id
+                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                        }
+                        action.state = self.vm.selectedVideoID == videoStream.id ? .on : .off
+                        return action
+                    })
+                )
+            )
         }
         
         // TV Season-related buttons
@@ -83,8 +95,8 @@ struct PlayerView: View {
             var setPreviousEpisode: Bool = false
             
             if let index = allEpisodes.firstIndex(where: { episode in
-                for mediaSource in episode.mediaSources {
-                    if mediaSource.id == self.vm.mediaSource.id { return true }
+                for mediaSource in episode.mediaSources where mediaSource.id != self.vm.mediaSource.id {
+                    return true
                 }
                 return false
             }) {
@@ -121,9 +133,16 @@ struct PlayerView: View {
                     return action
                 }
                 
-                return UIMenu(title: season.title, options: .displayInline, children: episodeActions) // Awful limitation by Apple to only support menus one level deep here
+                // Awful limitation by Apple to only support menus one level deep here
+                return UIMenu(title: season.title, options: .displayInline, children: episodeActions)
             }
-            items.insert(UIMenu(title: "Seasons", image: UIImage(systemName: "calendar.day.timeline.right"), children: seasonItems), at: setPreviousEpisode ? 1 : 0)
+            items.insert(
+                UIMenu(
+                    title: "Seasons",
+                    image: UIImage(systemName: "calendar.day.timeline.right"),
+                    children: seasonItems
+                ), at: setPreviousEpisode ? 1 : 0
+            )
         }
         return items
     }

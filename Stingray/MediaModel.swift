@@ -8,6 +8,8 @@
 import Foundation
 
 // MARK: Protocols
+
+/// Define the shape of a piece of media
 public protocol MediaProtocol: Identifiable {
     var title: String { get }
     var tagline: String { get }
@@ -23,18 +25,28 @@ public protocol MediaProtocol: Identifiable {
     var people: [MediaPersonProtocol] { get }
 }
 
+/// Track image IDs for a piece of media
 public protocol MediaImagesProtocol {
+    /// Thumbnail ID
     var thumbnail: String? { get }
+    /// Logo ID
     var logo: String? { get }
+    /// Primary image ID
     var primary: String? { get }
 }
 
+/// Track image hashes for displaying previews
 public protocol MediaImageBlurHashesProtocol {
+    /// Primary hashes
     var primary: [String: String]? { get }
+    /// Thumbnail hashes
     var thumb: [String: String]? { get }
+    /// Logo hashes
     var logo: [String: String]? { get }
+    /// Backdrop hashes
     var backdrop: [String: String]? { get }
     
+    /// Request a type of blur hash
     func getBlurHash(for key: MediaImageType) -> String?
 }
 
@@ -61,16 +73,21 @@ extension MediaSourceProtocol {
         case .unknown:
             return nil
         }
-        return streams.first { $0.title == baseStream.title}
+        return streams.first { $0.title == baseStream.title }
     }
 }
 
+/// Data about a person for a piece of media
 public protocol MediaPersonProtocol {
+    /// ID of the person
     var id: String { get }
+    /// Person's firstname and lastname
     var name: String { get }
+    /// How they contributed to the media
     var role: String { get }
+    /// Type of contribution. Ex. Director
     var type: String { get }
-    var image: String? { get }
+    /// Preview hashes
     var imageHashes: MediaImageBlurHashes? { get }
 }
 
@@ -145,7 +162,8 @@ public final class MediaModel: MediaProtocol, Decodable {
         self.description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
         
         // ImageTags might be optional as well
-        self.ImageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ?? MediaImages(thumbnail: nil, logo: nil, primary: nil)
+        self.ImageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
+        MediaImages(thumbnail: nil, logo: nil, primary: nil)
         
         // Decode blur hashes if present
         self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
@@ -159,10 +177,10 @@ public final class MediaModel: MediaProtocol, Decodable {
         // Setup media type which will have different types of content within it (ex. movie or tv seasons)
         let mediaType = try container.decode(MediaType.self, forKey: .mediaType)
         switch mediaType {
-        case .movies(_):
+        case .movies:
             var movieSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
             let userDataContainer = try container.decode(UserData.self, forKey: .userData)
-            if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID}) {
+            if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
                 movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
             }
             self.mediaType = .movies(movieSources)
@@ -324,7 +342,6 @@ public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var name: String
     public var role: String
     public var type: String
-    public var image: String?
     public var imageHashes: MediaImageBlurHashes?
     
     enum CodingKeys: String, CodingKey {
@@ -332,7 +349,6 @@ public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
         case name = "Name"
         case role = "Role"
         case type = "Type"
-        case image = "PrimaryImageTag"
         case imageHashes = "ImageBlurHashes"
     }
 }

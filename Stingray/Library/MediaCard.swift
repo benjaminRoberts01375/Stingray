@@ -30,6 +30,7 @@ struct MediaCard: View {
                         Image(uiImage: blurImage)
                             .resizable()
                             .scaledToFill()
+                            .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                     } else {
                         MediaCardLoading()
                     }
@@ -69,6 +70,7 @@ struct MediaCardNoImage: View {
                 Image(systemName: "photo")
                     .font(.system(size: 48))
                     .foregroundStyle(.secondary)
+                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                 Text("No image available")
                     .multilineTextAlignment(.center)
                     .font(.caption)

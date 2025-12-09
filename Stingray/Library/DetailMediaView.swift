@@ -30,7 +30,7 @@ struct DetailMediaView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-                MediaBackgroundView(media: media, backgroundImageURL: backgroundImageURL, shouldBlurBackground: $shouldBlurBackground)
+            MediaBackgroundView(media: media, backgroundImageURL: backgroundImageURL, shouldBlurBackground: $shouldBlurBackground)
             VStack(alignment: .center, spacing: 15) {
                 Spacer()
                 
@@ -66,7 +66,13 @@ struct DetailMediaView: View {
                     if let seasons = seasons {
                         ScrollViewReader { scrollProxy in
                             ScrollView(.horizontal) {
-                                EpisodeSelectorView(media: media, logoImageURL: logoImageURL, seasons: seasons, streamingService: streamingService, focus: $focus)
+                                EpisodeSelectorView(
+                                    media: media,
+                                    logoImageURL: logoImageURL,
+                                    seasons: seasons,
+                                    streamingService: streamingService,
+                                    focus: $focus
+                                )
                             }
                             .scrollClipDisabled()
                             .padding(40)
@@ -85,7 +91,7 @@ struct DetailMediaView: View {
             .padding()
             .offset(y: {
                 switch media.mediaType {
-                case .tv(_):
+                case .tv:
                     return focus == .media ? 0 : 550
                 default:
                     return 0
@@ -112,7 +118,7 @@ struct DetailMediaView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .task { focus = .play }
-        .onChange(of: focus) { _, newValue in
+        .onChange(of: focus) { _, _ in
             switch focus {
             case .play, .metadata:
                 shouldBlurBackground = false
@@ -141,8 +147,12 @@ fileprivate struct MovieNavigationView: View {
         NavigationLink {
             PlayerView(
                 vm: PlayerViewModel(
-                    selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                    selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                    selectedAudioID: mediaSource.audioStreams.first(
+                        where: { $0.isDefault }
+                    )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                    selectedVideoID: mediaSource.videoStreams.first(
+                        where: { $0.isDefault }
+                    )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
@@ -178,6 +188,7 @@ fileprivate struct MediaBackgroundView: View {
                     .aspectRatio(contentMode: .fill)
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                     .clipped()
+                    .accessibilityHint("Placeholder image", isEnabled: false)
             }
             if media.ImageTags.thumbnail != nil {
                 AsyncImage(url: backgroundImageURL) { image in
@@ -254,7 +265,9 @@ fileprivate struct TVNextEpisodeView: View {
     
     static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
         let allEpisodes = seasons.flatMap(\.episodes)
-        guard let mostRecentEpisode = (allEpisodes.enumerated().max { $0.element.lastPlayed ?? .distantPast < $1.element.lastPlayed ?? .distantPast }),
+        guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
+            previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
+        }),
               let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
         else { return allEpisodes.first }
         
@@ -274,9 +287,15 @@ fileprivate struct TVNextEpisodeView: View {
             NavigationLink {
                 PlayerView(
                     vm: PlayerViewModel(
-                        selectedSubtitleID: mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id,
-                        selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                        selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                        selectedSubtitleID: mediaSource.subtitleStreams.first(
+                            where: { $0.isDefault }
+                        )?.id ?? mediaSource.subtitleStreams.first?.id,
+                        selectedAudioID: mediaSource.audioStreams.first(
+                            where: { $0.isDefault }
+                        )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                        selectedVideoID: mediaSource.videoStreams.first(
+                            where: { $0.isDefault }
+                        )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
                         startTime: .zero,
                         streamingService: streamingService,
@@ -293,9 +312,15 @@ fileprivate struct TVNextEpisodeView: View {
                 NavigationLink {
                     PlayerView(
                         vm: PlayerViewModel(
-                            selectedSubtitleID: mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id,
-                            selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                            selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                            selectedSubtitleID: mediaSource.subtitleStreams.first(
+                                where: { $0.isDefault }
+                            )?.id ?? mediaSource.subtitleStreams.first?.id,
+                            selectedAudioID: mediaSource.audioStreams.first(
+                                where: { $0.isDefault }
+                            )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                            selectedVideoID: mediaSource.videoStreams.first(
+                                where: { $0.isDefault }
+                            )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                             mediaSource: mediaSource,
                             startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                             streamingService: streamingService,
@@ -326,7 +351,15 @@ fileprivate struct EpisodeSelectorView: View {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
-                        EpisodeView(logoImageURL: logoImageURL, media: media, source: source, streamingService: streamingService, seasons: seasons, episode: episode, focus: $focus)
+                        EpisodeView(
+                            logoImageURL: logoImageURL,
+                            media: media,
+                            source: source,
+                            streamingService: streamingService,
+                            seasons: seasons,
+                            episode: episode,
+                            focus: $focus
+                        )
                     }
                 }
             }
@@ -346,9 +379,15 @@ fileprivate struct EpisodeNavigationView: View {
             PlayerView(
                 vm: (
                     PlayerViewModel(
-                        selectedSubtitleID: mediaSource.subtitleStreams.first(where: { $0.isDefault })?.id ?? mediaSource.subtitleStreams.first?.id,
-                        selectedAudioID: mediaSource.audioStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                        selectedVideoID: mediaSource.videoStreams.first(where: { $0.isDefault })?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                        selectedSubtitleID: mediaSource.subtitleStreams.first(
+                            where: { $0.isDefault }
+                        )?.id ?? mediaSource.subtitleStreams.first?.id,
+                        selectedAudioID: mediaSource.audioStreams.first(
+                            where: { $0.isDefault }
+                        )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                        selectedVideoID: mediaSource.videoStreams.first(
+                            where: { $0.isDefault }
+                        )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
                         startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                         streamingService: streamingService,
@@ -385,10 +424,16 @@ fileprivate struct EpisodeView: View {
     
     var body: some View {
         VStack {
-            EpisodeNavigationView(mediaID: media.id, mediaSource: source, streamingService: streamingService, seasons: seasons, episode: episode)
-                .frame(width: 400, height: 325)
-                .focused($focus, equals: .media)
-                .focused($isFocused, equals: true)
+            EpisodeNavigationView(
+                mediaID: media.id,
+                mediaSource: source,
+                streamingService: streamingService,
+                seasons: seasons,
+                episode: episode
+            )
+            .frame(width: 400, height: 325)
+            .focused($focus, equals: .media)
+            .focused($isFocused, equals: true)
             
             if let overview = episode.overview {
                 Button {
@@ -495,6 +540,7 @@ fileprivate struct ActorImage: View {
                 Image(uiImage: blurImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
+                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
             }
             if let url = streamingService.getImageURL(imageType: .primary, imageID: person.id, width: 0) {
                 AsyncImage(url: url) { image in
@@ -524,6 +570,7 @@ fileprivate struct EpisodeArtView: View {
                     Image(uiImage: blurImage)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                 }
                 if let url = streamingService.getImageURL(imageType: .primary, imageID: episode.id, width: 800) {
                     AsyncImage(url: url) { image in
