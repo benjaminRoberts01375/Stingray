@@ -14,7 +14,7 @@ struct DashboardView: View {
         case error(Error)
     }
     
-    @State var streamingService: StreamingServiceProtocol
+    var streamingService: StreamingServiceProtocol
     @State var libraryStatus: LibraryStatus = .waiting
     @State private var selectedTab: String = "home"
     

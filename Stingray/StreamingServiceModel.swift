@@ -22,6 +22,7 @@ protocol StreamingServiceProtocol {
     ) async throws -> [MediaModel]
 }
 
+@Observable
 final class JellyfinModel: StreamingServiceProtocol {
     var networkAPI: AdvancedNetworkProtocol
     var storageAPI: AdvancedStorageProtocol

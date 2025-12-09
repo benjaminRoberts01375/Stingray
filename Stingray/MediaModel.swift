@@ -118,6 +118,7 @@ public protocol TVEpisodeProtocol: Identifiable {
 }
 
 // MARK: Concrete types
+@Observable
 public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
     public var tagline: String
@@ -215,7 +216,14 @@ public final class MediaModel: MediaProtocol, Decodable {
     }
 }
 
-public struct MediaImages: Decodable, Equatable, MediaImagesProtocol {
+@Observable
+public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
+    public static func == (lhs: MediaImages, rhs: MediaImages) -> Bool {
+        lhs.thumbnail == rhs.thumbnail &&
+        lhs.logo == rhs.logo &&
+        lhs.primary == rhs.primary
+    }
+    
     public var thumbnail: String?
     public var logo: String?
     public var primary: String?
@@ -225,9 +233,23 @@ public struct MediaImages: Decodable, Equatable, MediaImagesProtocol {
         case logo = "Logo"
         case primary = "Primary"
     }
+    
+    public init(thumbnail: String?, logo: String?, primary: String?) {
+        self.thumbnail = thumbnail
+        self.logo = logo
+        self.primary = primary
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.thumbnail = try container.decodeIfPresent(String.self, forKey: .thumbnail)
+        self.logo = try container.decodeIfPresent(String.self, forKey: .logo)
+        self.primary = try container.decodeIfPresent(String.self, forKey: .primary)
+    }
 }
 
-public struct MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesProtocol {
+@Observable
+public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesProtocol {
     public var primary: [String: String]?
     public var thumb: [String: String]?
     public var logo: [String: String]?
@@ -238,6 +260,21 @@ public struct MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesPr
         case thumb = "Thumb"
         case logo = "Logo"
         case backdrop = "Backdrop"
+    }
+    
+    public static func == (lhs: MediaImageBlurHashes, rhs: MediaImageBlurHashes) -> Bool {
+        lhs.primary == rhs.primary &&
+        lhs.thumb == rhs.thumb &&
+        lhs.logo == rhs.logo &&
+        lhs.backdrop == rhs.backdrop
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)
+        self.thumb = try container.decodeIfPresent([String: String].self, forKey: .thumb)
+        self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)
+        self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)
     }
     
     public func getBlurHash(for key: MediaImageType) -> String? {
@@ -254,7 +291,8 @@ public struct MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesPr
     }
 }
 
-public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
+@Observable
+public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var id: String
     public var name: String
     public var videoStreams: [any MediaStreamProtocol]
@@ -303,7 +341,8 @@ public struct MediaSource: Decodable, Equatable, MediaSourceProtocol {
     }
 }
 
-public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
+@Observable
+public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var id: Int
     public var title: String
     public var type: StreamType
@@ -329,15 +368,25 @@ public struct MediaStream: Decodable, Equatable, MediaStreamProtocol {
         self.id = try container.decodeIfPresent(Int.self, forKey: .id) ?? Int.random(in: 0..<Int.max)
         self.title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
         self.codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
+        self.isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
         self.bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate) ?? 10000
         if codec == "av1" {
             self.bitrate = Int(Double(self.bitrate) * 1.75) // AV1 isn't supported, but it's so good that we need way more bits
         }
-        self.isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
+    }
+    
+    public static func == (lhs: MediaStream, rhs: MediaStream) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.title == rhs.title &&
+        lhs.type == rhs.type &&
+        lhs.bitrate == rhs.bitrate &&
+        lhs.codec == rhs.codec &&
+        lhs.isDefault == rhs.isDefault
     }
 }
 
-public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
+@Observable
+public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var id: String
     public var name: String
     public var role: String
@@ -351,16 +400,34 @@ public struct MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
         case type = "Type"
         case imageHashes = "ImageBlurHashes"
     }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.role = try container.decode(String.self, forKey: .role)
+        self.type = try container.decode(String.self, forKey: .type)
+        self.imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
+    }
 }
 
-public struct TVSeason: TVSeasonProtocol {
+@Observable
+public final class TVSeason: TVSeasonProtocol {
     public var id: String
     public var title: String
     public var episodes: [any TVEpisodeProtocol]
     public var seasonNumber: Int
+    
+    public init(id: String, title: String, episodes: [any TVEpisodeProtocol], seasonNumber: Int) {
+        self.id = id
+        self.title = title
+        self.episodes = episodes
+        self.seasonNumber = seasonNumber
+    }
 }
 
-public struct TVEpisode: TVEpisodeProtocol {
+@Observable
+public final class TVEpisode: TVEpisodeProtocol {
     public var id: String
     public var blurHashes: MediaImageBlurHashes?
     public var title: String
@@ -368,6 +435,16 @@ public struct TVEpisode: TVEpisodeProtocol {
     public var mediaSources: [any MediaSourceProtocol]
     public var lastPlayed: Date?
     public var overview: String?
+    
+    init(id: String, blurHashes: MediaImageBlurHashes? = nil, title: String, episodeNumber: Int, mediaSources: [any MediaSourceProtocol], lastPlayed: Date? = nil, overview: String? = nil) {
+        self.id = id
+        self.blurHashes = blurHashes
+        self.title = title
+        self.episodeNumber = episodeNumber
+        self.mediaSources = mediaSources
+        self.lastPlayed = lastPlayed
+        self.overview = overview
+    }
 }
 
 public enum StreamType: String, Decodable, Equatable {
