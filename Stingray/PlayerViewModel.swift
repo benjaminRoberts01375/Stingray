@@ -30,18 +30,15 @@ final class PlayerViewModel {
     
     /// Normal init for setting up a player
     public init(
-        selectedSubtitleID: Int? = nil,
-        selectedAudioID: Int,
-        selectedVideoID: Int,
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
         streamingService: StreamingServiceProtocol,
         seasons: [any TVSeasonProtocol]?
     ) {
         self.player = nil
-        self.selectedSubtitleID = selectedSubtitleID
-        self.selectedAudioID = selectedAudioID
-        self.selectedVideoID = selectedVideoID
+        self.selectedSubtitleID = mediaSource.subtitleStreams.first { $0.isDefault }?.id ?? mediaSource.subtitleStreams.first?.id
+        self.selectedAudioID = mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
+        self.selectedVideoID = mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? 0)
         self.mediaSource = mediaSource
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
