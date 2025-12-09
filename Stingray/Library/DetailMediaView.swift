@@ -420,10 +420,15 @@ fileprivate struct EpisodeView: View {
             .focused($isFocused, equals: true)
             
             VStack(alignment: .leading) {
-                Text("Episode \(episode.episodeNumber)")
-                    .multilineTextAlignment(.leading)
-                    .opacity(0.5)
-                Spacer(minLength: 0)
+                HStack(spacing: 0) {
+                    if let seasonIndex = (seasons.firstIndex { $0.episodes.contains { $0.id == episode.id } }) {
+                        Text("Season \(seasonIndex + 1), ")
+                    }
+                    Text("Episode \(episode.episodeNumber)")
+                    Spacer()
+                }
+                .opacity(0.5)
+                
                 if let overview = episode.overview {
                     Button {
                         self.showDetails = true
@@ -454,7 +459,7 @@ fileprivate struct EpisodeView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .frame(width: 400, height: 200)
+            .frame(width: 400, height: 225)
             .padding(16)
             .background {
                 RoundedRectangle(cornerRadius: 20)
