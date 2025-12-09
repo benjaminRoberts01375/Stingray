@@ -95,8 +95,8 @@ struct PlayerView: View {
             var setPreviousEpisode: Bool = false
             
             if let index = allEpisodes.firstIndex(where: { episode in
-                for mediaSource in episode.mediaSources where mediaSource.id != self.vm.mediaSource.id {
-                    return true
+                for mediaSource in episode.mediaSources {
+                    return mediaSource.id == self.vm.mediaSource.id
                 }
                 return false
             }) {
