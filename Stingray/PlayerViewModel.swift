@@ -54,6 +54,7 @@ final class PlayerViewModel {
         if let existingPlayer = player {
             existingPlayer.pause()
             streamingService.playbackEnd()
+            self.player = nil
         }
         guard let player = streamingService.playbackStart(
             mediaSource: mediaSource,
