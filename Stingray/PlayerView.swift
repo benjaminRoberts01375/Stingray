@@ -104,7 +104,6 @@ struct PlayerView: View {
                 if index + 1 < allEpisodes.count {
                     let episode = allEpisodes[index + 1]
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
-                        self.vm.newIDsFromPreviousMedia(episode: episode)
                         self.vm.mediaSource = episode.mediaSources.first ?? self.vm.mediaSource
                         self.vm.newIDsFromPreviousMedia(episode: episode)
                         self.vm.newPlayer(startTime: .zero)
