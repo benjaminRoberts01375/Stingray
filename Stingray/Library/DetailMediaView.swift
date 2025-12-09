@@ -147,12 +147,8 @@ fileprivate struct MovieNavigationView: View {
         NavigationLink {
             PlayerView(
                 vm: PlayerViewModel(
-                    selectedAudioID: mediaSource.audioStreams.first(
-                        where: { $0.isDefault }
-                    )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                    selectedVideoID: mediaSource.videoStreams.first(
-                        where: { $0.isDefault }
-                    )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                    selectedAudioID: mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                    selectedVideoID: mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
@@ -287,15 +283,9 @@ fileprivate struct TVNextEpisodeView: View {
             NavigationLink {
                 PlayerView(
                     vm: PlayerViewModel(
-                        selectedSubtitleID: mediaSource.subtitleStreams.first(
-                            where: { $0.isDefault }
-                        )?.id ?? mediaSource.subtitleStreams.first?.id,
-                        selectedAudioID: mediaSource.audioStreams.first(
-                            where: { $0.isDefault }
-                        )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                        selectedVideoID: mediaSource.videoStreams.first(
-                            where: { $0.isDefault }
-                        )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                        selectedSubtitleID: mediaSource.subtitleStreams.first { $0.isDefault }?.id ?? mediaSource.subtitleStreams.first?.id,
+                        selectedAudioID: mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                        selectedVideoID: mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
                         startTime: .zero,
                         streamingService: streamingService,
@@ -379,15 +369,9 @@ fileprivate struct EpisodeNavigationView: View {
             PlayerView(
                 vm: (
                     PlayerViewModel(
-                        selectedSubtitleID: mediaSource.subtitleStreams.first(
-                            where: { $0.isDefault }
-                        )?.id ?? mediaSource.subtitleStreams.first?.id,
-                        selectedAudioID: mediaSource.audioStreams.first(
-                            where: { $0.isDefault }
-                        )?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
-                        selectedVideoID: mediaSource.videoStreams.first(
-                            where: { $0.isDefault }
-                        )?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
+                        selectedSubtitleID: mediaSource.subtitleStreams.first { $0.isDefault }?.id ?? mediaSource.subtitleStreams.first?.id,
+                        selectedAudioID: mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? 1),
+                        selectedVideoID: mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? 1),
                         mediaSource: mediaSource,
                         startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                         streamingService: streamingService,
