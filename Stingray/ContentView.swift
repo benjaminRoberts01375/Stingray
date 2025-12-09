@@ -19,8 +19,16 @@ struct ContentView: View {
         switch loginState {
         case .loggedOut:
             LoginView(loggedIn: $loginState)
-        case .loggedIn(let service):
-            DashboardView(streamingService: service)
+        case .loggedIn(let streamingService):
+            DashboardView(streamingService: streamingService)
+                .task {
+                    guard case .waiting = streamingService.libraryStatus else {
+                        print("No need for libraries")
+                        return
+                    }
+                    print("Getting libraries")
+                    await streamingService.retrieveLibraries()
+                }
         }
     }
 }

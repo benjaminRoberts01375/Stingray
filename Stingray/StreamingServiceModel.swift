@@ -8,24 +8,27 @@
 import AVKit
 
 protocol StreamingServiceProtocol {
+    var libraryStatus: LibraryStatus { get }
+    
     func login(username: String, password: String) async throws
-    func getLibraries() async throws -> [LibraryModel]
+    func retrieveLibraries() async
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
     func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
-    func getLibraryMedia(
-        libraryID: String,
-        index: Int,
-        count: Int,
-        sortOrder: LibraryMediaSortOrder,
-        sortBy: LibraryMediaSortBy
-    ) async throws -> [MediaModel]
+}
+
+enum LibraryStatus {
+    case waiting
+    case retrieving
+    case available([LibraryModel])
+    case error(Error)
 }
 
 @Observable
 final class JellyfinModel: StreamingServiceProtocol {
     var networkAPI: AdvancedNetworkProtocol
     var storageAPI: AdvancedStorageProtocol
+    var libraryStatus: LibraryStatus
     
     var url: URL {
         didSet { storageAPI.setServerURL(url) }
@@ -63,6 +66,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         self.sessionID = storageAPI.getSessionID()
         self.accessToken = storageAPI.getAccessToken() ?? ""
         self.serverID = storageAPI.getServerID()
+        self.libraryStatus = .waiting
         
         // Manually call storage setters during init since didSet won't always trigger >:(
         storageAPI.setServerURL(address)
@@ -89,8 +93,54 @@ final class JellyfinModel: StreamingServiceProtocol {
         self.serverID = response.serverId
     }
     
-    func getLibraries() async throws -> [LibraryModel] {
-        return try await networkAPI.getLibraries(accessToken: accessToken)
+    func retrieveLibraries() async {
+        let batchSize = 50
+        
+        do {
+            self.libraryStatus = .retrieving
+            let libraries = try await networkAPI.getLibraries(accessToken: accessToken)
+            self.libraryStatus = .available(libraries)
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                for library in libraries {
+                    group.addTask {
+                        var currentIndex = 0
+                        var allMedia: [MediaModel] = []
+                        if case .available(let existingMedia) = await library.media {
+                            allMedia = existingMedia
+                        }
+                        
+                        while true {
+                            let incomingMedia = try await self.networkAPI.getLibraryMedia(
+                                accessToken: self.accessToken,
+                                libraryId: library.id,
+                                index: currentIndex,
+                                count: batchSize,
+                                sortOrder: .ascending,
+                                sortBy: .SortName,
+                                mediaTypes: [.movies([]), .tv(nil)]
+                            )
+                            
+                            allMedia.append(contentsOf: incomingMedia)
+                            
+                            // Update the UI after each batch
+                            await MainActor.run { [allMedia] in
+                                library.media = .available(allMedia)
+                            }
+                            
+                            // If we received fewer items than requested, we've reached the end
+                            if incomingMedia.count < batchSize {
+                                break
+                            }
+                            
+                            currentIndex += batchSize
+                        }
+                    }
+                }
+                try await group.waitForAll()
+            }
+        } catch {
+            self.libraryStatus = .error(error)
+        }
     }
     
     func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
@@ -99,24 +149,6 @@ final class JellyfinModel: StreamingServiceProtocol {
     
     func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL? {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, imageID: imageID, width: width)
-    }
-    
-    func getLibraryMedia(
-        libraryID: String,
-        index: Int,
-        count: Int,
-        sortOrder: LibraryMediaSortOrder,
-        sortBy: LibraryMediaSortBy
-    ) async throws -> [MediaModel] {
-        return try await networkAPI.getLibraryMedia(
-            accessToken: accessToken,
-            libraryId: libraryID,
-            index: index,
-            count: count,
-            sortOrder: .ascending,
-            sortBy: .SortName,
-            mediaTypes: [.movies([]), .tv(nil)]
-        )
     }
     
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer? {

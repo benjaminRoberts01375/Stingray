@@ -557,7 +557,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
                     let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
                     
-                    var episode: TVEpisode = TVEpisode(
+                    let episode: TVEpisode = TVEpisode(
                         id: try episodeContainer.decode(String.self, forKey: .id),
                         blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
                         title: try episodeContainer.decode(String.self, forKey: .title),

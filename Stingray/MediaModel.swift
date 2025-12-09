@@ -179,7 +179,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         let mediaType = try container.decode(MediaType.self, forKey: .mediaType)
         switch mediaType {
         case .movies:
-            var movieSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
+            let movieSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
             let userDataContainer = try container.decode(UserData.self, forKey: .userData)
             if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
                 movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
@@ -324,7 +324,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
         
         // Separate streams by type
         self.videoStreams = allStreams.filter { $0.type == .video }
-        var audioStreams = allStreams.filter { $0.type == .audio }
+        let audioStreams = allStreams.filter { $0.type == .audio }
         self.subtitleStreams = allStreams.filter { $0.type == .subtitle }
         
         if let defaultAudioIndex = try container.decodeIfPresent(Int.self, forKey: .defaultAudioIndex) {
@@ -436,7 +436,15 @@ public final class TVEpisode: TVEpisodeProtocol {
     public var lastPlayed: Date?
     public var overview: String?
     
-    init(id: String, blurHashes: MediaImageBlurHashes? = nil, title: String, episodeNumber: Int, mediaSources: [any MediaSourceProtocol], lastPlayed: Date? = nil, overview: String? = nil) {
+    init(
+        id: String,
+        blurHashes: MediaImageBlurHashes? = nil,
+        title: String,
+        episodeNumber: Int,
+        mediaSources: [any MediaSourceProtocol],
+        lastPlayed: Date? = nil,
+        overview: String? = nil
+    ) {
         self.id = id
         self.blurHashes = blurHashes
         self.title = title

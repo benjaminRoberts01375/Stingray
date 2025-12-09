@@ -8,21 +8,14 @@
 import SwiftUI
 
 struct DashboardView: View {
-    enum LibraryStatus {
-        case waiting
-        case available([LibraryModel])
-        case error(Error)
-    }
-    
     var streamingService: StreamingServiceProtocol
-    @State var libraryStatus: LibraryStatus = .waiting
     @State private var selectedTab: String = "home"
     
     var body: some View {
         NavigationStack {
             VStack {
-                switch libraryStatus {
-                case .waiting:
+                switch streamingService.libraryStatus {
+                case .waiting, .retrieving:
                     ProgressView()
                 case .error(let err):
                     Text("Error loading libraries: \(err.localizedDescription)")
@@ -44,29 +37,6 @@ struct DashboardView: View {
                         }
                     }
                 }
-            }
-        }
-        .task {
-            guard case .waiting = libraryStatus else {
-                print("No need for libraries")
-                return
-            }
-            print("Getting libraries")
-            do {
-                let libraries = try await streamingService.getLibraries().filter { $0.title != "Collections" && $0.title != "Playlists" }
-                libraryStatus = .available(libraries)
-                try await withThrowingTaskGroup(of: Void.self) { group in
-                    for library in libraries {
-                        group.addTask {
-                            try await library.loadMedia(streamingService: streamingService)
-                        }
-                    }
-                    try await group.waitForAll()
-                }
-                print("Finished loading media for all libraries")
-            } catch {
-                libraryStatus = .error(error)
-                print("Failed to get libraries: \(error.localizedDescription)")
             }
         }
     }

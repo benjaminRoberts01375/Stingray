@@ -60,38 +60,4 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         }
         self.media = .unloaded // Don't even try to decode media here
     }
-    
-    func loadMedia(streamingService: any StreamingServiceProtocol) async throws {
-        let batchSize = 50
-        var currentIndex = 0
-        var allMedia: [MediaModel] = []
-        
-        // Preserve existing media if we're adding to it
-        if case .available(let existingMedia) = self.media {
-            allMedia = existingMedia
-        }
-        
-        // Keep fetching batches until we get fewer items than the batch size
-        while true {
-            let incomingMedia = try await streamingService.getLibraryMedia(
-                libraryID: self.id,
-                index: currentIndex,
-                count: batchSize,
-                sortOrder: .ascending,
-                sortBy: .SortName
-            )
-            
-            allMedia.append(contentsOf: incomingMedia)
-            
-            // Update the UI after each batch
-            media = .available(allMedia)
-            
-            // If we received fewer items than requested, we've reached the end
-            if incomingMedia.count < batchSize {
-                break
-            }
-            
-            currentIndex += batchSize
-        }
-    }
 }
