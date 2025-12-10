@@ -24,7 +24,10 @@ struct DashboardView: View {
                 case .available(let libraries):
                     TabView(selection: $selectedTab) {
                         Tab(value: "home") {
-                            Text("Home")
+                            ScrollView {
+                                HomeView(streamingService: streamingService)
+                                    .scrollClipDisabled()
+                            }
                         } label: {
                             Text("Home")
                         }
