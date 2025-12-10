@@ -18,8 +18,10 @@ public enum MediaStatus {
     case unloaded
     /// Waiting for the server to respond
     case waiting
-    /// Library content is available
+    /// Some library content is available, and some may still be downloading
     case available([MediaModel])
+    /// All library content is available
+    case complete([MediaModel])
     /// Loading library content failed with an error
     case error(Error)
 }

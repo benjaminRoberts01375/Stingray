@@ -22,7 +22,7 @@ public struct LibraryView: View {
                 Text("Error: \(err.localizedDescription)")
                     .foregroundStyle(.red)
                     .padding(.vertical)
-            case .available(let allMedia):
+            case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
                     let columns = [
                         GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)

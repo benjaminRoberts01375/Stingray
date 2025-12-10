@@ -23,6 +23,7 @@ enum LibraryStatus {
     case waiting
     case retrieving
     case available([LibraryModel])
+    case complete([LibraryModel])
     case error(Error)
 }
 
@@ -131,6 +132,9 @@ final class JellyfinModel: StreamingServiceProtocol {
                             
                             // If we received fewer items than requested, we've reached the end
                             if incomingMedia.count < batchSize {
+                                await MainActor.run { [allMedia] in
+                                    library.media = .complete(allMedia)
+                                }
                                 break
                             }
                             
@@ -139,6 +143,7 @@ final class JellyfinModel: StreamingServiceProtocol {
                     }
                 }
                 try await group.waitForAll()
+                self.libraryStatus = .complete(libraries)
             }
         } catch {
             self.libraryStatus = .error(error)

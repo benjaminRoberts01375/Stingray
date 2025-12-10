@@ -21,7 +21,7 @@ struct DashboardView: View {
                     Text("Error loading libraries: \(err.localizedDescription)")
                         .foregroundStyle(.red)
                     
-                case .available(let libraries):
+                case .available(let libraries), .complete(let libraries):
                     TabView(selection: $selectedTab) {
                         Tab(value: "home") {
                             ScrollView {
