@@ -10,19 +10,24 @@ import Foundation
 // MARK: Protocols
 
 /// Define the shape of a piece of media
-public protocol MediaProtocol: Identifiable {
-    var title: String { get }
+public protocol MediaProtocol: Identifiable, SlimMediaProtocol {
     var tagline: String { get }
     var description: String { get }
     var imageTags: any MediaImagesProtocol { get }
     var id: String { get }
-    var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
     var genres: [String] { get }
     var maturity: String? { get }
     var releaseDate: Date? { get }
     var mediaType: MediaType { get }
     var duration: Duration? { get }
     var people: [MediaPersonProtocol] { get }
+}
+
+public protocol SlimMediaProtocol: Identifiable {
+    var id: String { get }
+    var title: String { get }
+    var imageTags: any MediaImagesProtocol { get }
+    var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
 }
 
 /// Track image IDs for a piece of media
@@ -213,6 +218,41 @@ public final class MediaModel: MediaProtocol, Decodable {
                 case mediaItemID = "ItemId"
             }
         }
+    }
+}
+
+@Observable
+public final class SlimMedia: SlimMediaProtocol, Decodable {
+    public var id: String
+    public var title: String
+    public var imageTags: any MediaImagesProtocol
+    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    public var parentID: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case seriesID = "SeriesId"
+        case seriesTitle = "SeriesName"
+        case title = "Name"
+        case imageBlurHashes = "ImageBlurHashes"
+        case imageTags = "ImageTags"
+        case parentID = "ParentId"
+        case parentPrimaryImage = "SeriesPrimaryImageTag"
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
+        self.parentID = try container.decode(String.self, forKey: .parentID)
+        
+        self.id = try container.decodeIfPresent(String.self, forKey: .seriesID) ??
+        container.decode(String.self, forKey: .id)
+        
+        self.title = try container.decodeIfPresent(String.self, forKey: .seriesTitle) ??
+        container.decode(String.self, forKey: .title)
+        
+        self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
+        MediaImages(thumbnail: nil, logo: nil, primary: nil)
     }
 }
 

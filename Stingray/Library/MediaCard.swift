@@ -9,10 +9,10 @@ import BlurHashKit
 import SwiftUI
 
 struct MediaCard: View {
-    let media: MediaModel
+    let media: any SlimMediaProtocol
     let url: URL?
     
-    init(media: MediaModel, streamingService: StreamingServiceProtocol) {
+    init(media: any SlimMediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
         self.url = streamingService.getImageURL(imageType: .primary, imageID: media.id, width: 400)
     }

@@ -12,6 +12,8 @@ protocol StreamingServiceProtocol {
     
     func login(username: String, password: String) async throws
     func retrieveLibraries() async
+    func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia]
+    func retrieveUpNext() async -> [SlimMedia]
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
     func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
@@ -140,6 +142,21 @@ final class JellyfinModel: StreamingServiceProtocol {
             }
         } catch {
             self.libraryStatus = .error(error)
+        }
+    }
+    
+    func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
+        do {
+            return try await networkAPI.getRecentlyAdded(contentType: contentType, accessToken: accessToken)
+        } catch { return [] }
+    }
+    
+    func retrieveUpNext() async -> [SlimMedia] {
+        do {
+            return try await networkAPI.getUpNext(accessToken: accessToken)
+        } catch {
+            print("Up next failed: \(error.localizedDescription)")
+            return []
         }
     }
     

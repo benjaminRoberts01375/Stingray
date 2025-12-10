@@ -220,6 +220,18 @@ public protocol AdvancedNetworkProtocol {
         playbackStatus: PlaybackStatus,
         accessToken: String
     ) async throws
+    
+    /// Retrieve recently added media of some type
+    /// - Parameters:
+    ///   - contentType: Type of media to retrieve
+    ///   - accessToken: Access token for the server
+    /// - Returns: A silm verion of the media type
+    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws -> [SlimMedia]
+    
+    /// Gets up next shows
+    /// - Parameter accessToken: Access token for the server
+    /// - Returns: Available media for up next
+    func getUpNext(accessToken: String) async throws -> [SlimMedia]
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -751,6 +763,47 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             body: stats
         )
     }
+    
+    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws -> [SlimMedia] {
+        var params: [URLQueryItem] = [
+            URLQueryItem(name: "limit", value: "\(25)"),
+            URLQueryItem(name: "fields", value: "ParentId")
+        ]
+        
+        switch contentType {
+        case .all:
+            break
+        case .movie:
+            params.append(URLQueryItem(name: "includeItemTypes", value: "Movie"))
+        case .tv:
+            params.append(URLQueryItem(name: "includeItemTypes", value: "Series"))
+        }
+        
+        return try await network.request(
+            verb: .get,
+            path: "/Items/Latest",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: params,
+            body: nil
+        )
+    }
+    
+    func getUpNext(accessToken: String) async throws -> [SlimMedia] {
+        struct Root: Decodable {
+            let Items: [SlimMedia]
+        }
+        
+        let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]
+        
+        let root: Root = try await network.request(
+            verb: .get,
+            path: "/Shows/NextUp",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: params,
+            body: nil
+        )
+        return root.Items
+    }
 }
 
 /// Denotes playback status of a player
@@ -763,4 +816,14 @@ public enum PlaybackStatus {
     case progressed
     /// The player is temporarily paused
     case paused
+}
+
+/// Denotes types of desired media for recently added content
+public enum RecentlyAddedMediaType {
+    /// Get a list of recently added movies
+    case movie
+    /// Get a list of recently added TV Shows
+    case tv
+    /// Get a list of all recently added content
+    case all
 }
