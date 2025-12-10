@@ -17,6 +17,7 @@ protocol StreamingServiceProtocol {
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
     func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
+    func lookup(mediaID: String, parentID: String) -> MediaLookupStatus
 }
 
 enum LibraryStatus {
@@ -25,6 +26,16 @@ enum LibraryStatus {
     case available([LibraryModel])
     case complete([LibraryModel])
     case error(Error)
+}
+
+/// Denotes the availablity of a piece of media
+enum MediaLookupStatus {
+    /// The requested media was found
+    case found(any MediaProtocol)
+    /// The requested media was not found, but may be available once libraries finish downloading
+    case temporarilyNotFound
+    /// The requested media was not found despite all libraries being downloaded
+    case notFound
 }
 
 @Observable
@@ -104,6 +115,7 @@ final class JellyfinModel: StreamingServiceProtocol {
             let libraries = try await networkAPI.getLibraries(accessToken: accessToken)
             self.libraryStatus = .available(libraries)
             try await withThrowingTaskGroup(of: Void.self) { group in
+                try await Task.sleep(for: .seconds(7))
                 for library in libraries {
                     group.addTask {
                         var currentIndex = 0
@@ -162,6 +174,54 @@ final class JellyfinModel: StreamingServiceProtocol {
         } catch {
             print("Up next failed: \(error.localizedDescription)")
             return []
+        }
+    }
+    
+    func lookup(mediaID: String, parentID: String) -> MediaLookupStatus {
+        let libraries: [LibraryModel]
+        switch self.libraryStatus {
+        case .available(let libs), .complete(let libs):
+            libraries = libs
+        default:
+            return .temporarilyNotFound
+        }
+        
+        // Check the parent library first (most likely location)
+        if let parentLibrary = libraries.first(where: { $0.id == parentID }) {
+            let allMedia: [MediaModel]?
+            switch parentLibrary.media {
+            case .available(let media), .complete(let media):
+                allMedia = media
+            default:
+                allMedia = nil
+            }
+            
+            if let allMedia = allMedia,
+               let found = allMedia.first(where: { $0.id == mediaID }) {
+                return .found(found)
+            }
+        }
+        
+        // Fallback: search all libraries
+        for library in libraries {
+            let allMedia: [MediaModel]?
+            switch library.media {
+            case .available(let media), .complete(let media):
+                allMedia = media
+            default:
+                allMedia = nil
+            }
+            
+            if let allMedia = allMedia,
+               let found = allMedia.first(where: { $0.id == mediaID }) {
+                return .found(found)
+            }
+        }
+        switch self.libraryStatus {
+        case .complete:
+            return .notFound
+        default:
+            return .temporarilyNotFound
         }
     }
     

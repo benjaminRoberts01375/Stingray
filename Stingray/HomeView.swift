@@ -79,10 +79,31 @@ fileprivate struct MediaNavigation: View {
     var streamingService: StreamingServiceProtocol
     
     var body: some View {
-        NavigationLink(destination: EmptyView()) {
+        NavigationLink {
+            MediaDetailLoader(media: media, parentID: media.parentID, streamingService: streamingService)
+        } label: {
             MediaCard(media: media, streamingService: streamingService)
                 .frame(width: 200, height: 370)
         }
         .buttonStyle(.card)
+    }
+}
+
+fileprivate struct MediaDetailLoader: View {
+    let media: any SlimMediaProtocol
+    let parentID: String
+    let streamingService: StreamingServiceProtocol
+    
+    var body: some View {
+        switch self.streamingService.lookup(mediaID: media.id, parentID: parentID) {
+        case .found(let foundMedia):
+            DetailMediaView(media: foundMedia, streamingService: streamingService)
+        case .temporarilyNotFound:
+            ProgressView("Loading Libraries...")
+        case .notFound:
+            Text("Failed to locate \(media.title).")
+            Text("It may not have been compatible with Stingray")
+                .opacity(0.5)
+        }
     }
 }
