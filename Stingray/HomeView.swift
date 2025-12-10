@@ -67,13 +67,23 @@ fileprivate struct MediaPicker: View {
         ScrollView(.horizontal) {
             HStack {
                 ForEach(pickerMedia) { media in
-                    NavigationLink(destination: EmptyView()) {
-                        MediaCard(media: media, streamingService: streamingService)
-                            .frame(width: 200, height: 370)
-                    }
-                    .buttonStyle(.card)
+                    MediaNavigation(media: media, streamingService: streamingService)
                 }
             }
         }
+    }
+}
+
+fileprivate struct MediaNavigation: View {
+    var media: SlimMedia
+    var streamingService: StreamingServiceProtocol
+    
+    var body: some View {
+        NavigationLink(destination: EmptyView()) {
+            MediaCard(media: media, streamingService: streamingService)
+                .frame(width: 200, height: 370)
+        }
+        .buttonStyle(.card)
+        .toolbar(.hidden, for: .tabBar)
     }
 }
