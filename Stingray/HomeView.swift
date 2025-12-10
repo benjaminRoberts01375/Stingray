@@ -84,6 +84,5 @@ fileprivate struct MediaNavigation: View {
                 .frame(width: 200, height: 370)
         }
         .buttonStyle(.card)
-        .toolbar(.hidden, for: .tabBar)
     }
 }
