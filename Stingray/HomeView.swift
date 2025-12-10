@@ -54,14 +54,14 @@ fileprivate struct DashboardRow: View {
         VStack(alignment: .leading) {
             Text(title)
                 .font(.title2.bold())
-                .task {
+                .task(id: title) {
                     let response = await fetchMedia()
                     status = response.isEmpty ? .empty : .complete(response)
                 }
             
             switch status {
             case .unstarted, .retrieving:
-                ProgressView()
+                MediaNavigationLoadingPicker()
             case .complete(let newMedia):
                 MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
             case .empty:
@@ -126,5 +126,47 @@ fileprivate struct MediaDetailLoader: View {
             Text("It may not have been compatible with Stingray")
                 .opacity(0.5)
         }
+    }
+}
+
+fileprivate struct MediaNavigationLoadingPicker: View {
+    private let numOfPlaceholders: Int = Int.random(in: 4..<8)
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(0..<numOfPlaceholders, id: \.self) { index in
+                    MediaNavigationLoadingCard()
+                        .opacity(Double(1 - (Double(index) / Double(numOfPlaceholders))))
+                }
+            }
+        }
+    }
+}
+
+fileprivate struct MediaNavigationLoadingCard: View {
+    private let randomWordCount = Int.random(in: 3...5)
+    
+    var body: some View {
+        Button {
+            
+        } label: {
+            VStack {
+                ZStack {
+                    Color.gray.opacity(0.2)
+                    ProgressView()
+                }
+                Text(
+                    (3...5).map { _ in
+                        String(repeating: "▀", count: Int.random(in: 2...5))
+                    }
+                        .joined(separator: " ")
+                )
+                .opacity(0.5)
+                Spacer()
+            }
+            .frame(width: 200, height: 370)
+        }
+        .buttonStyle(.card)
+        .focusable(false)
     }
 }
