@@ -18,6 +18,7 @@ struct HomeView: View {
             ) {
                 await streamingService.retrieveUpNext()
             }
+            .focusSection()
             
             DashboardRow(
                 title: "Recently Added",
@@ -25,6 +26,7 @@ struct HomeView: View {
             ) {
                 await streamingService.retrieveRecentlyAdded(.all)
             }
+            .focusSection()
             
             DashboardRow(
                 title: "Latest Movies",
@@ -32,6 +34,7 @@ struct HomeView: View {
             ) {
                 await streamingService.retrieveRecentlyAdded(.movie)
             }
+            .focusSection()
             
             DashboardRow(
                 title: "Latest Shows",
@@ -39,6 +42,7 @@ struct HomeView: View {
             ) {
                 await streamingService.retrieveRecentlyAdded(.tv)
             }
+            .focusSection()
         }
     }
 }
