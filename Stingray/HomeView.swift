@@ -9,89 +9,67 @@ import SwiftUI
 
 struct HomeView: View {
     let streamingService: StreamingServiceProtocol
-    @State var upNextMedia: DashboardRowStatus = .unstarted
-    @State var recentlyAddedMedia: DashboardRowStatus = .unstarted
-    @State var recentlyAddedMovies: DashboardRowStatus = .unstarted
-    @State var recentlyAddedShows: DashboardRowStatus = .unstarted
     
     var body: some View {
         VStack(alignment: .leading) {
-            VStack(alignment: .leading) {
-                Text("Next Up")
-                    .font(.title2.bold())
-                    .task {
-                        let response = await streamingService.retrieveUpNext()
-                        upNextMedia = response.isEmpty ? .empty : .complete(response)
-                    }
-                switch upNextMedia {
-                case .unstarted, .retrieving:
-                    ProgressView()
-                case .complete(let newMedia):
-                    MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
-                case .empty:
-                    EmptyView()
-                }
+            DashboardRow(
+                title: "Next Up",
+                streamingService: streamingService
+            ) {
+                await streamingService.retrieveUpNext()
             }
-            .padding(.vertical)
-            .frame(maxWidth: .infinity, alignment: .leading)
             
-            VStack(alignment: .leading) {
-                Text("Recently Added")
-                    .font(.title2.bold())
-                    .task {
-                        let response = await streamingService.retrieveRecentlyAdded(.all)
-                        recentlyAddedMedia = response.isEmpty ? .empty : .complete(response)
-                    }
-                switch recentlyAddedMedia {
-                case .unstarted, .retrieving:
-                    ProgressView()
-                case .complete(let newMedia):
-                    MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
-                case .empty:
-                    EmptyView()
-                }
+            DashboardRow(
+                title: "Recently Added",
+                streamingService: streamingService
+            ) {
+                await streamingService.retrieveRecentlyAdded(.all)
             }
-            .padding(.vertical)
-            .frame(maxWidth: .infinity, alignment: .leading)
             
-            VStack(alignment: .leading) {
-                Text("Latest Movies")
-                    .font(.title2.bold())
-                    .task {
-                        let response = await streamingService.retrieveRecentlyAdded(.movie)
-                        recentlyAddedMovies = response.isEmpty ? .empty : .complete(response)
-                    }
-                switch recentlyAddedMovies {
-                case .unstarted, .retrieving:
-                    ProgressView()
-                case .complete(let newMedia):
-                    MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
-                case .empty:
-                    EmptyView()
-                }
+            DashboardRow(
+                title: "Latest Movies",
+                streamingService: streamingService
+            ) {
+                await streamingService.retrieveRecentlyAdded(.movie)
             }
-            .padding(.vertical)
-            .frame(maxWidth: .infinity, alignment: .leading)
             
-            VStack(alignment: .leading) {
-                Text("Latest Shows")
-                    .font(.title2.bold())
-                    .task {
-                        let response = await streamingService.retrieveRecentlyAdded(.tv)
-                        recentlyAddedShows = response.isEmpty ? .empty : .complete(response)
-                    }
-                switch recentlyAddedShows {
-                case .unstarted, .retrieving:
-                    ProgressView()
-                case .complete(let newMedia):
-                    MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
-                case .empty:
-                    EmptyView()
-                }
+            DashboardRow(
+                title: "Latest Shows",
+                streamingService: streamingService
+            ) {
+                await streamingService.retrieveRecentlyAdded(.tv)
             }
-            .padding(.vertical)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+fileprivate struct DashboardRow: View {
+    let title: String
+    let streamingService: StreamingServiceProtocol
+    let fetchMedia: () async -> [SlimMedia]
+    
+    @State private var status: DashboardRowStatus = .unstarted
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.title2.bold())
+                .task {
+                    let response = await fetchMedia()
+                    status = response.isEmpty ? .empty : .complete(response)
+                }
+            
+            switch status {
+            case .unstarted, .retrieving:
+                ProgressView()
+            case .complete(let newMedia):
+                MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
+            case .empty:
+                EmptyView()
+            }
+        }
+        .padding(.vertical)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     enum DashboardRowStatus {
