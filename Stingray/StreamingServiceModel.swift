@@ -14,7 +14,6 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     func retrieveLibraries() async
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
-    func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL?
     func lookup(mediaID: String, parentID: String) -> MediaLookupStatus
 }
 
@@ -227,8 +226,8 @@ final class JellyfinModel: StreamingServiceProtocol {
         return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
     }
     
-    func getImageURL(imageType: MediaImageType, imageID: String, width: Int) -> URL? {
-        return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, imageID: imageID, width: width)
+    func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
+        return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
     
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer? {

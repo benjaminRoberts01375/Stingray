@@ -43,10 +43,10 @@ public protocol AdvancedNetworkProtocol {
     /// - Parameters:
     ///   - accessToken: Access token for the server
     ///   - imageType: Type of image (ex. poster)
-    ///   - imageID: ID of the image
+    ///   - mediaID: ID of the image
     ///   - width: Ideal width of the image
     /// - Returns: Formatted URL if possible
-    func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL?
+    func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL?
     /// Generates a player for a media stream
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -401,13 +401,13 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return response.items
     }
     
-    func getMediaImageURL(accessToken: String, imageType: MediaImageType, imageID: String, width: Int) -> URL? {
+    func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "fillWidth", value: String(width)),
             URLQueryItem(name: "quality", value: "95")
         ]
         
-        return network.buildURL(path: "/Items/\(imageID)/Images/\(imageType.rawValue)", urlParams: params)
+        return network.buildURL(path: "/Items/\(mediaID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
     func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {

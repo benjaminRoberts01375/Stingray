@@ -24,8 +24,8 @@ struct DetailMediaView: View {
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
         self.media = media
         self.streamingService = streamingService
-        self.backgroundImageURL = streamingService.getImageURL(imageType: .backdrop, imageID: media.id, width: 0)
-        self.logoImageURL = streamingService.getImageURL(imageType: .logo, imageID: media.id, width: 0)
+        self.backgroundImageURL = streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0)
+        self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
     }
     
     var body: some View {
@@ -467,7 +467,7 @@ fileprivate struct MediaMetadataView: View {
     
     init(media: any MediaProtocol, streamingService: any StreamingServiceProtocol) {
         self.media = media
-        self.logoImageURL = streamingService.getImageURL(imageType: .logo, imageID: media.id, width: 0)
+        self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
         self.streamingService = streamingService
     }
     
@@ -526,7 +526,7 @@ fileprivate struct ActorImage: View {
                     .aspectRatio(contentMode: .fit)
                     .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
             }
-            if let url = streamingService.getImageURL(imageType: .primary, imageID: person.id, width: 0) {
+            if let url = streamingService.getImageURL(imageType: .primary, mediaID: person.id, width: 0) {
                 AsyncImage(url: url) { image in
                     image
                         .resizable()
@@ -556,7 +556,7 @@ fileprivate struct EpisodeArtView: View {
                         .aspectRatio(contentMode: .fit)
                         .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                 }
-                if let url = streamingService.getImageURL(imageType: .primary, imageID: episode.id, width: 800) {
+                if let url = streamingService.getImageURL(imageType: .primary, mediaID: episode.id, width: 800) {
                     AsyncImage(url: url) { image in
                         image
                             .resizable()

@@ -17,6 +17,14 @@ public protocol StreamingServiceBasicProtocol {
     /// Retrieves a list of the media slated for up next
     /// - Returns: All slim versions of media found
     func retrieveUpNext() async -> [SlimMedia]
+    
+    /// Formats a URL based on a piece of media
+    /// - Parameters:
+    ///   - imageType: Shape of image
+    ///   - mediaID: The mediaID of the media to get the image for
+    ///   - width: Target width of hte image
+    /// - Returns: A formatted URL to the image
+    func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL?
 }
 
 /// Denotes types of desired media for recently added content
