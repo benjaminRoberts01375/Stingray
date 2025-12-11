@@ -8,39 +8,6 @@
 import AVKit
 import SwiftUI
 
-public enum MediaType: Decodable {
-    case collections
-    case movies([any MediaSourceProtocol])
-    case tv([TVSeason]?)
-    
-    public init (from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let stringValue = try container.decode(String.self)
-        
-        switch stringValue {
-        case MediaType.collections.rawValue:
-            self = .collections
-        case "Movie":
-            self = .movies([])
-        case "Series":
-            self = .tv(nil)
-        default:
-            fatalError("Unknown media type: \(stringValue)")
-        }
-    }
-    
-    var rawValue: String {
-        switch self {
-        case .collections:
-            return "BoxSet"
-        case .movies:
-            return "Movie"
-        case .tv:
-            return "Series"
-        }
-    }
-}
-
 /// Defines a network that is reliant on primitives already created by `BasicNetworkProtocol`
 public protocol AdvancedNetworkProtocol {
     /// Log-in a user via a username and password
@@ -177,13 +144,6 @@ public enum LibraryMediaSortBy: String {
     case SeriesDatePlayed = "SeriesDatePlayed"
     case ParentIndexNumber = "ParentIndexNumber"
     case IndexNumber = "IndexNumber"
-}
-
-public enum MediaImageType: String {
-    case thumbnail = "Thumb"
-    case logo = "Logo"
-    case primary = "Primary"
-    case backdrop = "Backdrop"
 }
 
 public struct APILoginResponse: Decodable {
