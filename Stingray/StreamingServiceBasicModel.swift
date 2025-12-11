@@ -29,3 +29,12 @@ public enum RecentlyAddedMediaType {
     case all
 }
 
+public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
+        return []
+    }
+    
+    public func retrieveUpNext() async -> [SlimMedia] {
+        return []
+    }
+}
