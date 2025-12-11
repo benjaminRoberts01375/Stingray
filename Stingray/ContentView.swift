@@ -20,6 +20,7 @@ struct ContentView: View {
         switch loginState {
         case .loggedOut:
             LoginView(loggedIn: $loginState)
+                .padding(128)
         case .loggedIn(let streamingService):
             DashboardView(streamingService: streamingService, deepLinkRequest: $deepLinkRequest) // Deeplink is handled in here
                 .task {
