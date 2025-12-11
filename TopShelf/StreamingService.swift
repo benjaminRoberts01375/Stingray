@@ -19,7 +19,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
             enum AddressError: Error { case badAddress }
             throw AddressError.badAddress
         }
-        guard let token = storage.getSessionID() else {
+        guard let token = storage.getAccessToken() else {
             print("No token")
             enum TokenError: Error { case noToken }
             throw TokenError.noToken
