@@ -8,16 +8,72 @@
 
 /* Begin PBXBuildFile section */
 		B506A9E22EC8341A0086F657 /* BlurHashKit in Frameworks */ = {isa = PBXBuildFile; productRef = B506A9E12EC8341A0086F657 /* BlurHashKit */; };
+		B593D4B62EEB58090015EB83 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B593D4B52EEB58090015EB83 /* TVServices.framework */; };
+		B593D4BD2EEB58090015EB83 /* TopShelf.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B593D4B32EEB58090015EB83 /* TopShelf.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B593D4BB2EEB58090015EB83 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B5625A442EC4EDF500C0507C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B593D4B22EEB58090015EB83;
+			remoteInfo = TopShelf;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B593D4C22EEB58090015EB83 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B593D4BD2EEB58090015EB83 /* TopShelf.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		B5625A4C2EC4EDF500C0507C /* Stingray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stingray.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B593D4B32EEB58090015EB83 /* TopShelf.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TopShelf.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B593D4B52EEB58090015EB83 /* TVServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = TVServices.framework; path = System/Library/Frameworks/TVServices.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B593D4BE2EEB58090015EB83 /* Exceptions for "TopShelf" folder in "TopShelf" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B593D4B22EEB58090015EB83 /* TopShelf */;
+		};
+		B593D4C42EEB58590015EB83 /* Exceptions for "Stingray" folder in "TopShelf" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				APIBasicNetwork.swift,
+			);
+			target = B593D4B22EEB58090015EB83 /* TopShelf */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B5625A4E2EC4EDF500C0507C /* Stingray */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B593D4C42EEB58590015EB83 /* Exceptions for "Stingray" folder in "TopShelf" target */,
+			);
 			path = Stingray;
+			sourceTree = "<group>";
+		};
+		B593D4B72EEB58090015EB83 /* TopShelf */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B593D4BE2EEB58090015EB83 /* Exceptions for "TopShelf" folder in "TopShelf" target */,
+			);
+			path = TopShelf;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -31,6 +87,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B593D4B02EEB58090015EB83 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B593D4B62EEB58090015EB83 /* TVServices.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -38,6 +102,8 @@
 			isa = PBXGroup;
 			children = (
 				B5625A4E2EC4EDF500C0507C /* Stingray */,
+				B593D4B72EEB58090015EB83 /* TopShelf */,
+				B593D4B42EEB58090015EB83 /* Frameworks */,
 				B5625A4D2EC4EDF500C0507C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -46,8 +112,17 @@
 			isa = PBXGroup;
 			children = (
 				B5625A4C2EC4EDF500C0507C /* Stingray.app */,
+				B593D4B32EEB58090015EB83 /* TopShelf.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B593D4B42EEB58090015EB83 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B593D4B52EEB58090015EB83 /* TVServices.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -60,11 +135,13 @@
 				B5625A482EC4EDF500C0507C /* Sources */,
 				B5625A492EC4EDF500C0507C /* Frameworks */,
 				B5625A4A2EC4EDF500C0507C /* Resources */,
+				B593D4C22EEB58090015EB83 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				B56CD24D2EE78F1C00B1F21F /* PBXTargetDependency */,
+				B593D4BC2EEB58090015EB83 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B5625A4E2EC4EDF500C0507C /* Stingray */,
@@ -77,6 +154,28 @@
 			productReference = B5625A4C2EC4EDF500C0507C /* Stingray.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B593D4B22EEB58090015EB83 /* TopShelf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B593D4BF2EEB58090015EB83 /* Build configuration list for PBXNativeTarget "TopShelf" */;
+			buildPhases = (
+				B593D4AF2EEB58090015EB83 /* Sources */,
+				B593D4B02EEB58090015EB83 /* Frameworks */,
+				B593D4B12EEB58090015EB83 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B593D4B72EEB58090015EB83 /* TopShelf */,
+			);
+			name = TopShelf;
+			packageProductDependencies = (
+			);
+			productName = TopShelf;
+			productReference = B593D4B32EEB58090015EB83 /* TopShelf.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -88,6 +187,9 @@
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					B5625A4B2EC4EDF500C0507C = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					B593D4B22EEB58090015EB83 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
@@ -111,12 +213,20 @@
 			projectRoot = "";
 			targets = (
 				B5625A4B2EC4EDF500C0507C /* Stingray */,
+				B593D4B22EEB58090015EB83 /* TopShelf */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		B5625A4A2EC4EDF500C0507C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B593D4B12EEB58090015EB83 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -133,12 +243,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B593D4AF2EEB58090015EB83 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		B56CD24D2EE78F1C00B1F21F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			productRef = B56CD24C2EE78F1C00B1F21F /* SwiftLintBuildToolPlugin */;
+		};
+		B593D4BC2EEB58090015EB83 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B593D4B22EEB58090015EB83 /* TopShelf */;
+			targetProxy = B593D4BB2EEB58090015EB83 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -330,6 +452,64 @@
 			};
 			name = Release;
 		};
+		B593D4C02EEB58090015EB83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 68A766T4GX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TopShelf/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TopShelf;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray.TopShelf;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		B593D4C12EEB58090015EB83 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 68A766T4GX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TopShelf/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TopShelf;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray.TopShelf;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -347,6 +527,15 @@
 			buildConfigurations = (
 				B5625A582EC4EDF700C0507C /* Debug */,
 				B5625A592EC4EDF700C0507C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B593D4BF2EEB58090015EB83 /* Build configuration list for PBXNativeTarget "TopShelf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B593D4C02EEB58090015EB83 /* Debug */,
+				B593D4C12EEB58090015EB83 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
