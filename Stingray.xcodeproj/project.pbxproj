@@ -54,7 +54,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				APIBasicNetwork.swift,
+				APIStorage.swift,
 				MediaModel.swift,
+				StreamingServiceBasicModel.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};

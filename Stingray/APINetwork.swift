@@ -578,13 +578,3 @@ public enum PlaybackStatus {
     /// The player is temporarily paused
     case paused
 }
-
-/// Denotes types of desired media for recently added content
-public enum RecentlyAddedMediaType {
-    /// Get a list of recently added movies
-    case movie
-    /// Get a list of recently added TV Shows
-    case tv
-    /// Get a list of all recently added content
-    case all
-}
