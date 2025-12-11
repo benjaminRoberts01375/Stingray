@@ -88,7 +88,19 @@ public protocol AdvancedStorageProtocol {
 }
 
 final class DefaultsBasicStorage: BasicStorageProtocol {
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    
+    init() {
+        // Use the shared container instead of standard defaults
+        if let sharedDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") {
+            print("Setting up user defaults with suite name")
+            self.defaults = sharedDefaults
+        } else {
+            // Fallback to standard defaults if app group isn't configured
+            print("Setting up generic user defaults")
+            self.defaults = UserDefaults.standard
+        }
+    }
     
     func getString(_ key: BasicNetworkKeys) -> String? {
         return defaults.string(forKey: key.rawValue)
