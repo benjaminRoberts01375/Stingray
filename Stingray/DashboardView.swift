@@ -10,9 +10,11 @@ import SwiftUI
 struct DashboardView: View {
     var streamingService: StreamingServiceProtocol
     @State private var selectedTab: String = "home"
+    @State private var navigationPath = NavigationPath()
+    @Binding var deepLinkRequest: DeepLinkRequest?
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack {
                 switch streamingService.libraryStatus {
                 case .waiting, .retrieving:
@@ -41,6 +43,18 @@ struct DashboardView: View {
                     }
                 }
             }
+            .navigationDestination(for: DeepLinkRequest.self) { request in
+                MediaDetailLoader(
+                    mediaID: request.mediaID,
+                    parentID: request.parentID,
+                    streamingService: streamingService
+                )
+            }
+        }
+        .onChange(of: deepLinkRequest) { _, newValue in
+            guard let request = newValue else { return }
+            navigationPath.append(request) // Navigate to requested media
+            deepLinkRequest = nil // Clear the request
         }
     }
 }

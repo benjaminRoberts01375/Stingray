@@ -60,12 +60,20 @@
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};
+		B5CB94A62EEB80FE00F5F9BD /* Exceptions for "Stingray" folder in "Stingray" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B5625A4B2EC4EDF500C0507C /* Stingray */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B5625A4E2EC4EDF500C0507C /* Stingray */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				B5CB94A62EEB80FE00F5F9BD /* Exceptions for "Stingray" folder in "Stingray" target */,
 				B593D4C42EEB58590015EB83 /* Exceptions for "Stingray" folder in "TopShelf" target */,
 			);
 			path = Stingray;
@@ -402,6 +410,7 @@
 				DEVELOPMENT_TEAM = 68A766T4GX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stingray/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Stingray;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -435,6 +444,7 @@
 				DEVELOPMENT_TEAM = 68A766T4GX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stingray/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Stingray;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
