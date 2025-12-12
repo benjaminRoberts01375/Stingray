@@ -59,7 +59,7 @@ public struct SearchView: View {
             for library in libraries {
                 switch library {
                 case .available(let medias), .complete(let medias):
-                    foundContent += medias.filter { $0.title.contains(searchText) }
+                    foundContent += medias.filter { $0.title.lowercased().contains(searchText) }
                 default: break
                 }
             }
