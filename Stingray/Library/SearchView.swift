@@ -45,7 +45,27 @@ public struct SearchView: View {
     
     func search() -> SearchStatus {
         if searchText.isEmpty { return .empty }
+        var foundContent: [any MediaProtocol] = []
         
-        return .notFound
+        switch streamingService.libraryStatus {
+        case .error:
+            return .notFound
+        case .waiting, .retrieving:
+            return .temporarilyNotFound
+        case .available(let libraries), .complete(let libraries):
+            let libraries = libraries.compactMap(\.media)
+            for library in libraries {
+                switch library {
+                case .available(let medias), .complete(let medias):
+                    foundContent += medias.filter { $0.title.contains(searchText) }
+                default: break
+                }
+            }
+        }
+        
+        if foundContent.isEmpty {
+            return .notFound
+        }
+        return .found(foundContent)
     }
 }
