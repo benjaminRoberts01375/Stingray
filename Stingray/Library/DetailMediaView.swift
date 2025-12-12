@@ -19,6 +19,7 @@ struct DetailMediaView: View {
     @State private var showMetadata: Bool = false
     @FocusState private var focus: ButtonType?
     @State private var shouldBlurBackground: Bool = false
+    @State private var isViewingEpisodes: Bool = false
     private let titleShadowSize: CGFloat = 800
     
     init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
@@ -92,12 +93,12 @@ struct DetailMediaView: View {
             .offset(y: {
                 switch media.mediaType {
                 case .tv:
-                    return focus == .media ? 0 : 550
+                    return isViewingEpisodes ? 0 : 550
                 default:
                     return 0
                 }
             }())
-            .animation(.smooth(duration: 0.5), value: focus)
+            .animation(.smooth(duration: 0.5), value: isViewingEpisodes)
             .background(alignment: .bottom) {
                 Circle()
                     .fill(
@@ -118,12 +119,14 @@ struct DetailMediaView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .task { focus = .play }
-        .onChange(of: focus) { _, _ in
+        .onChange(of: focus) {
             switch focus {
             case .play, .metadata:
                 shouldBlurBackground = false
-            case .media, nil:
+                isViewingEpisodes = false
+            default:
                 shouldBlurBackground = true
+                isViewingEpisodes = true
             }
         }
         .fullScreenCover(isPresented: $showMetadata) {
@@ -323,7 +326,7 @@ fileprivate struct EpisodeSelectorView: View {
     @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
-        HStack {
+        LazyHStack {
             ForEach(seasons, id: \.id) { season in
                 ForEach(season.episodes, id: \.id) { episode in
                     if let source = episode.mediaSources.first {
