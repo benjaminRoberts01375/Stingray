@@ -24,18 +24,7 @@ public struct LibraryView: View {
                     .padding(.vertical)
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
-                    let columns = [
-                        GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
-                    ]
-                    LazyVGrid(columns: columns, spacing: cardSpacing) {
-                        ForEach(allMedia) { media in
-                            NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService)) {
-                                MediaCard(media: media, streamingService: streamingService)
-                                    .frame(width: cardWidth, height: 370)
-                            }
-                            .buttonStyle(.card)
-                        }
-                    }
+                    MediaGridView(allMedia: allMedia, streamingService: streamingService)
                 } else {
                     VStack(alignment: .center) {
                         Text("This library appears to be empty")
@@ -43,6 +32,29 @@ public struct LibraryView: View {
                             .opacity(0.5)
                     }
                 }
+            }
+        }
+    }
+}
+
+public struct MediaGridView: View {
+    private let cardWidth = 200.0
+    private let cardHeight = 370.0
+    private let cardSpacing = 50.0
+    let allMedia: [any MediaProtocol]
+    let streamingService: any StreamingServiceProtocol
+    
+    public var body: some View {
+        let columns = [
+            GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
+        ]
+        LazyVGrid(columns: columns, spacing: cardSpacing) {
+            ForEach(allMedia, id: \.id) { media in
+                NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService)) {
+                    MediaCard(media: media, streamingService: streamingService)
+                        .frame(width: cardWidth, height: cardHeight)
+                }
+                .buttonStyle(.card)
             }
         }
     }
