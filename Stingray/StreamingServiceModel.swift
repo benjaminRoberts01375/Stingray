@@ -249,7 +249,7 @@ final class JellyfinModel: StreamingServiceProtocol {
             player: player,
             network: networkAPI,
             mediaID: mediaSource.id,
-            mediaSourceID: mediaSource.id,
+            mediaSource: mediaSource,
             videoID: videoID,
             audioID: audioID,
             subtitleID: subtitleID,
@@ -273,7 +273,7 @@ final class JellyfinPlayerProgress {
     private let network: any AdvancedNetworkProtocol
     private var timer: Timer?
     private let mediaID: String
-    private let mediaSourceID: String
+    private var mediaSource: any MediaSourceProtocol
     private let videoID: Int
     private let audioID: Int
     private let subtitleID: Int?
@@ -285,7 +285,7 @@ final class JellyfinPlayerProgress {
         player: AVPlayer,
         network: any AdvancedNetworkProtocol,
         mediaID: String,
-        mediaSourceID: String,
+        mediaSource: any MediaSourceProtocol,
         videoID: Int,
         audioID: Int,
         subtitleID: Int?,
@@ -296,7 +296,7 @@ final class JellyfinPlayerProgress {
         self.player = player
         self.network = network
         self.mediaID = mediaID
-        self.mediaSourceID = mediaSourceID
+        self.mediaSource = mediaSource
         self.videoID = videoID
         self.audioID = audioID
         self.subtitleID = subtitleID
@@ -309,7 +309,7 @@ final class JellyfinPlayerProgress {
             do {
                 try await self.network.updatePlaybackStatus(
                     itemID: self.mediaID,
-                    mediaSourceID: self.mediaSourceID,
+                    mediaSourceID: self.mediaSource.id,
                     audioStreamIndex: self.audioID,
                     subtitleStreamIndex: self.subtitleID,
                     playbackPosition: Int(self.player.currentTime().seconds * 10_000_000),
@@ -341,7 +341,7 @@ final class JellyfinPlayerProgress {
                     }
                     try await self.network.updatePlaybackStatus(
                         itemID: self.mediaID,
-                        mediaSourceID: self.mediaSourceID,
+                        mediaSourceID: self.mediaSource.id,
                         audioStreamIndex: self.audioID,
                         subtitleStreamIndex: self.subtitleID,
                         playbackPosition: Int(self.player.currentTime().seconds * 10_000_000),
@@ -356,14 +356,16 @@ final class JellyfinPlayerProgress {
     }
     
     func stop() {
+        let playbackTicks = Int(self.player.currentTime().seconds * 10_000_000)
+        self.mediaSource.startTicks = playbackTicks
         Task {
             do {
                 try await self.network.updatePlaybackStatus(
                     itemID: self.mediaID,
-                    mediaSourceID: self.mediaSourceID,
+                    mediaSourceID: self.mediaSource.id,
                     audioStreamIndex: self.audioID,
                     subtitleStreamIndex: self.subtitleID,
-                    playbackPosition: Int(self.player.currentTime().seconds * 10_000_000),
+                    playbackPosition: playbackTicks,
                     playSessionID: self.playbackSessionID,
                     userSessionID: self.userSessionID,
                     playbackStatus: .stop,
