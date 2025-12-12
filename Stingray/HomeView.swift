@@ -56,13 +56,18 @@ fileprivate struct DashboardRow: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text(title)
-                .font(.title2.bold())
-                .task(id: title) {
-                    let response = await fetchMedia()
-                    status = response.isEmpty ? .empty : .complete(response)
-                }
-            
+            switch status {
+            case .empty:
+                EmptyView()
+            default:
+                Text(title)
+                    .font(.title2.bold())
+                    .task(id: title) {
+                        let response = await fetchMedia()
+                        status = response.isEmpty ? .empty : .complete(response)
+                    }
+            }
+                
             switch status {
             case .unstarted, .retrieving:
                 MediaNavigationLoadingPicker()
