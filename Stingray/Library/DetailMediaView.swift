@@ -64,7 +64,7 @@ struct DetailMediaView: View {
                 // Show episodes if series
                 switch media.mediaType {
                 case .tv(let seasons): // Show TV episodes
-                    if let seasons = seasons {
+                    if let seasons = seasons, seasons.flatMap(\.episodes).count > 1 {
                         ScrollViewReader { scrollProxy in
                             ScrollView(.horizontal) {
                                 EpisodeSelectorView(
@@ -92,8 +92,10 @@ struct DetailMediaView: View {
             .padding()
             .offset(y: {
                 switch media.mediaType {
-                case .tv:
-                    return isViewingEpisodes ? 0 : 550
+                case .tv(let seasons):
+                    if let seasons = seasons, seasons.flatMap(\.episodes).count > 1 {
+                        return isViewingEpisodes ? 0 : 550
+                    } else { return 0 }
                 default:
                     return 0
                 }
