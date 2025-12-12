@@ -121,7 +121,7 @@ fileprivate struct MediaNavigation: View {
 
 struct MediaDetailLoader: View {
     let mediaID: String
-    let parentID: String
+    let parentID: String?
     let streamingService: StreamingServiceProtocol
     
     var body: some View {

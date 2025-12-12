@@ -105,7 +105,7 @@ class ContentProvider: TVTopShelfContentProvider {
         
         // Set the display action to open your app with this content
         // URL scheme: stingray://media?id=<mediaID>&parentID=<parentID>
-        if let displayURL = URL(string: "stingray://media?id=\(mediaID)&parentID=\(media.parentID)") {
+        if let displayURL = URL(string: "stingray://media?id=\(mediaID)&parentID=\(media.parentID ?? "None")") {
             item.displayAction = TVTopShelfAction(url: displayURL)
         }
         

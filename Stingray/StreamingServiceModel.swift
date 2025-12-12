@@ -14,7 +14,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     func retrieveLibraries() async
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
-    func lookup(mediaID: String, parentID: String) -> MediaLookupStatus
+    func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
 }
 
 enum LibraryStatus {
@@ -174,7 +174,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    func lookup(mediaID: String, parentID: String) -> MediaLookupStatus {
+    func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
         let libraries: [LibraryModel]
         switch self.libraryStatus {
         case .available(let libs), .complete(let libs):
@@ -184,7 +184,8 @@ final class JellyfinModel: StreamingServiceProtocol {
         }
         
         // Check the parent library first (most likely location)
-        if let parentLibrary = libraries.first(where: { $0.id == parentID }) {
+        if let parentID = parentID,
+           let parentLibrary = libraries.first(where: { $0.id == parentID }) {
             let allMedia: [MediaModel]?
             switch parentLibrary.media {
             case .available(let media), .complete(let media):

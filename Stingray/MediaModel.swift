@@ -234,7 +234,7 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
     public var title: String
     public var imageTags: any MediaImagesProtocol
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
-    public var parentID: String
+    public var parentID: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -250,7 +250,7 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
-        self.parentID = try container.decode(String.self, forKey: .parentID)
+        self.parentID = try container.decodeIfPresent(String.self, forKey: .parentID)
         
         self.id = try container.decodeIfPresent(String.self, forKey: .seriesID) ??
         container.decode(String.self, forKey: .id)
