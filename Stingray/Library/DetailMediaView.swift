@@ -414,8 +414,8 @@ fileprivate struct EpisodeView: View {
             } label: {
                 VStack(alignment: .leading) {
                     HStack(spacing: 0) {
-                        if let seasonIndex = (seasons.firstIndex { $0.episodes.contains { $0.id == episode.id } }) {
-                            Text("Season \(seasonIndex + 1), ")
+                        if let season = (seasons.first { $0.episodes.contains { $0.id == episode.id } }) {
+                            Text("Season \(season.seasonNumber), ")
                         }
                         Text("Episode \(episode.episodeNumber)")
                         Spacer()
