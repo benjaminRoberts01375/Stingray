@@ -58,8 +58,27 @@ public struct SearchView: View {
                 switch library {
                 case .available(let medias), .complete(let medias):
                     scoredMedia += medias
-                        .map { MediaScore(media: $0, score: $0.title.slidingLevenshteinDistance(to: searchText)) }
-                        .filter { $0.media.title.count >= searchText.count && $0.score <= 2 }
+                        .map {
+                            var score = $0.title.slidingLevenshteinDistance(to: searchText)
+                            var sortTitle = $0.title
+                            if score != 0 { // If it's not already a perfect match, search the episodes if there are any
+                                switch $0.mediaType {
+                                case .tv(let seasons):
+                                    guard let seasons = seasons else { return MediaScore(media: $0, score: score, sortTitle: $0.title)}
+                                    for season in seasons {
+                                        for episode in season.episodes {
+                                            score = min(score, episode.title.slidingLevenshteinDistance(to: searchText))
+                                            sortTitle = episode.title
+                                            if score == 0 { break }// If it's not already a perfect match, search more episodes
+                                        }
+                                        if score == 0 { break } // If it's not already a perfect match, search more episodes
+                                    }
+                                default: return MediaScore(media: $0, score: score, sortTitle: $0.title)
+                                }
+                            }
+                            return MediaScore(media: $0, score: score, sortTitle: sortTitle)
+                        }
+                        .filter { $0.score <= 2 && $0.sortTitle.count >= searchText.count }
                 default: break
                 }
             }
@@ -119,4 +138,5 @@ extension String {
 struct MediaScore {
     let media: any MediaProtocol
     let score: Int
+    let sortTitle: String
 }
