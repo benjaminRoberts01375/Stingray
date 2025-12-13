@@ -13,12 +13,10 @@ public struct SearchView: View {
     @State var searchResults: SearchStatus = .empty
     
     public var body: some View {
-        VStack {
+        ScrollView {
             switch searchResults {
             case .found(let allMedia):
-                ScrollView {
-                    MediaGridView(allMedia: allMedia, streamingService: streamingService)
-                }
+                MediaGridView(allMedia: allMedia, streamingService: streamingService)
             case .temporarilyNotFound:
                 ProgressView("Not found yet, but we're still getting your media...")
             case .notFound:
