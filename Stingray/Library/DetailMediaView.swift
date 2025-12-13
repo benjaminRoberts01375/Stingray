@@ -65,25 +65,14 @@ struct DetailMediaView: View {
                 switch media.mediaType {
                 case .tv(let seasons): // Show TV episodes
                     if let seasons = seasons, seasons.flatMap(\.episodes).count > 1 {
-                        ScrollViewReader { scrollProxy in
-                            ScrollView(.horizontal) {
-                                EpisodeSelectorView(
-                                    media: media,
-                                    logoImageURL: logoImageURL,
-                                    seasons: seasons,
-                                    streamingService: streamingService,
-                                    focus: $focus
-                                )
-                            }
-                            .scrollClipDisabled()
-                            .padding(40)
-                            .ignoresSafeArea()
-                            .task {
-                                if let nextEpisodeID = TVNextEpisodeView.getNextUp(from: seasons)?.id {
-                                    scrollProxy.scrollTo(nextEpisodeID, anchor: .center)
-                                }
-                            }
-                        }
+                        EpisodeSelectorView(
+                            media: media,
+                            logoImageURL: logoImageURL,
+                            seasons: seasons,
+                            streamingService: streamingService,
+                            focus: $focus
+                        )
+                        
                     }
                 default: EmptyView()
                 }
@@ -328,20 +317,32 @@ fileprivate struct EpisodeSelectorView: View {
     @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
-        LazyHStack {
-            ForEach(seasons, id: \.id) { season in
-                ForEach(season.episodes, id: \.id) { episode in
-                    if let source = episode.mediaSources.first {
-                        EpisodeView(
-                            logoImageURL: logoImageURL,
-                            media: media,
-                            source: source,
-                            streamingService: streamingService,
-                            seasons: seasons,
-                            episode: episode,
-                            focus: $focus
-                        )
+        ScrollViewReader { scrollProxy in
+            ScrollView(.horizontal) {
+                LazyHStack {
+                    ForEach(seasons, id: \.id) { season in
+                        ForEach(season.episodes, id: \.id) { episode in
+                            if let source = episode.mediaSources.first {
+                                EpisodeView(
+                                    logoImageURL: logoImageURL,
+                                    media: media,
+                                    source: source,
+                                    streamingService: streamingService,
+                                    seasons: seasons,
+                                    episode: episode,
+                                    focus: $focus
+                                )
+                            }
+                        }
                     }
+                }
+                .scrollClipDisabled()
+                .padding(40)
+                .ignoresSafeArea()
+            }
+            .task {
+                if let nextEpisodeID = TVNextEpisodeView.getNextUp(from: seasons)?.id {
+                    scrollProxy.scrollTo(nextEpisodeID, anchor: .center)
                 }
             }
         }
