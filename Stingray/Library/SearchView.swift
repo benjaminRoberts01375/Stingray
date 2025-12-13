@@ -59,8 +59,10 @@ public struct SearchView: View {
                 case .available(let medias), .complete(let medias):
                     scoredMedia += medias
                         .map {
-                            var score = $0.title.slidingLevenshteinDistance(to: searchText)
+                            var score: Int
                             var sortTitle = $0.title
+                            if $0.title.lowercased().contains(searchText.lowercased()) { score = 0 }
+                            else { score = $0.title.slidingLevenshteinDistance(to: searchText) }
                             if score != 0 { // If it's not already a perfect match, search the episodes if there are any
                                 switch $0.mediaType {
                                 case .tv(let seasons):
