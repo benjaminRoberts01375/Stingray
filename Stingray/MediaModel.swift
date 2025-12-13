@@ -201,7 +201,7 @@ public final class MediaModel: MediaProtocol, Decodable {
             self.mediaType = mediaType
         }
         
-        if let runtimeTicks = try container.decodeIfPresent(Int.self, forKey: .duration) {
+        if let runtimeTicks = try container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {
             self.duration = .nanoseconds(100 * runtimeTicks)
         }
         
