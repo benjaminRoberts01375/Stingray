@@ -85,6 +85,8 @@ extension String {
     /// term.
     /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
     func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
+        if self.lowercased() == structuredTarget.lowercased() { return 0 }
+        
         let target = Array(structuredTarget.lowercased()) // Normalized
         let source = Array(self.lowercased()).prefix(target.count) // Normalized
         let length = min(source.count, target.count)
