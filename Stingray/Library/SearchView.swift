@@ -85,39 +85,36 @@ extension String {
     /// term.
     /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
     func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
-        if self.lowercased() == structuredTarget.lowercased() { return 0 }
+        let selfLower = self.lowercased()
+        let targetLower = structuredTarget.lowercased()
         
-        let target = Array(structuredTarget.lowercased()) // Normalized
-        let source = Array(self.lowercased()).prefix(target.count) // Normalized
-        let length = min(source.count, target.count)
+        if selfLower == targetLower { return 0 }
         
-        // Make a 2D SQUARE matrix based on the length of the target (search text)
-        var matrix = [[Int]](
-            repeating: [Int](
-                repeating: 0,
-                count: length + 1
-            ),
-            count: length + 1
-        )
+        let targetChars = Array(targetLower)
+        let sourceChars = Array(selfLower.prefix(targetChars.count))
+        let length = min(sourceChars.count, targetChars.count)
         
-        // Fill-in base values of matrix
-        for i in 0...length {
-            matrix[i][0] = i
-            matrix[0][i] = i
-        }
+        if length == 0 { return 0 }
         
-        // Walk the entire graph calculating distances
-        for i in 1...(length) {
-            for j in 1...(length) {
-                let cost = source[j - 1] == target[i - 1] ? 0 : 1 // Offset by 1 to account for the edges of the matrix
-                matrix[i][j] = Swift.min(
-                    matrix[i - 1][j] + 1,       // deletion
-                    matrix[i][j - 1] + 1,       // insertion
-                    matrix[i - 1][j - 1] + cost // substitution
+        var previousRow = Array(0...length)
+        var currentRow = Array(repeating: 0, count: length + 1)
+        
+        for i in 1...length {
+            currentRow[0] = i
+            
+            for j in 1...length {
+                let cost = sourceChars[j - 1] == targetChars[i - 1] ? 0 : 1
+                currentRow[j] = Swift.min(
+                    previousRow[j] + 1,
+                    currentRow[j - 1] + 1,
+                    previousRow[j - 1] + cost
                 )
             }
+            
+            swap(&previousRow, &currentRow)
         }
-        return matrix[length][length]
+        
+        return previousRow[length]
     }
 }
 
