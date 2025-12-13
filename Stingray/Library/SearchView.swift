@@ -47,7 +47,7 @@ public struct SearchView: View {
     
     func search() -> SearchStatus {
         if searchText.isEmpty { return .empty }
-        var foundContent: [any MediaProtocol] = []
+        var scoredMedia: [MediaScore] = []
         
         switch streamingService.libraryStatus {
         case .error:
@@ -59,15 +59,67 @@ public struct SearchView: View {
             for library in libraries {
                 switch library {
                 case .available(let medias), .complete(let medias):
-                    foundContent += medias.filter { $0.title.lowercased().contains(searchText) }
+                    scoredMedia += medias
+                        .map { MediaScore(media: $0, score: $0.title.slidingLevenshteinDistance(to: searchText)) }
+                        .filter { $0.media.title.count >= searchText.count && $0.score <= 2 }
                 default: break
                 }
             }
         }
         
-        if foundContent.isEmpty {
+        if scoredMedia.isEmpty {
             return .notFound
         }
-        return .found(foundContent)
+        
+        let finalMedia = scoredMedia
+            .sorted { $0.score < $1.score }
+            .map { $0.media }
+        
+        return .found(finalMedia)
     }
+}
+
+extension String {
+    /// A sliding Levenshtein Distance calculator, designed to give long names no disadvantage. For example searching for "Assass"
+    /// will have a perfect result against "Assassination Classroom" since the full title is truncated to the length of the original search
+    /// term.
+    /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
+    func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
+        let target = Array(structuredTarget.lowercased()) // Normalized
+        let source = Array(self.lowercased()).prefix(target.count) // Normalized
+        let length = min(source.count, target.count)
+        
+        // Make a 2D SQUARE matrix based on the length of the target (search text)
+        var matrix = [[Int]](
+            repeating: [Int](
+                repeating: 0,
+                count: length + 1
+            ),
+            count: length + 1
+        )
+        
+        // Fill-in base values of matrix
+        for i in 0...length {
+            matrix[i][0] = i
+            matrix[0][i] = i
+        }
+        
+        // Walk the entire graph calculating distances
+        for i in 1...(length) {
+            for j in 1...(length) {
+                let cost = source[j - 1] == target[i - 1] ? 0 : 1 // Offset by 1 to account for the edges of the matrix
+                matrix[i][j] = Swift.min(
+                    matrix[i - 1][j] + 1,       // deletion
+                    matrix[i][j - 1] + 1,       // insertion
+                    matrix[i - 1][j - 1] + cost // substitution
+                )
+            }
+        }
+        return matrix[length][length]
+    }
+}
+
+struct MediaScore {
+    let media: any MediaProtocol
+    let score: Int
 }
