@@ -115,7 +115,7 @@ struct DetailMediaView: View {
                         VStack(alignment: .leading) {
                             if !media.description.isEmpty {
                                 Text("Overview")
-                                    .font(.title3.bold())
+                                    .font(.headline.bold())
                                     .lineLimit(2)
                                 Text(media.description)
                                     .multilineTextAlignment(.leading)
