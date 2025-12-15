@@ -57,11 +57,11 @@ struct DetailMediaView: View {
                 }
                 
                 // TV Episodes
-                ScrollViewReader { svrProxy in
-                    ScrollView {
-                        switch media.mediaType {
-                        case .tv(let seasons):
-                            if let seasons, seasons.flatMap(\.episodes).count > 1 {
+                ScrollView {
+                    switch media.mediaType {
+                    case .tv(let seasons):
+                        if let seasons, seasons.flatMap(\.episodes).count > 1 {
+                            ScrollViewReader { svrProxy in
                                 ScrollView(.horizontal) {
                                     LazyHStack {
                                         EpisodeSelectorView(
@@ -72,20 +72,20 @@ struct DetailMediaView: View {
                                         )
                                     }
                                 }
-                                .scrollClipDisabled()
-                                .padding(.horizontal)
                                 .task {
                                     if let nextEpisodeID = Self.getNextUp(from: seasons)?.id {
                                         svrProxy.scrollTo(nextEpisodeID, anchor: .center)
                                     }
                                 }
                             }
-                        default: EmptyView()
+                            .scrollClipDisabled()
+                            .padding(.horizontal)
                         }
+                    default: EmptyView()
                     }
-                    .scrollClipDisabled()
-                    .padding()
                 }
+                .scrollClipDisabled()
+                .padding()
             }
             .offset(y: shouldRevealBottomShelf ? 0 : 700)
             .background(alignment: .bottom) {
