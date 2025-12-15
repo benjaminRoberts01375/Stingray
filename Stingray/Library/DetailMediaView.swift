@@ -27,24 +27,16 @@ struct DetailMediaView: View {
                 shouldBlurBackground: $shouldBackgroundBlur
             )
             
-            VStack {
-                // Basic movie/series data
-                Button { shouldShowMetaData = true }
-                label: {
-                    MediaLogoView(media: media, logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0))
-                        .focused($focus, equals: .metadata)
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    MediaLogoView(
+                        media: media,
+                        logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
+                    )
                 }
-                .buttonStyle(.plain)
                 .padding(.top)
-                .frame(height: 150)
-                .focusable({
-                    switch focus {
-                    case .play:
-                        return true
-                    default:
-                        return false
-                    }
-                }())
+                .frame(height: 350)
                 
                 // Play buttons
                 HStack {
@@ -63,61 +55,110 @@ struct DetailMediaView: View {
                         }
                     }
                 }
-                .focusable({
+                .disabled({
                     switch focus {
-                    case .play, .metadata, .season:
-                        return true
-                    default:
+                    case .play, .overview, .season, nil:
                         return false
+                    default:
+                        return true
                     }
                 }())
                 
                 // TV Episodes
-                ScrollView {
-                    switch media.mediaType {
-                    case .tv(let seasons):
-                        if let seasons, seasons.flatMap(\.episodes).count > 1 {
-                            ScrollViewReader { svrProxy in
-                                ScrollView(.horizontal) {
-                                    HStack {
-                                        SeasonSelectorView(
-                                            seasons: seasons,
-                                            streamingService: streamingService,
-                                            focus: $focus,
-                                            scrollProxy: svrProxy
-                                        )
-                                    }
+                switch media.mediaType {
+                case .tv(let seasons):
+                    if let seasons, seasons.flatMap(\.episodes).count > 1 {
+                        ScrollViewReader { svrProxy in
+                            ScrollView(.horizontal) {
+                                HStack {
+                                    SeasonSelectorView(
+                                        seasons: seasons,
+                                        streamingService: streamingService,
+                                        focus: $focus,
+                                        scrollProxy: svrProxy
+                                    )
                                 }
-                                .scrollClipDisabled()
-                                .padding(32)
-                                .opacity(shouldRevealBottomShelf ? 1 : 0)
-                                
-                                ScrollView(.horizontal) {
-                                    LazyHStack {
-                                        EpisodeSelectorView(
-                                            media: media,
-                                            seasons: seasons,
-                                            streamingService: streamingService,
-                                            focus: $focus
-                                        )
-                                    }
-                                }
-                                .task {
-                                    if let nextEpisodeID = Self.getNextUp(from: seasons)?.id {
-                                        svrProxy.scrollTo(nextEpisodeID, anchor: .center)
-                                    }
-                                }
-                                .scrollClipDisabled()
-                                .padding(.horizontal)
-                                .offset(y: shouldRevealBottomShelf ? 0 : -100)
                             }
+                            .scrollClipDisabled()
+                            .padding(32)
+                            .opacity(shouldRevealBottomShelf ? 1 : 0)
+                            
+                            ScrollView(.horizontal) {
+                                LazyHStack {
+                                    EpisodeSelectorView(
+                                        media: media,
+                                        seasons: seasons,
+                                        streamingService: streamingService,
+                                        focus: $focus
+                                    )
+                                }
+                            }
+                            .task {
+                                if let nextEpisodeID = Self.getNextUp(from: seasons)?.id {
+                                    svrProxy.scrollTo(nextEpisodeID, anchor: .center)
+                                }
+                            }
+                            .scrollClipDisabled()
+                            .padding(.horizontal)
+                            .offset(y: shouldRevealBottomShelf ? 0 : -100)
                         }
-                    default: EmptyView()
+                    }
+                    
+                default:
+                    EmptyView()
+                        .focusable(false)
+                }
+                
+                if !media.description.isEmpty {
+                    VStack(alignment: .leading) {
+                        Text("Overview")
+                            .font(.title3.bold())
+                            .lineLimit(2)
+                        Text(media.description)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background {
+                        if focus == .overview {
+                            Color.white
+                        } else {
+                            Color.clear.background(.regularMaterial)
+                        }
+                    }
+                    .foregroundStyle(focus == .overview ? Color.black : Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 32))
+                    .focusable()
+                    .focused($focus, equals: .overview)
+                    .padding(.top)
+                }
+                
+                ScrollView(.horizontal) {
+                    HStack {
+                        ForEach(media.people, id: \.id) { person in
+                            Button { /* Temp Workaround */ } label: {
+                                VStack {
+                                    ActorImage(media: media, streamingService: streamingService, person: person)
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                        .frame(width: 300)
+                                    Text(person.name)
+                                        .multilineTextAlignment(.center)
+                                        .font(.headline)
+                                    Text(person.role)
+                                        .multilineTextAlignment(.center)
+                                        .font(.caption)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                        }
                     }
                 }
                 .scrollClipDisabled()
+                
             }
-            .offset(y: shouldRevealBottomShelf ? 0 : 700)
+            .scrollClipDisabled()
+            .padding(32)
+            .offset(y: shouldRevealBottomShelf ? 0 : 500)
             .background(alignment: .bottom) {
                 let titleShadowSize = 800.0
                 Circle()
@@ -141,10 +182,10 @@ struct DetailMediaView: View {
         .ignoresSafeArea()
         .onChange(of: focus) { _, newValue in
             switch newValue {
-            case .media, .season:
+            case .media, .season, .overview:
                 self.shouldBackgroundBlur = true
                 self.shouldRevealBottomShelf = true
-            case .metadata, .play:
+            case .play:
                 self.shouldBackgroundBlur = false
                 self.shouldRevealBottomShelf = false
             case nil:
@@ -385,7 +426,7 @@ fileprivate struct SeasonSelectorView: View {
             .focused($focus, equals: .season(season.id))
             .disabled({
                 switch focus {
-                case .play, .metadata:
+                case .play, .overview:
                     return true
                 case .media(let mediaID):
                     return !season.episodes.contains { $0.id == mediaID }
@@ -558,57 +599,6 @@ fileprivate struct EpisodeView: View {
     }
 }
 
-// MARK: Fullscreen Metadata
-fileprivate struct MediaMetadataView: View {
-    let media: any MediaProtocol
-    private let logoImageURL: URL?
-    private let streamingService: any StreamingServiceProtocol
-    
-    init(media: any MediaProtocol, streamingService: any StreamingServiceProtocol) {
-        self.media = media
-        self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
-        self.streamingService = streamingService
-    }
-    
-    var body: some View {
-        VStack {
-            VStack {
-                MediaLogoView(media: media, logoImageURL: logoImageURL)
-                    .padding(.bottom)
-                Text(media.description == "" ? "No description" : media.description)
-            }
-            .frame(width: 1000)
-            Spacer()
-            VStack {
-                ScrollView(.horizontal) {
-                    HStack {
-                        ForEach(media.people, id: \.id) { person in
-                            Button { /* Temp Workaround */ } label: {
-                                VStack {
-                                    ActorImage(media: media, streamingService: streamingService, person: person)
-                                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                                        .frame(width: 300)
-                                    Text(person.name)
-                                        .multilineTextAlignment(.center)
-                                        .font(.headline)
-                                    Text(person.role)
-                                        .multilineTextAlignment(.center)
-                                        .font(.caption)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.horizontal)
-                        }
-                    }
-                }
-                .padding()
-                .scrollClipDisabled(true)
-            }
-            .frame(minWidth: 400)
-        }
-    }
-}
-
 // MARK: Actor Photo
 fileprivate struct ActorImage: View {
     let media: any MediaProtocol
@@ -675,5 +665,5 @@ fileprivate enum ButtonType: Hashable {
     case play
     case season(String)
     case media(String)
-    case metadata
+    case overview
 }
