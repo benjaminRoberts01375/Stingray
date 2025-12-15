@@ -37,6 +37,14 @@ struct DetailMediaView: View {
                 .buttonStyle(.plain)
                 .padding(.top)
                 .frame(height: 150)
+                .focusable({
+                    switch focus {
+                    case .play:
+                        return true
+                    default:
+                        return false
+                    }
+                }())
                 
                 // Play buttons
                 HStack {
@@ -55,6 +63,14 @@ struct DetailMediaView: View {
                         }
                     }
                 }
+                .focusable({
+                    switch focus {
+                    case .play, .metadata, .season:
+                        return true
+                    default:
+                        return false
+                    }
+                }())
                 
                 // TV Episodes
                 ScrollView {
@@ -62,6 +78,19 @@ struct DetailMediaView: View {
                     case .tv(let seasons):
                         if let seasons, seasons.flatMap(\.episodes).count > 1 {
                             ScrollViewReader { svrProxy in
+                                ScrollView(.horizontal) {
+                                    HStack {
+                                        SeasonSelectorView(
+                                            seasons: seasons,
+                                            streamingService: streamingService,
+                                            focus: $focus,
+                                            scrollProxy: svrProxy
+                                        )
+                                    }
+                                }
+                                .scrollClipDisabled()
+                                .padding(16)
+                                
                                 ScrollView(.horizontal) {
                                     LazyHStack {
                                         EpisodeSelectorView(
@@ -77,9 +106,9 @@ struct DetailMediaView: View {
                                         svrProxy.scrollTo(nextEpisodeID, anchor: .center)
                                     }
                                 }
+                                .scrollClipDisabled()
+                                .padding(.horizontal)
                             }
-                            .scrollClipDisabled()
-                            .padding(.horizontal)
                         }
                     default: EmptyView()
                     }
@@ -300,6 +329,86 @@ fileprivate struct TVEpisodeNavigationView: View {
     }
 }
 
+// MARK: Season selector
+fileprivate struct SeasonSelectorView: View {
+    let seasons: [any TVSeasonProtocol]
+    let streamingService: any StreamingServiceProtocol
+    
+    @FocusState.Binding var focus: ButtonType?
+    @State private var lastFocusedSeasonID: String?
+    let scrollProxy: ScrollViewProxy
+    
+    var body: some View {
+        ForEach(seasons, id: \.id) { season in
+            Button {
+                if let firstEpisode = season.episodes.first {
+                    // Scroll to the first episode of the season
+                    withAnimation {
+                        scrollProxy.scrollTo(firstEpisode.id, anchor: .center)
+                    }
+                    // Small delay to ensure the view is loaded before transferring focus
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        self.focus = .media(firstEpisode.id)
+                    }
+                }
+            } label: {
+                Text("Season \(season.seasonNumber)")
+            }
+            .padding(16)
+            .background {
+                let isActiveSeason: Bool = {
+                    switch focus {
+                    case .media(let mediaID):
+                        return season.episodes.contains { $0.id == mediaID }
+                    case .season, nil:
+                        // Maintain the last focused season's background when focus is nil
+                        return season.id == lastFocusedSeasonID
+                    default:
+                        return false
+                    }
+                }()
+                
+                if isActiveSeason {
+                    Capsule()
+                        .opacity(0.25)
+                } else {
+                    EmptyView()
+                }
+            }
+            .padding(-16)
+            .padding(.horizontal)
+            .buttonStyle(.plain)
+            .onMoveCommand { direction in
+                if direction == .up { self.focus = .play }
+            }
+            .focused($focus, equals: .season(season.id))
+            .disabled({
+                switch focus {
+                case .play, .metadata:
+                    return true
+                case .media(let mediaID):
+                    return !season.episodes.contains { $0.id == mediaID }
+                case nil:
+                    return season.id != lastFocusedSeasonID
+                case .season:
+                    return false
+                }
+            }())
+        }
+        .onChange(of: focus) { _, newValue in
+            // Track which season is active when focus changes
+            switch newValue {
+            case .media(let mediaID):
+                if let season = seasons.first(where: { $0.episodes.contains { $0.id == mediaID } }) {
+                    lastFocusedSeasonID = season.id
+                }
+            default:
+                break
+            }
+        }
+    }
+}
+
 // MARK: Episode selector
 fileprivate struct EpisodeSelectorView: View {
     let media: any MediaProtocol
@@ -385,7 +494,9 @@ fileprivate struct EpisodeView: View {
             .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
             .onMoveCommand { direction in
-                if direction == .up { focus = .play }
+                if direction == .up, let seasonID = (seasons.first { $0.episodes.contains { $0.id == episode.id } }?.id) {
+                    self.focus = .season(seasonID)
+                }
             }
             
             Button {
@@ -439,7 +550,6 @@ fileprivate struct EpisodeView: View {
                 .padding(-16)
             }
             .buttonStyle(.plain)
-            .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
             .animation(.easeOut(duration: 0.5), value: isFocused)
             .padding(.top, isFocused ?? false ? 16 : 0)
