@@ -12,38 +12,31 @@ import SwiftUI
 // MARK: Main view
 struct DetailMediaView: View {
     let media: any MediaProtocol
-    let backgroundImageURL: URL?
-    let logoImageURL: URL?
-    let streamingService: StreamingServiceProtocol
-    @State private var logoOpacity: Double = 0
-    @State private var showMetadata: Bool = false
-    @FocusState private var focus: ButtonType?
-    @State private var shouldBlurBackground: Bool = false
-    @State private var isViewingEpisodes: Bool = false
-    private let titleShadowSize: CGFloat = 800
+    let streamingService: any StreamingServiceProtocol
     
-    init (media: any MediaProtocol, streamingService: StreamingServiceProtocol) {
-        self.media = media
-        self.streamingService = streamingService
-        self.backgroundImageURL = streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0)
-        self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
-    }
+    @State private var shouldBackgroundBlur: Bool = false
+    @State private var shouldRevealBottomShelf: Bool = false
+    @State private var shouldShowMetaData: Bool = false
+    @FocusState private var focus: ButtonType?
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            MediaBackgroundView(media: media, backgroundImageURL: backgroundImageURL, shouldBlurBackground: $shouldBlurBackground)
-            VStack(alignment: .center, spacing: 15) {
-                Spacer()
-                
+            MediaBackgroundView(
+                media: media,
+                backgroundImageURL: streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0),
+                shouldBlurBackground: $shouldBackgroundBlur
+            )
+            
+            VStack {
                 // Basic movie/series data
-                Button {
-                    showMetadata = true
-                } label: {
-                    MediaLogoView(media: media, logoImageURL: logoImageURL)
+                Button { shouldShowMetaData = true }
+                label: {
+                    MediaLogoView(media: media, logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0))
+                        .focused($focus, equals: .metadata)
                 }
                 .buttonStyle(.plain)
-                .padding(.vertical)
-                .focused($focus, equals: .metadata)
+                .padding(.top)
+                .frame(height: 150)
                 
                 // Play buttons
                 HStack {
@@ -55,42 +48,48 @@ struct DetailMediaView: View {
                             MovieNavigationView(mediaSource: source, streamingService: streamingService, focus: $focus)
                         }
                     case .tv(let seasons):
-                        if let seasons = seasons {
-                            TVNextEpisodeView(seasons: seasons, streamingService: streamingService, focus: $focus)
+                        if let seasons = seasons, let episode = Self.getNextUp(from: seasons) ?? seasons.first?.episodes.first {
+                            TVEpisodeNavigationView(seasons: seasons, streamingService: streamingService, episode: episode, focus: $focus)
+                        } else {
+                            ProgressView("Loading seasons...")
                         }
                     }
                 }
                 
-                // Show episodes if series
-                switch media.mediaType {
-                case .tv(let seasons): // Show TV episodes
-                    if let seasons = seasons, seasons.flatMap(\.episodes).count > 1 {
-                        EpisodeSelectorView(
-                            media: media,
-                            logoImageURL: logoImageURL,
-                            seasons: seasons,
-                            streamingService: streamingService,
-                            focus: $focus
-                        )
-                        
+                // TV Episodes
+                ScrollViewReader { svrProxy in
+                    ScrollView {
+                        switch media.mediaType {
+                        case .tv(let seasons):
+                            if let seasons, seasons.flatMap(\.episodes).count > 1 {
+                                ScrollView(.horizontal) {
+                                    LazyHStack {
+                                        EpisodeSelectorView(
+                                            media: media,
+                                            seasons: seasons,
+                                            streamingService: streamingService,
+                                            focus: $focus
+                                        )
+                                    }
+                                }
+                                .scrollClipDisabled()
+                                .padding(.horizontal)
+                                .task {
+                                    if let nextEpisodeID = Self.getNextUp(from: seasons)?.id {
+                                        svrProxy.scrollTo(nextEpisodeID, anchor: .center)
+                                    }
+                                }
+                            }
+                        default: EmptyView()
+                        }
                     }
-                default: EmptyView()
+                    .scrollClipDisabled()
+                    .padding()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
-            .offset(y: {
-                switch media.mediaType {
-                case .tv(let seasons):
-                    if let seasons = seasons, seasons.flatMap(\.episodes).count > 1 {
-                        return isViewingEpisodes ? 0 : 550
-                    } else { return 0 }
-                default:
-                    return 0
-                }
-            }())
-            .animation(.smooth(duration: 0.5), value: isViewingEpisodes)
+            .offset(y: shouldRevealBottomShelf ? 0 : 700)
             .background(alignment: .bottom) {
+                let titleShadowSize = 800.0
                 Circle()
                     .fill(
                         RadialGradient(
@@ -107,55 +106,39 @@ struct DetailMediaView: View {
                     .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
                     .offset(y: titleShadowSize)
             }
-        }
-        .toolbar(.hidden, for: .tabBar)
-        .task { focus = .play }
-        .onChange(of: focus) {
-            switch focus {
-            case .play, .metadata:
-                shouldBlurBackground = false
-                isViewingEpisodes = false
-            default:
-                shouldBlurBackground = true
-                isViewingEpisodes = true
-            }
-        }
-        .fullScreenCover(isPresented: $showMetadata) {
-            MediaMetadataView(media: media, streamingService: streamingService)
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea()
+            .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
-    }
-}
-
-fileprivate struct MovieNavigationView: View {
-    let mediaSource: any MediaSourceProtocol
-    let streamingService: any StreamingServiceProtocol
-    
-    @FocusState.Binding var focus: ButtonType?
-    
-    var body: some View {
-        NavigationLink {
-            PlayerView(
-                vm: PlayerViewModel(
-                    mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                    streamingService: streamingService,
-                    seasons: nil
-                )
-            )
-            .id(mediaSource.id)
-        } label: {
-            if mediaSource.startTicks > 0 {
-                Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
-            } else {
-                Text("Play \(mediaSource.name)")
+        .onChange(of: focus) { _, newValue in
+            switch newValue {
+            case .media, .season:
+                self.shouldBackgroundBlur = true
+                self.shouldRevealBottomShelf = true
+            case .metadata, .play:
+                self.shouldBackgroundBlur = false
+                self.shouldRevealBottomShelf = false
+            case nil:
+                break
             }
         }
-        .focused($focus, equals: .play)
+        .onAppear { focus = .play }
+    }
+    
+    static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
+        let allEpisodes = seasons.flatMap(\.episodes)
+        guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
+            previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
+        }),
+              let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
+        else { return allEpisodes.first }
+        
+        if let durationTicks = mostRecentMediaSource.durationTicks,
+           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) ||
+            mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
+            return mostRecentEpisode.element
+        }
+        
+        return allEpisodes[mostRecentEpisode.offset + 1]
     }
 }
 
@@ -184,17 +167,15 @@ fileprivate struct MediaBackgroundView: View {
                         .resizable()
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                         .opacity(backgroundOpacity)
-                        .animation(.easeOut(duration: 0.5), value: backgroundOpacity)
-                        .onAppear {
-                            backgroundOpacity = 1
-                        }
+                        .animation(.spring(.smooth), value: backgroundOpacity)
+                        .onAppear { backgroundOpacity = 1 }
                 } placeholder: {
                     EmptyView()
                 }
             }
             // Blurry background
             Color.clear
-                .background(.ultraThinMaterial.opacity(shouldBlurBackground ? 1 : 0))
+                .background(.thinMaterial.opacity(shouldBlurBackground ? 1 : 0))
                 .animation(.smooth(duration: 0.5), value: shouldBlurBackground)
         }
     }
@@ -215,9 +196,7 @@ fileprivate struct MediaLogoView: View {
                         .aspectRatio(contentMode: .fit)
                         .opacity(logoOpacity)
                         .animation(.easeOut(duration: 0.5), value: logoOpacity)
-                        .onAppear {
-                            logoOpacity = 1
-                        }
+                        .onAppear { logoOpacity = 1 }
                 } placeholder: {
                     EmptyView()
                 }
@@ -244,33 +223,45 @@ fileprivate struct MediaLogoView: View {
     }
 }
 
-// MARK: Next episode selector
-fileprivate struct TVNextEpisodeView: View {
-    let seasons: [any TVSeasonProtocol]
+// MARK: Movie play buttons
+fileprivate struct MovieNavigationView: View {
+    let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
     
     @FocusState.Binding var focus: ButtonType?
     
-    static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
-        let allEpisodes = seasons.flatMap(\.episodes)
-        guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
-            previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
-        }),
-              let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
-        else { return allEpisodes.first }
-        
-        if let durationTicks = mostRecentMediaSource.durationTicks,
-           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) ||
-            mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
-            return mostRecentEpisode.element
+    var body: some View {
+        NavigationLink {
+            PlayerView(
+                vm: PlayerViewModel(
+                    mediaSource: mediaSource,
+                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    streamingService: streamingService,
+                    seasons: nil
+                )
+            )
+            .id(mediaSource.id)
+        } label: {
+            if mediaSource.startTicks > 0 {
+                Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
+            } else {
+                Text("Play \(mediaSource.name)")
+            }
         }
-        
-        return allEpisodes[mostRecentEpisode.offset + 1]
+        .focused($focus, equals: .play)
     }
+}
+
+// MARK: Episode play buttons
+fileprivate struct TVEpisodeNavigationView: View {
+    let seasons: [any TVSeasonProtocol]
+    let streamingService: any StreamingServiceProtocol
+    let episode: any TVEpisodeProtocol
+    
+    @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
-        if let nextEpisode = Self.getNextUp(from: seasons), let mediaSource = nextEpisode.mediaSources.first {
-            
+        if let mediaSource = episode.mediaSources.first {
             // Always restart episode button
             NavigationLink {
                 PlayerView(
@@ -282,7 +273,7 @@ fileprivate struct TVNextEpisodeView: View {
                     )
                 )
             } label: {
-                Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(nextEpisode.title)")
+                Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(episode.title)")
             }
             .focused($focus, equals: .play)
             
@@ -298,10 +289,13 @@ fileprivate struct TVNextEpisodeView: View {
                         )
                     )
                 } label: {
-                    Text("Resume \(nextEpisode.title)")
+                    Text("Resume \(episode.title)")
                 }
                 .focused($focus, equals: .play)
             }
+        } else {
+            Text("Error loading episode")
+                .foregroundStyle(.red)
         }
     }
 }
@@ -309,40 +303,23 @@ fileprivate struct TVNextEpisodeView: View {
 // MARK: Episode selector
 fileprivate struct EpisodeSelectorView: View {
     let media: any MediaProtocol
-    let logoImageURL: URL?
-    
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     
     @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
-        ScrollViewReader { scrollProxy in
-            ScrollView(.horizontal) {
-                LazyHStack {
-                    ForEach(seasons, id: \.id) { season in
-                        ForEach(season.episodes, id: \.id) { episode in
-                            if let source = episode.mediaSources.first {
-                                EpisodeView(
-                                    logoImageURL: logoImageURL,
-                                    media: media,
-                                    source: source,
-                                    streamingService: streamingService,
-                                    seasons: seasons,
-                                    episode: episode,
-                                    focus: $focus
-                                )
-                            }
-                        }
-                    }
-                }
-                .scrollClipDisabled()
-                .padding(40)
-                .ignoresSafeArea()
-            }
-            .task {
-                if let nextEpisodeID = TVNextEpisodeView.getNextUp(from: seasons)?.id {
-                    scrollProxy.scrollTo(nextEpisodeID, anchor: .center)
+        ForEach(seasons, id: \.id) { season in
+            ForEach(season.episodes, id: \.id) { episode in
+                if let source = episode.mediaSources.first {
+                    EpisodeView(
+                        media: media,
+                        source: source,
+                        streamingService: streamingService,
+                        seasons: seasons,
+                        episode: episode,
+                        focus: $focus
+                    )
                 }
             }
         }
@@ -378,13 +355,13 @@ fileprivate struct EpisodeNavigationView: View {
                     .padding()
                 Spacer(minLength: 0)
             }
+            .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
     }
 }
 
 fileprivate struct EpisodeView: View {
-    let logoImageURL: URL?
     let media: any MediaProtocol
     let source: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
@@ -405,15 +382,17 @@ fileprivate struct EpisodeView: View {
                 episode: episode
             )
             .frame(width: 400, height: 325)
-            .focused($focus, equals: .media)
+            .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
+            .onMoveCommand { direction in
+                if direction == .up { focus = .play }
+            }
             
             Button {
-                if episode.overview != nil {
-                    self.showDetails = true
-                }
+                self.showDetails = episode.overview != nil
             } label: {
                 VStack(alignment: .leading) {
+                    // Season and episode number
                     HStack(spacing: 0) {
                         if let season = (seasons.first { $0.episodes.contains { $0.id == episode.id } }) {
                             Text("Season \(season.seasonNumber), ")
@@ -434,7 +413,10 @@ fileprivate struct EpisodeView: View {
                         .sheet(isPresented: $showDetails) {
                             VStack {
                                 Spacer()
-                                MediaLogoView(media: media, logoImageURL: logoImageURL)
+                                MediaLogoView(
+                                    media: media,
+                                    logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
+                                )
                                     .padding()
                                 Spacer()
                                 Text(overview)
@@ -457,7 +439,7 @@ fileprivate struct EpisodeView: View {
                 .padding(-16)
             }
             .buttonStyle(.plain)
-            .focused($focus, equals: .media)
+            .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
             .animation(.easeOut(duration: 0.5), value: isFocused)
             .padding(.top, isFocused ?? false ? 16 : 0)
@@ -580,6 +562,7 @@ fileprivate struct EpisodeArtView: View {
 
 fileprivate enum ButtonType: Hashable {
     case play
-    case media
+    case season(String)
+    case media(String)
     case metadata
 }
