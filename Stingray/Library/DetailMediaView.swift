@@ -89,7 +89,7 @@ struct DetailMediaView: View {
                                     }
                                 }
                                 .scrollClipDisabled()
-                                .padding(16)
+                                .padding(32)
                                 .opacity(shouldRevealBottomShelf ? 1 : 0)
                                 
                                 ScrollView(.horizontal) {
@@ -116,7 +116,6 @@ struct DetailMediaView: View {
                     }
                 }
                 .scrollClipDisabled()
-                .padding()
             }
             .offset(y: shouldRevealBottomShelf ? 0 : 700)
             .background(alignment: .bottom) {
