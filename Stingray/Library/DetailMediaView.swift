@@ -109,28 +109,63 @@ struct DetailMediaView: View {
                         .focusable(false)
                 }
                 
-                if !media.description.isEmpty {
-                    VStack(alignment: .leading) {
-                        Text("Overview")
-                            .font(.title3.bold())
-                            .lineLimit(2)
-                        Text(media.description)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background {
-                        if focus == .overview {
-                            Color.white
-                        } else {
-                            Color.clear.background(.regularMaterial)
+                HStack {
+                    Button {} label: {
+                        VStack(alignment: .leading) {
+                            if !media.description.isEmpty {
+                                Text("Overview")
+                                    .font(.title3.bold())
+                                    .lineLimit(2)
+                                Text(media.description)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            else {
+                                Text("No description available")
+                                    .opacity(0.5)
+                            }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .foregroundStyle(focus == .overview ? Color.black : Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 32))
-                    .focusable()
                     .focused($focus, equals: .overview)
-                    .padding(.top)
+                    Button {} label: {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if !media.genres.isEmpty || media.releaseDate != nil || media.maturity != nil {
+                                if !media.genres.isEmpty {
+                                    VStack(alignment: .leading) {
+                                        Text("Genres")
+                                            .font(.headline.bold())
+                                            .lineLimit(2)
+                                        Text(media.genres.joined(separator: ", "))
+                                            .multilineTextAlignment(.leading)
+                                    }
+                                }
+                                if let releaseDate = media.releaseDate {
+                                    VStack(alignment: .leading) {
+                                        Text("Released")
+                                            .font(.headline.bold())
+                                            .lineLimit(2)
+                                        Text(String(Calendar.current.component(.year, from: releaseDate)))
+                                            .lineLimit(1)
+                                    }
+                                }
+                                if let maturity = media.maturity {
+                                    Text("Maturity")
+                                        .font(.headline.bold())
+                                        .lineLimit(1)
+                                    Text(maturity)
+                                        .lineLimit(1)
+                                }
+                            }
+                            else {
+                                Text("No description available")
+                                    .opacity(0.5)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .focused($focus, equals: .overview)
                 }
+                .padding(.top)
                 
                 ScrollView(.horizontal) {
                     HStack {
