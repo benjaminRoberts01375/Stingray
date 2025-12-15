@@ -90,6 +90,7 @@ struct DetailMediaView: View {
                                 }
                                 .scrollClipDisabled()
                                 .padding(16)
+                                .opacity(shouldRevealBottomShelf ? 1 : 0)
                                 
                                 ScrollView(.horizontal) {
                                     LazyHStack {
@@ -108,6 +109,7 @@ struct DetailMediaView: View {
                                 }
                                 .scrollClipDisabled()
                                 .padding(.horizontal)
+                                .offset(y: shouldRevealBottomShelf ? 0 : -100)
                             }
                         }
                     default: EmptyView()
