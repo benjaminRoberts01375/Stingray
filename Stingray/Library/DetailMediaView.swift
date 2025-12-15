@@ -638,7 +638,7 @@ fileprivate struct ActorImage: View {
                let blurImage = UIImage(blurHash: blurHash, size: .init(width: 30, height: 45)) {
                 Image(uiImage: blurImage)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .aspectRatio(contentMode: .fill)
                     .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
             }
             if let url = streamingService.getImageURL(imageType: .primary, mediaID: person.id, width: 0) {
@@ -662,13 +662,15 @@ fileprivate struct EpisodeArtView: View {
     @State private var imageOpacity: Double = 0
     
     var body: some View {
-        VStack {
+        GeometryReader { geo in
             ZStack {
                 if let blurHash = episode.blurHashes?.getBlurHash(for: .primary),
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
                     Image(uiImage: blurImage)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
                         .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                 }
                 if let url = streamingService.getImageURL(imageType: .primary, mediaID: episode.id, width: 800) {
@@ -676,6 +678,7 @@ fileprivate struct EpisodeArtView: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
+                            .frame(width: geo.size.width, height: geo.size.height)
                             .animation(.easeOut(duration: 0.5), value: imageOpacity)
                             .onAppear { imageOpacity = 1 }
                     } placeholder: {
@@ -684,6 +687,7 @@ fileprivate struct EpisodeArtView: View {
                 }
             }
         }
+        .aspectRatio(16 / 9, contentMode: .fit)
     }
 }
 
