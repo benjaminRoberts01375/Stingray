@@ -109,7 +109,8 @@ struct DetailMediaView: View {
                         .focusable(false)
                 }
                 
-                HStack {
+                // Overview
+                HStack(alignment: .top) {
                     Button {} label: {
                         VStack(alignment: .leading) {
                             if !media.description.isEmpty {
@@ -124,7 +125,7 @@ struct DetailMediaView: View {
                                     .opacity(0.5)
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
                     .focused($focus, equals: .overview)
                     Button {} label: {
@@ -161,11 +162,11 @@ struct DetailMediaView: View {
                                     .opacity(0.5)
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
                     .focused($focus, equals: .overview)
                 }
-                .padding(.top)
+                .padding(.vertical)
                 
                 ScrollView(.horizontal) {
                     HStack {
