@@ -434,19 +434,7 @@ fileprivate struct SeasonSelectorView: View {
             }
             .padding(16)
             .background {
-                let isActiveSeason: Bool = {
-                    switch focus {
-                    case .media(let mediaID):
-                        return season.episodes.contains { $0.id == mediaID }
-                    case .season, nil:
-                        // Maintain the last focused season's background when focus is nil
-                        return season.id == lastFocusedSeasonID
-                    default:
-                        return false
-                    }
-                }()
-                
-                if isActiveSeason {
+                if season.id == lastFocusedSeasonID {
                     Capsule()
                         .opacity(0.25)
                 } else {
@@ -477,6 +465,7 @@ fileprivate struct SeasonSelectorView: View {
             // Track which season is active when focus changes
             switch newValue {
             case .media(let mediaID):
+                print("Changed media ID to \(mediaID)")
                 if let season = seasons.first(where: { $0.episodes.contains { $0.id == mediaID } }) {
                     lastFocusedSeasonID = season.id
                 }
@@ -629,6 +618,7 @@ fileprivate struct EpisodeView: View {
             }
             .buttonStyle(.plain)
             .focused($isFocused, equals: true)
+            .focused($focus, equals: .media(episode.id))
             .animation(.easeOut(duration: 0.5), value: isFocused)
             .padding(.top, isFocused ?? false ? 16 : 0)
         }
