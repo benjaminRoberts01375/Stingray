@@ -158,7 +158,7 @@ struct DetailMediaView: View {
                                 }
                             }
                             else {
-                                Text("No description available")
+                                Text("No metadata available")
                                     .opacity(0.5)
                             }
                         }
