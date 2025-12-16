@@ -85,20 +85,19 @@ class ContentProvider: TVTopShelfContentProvider {
         case .landscape:
             // Use backdrop images for horizontal layout
             item.imageShape = .hdtv  // 16:9 aspect ratio for horizontal items
-            if let imageURL = streamingModel.getImageURL(imageType: .backdrop, mediaID: mediaID, width: 320) {
+            if let imageURL = streamingModel.getImageURL(imageType: .backdrop, mediaID: mediaID, width: 800) {
                 item.setImageURL(imageURL, for: .screenScale1x)
             }
-            if let imageURL2x = streamingModel.getImageURL(imageType: .backdrop, mediaID: mediaID, width: 640) {
+            if let imageURL2x = streamingModel.getImageURL(imageType: .backdrop, mediaID: mediaID, width: 1600) {
                 item.setImageURL(imageURL2x, for: .screenScale2x)
             }
             
         case .poster:
-            // Use poster images for vertical layout (common width is ~500-1000px for posters)
             item.imageShape = .poster  // Vertical aspect ratio for poster items
-            if let imageURL = streamingModel.getImageURL(imageType: .primary, mediaID: mediaID, width: 500) {
+            if let imageURL = streamingModel.getImageURL(imageType: .primary, mediaID: mediaID, width: 300) {
                 item.setImageURL(imageURL, for: .screenScale1x)
             }
-            if let imageURL2x = streamingModel.getImageURL(imageType: .primary, mediaID: mediaID, width: 1000) {
+            if let imageURL2x = streamingModel.getImageURL(imageType: .primary, mediaID: mediaID, width: 600) {
                 item.setImageURL(imageURL2x, for: .screenScale2x)
             }
         }
