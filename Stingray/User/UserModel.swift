@@ -5,6 +5,8 @@
 //  Created by Ben Roberts on 12/16/25.
 //
 
+import Foundation
+
 final class UserModel {
     var storage: UserStorageProtocol
     
@@ -20,6 +22,11 @@ final class UserModel {
     
     func getUserIDs() -> [String] {
         return storage.getUserIDs()
+    }
+    
+    func getDefaultUser() -> User? {
+        guard let defaultID = self.storage.getDefaultUserID() else { return nil }
+        return self.storage.getUser(userID: defaultID)
     }
 }
 
@@ -75,6 +82,7 @@ public enum ServiceType2: Codable {
 
 /// Basic structure for a user
 public struct User: Codable {
+    let serviceURL: URL
     let serviceType: ServiceType2
     let serviceID: String
     let id: String

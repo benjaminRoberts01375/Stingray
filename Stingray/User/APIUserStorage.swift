@@ -14,6 +14,12 @@ public protocol UserStorageProtocol {
     /// Set all user IDs to an array of IDs
     /// - Parameter userIDs: User IDs to set
     func setUserIDs(_ userIDs: [String])
+    /// Get the default user to use on startup
+    /// - Returns: The default user ID
+    func getDefaultUserID() -> String?
+    /// Set the default user to use on startup
+    /// - Parameter id: The default user ID
+    func setDefaultUserID(id: String)
     /// Save a `User` into storage
     /// - Parameters:
     ///   - user: User to save
@@ -21,7 +27,7 @@ public protocol UserStorageProtocol {
     /// Get a `User` from storage
     /// - Parameter userID: ID of the user to find
     /// - Returns: The formatted `User`
-    func getUser(userID: String) throws -> User?
+    func getUser(userID: String) -> User?
 }
 
 public final class UserStorage: UserStorageProtocol {
@@ -37,6 +43,14 @@ public final class UserStorage: UserStorageProtocol {
         self.basicStorage.setStringArray(.userIDs, id: "", value: userIDs)
     }
     
+    public func getDefaultUserID() -> String? {
+        self.basicStorage.getString(.defaultUserID, id: "")
+    }
+    
+    public func setDefaultUserID(id: String) {
+        self.basicStorage.setString(.defaultUserID, id: "", value: id)
+    }
+    
     public func setUser(user: User) {
         if let encoded = try? JSONEncoder().encode(user),
            let jsonString = String(data: encoded, encoding: .utf8) {
@@ -44,7 +58,7 @@ public final class UserStorage: UserStorageProtocol {
         }
     }
     
-    public func getUser(userID: String) throws -> User? {
+    public func getUser(userID: String) -> User? {
         guard let jsonString = self.basicStorage.getString(.user, id: userID),
               let data = jsonString.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(User.self, from: data)

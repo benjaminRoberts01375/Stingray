@@ -41,66 +41,39 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var storageAPI: AdvancedStorageProtocol
     var libraryStatus: LibraryStatus
     
-    var usersName: String {
-        didSet { storageAPI.setUsersName(usersName) }
-    }
-    
-    var usersID: String {
-        didSet { storageAPI.setUserID(usersID) }
-    }
-    
-    var sessionID: String {
-        didSet { storageAPI.setSessionID(sessionID) }
-    }
-    
-    var accessToken: String {
-        didSet { storageAPI.setAccessToken(accessToken)}
-    }
-    
-    var serverID: String {
-        didSet { storageAPI.setServerID(serverID) }
-    }
-    
+    var usersName: String
+    var usersID: String
+    var sessionID: String
+    var accessToken: String
+    var serverID: String
     var playerProgress: JellyfinPlayerProgress?
     
-    public init() throws {
+    public init(
+        userDisplayName: String,
+        userID: String,
+        serviceID: String,
+        accessToken: String,
+        sessionID: String,
+        serviceURL: URL
+    ) {
         // APIs
-        let storageAPI = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+        let storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: userID, serverID: serviceID)
         self.storageAPI = storageAPI
-        guard let url = storageAPI.getServerURL()
-        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingServerURL }
-        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        
-        // Defaults
-        guard let usersID = storageAPI.getUserID()
-        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingDefaultUserID }
-        self.usersID = usersID
+        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         
         // Misc properties
         self.libraryStatus = .waiting
-        guard let usersName = storageAPI.getUsersName()
-        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingUsersName }
-        self.usersName = usersName
-        guard let sessionID = storageAPI.getSessionID()
-        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingSessionID }
-        self.sessionID = sessionID
-        guard let accessToken = storageAPI.getAccessToken()
-        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingAccessToken }
+        self.usersName = userDisplayName
+        self.usersID = userID
+        self.serverID = serviceID
         self.accessToken = accessToken
-        guard let serverID = storageAPI.getServerID()
-        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingServerID }
-        self.serverID = serverID
-        
-        // Not yet required data, but it will be
-        if storageAPI.getServiceType(userID: usersID) == nil {
-            throw DefaultsAdvancedStorage.StorageMissingProperty.missingServiceType
-        }
+        self.sessionID = sessionID
     }
     
-    private init(response: APILoginResponse, url: URL) throws {
+    private init(response: APILoginResponse, url: URL) {
         // APIs
         self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        self.storageAPI = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: response.userId, serverID: response.serverId)
+        self.storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: response.userId, serverID: response.serverId)
         
         // Properties
         self.usersName = response.userName
@@ -126,7 +99,19 @@ public final class JellyfinModel: StreamingServiceProtocol {
     static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
         let response = try await networkAPI.login(username: username, password: password)
-        return try JellyfinModel(response: response, url: url)
+        let userModel = UserModel()
+        userModel.addUser(
+            User(
+                serviceURL: url,
+                serviceType: .Jellyfin(
+                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+                ),
+                serviceID: response.serverId,
+                id: response.userId,
+                displayName: response.userName
+            )
+        )
+        return JellyfinModel(response: response, url: url)
     }
     
     func retrieveLibraries() async {

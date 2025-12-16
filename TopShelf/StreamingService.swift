@@ -13,21 +13,29 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var accessToken: String
     
     init() throws {
-        let storage = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+        guard let defaultUser = UserModel().getDefaultUser() else {
+            throw InitError.noDefaultUser
+        }
+        
+        let storage = DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: defaultUser.id, serverID: defaultUser.serviceID)
         guard let url = storage.getServerURL() else {
             print("No URL")
-            enum AddressError: Error { case badAddress }
-            throw AddressError.badAddress
+            throw InitError.badAddress
         }
         guard let token = storage.getAccessToken() else {
             print("No token")
-            enum TokenError: Error { case noToken }
-            throw TokenError.noToken
+            throw InitError.noToken
         }
         let network = APINetwork(network: JellyfinBasicNetwork(address: url))
         self.networkAPI = network
         self.storageAPI = storage
         self.accessToken = token
+    }
+    
+    enum InitError: Error {
+        case badAddress
+        case noToken
+        case noDefaultUser
     }
     
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
@@ -51,4 +59,3 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
 }
-

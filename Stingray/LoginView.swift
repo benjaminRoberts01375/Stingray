@@ -67,11 +67,22 @@ struct LoginView: View {
         }
         .onAppear {
             print("Attempting to set up from storage")
-            do {
-                loggedIn = .loggedIn(try JellyfinModel())
-            } catch {
+            guard let defaultUser = UserModel().getDefaultUser() else {
                 print("Failed to setup from storage, showing login screen")
                 return
+            }
+            switch defaultUser.serviceType {
+            case .Jellyfin(let userJellyfin):
+                loggedIn = .loggedIn(
+                    JellyfinModel(
+                        userDisplayName: defaultUser.displayName,
+                        userID: defaultUser.displayName,
+                        serviceID: defaultUser.serviceID,
+                        accessToken: userJellyfin.accessToken,
+                        sessionID: userJellyfin.sessionID,
+                        serviceURL: defaultUser.serviceURL
+                    )
+                )
             }
         }
     }

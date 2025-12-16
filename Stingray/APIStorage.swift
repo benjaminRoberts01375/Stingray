@@ -167,15 +167,9 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     let activeUserID: String
     let activeServerID: String
     
-    init(storage: BasicStorageProtocol, userID: String? = nil, serverID: String? = nil) throws {
+    init(storage: BasicStorageProtocol, userID: String, serverID: String) {
         self.storage = storage
-        
-        guard let userID = userID ?? storage.getString(.defaultUserID, id: "")
-        else { throw StorageMissingProperty.missingDefaultUserID}
         self.activeUserID = userID
-        
-        guard let serverID = serverID ?? storage.getString(.serverID, id: userID)
-        else { throw StorageMissingProperty.missingServerID }
         self.activeServerID = serverID
     }
     

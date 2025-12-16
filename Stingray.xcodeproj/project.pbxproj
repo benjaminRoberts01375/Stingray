@@ -57,6 +57,8 @@
 				APIStorage.swift,
 				MediaModel.swift,
 				StreamingServiceBasicModel.swift,
+				User/APIUserStorage.swift,
+				User/UserModel.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};
