@@ -15,6 +15,7 @@ public enum BasicNetworkKeys: String {
     case accessToken = "accessToken"
     case serverID = "serverID"
     case defaultUserID = "defaultUserID"
+    case serviceType = "serviceType"
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
@@ -55,6 +56,12 @@ public protocol BasicStorageProtocol {
     /// - Parameter key: The key where the data might be stored
     /// - Returns: The found `Boolean`
     func getBool(_ key: BasicNetworkKeys, id: String) -> Bool
+}
+
+/// Types of streaming services
+public enum ServiceType: String {
+    /// Jellyfin streaming service
+    case Jellyfin = "Jellyfin"
 }
 
 /// A protocol for abstracting advanced storage actions
@@ -101,6 +108,8 @@ public protocol AdvancedStorageProtocol {
     /// Get the default userID
     /// - Returns: ID of the default user
     func getDefaultUser() -> String?
+    /// Sets the service type for a given userID
+    func setServiceType(_ type: ServiceType, userID: String)
 }
 
 final class DefaultsBasicStorage: BasicStorageProtocol {
@@ -175,6 +184,7 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
         case missingAccessToken
         case missingServerID
         case missingServerURL
+        case missingServiceType
     }
     
     func getServerURL() -> URL? {
@@ -230,5 +240,14 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     
     func setDefaultUser(id: String) {
         storage.setString(.defaultUserID, id: "", value: id)
+    }
+    
+    func setServiceType(_ type: ServiceType, userID: String) {
+        storage.setString(.serviceType, id: userID, value: ServiceType.Jellyfin.rawValue)
+    }
+    
+    func getServiceType(userID: String) -> ServiceType? {
+        guard let strServiceType = storage.getString(.serviceType, id: userID) else { return nil }
+        return ServiceType(rawValue: strServiceType)
     }
 }

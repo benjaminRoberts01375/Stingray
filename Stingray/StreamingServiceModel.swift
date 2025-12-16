@@ -90,6 +90,11 @@ public final class JellyfinModel: StreamingServiceProtocol {
         guard let serverID = storageAPI.getServerID()
         else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingServerID }
         self.serverID = serverID
+        
+        // Not yet required data, but it will be
+        if storageAPI.getServiceType(userID: usersID) == nil {
+            throw DefaultsAdvancedStorage.StorageMissingProperty.missingServiceType
+        }
     }
     
     private init(response: APILoginResponse, url: URL) throws {
@@ -115,6 +120,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         
         // Save defaults
         self.storageAPI.setDefaultUser(id: self.usersID)
+        self.storageAPI.setServiceType(.Jellyfin, userID: self.usersID)
     }
     
     static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
