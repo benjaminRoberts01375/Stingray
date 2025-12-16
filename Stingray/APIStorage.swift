@@ -28,6 +28,15 @@ public protocol BasicStorageProtocol {
     ///   - key: The key where data is to be stored
     ///   - value: Text to set
     func setString(_ key: BasicNetworkKeys, id: String, value: String)
+    /// Get a `[String]` from local storage
+    /// - Parameter key: The key where the data might be stored
+    /// - Returns: The found `[String]`
+    func getStringArray(_ key: BasicNetworkKeys, id: String) -> [String]
+    /// Set a `[String]` into local storage
+    /// - Parameters:
+    ///   - key: The key where data is to be stored
+    ///   - value: Array to set
+    func setStringArray(_ key: BasicNetworkKeys, id: String, value: [String])
     /// Get a URL from local storage
     /// - Parameter key: The key where the data might be stored
     /// - Returns: The found `URL`
@@ -130,6 +139,14 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     }
     
     func setBool(_ key: BasicNetworkKeys, id: String, value: Bool) {
+        defaults.set(value, forKey: key.rawValue + id)
+    }
+    
+    func getStringArray(_ key: BasicNetworkKeys, id: String) -> [String] {
+        return defaults.stringArray(forKey: key.rawValue + id) ?? []
+    }
+    
+    func setStringArray(_ key: BasicNetworkKeys, id: String, value: [String]) {
         defaults.set(value, forKey: key.rawValue + id)
     }
 }
