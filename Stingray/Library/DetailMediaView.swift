@@ -239,12 +239,24 @@ struct DetailMediaView: View {
               let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
         else { return allEpisodes.first }
         
+        // Watched previous episode all the way through
+        if mostRecentMediaSource.startTicks == 0 {
+            if mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
+                return allEpisodes.first ?? mostRecentEpisode.element
+            }
+            return allEpisodes[mostRecentEpisode.offset + 1]
+        }
+        
+        // Likely marked by Stingray that the user didn't finish
         if let durationTicks = mostRecentMediaSource.durationTicks,
-           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) ||
-            mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
+           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) {
             return mostRecentEpisode.element
         }
         
+        // User finished the series, recommend the first episode again
+        if mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
+            return allEpisodes.first ?? mostRecentEpisode.element
+        }
         return allEpisodes[mostRecentEpisode.offset + 1]
     }
 }
