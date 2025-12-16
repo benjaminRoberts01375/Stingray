@@ -11,7 +11,6 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var libraryStatus: LibraryStatus { get }
     var usersName: String { get }
     
-    func login(username: String, password: String) async throws
     func retrieveLibraries() async
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
     func playbackEnd()
@@ -37,24 +36,20 @@ enum MediaLookupStatus {
 }
 
 @Observable
-final class JellyfinModel: StreamingServiceProtocol {
+public final class JellyfinModel: StreamingServiceProtocol {
     var networkAPI: AdvancedNetworkProtocol
     var storageAPI: AdvancedStorageProtocol
     var libraryStatus: LibraryStatus
-    
-    var url: URL {
-        didSet { storageAPI.setServerURL(url) }
-    }
     
     var usersName: String {
         didSet { storageAPI.setUsersName(usersName) }
     }
     
-    var usersID: String? {
+    var usersID: String {
         didSet { storageAPI.setUserID(usersID) }
     }
     
-    var sessionID: String? {
+    var sessionID: String {
         didSet { storageAPI.setSessionID(sessionID) }
     }
     
@@ -62,47 +57,70 @@ final class JellyfinModel: StreamingServiceProtocol {
         didSet { storageAPI.setAccessToken(accessToken)}
     }
     
-    var serverID: String? {
+    var serverID: String {
         didSet { storageAPI.setServerID(serverID) }
     }
     
     var playerProgress: JellyfinPlayerProgress?
     
-    init(address: URL) throws {
-        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: address))
-        let storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+    public init() throws {
+        // APIs
+        let storageAPI = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
         self.storageAPI = storageAPI
-        self.url = address
-        self.usersName = storageAPI.getUsersName() ?? "User"
-        self.usersID = storageAPI.getUserID()
-        self.sessionID = storageAPI.getSessionID()
-        self.accessToken = storageAPI.getAccessToken() ?? ""
-        self.serverID = storageAPI.getServerID()
+        guard let url = storageAPI.getServerURL()
+        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingServerURL }
+        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
+        
+        // Defaults
+        guard let usersID = storageAPI.getUserID()
+        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingDefaultUserID }
+        self.usersID = usersID
+        
+        // Misc properties
         self.libraryStatus = .waiting
-        
-        // Manually call storage setters during init since didSet won't always trigger >:(
-        storageAPI.setServerURL(address)
-        storageAPI.setUsersName(self.usersName)
-        storageAPI.setUserID(self.usersID)
-        storageAPI.setSessionID(self.sessionID)
-        storageAPI.setAccessToken(self.accessToken)
-        storageAPI.setServerID(self.serverID)
-        
-        print("URL: \(url.absoluteString)")
-        print("User's Name: \(usersName)")
-        print("UserID: \(usersID ?? "None available")")
-        print("SessionID: \(sessionID ?? "None available")")
-        print("Access Token: \(accessToken)")
-        print("ServerID: \(serverID ?? "None available")")
+        guard let usersName = storageAPI.getUsersName()
+        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingUsersName }
+        self.usersName = usersName
+        guard let sessionID = storageAPI.getSessionID()
+        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingSessionID }
+        self.sessionID = sessionID
+        guard let accessToken = storageAPI.getAccessToken()
+        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingAccessToken }
+        self.accessToken = accessToken
+        guard let serverID = storageAPI.getServerID()
+        else { throw DefaultsAdvancedStorage.StorageMissingProperty.missingServerID }
+        self.serverID = serverID
     }
     
-    func login(username: String, password: String) async throws {
-        let response = try await networkAPI.login(username: username, password: password)
+    private init(response: APILoginResponse, url: URL) throws {
+        // APIs
+        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
+        self.storageAPI = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: response.userId, serverID: response.serverId)
+        
+        // Properties
         self.usersName = response.userName
         self.usersID = response.userId
         self.sessionID = response.sessionId
         self.accessToken = response.accessToken
         self.serverID = response.serverId
+        self.libraryStatus = .waiting
+        
+        // Save properties
+        self.storageAPI.setServerURL(url)
+        self.storageAPI.setUsersName(self.usersName)
+        self.storageAPI.setUserID(self.usersID)
+        self.storageAPI.setSessionID(self.sessionID)
+        self.storageAPI.setAccessToken(self.accessToken)
+        self.storageAPI.setServerID(self.serverID)
+        
+        // Save defaults
+        self.storageAPI.setDefaultUser(id: self.usersID)
+    }
+    
+    static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
+        let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
+        let response = try await networkAPI.login(username: username, password: password)
+        return try JellyfinModel(response: response, url: url)
     }
     
     func retrieveLibraries() async {
@@ -159,13 +177,13 @@ final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
         do {
             return try await networkAPI.getRecentlyAdded(contentType: contentType, accessToken: accessToken)
         } catch { return [] }
     }
     
-    func retrieveUpNext() async -> [SlimMedia] {
+    public func retrieveUpNext() async -> [SlimMedia] {
         do {
             return try await networkAPI.getUpNext(accessToken: accessToken)
         } catch {
@@ -227,7 +245,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
     }
     
-    func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
+    public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
     
@@ -255,7 +273,7 @@ final class JellyfinModel: StreamingServiceProtocol {
             audioID: audioID,
             subtitleID: subtitleID,
             playbackSessionID: sessionID,
-            userSessionID: self.sessionID ?? "",
+            userSessionID: self.sessionID,
             accessToken: self.accessToken
         )
         self.playerProgress?.start()

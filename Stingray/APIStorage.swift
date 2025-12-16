@@ -134,11 +134,6 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     }
 }
 
-enum FailedToInitializeAdvancedStorage: Error {
-    case noUserID
-    case noServerID
-}
-
 final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     var storage: BasicStorageProtocol
     let activeUserID: String
@@ -147,16 +142,28 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     init(storage: BasicStorageProtocol, userID: String? = nil, serverID: String? = nil) throws {
         self.storage = storage
         
-        guard let userID = userID ?? storage.getString(.defaultUserID, id: "") else { throw FailedToInitializeAdvancedStorage.noUserID}
+        guard let userID = userID ?? storage.getString(.defaultUserID, id: "")
+        else { throw StorageMissingProperty.missingDefaultUserID}
         self.activeUserID = userID
         
-        guard let serverID = serverID ?? storage.getString(.serverID, id: userID) else { throw FailedToInitializeAdvancedStorage.noServerID }
+        guard let serverID = serverID ?? storage.getString(.serverID, id: userID)
+        else { throw StorageMissingProperty.missingServerID }
         self.activeServerID = serverID
+    }
+    
+    public enum StorageMissingProperty: Error {
+        case missingDefaultUserID
+        case missingUsersName
+        case missingSessionID
+        case missingAccessToken
+        case missingServerID
+        case missingServerURL
     }
     
     func getServerURL() -> URL? {
         return storage.getURL(.serverURL, id: activeServerID)
     }
+    
     func setServerURL(_ url: URL) {
         storage.setURL(.serverURL, id: activeServerID, value: url)
     }
@@ -171,6 +178,7 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     func getUserID() -> String? {
         return storage.getString(.userID, id: activeUserID)
     }
+    
     func setUserID(_ id: String?) {
         storage.setString(.userID, id: activeUserID, value: id ?? "")
     }
@@ -178,6 +186,7 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     func getSessionID() -> String? {
         return storage.getString(.sessionID, id: activeUserID)
     }
+    
     func setSessionID(_ id: String?) {
         storage.setString(.sessionID, id: activeUserID, value: id ?? "")
     }
@@ -185,6 +194,7 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     func getAccessToken() -> String? {
         return storage.getString(.accessToken, id: activeUserID)
     }
+    
     func setAccessToken(_ token: String?) {
         storage.setString(.accessToken, id: activeUserID, value: token ?? "")
     }

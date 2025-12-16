@@ -13,7 +13,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var accessToken: String
     
     init() throws {
-        let storage = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+        let storage = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
         guard let url = storage.getServerURL() else {
             print("No URL")
             enum AddressError: Error { case badAddress }

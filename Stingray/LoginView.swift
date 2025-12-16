@@ -68,12 +68,7 @@ struct LoginView: View {
         .onAppear {
             print("Attempting to set up from storage")
             do {
-                let advancedStorage = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
-                guard let url = advancedStorage.getServerURL() else {
-                    enum AddressError: Error { case badAddress }
-                    throw AddressError.badAddress
-                }
-                loggedIn = .loggedIn(try JellyfinModel(address: url))
+                loggedIn = .loggedIn(try JellyfinModel())
             } catch {
                 print("Failed to setup from storage, showing login screen")
                 return
@@ -96,22 +91,15 @@ struct LoginView: View {
         }
         
         // Setup streaming service
-        let streamingService: JellyfinModel
-        do {
-            streamingService = try JellyfinModel(address: url)
-        } catch {
-            self.error = "Unable to setup streaming service"
-            return
-        }
         Task {
             awaitingLogin = true
             do {
-                try await streamingService.login(username: username, password: password)
+                let streamingService = try await JellyfinModel.login(url: url, username: username, password: password)
+                self.loggedIn = .loggedIn(streamingService)
             } catch {
                 self.error = error.localizedDescription
                 awaitingLogin = false
             }
-            self.loggedIn = .loggedIn(streamingService)
         }
     }
 }
