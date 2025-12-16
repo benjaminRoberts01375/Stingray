@@ -68,7 +68,7 @@ struct LoginView: View {
         .onAppear {
             print("Attempting to set up from storage")
             do {
-                let advancedStorage = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
+                let advancedStorage = try DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
                 guard let url = advancedStorage.getServerURL() else {
                     enum AddressError: Error { case badAddress }
                     throw AddressError.badAddress
