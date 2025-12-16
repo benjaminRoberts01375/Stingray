@@ -9,6 +9,7 @@ import AVKit
 
 protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var libraryStatus: LibraryStatus { get }
+    var usersName: String { get }
     
     func login(username: String, password: String) async throws
     func retrieveLibraries() async
@@ -45,7 +46,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         didSet { storageAPI.setServerURL(url) }
     }
     
-    var usersName: String? {
+    var usersName: String {
         didSet { storageAPI.setUsersName(usersName) }
     }
     
@@ -72,7 +73,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         let storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage())
         self.storageAPI = storageAPI
         self.url = address
-        self.usersName = storageAPI.getUsersName()
+        self.usersName = storageAPI.getUsersName() ?? "User"
         self.usersID = storageAPI.getUserID()
         self.sessionID = storageAPI.getSessionID()
         self.accessToken = storageAPI.getAccessToken() ?? ""
@@ -88,7 +89,7 @@ final class JellyfinModel: StreamingServiceProtocol {
         storageAPI.setServerID(self.serverID)
         
         print("URL: \(url.absoluteString)")
-        print("User's Name: \(usersName ?? "None available")")
+        print("User's Name: \(usersName)")
         print("UserID: \(usersID ?? "None available")")
         print("SessionID: \(sessionID ?? "None available")")
         print("Access Token: \(accessToken)")
