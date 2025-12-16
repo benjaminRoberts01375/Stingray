@@ -28,6 +28,10 @@ final class UserModel {
         guard let defaultID = self.storage.getDefaultUserID() else { return nil }
         return self.storage.getUser(userID: defaultID)
     }
+    
+    func setDefaultUser(userID: String) {
+        self.storage.setDefaultUserID(id: userID)
+    }
 }
 
 /// Jellyfin-specific userdata
@@ -38,7 +42,7 @@ public struct UserJellyfin: Codable {
 
 /// Types of streaming services
 /// Temporary name for compatibility until migration is complete
-public enum ServiceType2: Codable {
+public enum ServiceType: Codable {
     case Jellyfin(UserJellyfin)
     
     public var rawValue: String {
@@ -83,7 +87,7 @@ public enum ServiceType2: Codable {
 /// Basic structure for a user
 public struct User: Codable {
     let serviceURL: URL
-    let serviceType: ServiceType2
+    let serviceType: ServiceType
     let serviceID: String
     let id: String
     let displayName: String

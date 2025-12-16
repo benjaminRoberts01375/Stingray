@@ -38,7 +38,6 @@ enum MediaLookupStatus {
 @Observable
 public final class JellyfinModel: StreamingServiceProtocol {
     var networkAPI: AdvancedNetworkProtocol
-    var storageAPI: AdvancedStorageProtocol
     var libraryStatus: LibraryStatus
     
     var usersName: String
@@ -57,8 +56,6 @@ public final class JellyfinModel: StreamingServiceProtocol {
         serviceURL: URL
     ) {
         // APIs
-        let storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: userID, serverID: serviceID)
-        self.storageAPI = storageAPI
         self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         
         // Misc properties
@@ -73,7 +70,6 @@ public final class JellyfinModel: StreamingServiceProtocol {
     private init(response: APILoginResponse, url: URL) {
         // APIs
         self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        self.storageAPI = DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: response.userId, serverID: response.serverId)
         
         // Properties
         self.usersName = response.userName
@@ -82,18 +78,6 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.accessToken = response.accessToken
         self.serverID = response.serverId
         self.libraryStatus = .waiting
-        
-        // Save properties
-        self.storageAPI.setServerURL(url)
-        self.storageAPI.setUsersName(self.usersName)
-        self.storageAPI.setUserID(self.usersID)
-        self.storageAPI.setSessionID(self.sessionID)
-        self.storageAPI.setAccessToken(self.accessToken)
-        self.storageAPI.setServerID(self.serverID)
-        
-        // Save defaults
-        self.storageAPI.setDefaultUser(id: self.usersID)
-        self.storageAPI.setServiceType(.Jellyfin, userID: self.usersID)
     }
     
     static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
@@ -111,6 +95,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 displayName: response.userName
             )
         )
+        userModel.setDefaultUser(userID: response.userId)
         return JellyfinModel(response: response, url: url)
     }
     

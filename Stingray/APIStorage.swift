@@ -7,15 +7,8 @@
 
 import Foundation
 
-public enum BasicNetworkKeys: String {
-    case serverURL = "serverURL"
-    case usersName = "usersName"
-    case userID = "userID"
-    case sessionID = "sessionID"
-    case accessToken = "accessToken"
-    case serverID = "serverID"
+public enum StorageKeys: String {
     case defaultUserID = "defaultUserID"
-    case serviceType = "serviceType"
     case userIDs = "userIDs"
     case user = "user"
 }
@@ -25,93 +18,39 @@ public protocol BasicStorageProtocol {
     /// Get a `String` from local storage
     /// - Parameter key: The key where the data might be stored
     /// - Returns: The found string
-    func getString(_ key: BasicNetworkKeys, id: String) -> String?
+    func getString(_ key: StorageKeys, id: String) -> String?
     /// Set a `String` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored
     ///   - value: Text to set
-    func setString(_ key: BasicNetworkKeys, id: String, value: String)
+    func setString(_ key: StorageKeys, id: String, value: String)
     /// Get a `[String]` from local storage
     /// - Parameter key: The key where the data might be stored
     /// - Returns: The found `[String]`
-    func getStringArray(_ key: BasicNetworkKeys, id: String) -> [String]
+    func getStringArray(_ key: StorageKeys, id: String) -> [String]
     /// Set a `[String]` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored
     ///   - value: Array to set
-    func setStringArray(_ key: BasicNetworkKeys, id: String, value: [String])
+    func setStringArray(_ key: StorageKeys, id: String, value: [String])
     /// Get a URL from local storage
     /// - Parameter key: The key where the data might be stored
     /// - Returns: The found `URL`
-    func getURL(_ key: BasicNetworkKeys, id: String) -> URL?
+    func getURL(_ key: StorageKeys, id: String) -> URL?
     /// Set a `URL` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored
     ///   - value: `URL` to set
-    func setURL(_ key: BasicNetworkKeys, id: String, value: URL?)
+    func setURL(_ key: StorageKeys, id: String, value: URL?)
     /// Set a `Boolean` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored
     ///   - value: `Boolean` to set
-    func setBool(_ key: BasicNetworkKeys, id: String, value: Bool)
+    func setBool(_ key: StorageKeys, id: String, value: Bool)
     /// Get a `Boolean` from local storage
     /// - Parameter key: The key where the data might be stored
     /// - Returns: The found `Boolean`
-    func getBool(_ key: BasicNetworkKeys, id: String) -> Bool
-}
-
-/// Types of streaming services
-public enum ServiceType: String {
-    /// Jellyfin streaming service
-    case Jellyfin = "Jellyfin"
-}
-
-/// A protocol for abstracting advanced storage actions
-public protocol AdvancedStorageProtocol {
-    /// Get the streaming service URL from storage
-    /// - Returns: The server's URL
-    func getServerURL() -> URL?
-    /// Set the streaming service URL in storage
-    /// - Parameter url: URL to set
-    func setServerURL(_ url: URL)
-    /// Get the user's name from storage
-    /// - Returns: The user's name
-    func getUsersName() -> String?
-    /// Set the user's name into storage
-    /// - Parameter name: The user's name
-    func setUsersName(_ name: String?)
-    /// Get the userID from storage
-    /// - Returns: The userID
-    func getUserID() -> String?
-    /// Set the userID into storage
-    /// - Parameter id: The userID
-    func setUserID(_ id: String?)
-    /// Get the sessionID from storage
-    /// - Returns: The sessionID
-    func getSessionID() -> String?
-    /// Set the sessionID into storage
-    /// - Parameter id: The sessionID
-    func setSessionID(_ id: String?)
-    /// Get the server access token from storage
-    /// - Returns: The access token
-    func getAccessToken() -> String?
-    /// Set the server access token into storage
-    /// - Parameter token: The access token
-    func setAccessToken(_ token: String?)
-    /// Get the serverID from storage
-    /// - Returns: The serverID
-    func getServerID() -> String?
-    /// Set the serverID into storage
-    /// - Parameter id: The serverID
-    func setServerID(_ id: String?)
-    /// Set the default user that'll load on app launch.
-    /// - Parameter id: ID of the user
-    func setDefaultUser(id: String)
-    /// Get the default userID
-    /// - Returns: ID of the default user
-    func getDefaultUser() -> String?
-    /// Sets the service type for a given userID
-    func setServiceType(_ type: ServiceType, userID: String)
+    func getBool(_ key: StorageKeys, id: String) -> Bool
 }
 
 final class DefaultsBasicStorage: BasicStorageProtocol {
@@ -129,121 +68,35 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         }
     }
     
-    func getString(_ key: BasicNetworkKeys, id: String) -> String? {
+    func getString(_ key: StorageKeys, id: String) -> String? {
         return defaults.string(forKey: key.rawValue + id)
     }
     
-    func setString(_ key: BasicNetworkKeys, id: String, value: String) {
+    func setString(_ key: StorageKeys, id: String, value: String) {
         defaults.set(value, forKey: key.rawValue + id)
     }
     
-    func getURL(_ key: BasicNetworkKeys, id: String) -> URL? {
+    func getURL(_ key: StorageKeys, id: String) -> URL? {
         return URL(string: defaults.string(forKey: key.rawValue + id) ?? "")
     }
     
-    func setURL(_ key: BasicNetworkKeys, id: String, value: URL?) {
+    func setURL(_ key: StorageKeys, id: String, value: URL?) {
         defaults.set(value?.absoluteString ?? "", forKey: key.rawValue + id)
     }
     
-    func getBool(_ key: BasicNetworkKeys, id: String) -> Bool {
+    func getBool(_ key: StorageKeys, id: String) -> Bool {
         return defaults.bool(forKey: key.rawValue + id)
     }
     
-    func setBool(_ key: BasicNetworkKeys, id: String, value: Bool) {
+    func setBool(_ key: StorageKeys, id: String, value: Bool) {
         defaults.set(value, forKey: key.rawValue + id)
     }
     
-    func getStringArray(_ key: BasicNetworkKeys, id: String) -> [String] {
+    func getStringArray(_ key: StorageKeys, id: String) -> [String] {
         return defaults.stringArray(forKey: key.rawValue + id) ?? []
     }
     
-    func setStringArray(_ key: BasicNetworkKeys, id: String, value: [String]) {
+    func setStringArray(_ key: StorageKeys, id: String, value: [String]) {
         defaults.set(value, forKey: key.rawValue + id)
-    }
-}
-
-final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
-    var storage: BasicStorageProtocol
-    let activeUserID: String
-    let activeServerID: String
-    
-    init(storage: BasicStorageProtocol, userID: String, serverID: String) {
-        self.storage = storage
-        self.activeUserID = userID
-        self.activeServerID = serverID
-    }
-    
-    public enum StorageMissingProperty: Error {
-        case missingDefaultUserID
-        case missingUsersName
-        case missingSessionID
-        case missingAccessToken
-        case missingServerID
-        case missingServerURL
-        case missingServiceType
-    }
-    
-    func getServerURL() -> URL? {
-        return storage.getURL(.serverURL, id: activeServerID)
-    }
-    
-    func setServerURL(_ url: URL) {
-        storage.setURL(.serverURL, id: activeServerID, value: url)
-    }
-    
-    func getUsersName() -> String? {
-        return storage.getString(.usersName, id: activeUserID)
-    }
-    func setUsersName(_ name: String?) {
-        storage.setString(.usersName, id: activeUserID, value: name ?? "")
-    }
-    
-    func getUserID() -> String? {
-        return storage.getString(.userID, id: activeUserID)
-    }
-    
-    func setUserID(_ id: String?) {
-        storage.setString(.userID, id: activeUserID, value: id ?? "")
-    }
-    
-    func getSessionID() -> String? {
-        return storage.getString(.sessionID, id: activeUserID)
-    }
-    
-    func setSessionID(_ id: String?) {
-        storage.setString(.sessionID, id: activeUserID, value: id ?? "")
-    }
-    
-    func getAccessToken() -> String? {
-        return storage.getString(.accessToken, id: activeUserID)
-    }
-    
-    func setAccessToken(_ token: String?) {
-        storage.setString(.accessToken, id: activeUserID, value: token ?? "")
-    }
-    
-    func getServerID() -> String? {
-        return storage.getString(.serverID, id: activeUserID)
-    }
-    
-    func setServerID(_ id: String?) {
-        storage.setString(.serverID, id: activeUserID, value: id ?? "")
-    }
-    
-    func getDefaultUser() -> String? {
-        storage.getString(.defaultUserID, id: "")
-    }
-    
-    func setDefaultUser(id: String) {
-        storage.setString(.defaultUserID, id: "", value: id)
-    }
-    
-    func setServiceType(_ type: ServiceType, userID: String) {
-        storage.setString(.serviceType, id: userID, value: ServiceType.Jellyfin.rawValue)
-    }
-    
-    func getServiceType(userID: String) -> ServiceType? {
-        guard let strServiceType = storage.getString(.serviceType, id: userID) else { return nil }
-        return ServiceType(rawValue: strServiceType)
     }
 }

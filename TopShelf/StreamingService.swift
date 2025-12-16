@@ -9,27 +9,18 @@ import Foundation
 
 public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var networkAPI: AdvancedNetworkProtocol
-    private var storageAPI: AdvancedStorageProtocol
     private var accessToken: String
     
     init() throws {
         guard let defaultUser = UserModel().getDefaultUser() else {
             throw InitError.noDefaultUser
         }
-        
-        let storage = DefaultsAdvancedStorage(storage: DefaultsBasicStorage(), userID: defaultUser.id, serverID: defaultUser.serviceID)
-        guard let url = storage.getServerURL() else {
-            print("No URL")
-            throw InitError.badAddress
+        switch defaultUser.serviceType {
+        case .Jellyfin(let userJellyfin):
+            let network = APINetwork(network: JellyfinBasicNetwork(address: defaultUser.serviceURL))
+            self.networkAPI = network
+            self.accessToken = userJellyfin.accessToken
         }
-        guard let token = storage.getAccessToken() else {
-            print("No token")
-            throw InitError.noToken
-        }
-        let network = APINetwork(network: JellyfinBasicNetwork(address: url))
-        self.networkAPI = network
-        self.storageAPI = storage
-        self.accessToken = token
     }
     
     enum InitError: Error {
