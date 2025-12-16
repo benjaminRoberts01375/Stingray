@@ -86,6 +86,12 @@ public protocol AdvancedStorageProtocol {
     /// Set the serverID into storage
     /// - Parameter id: The serverID
     func setServerID(_ id: String?)
+    /// Set the default user that'll load on app launch.
+    /// - Parameter id: ID of the user
+    func setDefaultUser(id: String)
+    /// Get the default userID
+    /// - Returns: ID of the default user
+    func getDefaultUser() -> String?
 }
 
 final class DefaultsBasicStorage: BasicStorageProtocol {
@@ -189,5 +195,13 @@ final class DefaultsAdvancedStorage: AdvancedStorageProtocol {
     
     func setServerID(_ id: String?) {
         storage.setString(.serverID, id: activeUserID, value: id ?? "")
+    }
+    
+    func getDefaultUser() -> String? {
+        storage.getString(.defaultUserID, id: "")
+    }
+    
+    func setDefaultUser(id: String) {
+        storage.setString(.defaultUserID, id: "", value: id)
     }
 }
