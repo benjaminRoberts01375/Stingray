@@ -16,6 +16,8 @@ public enum BasicNetworkKeys: String {
     case serverID = "serverID"
     case defaultUserID = "defaultUserID"
     case serviceType = "serviceType"
+    case userIDs = "userIDs"
+    case user = "user"
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
