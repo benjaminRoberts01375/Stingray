@@ -18,7 +18,10 @@ struct DashboardView: View {
         NavigationStack(path: $navigationPath) {
             VStack {
                 switch streamingService.libraryStatus {
-                case .waiting, .retrieving:
+                case .waiting:
+                    ProgressView()
+                        .task { await streamingService.retrieveLibraries() }
+                case .retrieving:
                     ProgressView()
                 case .error(let err):
                     Text("Error loading libraries: \(err.localizedDescription)")

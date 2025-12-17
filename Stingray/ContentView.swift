@@ -23,14 +23,6 @@ struct ContentView: View {
                 .padding(128)
         case .loggedIn(let streamingService):
             DashboardView(streamingService: streamingService, deepLinkRequest: $deepLinkRequest, loggedIn: $loginState)
-                .task {
-                    guard case .waiting = streamingService.libraryStatus else {
-                        print("No need for libraries")
-                        return
-                    }
-                    print("Getting libraries")
-                    await streamingService.retrieveLibraries()
-                }
                 .onOpenURL { url in
                     handleDeepLink(url: url)
                 }
