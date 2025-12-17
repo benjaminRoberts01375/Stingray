@@ -9,12 +9,14 @@ import SwiftUI
 
 struct HomeView: View {
     let streamingService: StreamingServiceProtocol
+    @State private var dashboardCache: [String: [SlimMedia]] = [:]
     
     var body: some View {
         VStack(alignment: .leading) {
             DashboardRow(
                 title: "Next Up",
-                streamingService: streamingService
+                streamingService: streamingService,
+                cache: $dashboardCache
             ) {
                 await streamingService.retrieveUpNext()
             }
@@ -22,7 +24,8 @@ struct HomeView: View {
             
             DashboardRow(
                 title: "Recently Added",
-                streamingService: streamingService
+                streamingService: streamingService,
+                cache: $dashboardCache
             ) {
                 await streamingService.retrieveRecentlyAdded(.all)
             }
@@ -30,7 +33,8 @@ struct HomeView: View {
             
             DashboardRow(
                 title: "Latest Movies",
-                streamingService: streamingService
+                streamingService: streamingService,
+                cache: $dashboardCache
             ) {
                 await streamingService.retrieveRecentlyAdded(.movie)
             }
@@ -38,7 +42,8 @@ struct HomeView: View {
             
             DashboardRow(
                 title: "Latest Shows",
-                streamingService: streamingService
+                streamingService: streamingService,
+                cache: $dashboardCache
             ) {
                 await streamingService.retrieveRecentlyAdded(.tv)
             }
@@ -50,6 +55,7 @@ struct HomeView: View {
 fileprivate struct DashboardRow: View {
     let title: String
     let streamingService: StreamingServiceProtocol
+    @Binding var cache: [String: [SlimMedia]]
     let fetchMedia: () async -> [SlimMedia]
     
     @State private var status: DashboardRowStatus = .unstarted
@@ -62,8 +68,16 @@ fileprivate struct DashboardRow: View {
             default:
                 Text(title)
                     .font(.title2.bold())
-                    .task(id: title) {
+                    .task {
+                        // Check if we already have cached data
+                        if let cachedMedia = cache[title] {
+                            status = cachedMedia.isEmpty ? .empty : .complete(cachedMedia)
+                            return
+                        }
+                        
+                        // Only fetch if not cached
                         let response = await fetchMedia()
+                        cache[title] = response
                         status = response.isEmpty ? .empty : .complete(response)
                     }
             }
