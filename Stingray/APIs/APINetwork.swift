@@ -18,8 +18,9 @@ public protocol AdvancedNetworkProtocol {
     func login(username: String, password: String) async throws -> APILoginResponse
     /// Gets all libraries from a server
     /// - Parameter accessToken: Access token for the server
+    /// - Parameter userID: ID of the user to get libraries for
     /// - Returns: Libraries
-    func getLibraries(accessToken: String) async throws -> [LibraryModel]
+    func getLibraries(accessToken: String, userID: String) async throws -> [LibraryModel]
     /// Gets all media for a given library in chunks
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -222,7 +223,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, urlParams: nil, body: requestBody)
     }
     
-    func getLibraries(accessToken: String) async throws -> [LibraryModel] {
+    func getLibraries(accessToken: String, userID: String) async throws -> [LibraryModel] {
         struct Root: Decodable {
             let items: [LibraryModel]
             
@@ -232,7 +233,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         let root: Root = try await network.request(
             verb: .get,
-            path: "/Library/MediaFolders",
+            path: "/Users/\(userID)/Views",
             headers: ["X-MediaBrowser-Token":accessToken],
             urlParams: nil,
             body: nil

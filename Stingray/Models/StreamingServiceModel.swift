@@ -109,7 +109,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         
         do {
             self.libraryStatus = .retrieving
-            let libraries = try await networkAPI.getLibraries(accessToken: accessToken)
+            let libraries = try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
             self.libraryStatus = .available(libraries)
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for library in libraries {
