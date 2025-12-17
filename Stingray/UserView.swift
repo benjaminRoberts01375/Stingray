@@ -8,16 +8,29 @@
 import SwiftUI
 
 public struct UserView: View {
-    var users = UserModel().getUsers()
+    var users = UserModel()
     var streamingService: any StreamingServiceProtocol
     @Binding var loggedIn: LoginState
     
     public var body: some View {
         ScrollView(.horizontal) {
             HStack {
-                ForEach(users) { user in
+                ForEach(users.getUsers()) { user in
                     Button {
-                        print(user.displayName)
+                        switch user.serviceType {
+                        case .Jellyfin(let jellyfinData):
+                            self.loggedIn = .loggedIn(
+                                JellyfinModel(
+                                    userDisplayName: user.displayName,
+                                    userID: user.id,
+                                    serviceID: user.serviceID,
+                                    accessToken: jellyfinData.accessToken,
+                                    sessionID: jellyfinData.sessionID,
+                                    serviceURL: user.serviceURL
+                                )
+                            )
+                            self.users.setDefaultUser(userID: user.id)
+                        }
                     } label: {
                         Text(user.displayName)
                     }
