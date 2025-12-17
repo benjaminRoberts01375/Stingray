@@ -27,8 +27,8 @@ public struct LibraryView: View {
                     MediaGridView(allMedia: allMedia, streamingService: streamingService)
                 } else {
                     VStack(alignment: .center) {
-                        Text("This library appears to be empty")
-                        Text("Collections, playlists, and music aren't supported")
+                        Text("This library appears to be empty.")
+                        Text("Media type like collections, playlists, and music aren't yet supported.")
                             .opacity(0.5)
                     }
                 }
