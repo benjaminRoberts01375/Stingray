@@ -28,6 +28,10 @@ final class UserModel {
     func setDefaultUser(userID: String) {
         self.storage.setDefaultUserID(id: userID)
     }
+    
+    func getUsers() -> [User] {
+        return self.storage.getUserIDs().compactMap { self.storage.getUser(userID: $0) }
+    }
 }
 
 /// Jellyfin-specific userdata
