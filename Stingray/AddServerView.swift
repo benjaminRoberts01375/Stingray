@@ -1,5 +1,5 @@
 //
-//  login.swift
+//  AddServerView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 11/12/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LoginView: View {
+struct AddServerView: View {
     enum HttpProtocol: String, CaseIterable {
         case http = "http"
         case https = "https"
@@ -117,5 +117,5 @@ struct LoginView: View {
 
 #Preview {
     @Previewable @State var loginState: LoginState = .loggedOut
-    LoginView(loggedIn: $loginState)
+    AddServerView(loggedIn: $loginState)
 }
