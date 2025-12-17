@@ -53,12 +53,12 @@
 		B593D4C42EEB58590015EB83 /* Exceptions for "Stingray" folder in "TopShelf" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				APIBasicNetwork.swift,
-				APIStorage.swift,
-				MediaModel.swift,
-				StreamingServiceBasicModel.swift,
-				User/APIUserStorage.swift,
-				User/UserModel.swift,
+				APIs/APIBasicNetwork.swift,
+				APIs/APIStorage.swift,
+				APIs/APIUserStorage.swift,
+				Models/MediaModel.swift,
+				Models/StreamingServiceBasicModel.swift,
+				Models/UserModel.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};
