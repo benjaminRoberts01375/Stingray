@@ -350,18 +350,19 @@ fileprivate struct MovieNavigationView: View {
     @FocusState.Binding var focus: ButtonType?
     
     var body: some View {
+        let startTicks = Double(mediaSource.startTicks > 15 * 60 * 10_000_000 ? mediaSource.startTicks : 0)
         NavigationLink {
             PlayerView(
                 vm: PlayerViewModel(
                     mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    startTime: CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: nil
                 )
             )
             .id(mediaSource.id)
         } label: {
-            if mediaSource.startTicks > 0 {
+            if startTicks != 0 { // Restart if watched less than 15 minutes
                 Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
             } else {
                 Text("Play \(mediaSource.name)")
