@@ -12,6 +12,7 @@ struct DashboardView: View {
     @State private var selectedTab: String = "home"
     @State private var navigationPath = NavigationPath()
     @Binding var deepLinkRequest: DeepLinkRequest?
+    @Binding var loggedIn: LoginState
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -26,7 +27,7 @@ struct DashboardView: View {
                 case .available(let libraries), .complete(let libraries):
                     TabView(selection: $selectedTab) {
                         Tab(value: "users") {
-                            UserView(streamingService: streamingService)
+                            UserView(streamingService: streamingService, loggedIn: $loggedIn)
                         } label: {
                             Text(streamingService.usersName)
                         }

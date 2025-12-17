@@ -22,7 +22,7 @@ struct ContentView: View {
             AddServerView(loggedIn: $loginState)
                 .padding(128)
         case .loggedIn(let streamingService):
-            DashboardView(streamingService: streamingService, deepLinkRequest: $deepLinkRequest) // Deeplink is handled in here
+            DashboardView(streamingService: streamingService, deepLinkRequest: $deepLinkRequest, loggedIn: $loginState)
                 .task {
                     guard case .waiting = streamingService.libraryStatus else {
                         print("No need for libraries")
