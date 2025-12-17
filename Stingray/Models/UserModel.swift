@@ -85,10 +85,10 @@ public enum ServiceType: Codable {
 }
 
 /// Basic structure for a user
-public struct User: Codable {
+public struct User: Codable, Identifiable {
     let serviceURL: URL
     let serviceType: ServiceType
     let serviceID: String
-    let id: String
+    public let id: String
     let displayName: String
 }
