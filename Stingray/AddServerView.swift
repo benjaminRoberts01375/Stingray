@@ -77,7 +77,7 @@ struct AddServerView: View {
                 loggedIn = .loggedIn(
                     JellyfinModel(
                         userDisplayName: defaultUser.displayName,
-                        userID: defaultUser.displayName,
+                        userID: defaultUser.id,
                         serviceID: defaultUser.serviceID,
                         accessToken: userJellyfin.accessToken,
                         sessionID: userJellyfin.sessionID,
