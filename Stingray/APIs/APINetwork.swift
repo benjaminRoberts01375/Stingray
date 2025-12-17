@@ -107,6 +107,11 @@ public protocol AdvancedNetworkProtocol {
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
     func getUpNext(accessToken: String) async throws -> [SlimMedia]
+    /// Generates a URL to get the user's profile image
+    /// - Parameters:
+    ///   - userID: ID of the user
+    /// - Returns: Formatted URL
+    func getUserImageURL(userID: String) -> URL?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -565,6 +570,14 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             body: nil
         )
         return root.Items
+    }
+    
+    func getUserImageURL(userID: String) -> URL? {
+        let params: [URLQueryItem] = [
+            URLQueryItem(name: "userID", value: userID)
+        ]
+        
+        return network.buildURL(path: "/UserImage", urlParams: params)
     }
 }
 

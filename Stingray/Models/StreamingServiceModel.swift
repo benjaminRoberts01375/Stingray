@@ -266,6 +266,13 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.playerProgress?.stop()
         self.playerProgress = nil
     }
+    
+    static func getProfileImageURL(userID: String, serviceURL: URL) -> URL? {
+        let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        let url = networkAPI.getUserImageURL(userID: userID)
+        print("Profile URL: \(url?.absoluteString ?? "No URL")")
+        return url
+    }
 }
 
 final class JellyfinPlayerProgress {
