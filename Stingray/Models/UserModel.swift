@@ -15,13 +15,9 @@ final class UserModel {
     }
     
     func addUser(_ user: User) {
-        var userIDs = getUserIDs()
+        var userIDs = storage.getUserIDs()
         userIDs.append(user.id)
         storage.setUser(user: user)
-    }
-    
-    func getUserIDs() -> [String] {
-        return storage.getUserIDs()
     }
     
     func getDefaultUser() -> User? {
