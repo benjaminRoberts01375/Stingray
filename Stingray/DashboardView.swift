@@ -18,10 +18,7 @@ struct DashboardView: View {
         NavigationStack(path: $navigationPath) {
             VStack {
                 switch streamingService.libraryStatus {
-                case .waiting:
-                    ProgressView()
-                        .task { await streamingService.retrieveLibraries() }
-                case .retrieving:
+                case .waiting, .retrieving:
                     ProgressView()
                 case .error(let err):
                     Text("Error loading libraries: \(err.localizedDescription)")
@@ -70,6 +67,10 @@ struct DashboardView: View {
             guard let request = newValue else { return }
             navigationPath.append(request) // Navigate to requested media
             deepLinkRequest = nil // Clear the request
+        }
+        .onChange(of: streamingService.userID, initial: true) {
+            self.selectedTab = "home"
+            Task { await streamingService.retrieveLibraries() }
         }
     }
 }
