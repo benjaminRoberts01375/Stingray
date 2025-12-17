@@ -60,6 +60,7 @@ struct AddServerView: View {
                 Button("Connect") {
                     setupConnection()
                 }
+                .disabled(awaitingLogin)
                 ProgressView()
                     .opacity(awaitingLogin ? 1 : 0)
             }
