@@ -11,6 +11,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var libraryStatus: LibraryStatus { get }
     var usersName: String { get }
     var userID: String { get }
+    var serviceURL: URL { get }
     
     func retrieveLibraries() async
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
@@ -46,6 +47,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var sessionID: String
     var accessToken: String
     var serverID: String
+    var serviceURL: URL
     var playerProgress: JellyfinPlayerProgress?
     
     public init(
@@ -66,11 +68,12 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.serverID = serviceID
         self.accessToken = accessToken
         self.sessionID = sessionID
+        self.serviceURL = serviceURL
     }
     
-    private init(response: APILoginResponse, url: URL) {
+    private init(response: APILoginResponse, serviceURL: URL) {
         // APIs
-        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
+        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         
         // Properties
         self.usersName = response.userName
@@ -79,6 +82,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.accessToken = response.accessToken
         self.serverID = response.serverId
         self.libraryStatus = .waiting
+        self.serviceURL = serviceURL
     }
     
     static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
@@ -97,7 +101,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
             )
         )
         userModel.setDefaultUser(userID: response.userId)
-        return JellyfinModel(response: response, url: url)
+        return JellyfinModel(response: response, serviceURL: url)
     }
     
     func retrieveLibraries() async {
