@@ -183,18 +183,6 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     }
     
     public func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {
-        guard var url = URL(string: path, relativeTo: address) else {
-            return nil
-        }
-        
-        // Add query parameters if provided
-        if let urlParams = urlParams, !urlParams.isEmpty {
-            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-            components?.queryItems = urlParams
-            guard let urlWithParams = components?.url else { return nil }
-            url = urlWithParams
-        }
-        
-        return url
+        return self.address.buildURL(path: path, urlParams: urlParams)
     }
 }

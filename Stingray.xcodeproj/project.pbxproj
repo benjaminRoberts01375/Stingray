@@ -58,6 +58,7 @@
 				APIs/APIUserStorage.swift,
 				Models/MediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
+				Models/URLExtension.swift,
 				Models/UserModel.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
