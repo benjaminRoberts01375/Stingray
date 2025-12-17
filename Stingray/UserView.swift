@@ -13,13 +13,12 @@ public struct UserView: View {
     @Binding var loggedIn: LoginState
     
     public var body: some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(users.getUsers()) { user in
-                    Button {
-                        switchUser(user: user)
-                    } label: {
-                        VStack(alignment: .center) {
+        CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
+            ForEach(users.getUsers()) { user in
+                Button {
+                    switchUser(user: user)
+                } label: {
+                    VStack(alignment: .center) {
                             switch user.serviceType {
                             case .Jellyfin:
                                 AsyncImage(
@@ -30,33 +29,61 @@ public struct UserView: View {
                                 ) { phase in
                                     switch phase {
                                     case .empty:
+                                        Spacer()
                                         ProgressView()
                                     case .success(let image):
                                         image
                                             .resizable()
-                                            .scaledToFill()
+                                            .scaledToFit()
                                     default:
                                         // Handle the error here
                                         Image(systemName: "person.fill")
                                             .resizable()
-                                            .scaledToFill()
+                                            .scaledToFit()
+                                            .foregroundStyle(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color(red: 0, green: 0.729, blue: 1),
+                                                        Color(red: 0, green: 0.09, blue: 0.945)
+                                                    ],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
                                             .accessibilityLabel("Person icon")
+                                            .padding(50)
                                     }
                                 }
                             }
-                            Text(user.displayName)
-                        }
-                        .frame(width: 200, height: 250)
+                        Spacer()
+                        Text(user.displayName)
+                            .font(.callout.bold())
                     }
+                    .padding(16)
+                    .padding(.horizontal, 16)
+                    .background(user.id == streamingService.userID ? .white.opacity(0.25) : .clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 40))
+                    .padding(.horizontal, -16)
+                    .padding(-16)
                 }
-                NavigationLink {
-                    LoginView(loggedIn: $loggedIn)
-                } label: {
+                .buttonStyle(.plain)
+            }
+            NavigationLink {
+                LoginView(loggedIn: $loggedIn)
+            } label: {
+                VStack(alignment: .center) {
+                    Image(systemName: "person.crop.circle.fill.badge.plus")
+                        .resizable()
+                        .scaledToFit()
+                        .accessibilityLabel("Person icon")
+                        .padding(.top, 30)
+                    Spacer()
                     Text("Add User")
+                        .font(.callout.bold())
                 }
             }
+            .buttonStyle(.plain)
         }
-        .scrollClipDisabled()
     }
     
     func switchUser(user: User) {
