@@ -10,6 +10,7 @@ import AVKit
 protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var libraryStatus: LibraryStatus { get }
     var usersName: String { get }
+    var userID: String { get }
     
     func retrieveLibraries() async
     func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
@@ -41,7 +42,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var libraryStatus: LibraryStatus
     
     var usersName: String
-    var usersID: String
+    var userID: String
     var sessionID: String
     var accessToken: String
     var serverID: String
@@ -61,7 +62,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         // Misc properties
         self.libraryStatus = .waiting
         self.usersName = userDisplayName
-        self.usersID = userID
+        self.userID = userID
         self.serverID = serviceID
         self.accessToken = accessToken
         self.sessionID = sessionID
@@ -73,7 +74,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         
         // Properties
         self.usersName = response.userName
-        self.usersID = response.userId
+        self.userID = response.userId
         self.sessionID = response.sessionId
         self.accessToken = response.accessToken
         self.serverID = response.serverId
