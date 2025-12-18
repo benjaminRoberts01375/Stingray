@@ -119,8 +119,11 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         request.httpMethod = verb.rawValue
         
         // Jellyfin headers
-        let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
-        let deviceName = await UIDevice.current.name
+        let (deviceId, deviceName) = await MainActor.run {
+            let id = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            let name = UIDevice.current.name
+            return (id, name)
+        }
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         let authHeader = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
         request.setValue(authHeader, forHTTPHeaderField: "Authorization")
