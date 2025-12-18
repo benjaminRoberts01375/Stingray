@@ -16,6 +16,8 @@ struct LoginView: View {
     @State var error: String = ""
     @State var awaitingLogin: Bool = false
     
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         VStack {
             Text("Sign into Jellyfin")
@@ -58,6 +60,7 @@ struct LoginView: View {
                         password: password
                     )
                     self.loggedIn = .loggedIn(streamingService)
+                    dismiss()
                 } catch {
                     self.error = error.localizedDescription
                     awaitingLogin = false
