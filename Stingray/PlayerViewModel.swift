@@ -55,6 +55,13 @@ final class PlayerViewModel {
             streamingService.playbackEnd()
             self.player = nil
         }
+        
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+        } catch {
+            print("Failed to configure audio session: \(error)")
+        }
+        
         guard let player = streamingService.playbackStart(
             mediaSource: mediaSource,
             videoID: selectedVideoID,
