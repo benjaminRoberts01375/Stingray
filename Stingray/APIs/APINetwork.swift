@@ -52,7 +52,7 @@ public protocol AdvancedNetworkProtocol {
     /// - Parameters:
     ///   - accessToken: Access token for the server
     ///   - contentID: The media source ID
-    ///   - bitrate: Target bitrate
+    ///   - bitrate: Target video bitrate in bits per second
     ///   - subtitleID: Subtitles to be used (nil for none)
     ///   - audioID: Audio ID to be used
     ///   - videoID: Video ID to be used
@@ -61,7 +61,7 @@ public protocol AdvancedNetworkProtocol {
     func getStreamingContent(
         accessToken: String,
         contentID: String,
-        bitrate: Int?,
+        bitrate: Int,
         subtitleID: Int?,
         audioID: Int,
         videoID: Int,
@@ -431,7 +431,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     func getStreamingContent(
         accessToken: String,
         contentID: String,
-        bitrate: Int?,
+        bitrate: Int,
         subtitleID: Int?,
         audioID: Int,
         videoID: Int,
@@ -442,14 +442,11 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "mediaSourceID", value: contentID),
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
+            URLQueryItem(name: "videoBitRate", value: String(bitrate)),
             // Let Jellyfin decide based on client capabilities
             URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
             URLQueryItem(name: "videoCodec", value: "h264,hevc,vp9")
         ]
-        
-        if let bitrate = bitrate {
-            params.append(URLQueryItem(name: "videoBitRate", value: String(bitrate)))
-        }
         
         if let subtitleID = subtitleID {
             params.append(URLQueryItem(name: "SubtitleMethod", value: "Encode"))

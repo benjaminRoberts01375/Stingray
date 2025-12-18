@@ -89,6 +89,67 @@ struct PlayerView: View {
             )
         }
         
+        // Bitrate choices
+        if let videoStream = (self.vm.mediaSource.videoStreams.first { vm.selectedVideoID == $0.id }),
+           videoStream.bitrate > 1_500_000 {
+            let numberFormatter = NumberFormatter()
+            numberFormatter.numberStyle = .decimal
+            
+            let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
+                ?? "\(videoStream.bitrate)"
+            let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
+                self.vm.bitrate = .full
+                self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+            }
+            fullBitrate.state = {
+                if case .full = self.vm.bitrate {
+                    return .on
+                } else {
+                    return .off
+                }
+            }()
+            var bitrateOptions: [UIAction] = [fullBitrate]
+            
+            // Helper function to create a bitrate action
+            func makeBitrateAction(bitrate: Int) -> UIAction {
+                let mbps = Double(bitrate) / 1_000_000
+                let title = mbps.truncatingRemainder(dividingBy: 1) == 0 
+                    ? "\(Int(mbps)) Mbps" 
+                    : "\(mbps) Mbps"
+                
+                let action = UIAction(title: title) { _ in
+                    self.vm.bitrate = .limited(bitrate)
+                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                }
+                action.state = {
+                    if case .limited(let limit) = self.vm.bitrate, limit == bitrate {
+                        return .on
+                    } else {
+                        return .off
+                    }
+                }()
+                return action
+            }
+            
+            // Add dynamic options for high bitrates
+            let reversedBitrateOptions = stride(from: 20_000_000, to: videoStream.bitrate, by: 10_000_000).reversed()
+            bitrateOptions.append(contentsOf: reversedBitrateOptions.map { makeBitrateAction(bitrate: $0) })
+            
+            // Add common bitrate options if applicable
+            let commonBitrates = [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000]
+            for bitrate in commonBitrates where videoStream.bitrate > bitrate {
+                bitrateOptions.append(makeBitrateAction(bitrate: bitrate))
+            }
+            
+            items.append(
+                UIMenu(
+                    title: "Target Bitrate",
+                    image: UIImage(systemName: "wifi"),
+                    children: bitrateOptions
+                )
+            )
+        }
+        
         // TV Season-related buttons
         if let seasons = self.vm.seasons {
             let allEpisodes = seasons.flatMap(\.episodes)

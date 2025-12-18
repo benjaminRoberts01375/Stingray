@@ -22,6 +22,8 @@ final class PlayerViewModel {
     public var mediaSource: any MediaSourceProtocol
     /// Time to start the player at
     public var startTime: CMTime
+    /// Bitrate for the video stream
+    public var bitrate: Bitrate
     
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
@@ -39,6 +41,7 @@ final class PlayerViewModel {
         self.selectedSubtitleID = mediaSource.subtitleStreams.first { $0.isDefault }?.id ?? mediaSource.subtitleStreams.first?.id
         self.selectedAudioID = mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
         self.selectedVideoID = mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? 0)
+        self.bitrate = .full
         self.mediaSource = mediaSource
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
@@ -57,7 +60,8 @@ final class PlayerViewModel {
             mediaSource: mediaSource,
             videoID: selectedVideoID,
             audioID: selectedAudioID,
-            subtitleID: selectedSubtitleID
+            subtitleID: selectedSubtitleID,
+            bitrate: bitrate
         )
         else { return }
         

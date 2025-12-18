@@ -14,7 +14,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var serviceURL: URL { get }
     
     func retrieveLibraries() async
-    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer?
+    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?, bitrate: Bitrate) -> AVPlayer?
     func playbackEnd()
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
 }
@@ -35,6 +35,11 @@ enum MediaLookupStatus {
     case temporarilyNotFound
     /// The requested media was not found despite all libraries being downloaded
     case notFound
+}
+
+enum Bitrate {
+    case full
+    case limited(Int)
 }
 
 @Observable
@@ -230,13 +235,20 @@ public final class JellyfinModel: StreamingServiceProtocol {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
     
-    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?) -> AVPlayer? {
+    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?, bitrate: Bitrate) -> AVPlayer? {
         let sessionID = UUID().uuidString
-        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }),
-              let playerItem = networkAPI.getStreamingContent(
+        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
+        let bitrate = switch bitrate {
+        case .full:
+            videoStream.bitrate
+        case .limited(let setBitrate):
+            setBitrate
+        }
+        
+        guard let playerItem = networkAPI.getStreamingContent(
                 accessToken: accessToken,
                 contentID: mediaSource.id,
-                bitrate: videoStream.bitrate,
+                bitrate: bitrate,
                 subtitleID: subtitleID,
                 audioID: audioID,
                 videoID: videoID,
