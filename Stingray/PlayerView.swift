@@ -141,10 +141,18 @@ struct PlayerView: View {
                 bitrateOptions.append(makeBitrateAction(bitrate: bitrate))
             }
             
+            let bitrateIcon: String = {
+                if case .full = self.vm.bitrate {
+                    return "wifi"
+                } else {
+                    return "wifi.badge.lock"
+                }
+            }()
+            
             items.append(
                 UIMenu(
                     title: "Target Bitrate",
-                    image: UIImage(systemName: "wifi"),
+                    image: UIImage(systemName: bitrateIcon),
                     children: bitrateOptions
                 )
             )
