@@ -43,7 +43,6 @@ struct PlayerView: View {
             self.vm.newPlayer(startTime: self.vm.startTime)
         }
         .ignoresSafeArea(.all)
-        .onDisappear { vm.streamingService.playbackEnd() }
     }
     
     private func makeTransportBarItems() -> [UIMenuElement] {

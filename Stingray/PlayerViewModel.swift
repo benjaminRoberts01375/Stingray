@@ -108,4 +108,9 @@ final class PlayerViewModel {
             }
         }
     }
+    
+    deinit {
+        player?.pause()
+        streamingService.playbackEnd()
+    }
 }
