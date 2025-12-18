@@ -33,6 +33,15 @@ final class UserModel {
     func getUsers() -> [User] {
         return self.storage.getUserIDs().compactMap { self.storage.getUser(userID: $0) }
     }
+    
+    func updateUser(_ user: User) {
+        let userIDs = storage.getUserIDs()
+        if !userIDs.contains(user.id) {
+            self.addUser(user)
+        } else {
+            self.storage.setUser(user: user)
+        }
+    }
 }
 
 /// Jellyfin-specific userdata
@@ -92,4 +101,35 @@ public struct User: Codable, Identifiable {
     let serviceID: String
     public let id: String
     let displayName: String
+    var usesSubtitles: Bool // Set default as false
+    
+    init(
+        serviceURL: URL,
+        serviceType: ServiceType,
+        serviceID: String,
+        id: String,
+        displayName: String,
+        usesSubtitles: Bool = false
+    ) {
+        self.id = id
+        self.displayName = displayName
+        self.serviceURL = serviceURL
+        self.serviceType = serviceType
+        self.serviceID = serviceID
+        self.usesSubtitles = usesSubtitles
+    }
+    
+    // Custom decoder to provide default value for usesSubtitles
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // Required for all users
+        serviceURL = try container.decode(URL.self, forKey: .serviceURL)
+        serviceType = try container.decode(ServiceType.self, forKey: .serviceType)
+        serviceID = try container.decode(String.self, forKey: .serviceID)
+        id = try container.decode(String.self, forKey: .id)
+        displayName = try container.decode(String.self, forKey: .displayName)
+        
+        // User settings that may not have been configured yet
+        usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
+    }
 }
