@@ -131,12 +131,9 @@ struct PlayerView: View {
                 return action
             }
             
-            // Add dynamic options for high bitrates
-            let reversedBitrateOptions = stride(from: 20_000_000, to: videoStream.bitrate, by: 10_000_000).reversed()
-            bitrateOptions.append(contentsOf: reversedBitrateOptions.map { makeBitrateAction(bitrate: $0) })
-            
             // Add common bitrate options if applicable
-            let commonBitrates = [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000]
+            let commonBitrates = stride(from: 20_000_000, to: videoStream.bitrate, by: 10_000_000).reversed() +
+            [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000]
             for bitrate in commonBitrates where videoStream.bitrate > bitrate {
                 bitrateOptions.append(makeBitrateAction(bitrate: bitrate))
             }
