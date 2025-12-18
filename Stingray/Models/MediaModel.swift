@@ -225,27 +225,6 @@ public final class MediaModel: MediaProtocol, Decodable {
                 case mediaItemID = "ItemId"
             }
         }
-        
-        switch self.mediaType {
-        case .collections:
-            break
-        case .movies(let array):
-            for source in array {
-                for videoStream in source.videoStreams {
-                    print(videoStream.bitrate, self.title)
-                }
-            }
-        case .tv(let array):
-            for season in (array ?? []) {
-                for episode in season.episodes {
-                    for source in episode.mediaSources {
-                        for videoStream in source.videoStreams {
-                            print( videoStream.bitrate, self.title)
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
