@@ -45,12 +45,6 @@ final class PlayerViewModel {
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
         self.seasons = seasons
-        
-        if UserModel().getDefaultUser()?.usesSubtitles ?? false {
-            self.selectedSubtitleID = mediaSource.subtitleStreams.first { $0.isDefault }?.id ?? mediaSource.subtitleStreams.first?.id
-        } else {
-            self.selectedSubtitleID = nil
-        }
     }
     
     /// Creates a new player based on current state
@@ -78,6 +72,13 @@ final class PlayerViewModel {
         let userModel = UserModel()
         guard var currentUser = userModel.getDefaultUser() else { return }
         currentUser.usesSubtitles = selectedSubtitleID != nil
+        switch self.bitrate {
+        case .full:
+            currentUser.bitrate = nil
+        case .limited(let newBitrate):
+            currentUser.bitrate = newBitrate
+        }
+        userModel.updateUser(currentUser)
     }
     
     /// Generate new video, audio, and subtitle IDs based on the currently playing episode. Old values are assumed to be in this view model

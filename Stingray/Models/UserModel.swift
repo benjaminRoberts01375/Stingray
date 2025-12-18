@@ -102,6 +102,7 @@ public struct User: Codable, Identifiable {
     public let id: String
     let displayName: String
     var usesSubtitles: Bool // Set default as false
+    var bitrate: Int?
     
     init(
         serviceURL: URL,
@@ -131,5 +132,6 @@ public struct User: Codable, Identifiable {
         
         // User settings that may not have been configured yet
         usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
+        bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
     }
 }

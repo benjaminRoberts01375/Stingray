@@ -22,7 +22,26 @@ struct PlayerView: View {
                 )
             }
         }
-        .task { self.vm.newPlayer(startTime: self.vm.startTime) }
+        .onAppear {
+            let userModel = UserModel()
+            if let defaultUser = userModel.getDefaultUser() {
+                if defaultUser.usesSubtitles {
+                    self.vm.selectedSubtitleID = self.vm.mediaSource.subtitleStreams.first { $0.isDefault }?.id ??
+                    self.vm.mediaSource.subtitleStreams.first?.id
+                } else {
+                    self.vm.selectedSubtitleID = nil
+                }
+                
+                if let bitrate = defaultUser.bitrate {
+                    self.vm.bitrate = .limited(bitrate)
+                    print("Limiting bitrate")
+                } else {
+                    self.vm.bitrate = .full
+                    print("Full bitrate")
+                }
+            }
+            self.vm.newPlayer(startTime: self.vm.startTime)
+        }
         .ignoresSafeArea(.all)
         .onDisappear { vm.streamingService.playbackEnd() }
     }
