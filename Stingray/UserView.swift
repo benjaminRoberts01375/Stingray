@@ -67,6 +67,19 @@ public struct UserView: View {
                     .padding(-16)
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
+                        let userModel = UserModel()
+                        userModel.deleteUser(user.id)
+                        if self.streamingService.userID == user.id {
+                            if let nextUser = userModel.getUsers().first {
+                                self.switchUser(user: nextUser)
+                            } else {
+                                self.loggedIn = .loggedOut
+                            }
+                        }
+                    }
+                }
             }
             NavigationLink {
                 LoginView(loggedIn: $loggedIn)

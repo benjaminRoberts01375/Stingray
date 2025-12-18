@@ -28,6 +28,9 @@ public protocol UserStorageProtocol {
     /// - Parameter userID: ID of the user to find
     /// - Returns: The formatted `User`
     func getUser(userID: String) -> User?
+    /// Deletes only user data
+    /// - Parameter userID: ID of the user to remove
+    func deleteUser(userID: String)
 }
 
 public final class UserStorage: UserStorageProtocol {
@@ -62,5 +65,9 @@ public final class UserStorage: UserStorageProtocol {
         guard let jsonString = self.basicStorage.getString(.user, id: userID),
               let data = jsonString.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(User.self, from: data)
+    }
+    
+    public func deleteUser(userID: String) {
+        self.basicStorage.deleteString(.user, id: userID)
     }
 }

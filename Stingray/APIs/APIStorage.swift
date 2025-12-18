@@ -16,40 +16,56 @@ public enum StorageKeys: String {
 /// A protocol for abstracting access to local storage via key-value pairs
 public protocol BasicStorageProtocol {
     /// Get a `String` from local storage
-    /// - Parameter key: The key where the data might be stored
+    /// - Parameters:
+    ///   - key: The key where the data might be stored.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
     /// - Returns: The found string
     func getString(_ key: StorageKeys, id: String) -> String?
     /// Set a `String` into local storage
     /// - Parameters:
-    ///   - key: The key where data is to be stored
+    ///   - key: The key where data is to be stored.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
     ///   - value: Text to set
     func setString(_ key: StorageKeys, id: String, value: String)
+    /// Deletes a `String` from storage
+    /// - Parameters:
+    ///   - key: Key the string resides at.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
+    func deleteString(_ key: StorageKeys, id: String)
     /// Get a `[String]` from local storage
-    /// - Parameter key: The key where the data might be stored
+    /// - Parameters:
+    ///   - key: The key where the data might be stored.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
     /// - Returns: The found `[String]`
     func getStringArray(_ key: StorageKeys, id: String) -> [String]
     /// Set a `[String]` into local storage
     /// - Parameters:
-    ///   - key: The key where data is to be stored
-    ///   - value: Array to set
+    ///   - key: The key where data is to be stored.
+    ///   - value: Array to set.
+    ///   - id: Unique ID for saving multiple versions of this value at this key
     func setStringArray(_ key: StorageKeys, id: String, value: [String])
     /// Get a URL from local storage
-    /// - Parameter key: The key where the data might be stored
-    /// - Returns: The found `URL`
+    /// - Parameters:
+    ///   - key: The key where the data might be stored.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
+    /// - Returns: The found `URL`.
     func getURL(_ key: StorageKeys, id: String) -> URL?
     /// Set a `URL` into local storage
     /// - Parameters:
-    ///   - key: The key where data is to be stored
-    ///   - value: `URL` to set
+    ///   - key: The key where data is to be stored.
+    ///   - value: `URL` to set.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
     func setURL(_ key: StorageKeys, id: String, value: URL?)
     /// Set a `Boolean` into local storage
     /// - Parameters:
-    ///   - key: The key where data is to be stored
-    ///   - value: `Boolean` to set
+    ///   - key: The key where data is to be stored.
+    ///   - value: `Boolean` to set.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
     func setBool(_ key: StorageKeys, id: String, value: Bool)
     /// Get a `Boolean` from local storage
-    /// - Parameter key: The key where the data might be stored
-    /// - Returns: The found `Boolean`
+    /// - Parameter key: The key where the data might be stored.
+    /// - Returns: The found `Boolean`.
+    ///   - id: Unique ID for saving multiple versions of this value at this key.
     func getBool(_ key: StorageKeys, id: String) -> Bool
 }
 
@@ -98,5 +114,9 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     
     func setStringArray(_ key: StorageKeys, id: String, value: [String]) {
         defaults.set(value, forKey: key.rawValue + id)
+    }
+    
+    func deleteString(_ key: StorageKeys, id: String) {
+        defaults.removeObject(forKey: key.rawValue + id)
     }
 }

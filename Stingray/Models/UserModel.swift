@@ -42,6 +42,12 @@ final class UserModel {
             self.storage.setUser(user: user)
         }
     }
+    
+    func deleteUser(_ userID: String) {
+        let remainingUserIDs = self.storage.getUserIDs().filter { $0 != userID }
+        storage.setUserIDs(remainingUserIDs)
+        storage.deleteUser(userID: userID)
+    }
 }
 
 /// Jellyfin-specific userdata
