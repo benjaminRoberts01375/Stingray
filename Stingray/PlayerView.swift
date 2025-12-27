@@ -28,22 +28,23 @@ struct PlayerView: View {
             
             let userModel = UserModel()
             var subtitleID: String?
+            var bitrate: Bitrate = .full
             if let defaultUser = userModel.getDefaultUser() {
                 if defaultUser.usesSubtitles {
                     subtitleID = self.vm.mediaSource.subtitleStreams.first {
                         $0.isDefault
                     }?.id ?? self.vm.mediaSource.subtitleStreams.first?.id
                 }
-                if let bitrate = defaultUser.bitrate {
-                    if let bitrate = defaultUser.bitrate { self.vm.bitrate = .limited(bitrate) }
-                    else { self.vm.bitrate = .full }
+                if let bitrateBits = defaultUser.bitrate {
+                    bitrate = .limited(bitrateBits)
                 }
             }
             self.vm.newPlayer(
                 startTime: self.vm.startTime,
                 videoID: self.vm.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.videoStreams.first?.id ?? "0"),
                 audioID: self.vm.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.audioStreams.first?.id ?? "1"),
-                subtitleID: subtitleID
+                subtitleID: subtitleID,
+                bitrate: bitrate
             )
         }
         .ignoresSafeArea(.all)
@@ -115,11 +116,10 @@ struct PlayerView: View {
             let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
                 ?? "\(videoStream.bitrate)"
             let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
-                self.vm.bitrate = .full
-                self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, bitrate: .full)
             }
             fullBitrate.state = {
-                if case .full = self.vm.bitrate {
+                if case .full = self.vm.playerProgress?.bitrate {
                     return .on
                 } else {
                     return .off
@@ -135,11 +135,10 @@ struct PlayerView: View {
                     : "\(mbps) Mbps"
                 
                 let action = UIAction(title: title) { _ in
-                    self.vm.bitrate = .limited(bitrate)
-                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, bitrate: .limited(bitrate))
                 }
                 action.state = {
-                    if case .limited(let limit) = self.vm.bitrate, limit == bitrate {
+                    if case .limited(let limit) = self.vm.playerProgress?.bitrate, limit == bitrate {
                         return .on
                     } else {
                         return .off
@@ -156,7 +155,7 @@ struct PlayerView: View {
             }
             
             let bitrateIcon: String = {
-                if case .full = self.vm.bitrate {
+                if case .full = self.vm.playerProgress?.bitrate {
                     return "wifi"
                 } else {
                     return "wifi.badge.lock"

@@ -16,8 +16,6 @@ final class PlayerViewModel {
     public var mediaSource: any MediaSourceProtocol
     /// Time to start the player at
     public var startTime: CMTime
-    /// Bitrate for the video stream
-    public var bitrate: Bitrate
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
     
@@ -34,7 +32,6 @@ final class PlayerViewModel {
         seasons: [any TVSeasonProtocol]?
     ) {
         self.player = nil
-        self.bitrate = .full
         self.mediaSource = mediaSource
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
@@ -48,7 +45,14 @@ final class PlayerViewModel {
     ///   - videoID: Video stream identifier. Nil = existing video ID
     ///   - audioID: Audio stream identifier. Nil = existing audio ID
     ///   - subtitleID: Subtitle stream identifier (empty for no subtitles). Nil = existing subtitle ID
-    public func newPlayer(startTime: CMTime, videoID: String? = nil, audioID: String? = nil, subtitleID: String? = nil) {
+    ///   - bitrate: The video's bitrate in bits per second
+    public func newPlayer(
+        startTime: CMTime,
+        videoID: String? = nil,
+        audioID: String? = nil,
+        subtitleID: String? = nil,
+        bitrate: Bitrate? = nil
+    ) {
         if let existingPlayer = player {
             existingPlayer.pause()
             streamingService.playbackEnd()
@@ -66,7 +70,7 @@ final class PlayerViewModel {
             videoID: videoID ?? self.playerProgress?.videoID ?? "0",
             audioID: audioID ?? self.playerProgress?.audioID ?? "1",
             subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
-            bitrate: bitrate
+            bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full
         )
         else { return }
         
@@ -79,8 +83,8 @@ final class PlayerViewModel {
         let userModel = UserModel()
         guard var currentUser = userModel.getDefaultUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
-        switch self.bitrate {
-        case .full:
+        switch bitrate {
+        case .full, .none:
             currentUser.bitrate = nil
         case .limited(let newBitrate):
             currentUser.bitrate = newBitrate

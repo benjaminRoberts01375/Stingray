@@ -44,8 +44,11 @@ enum MediaLookupStatus {
     case notFound
 }
 
-enum Bitrate {
+/// Types of used bitrates
+public enum Bitrate {
+    /// The maximum allowed bitrate
     case full
+    /// An artifical limit on the bitrate
     case limited(Int)
 }
 
@@ -251,7 +254,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     ) -> AVPlayer? {
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
-        let bitrate = switch bitrate {
+        let bitrateBits = switch bitrate {
         case .full:
             videoStream.bitrate
         case .limited(let setBitrate):
@@ -261,7 +264,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         guard let playerItem = networkAPI.getStreamingContent(
                 accessToken: accessToken,
                 contentID: mediaSource.id,
-                bitrate: bitrate,
+                bitrate: bitrateBits,
                 subtitleID: subtitleID,
                 audioID: audioID,
                 videoID: videoID,
@@ -278,6 +281,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
             videoID: videoID,
             audioID: audioID,
             subtitleID: subtitleID,
+            bitrate: bitrate,
             playbackSessionID: sessionID,
             userSessionID: self.sessionID,
             accessToken: self.accessToken
@@ -305,6 +309,7 @@ protocol PlayerProtocol {
     var subtitleID: String? { get }
     var audioID: String { get }
     var videoID: String { get }
+    var bitrate: Bitrate { get }
     
     func start()
     func stop()
@@ -317,6 +322,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     private let mediaID: String
     private var mediaSource: any MediaSourceProtocol
     let videoID: String
+    let bitrate: Bitrate
     let audioID: String
     let subtitleID: String?
     private let playbackSessionID: String
@@ -331,6 +337,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         videoID: String,
         audioID: String,
         subtitleID: String?,
+        bitrate: Bitrate,
         playbackSessionID: String,
         userSessionID: String,
         accessToken: String
@@ -340,6 +347,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         self.mediaID = mediaID
         self.mediaSource = mediaSource
         self.videoID = videoID
+        self.bitrate = bitrate
         self.audioID = audioID
         self.subtitleID = subtitleID
         self.timer = nil
