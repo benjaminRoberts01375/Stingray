@@ -22,7 +22,10 @@ struct PlayerView: View {
                 )
             }
         }
-        .onAppear { // The init might get called repeatedly, but this ensures this code only runs once
+        .onAppear {
+            // Only run if player hasn't been set up yet
+            guard self.vm.player == nil else { return }
+            
             let userModel = UserModel()
             var subtitleID: String?
             if let defaultUser = userModel.getDefaultUser() {
@@ -36,10 +39,9 @@ struct PlayerView: View {
                     else { self.vm.bitrate = .full }
                 }
             }
-            print("Making a new player from init")
             self.vm.newPlayer(
                 startTime: self.vm.startTime,
-                videoID: self.vm.selectedVideoID,
+                videoID: self.vm.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.videoStreams.first?.id ?? "0"),
                 audioID: self.vm.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.audioStreams.first?.id ?? "1"),
                 subtitleID: subtitleID
             )
@@ -58,14 +60,14 @@ struct PlayerView: View {
                     let action = UIAction(title: "None") { _ in
                         self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
                     }
-                    action.state = self.vm.streamingService.playerProgress?.subtitleID == nil ? .on : .off
+                    action.state = self.vm.playerProgress?.subtitleID == nil ? .on : .off
                     return action
                 }()
             ] + self.vm.mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
                     self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, subtitleID: subtitleStream.id)
                 }
-                action.state = self.vm.streamingService.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
+                action.state = self.vm.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
                 return action
             })))
         }
@@ -80,7 +82,7 @@ struct PlayerView: View {
                         let action = UIAction(title: audioStream.title) { _ in
                             self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, audioID: audioStream.id)
                         }
-                        action.state = self.vm.streamingService.playerProgress?.audioID == audioStream.id ? .on : .off
+                        action.state = self.vm.playerProgress?.audioID == audioStream.id ? .on : .off
                         return action
                     })
                 )
@@ -95,10 +97,9 @@ struct PlayerView: View {
                     image: UIImage(systemName: "display"),
                     children: self.vm.mediaSource.videoStreams.map({ videoStream in
                         let action = UIAction(title: videoStream.title) { _ in
-                            self.vm.selectedVideoID = videoStream.id
-                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, videoID: videoStream.id)
                         }
-                        action.state = self.vm.selectedVideoID == videoStream.id ? .on : .off
+                        action.state = self.vm.playerProgress?.videoID == videoStream.id ? .on : .off
                         return action
                     })
                 )
@@ -106,7 +107,7 @@ struct PlayerView: View {
         }
         
         // Bitrate choices
-        if let videoStream = (self.vm.mediaSource.videoStreams.first { vm.selectedVideoID == $0.id }),
+        if let videoStream = (self.vm.mediaSource.videoStreams.first { self.vm.playerProgress?.videoID == $0.id }),
            videoStream.bitrate > 1_500_000 {
             let numberFormatter = NumberFormatter()
             numberFormatter.numberStyle = .decimal
