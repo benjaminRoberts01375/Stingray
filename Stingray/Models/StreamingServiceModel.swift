@@ -12,6 +12,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var usersName: String { get }
     var userID: String { get }
     var serviceURL: URL { get }
+    var playerProgress: PlayerProtocol? { get }
     
     func retrieveLibraries() async
     func playbackStart(
@@ -59,7 +60,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var accessToken: String
     var serverID: String
     var serviceURL: URL
-    var playerProgress: JellyfinPlayerProgress?
+    var playerProgress: PlayerProtocol?
     
     public init(
         userDisplayName: String,
@@ -299,15 +300,25 @@ public final class JellyfinModel: StreamingServiceProtocol {
     }
 }
 
-final class JellyfinPlayerProgress {
-    private let player: AVPlayer
+protocol PlayerProtocol {
+    var player: AVPlayer { get }
+    var subtitleID: String? { get }
+    var audioID: String { get }
+    var videoID: String { get }
+    
+    func start()
+    func stop()
+}
+
+final class JellyfinPlayerProgress: PlayerProtocol {
+    let player: AVPlayer
     private let network: any AdvancedNetworkProtocol
     private var timer: Timer?
     private let mediaID: String
     private var mediaSource: any MediaSourceProtocol
-    private let videoID: String
-    private let audioID: String
-    private let subtitleID: String?
+    let videoID: String
+    let audioID: String
+    let subtitleID: String?
     private let playbackSessionID: String
     private let userSessionID: String
     private let accessToken: String

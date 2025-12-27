@@ -22,25 +22,27 @@ struct PlayerView: View {
                 )
             }
         }
-        .onAppear {
+        .onAppear { // The init might get called repeatedly, but this ensures this code only runs once
             let userModel = UserModel()
+            var subtitleID: String?
             if let defaultUser = userModel.getDefaultUser() {
                 if defaultUser.usesSubtitles {
-                    self.vm.selectedSubtitleID = self.vm.mediaSource.subtitleStreams.first { $0.isDefault }?.id ??
-                    self.vm.mediaSource.subtitleStreams.first?.id
-                } else {
-                    self.vm.selectedSubtitleID = nil
+                    subtitleID = self.vm.mediaSource.subtitleStreams.first {
+                        $0.isDefault
+                    }?.id ?? self.vm.mediaSource.subtitleStreams.first?.id
                 }
-                
                 if let bitrate = defaultUser.bitrate {
-                    self.vm.bitrate = .limited(bitrate)
-                    print("Limiting bitrate")
-                } else {
-                    self.vm.bitrate = .full
-                    print("Full bitrate")
+                    if let bitrate = defaultUser.bitrate { self.vm.bitrate = .limited(bitrate) }
+                    else { self.vm.bitrate = .full }
                 }
             }
-            self.vm.newPlayer(startTime: self.vm.startTime)
+            print("Making a new player from init")
+            self.vm.newPlayer(
+                startTime: self.vm.startTime,
+                videoID: self.vm.selectedVideoID,
+                audioID: self.vm.selectedAudioID,
+                subtitleID: subtitleID
+            )
         }
         .ignoresSafeArea(.all)
     }
@@ -54,19 +56,16 @@ struct PlayerView: View {
             items.append(UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
                 {
                     let action = UIAction(title: "None") { _ in
-                        self.vm.selectedSubtitleID = nil
                         self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
-                        
                     }
-                    action.state = self.vm.selectedSubtitleID == nil ? .on : .off
+                    action.state = self.vm.streamingService.playerProgress?.subtitleID == nil ? .on : .off
                     return action
                 }()
             ] + self.vm.mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
-                    self.vm.selectedSubtitleID = subtitleStream.id
-                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, subtitleID: subtitleStream.id)
                 }
-                action.state = self.vm.selectedSubtitleID == subtitleStream.id ? .on : .off
+                action.state = self.vm.streamingService.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
                 return action
             })))
         }
@@ -189,8 +188,7 @@ struct PlayerView: View {
                     let episode = allEpisodes[index + 1]
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
                         self.vm.mediaSource = episode.mediaSources.first ?? self.vm.mediaSource
-                        self.vm.newIDsFromPreviousMedia(episode: episode)
-                        self.vm.newPlayer(startTime: .zero)
+                        self.vm.newPlayer(episode: episode)
                     }), at: 0)
                 }
                 
@@ -199,8 +197,7 @@ struct PlayerView: View {
                     let episode = allEpisodes[index - 1]
                     items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.left"), handler: { _ in
                         self.vm.mediaSource = episode.mediaSources.first ?? self.vm.mediaSource
-                        self.vm.newIDsFromPreviousMedia(episode: episode)
-                        self.vm.newPlayer(startTime: .zero)
+                        self.vm.newPlayer(episode: episode)
                     }), at: 0)
                     setPreviousEpisode = true
                 }
@@ -211,8 +208,7 @@ struct PlayerView: View {
                 let episodeActions = season.episodes.map { episode in
                     let action = UIAction(title: episode.title) { _ in
                         self.vm.mediaSource = episode.mediaSources.first ?? self.vm.mediaSource
-                        self.vm.newIDsFromPreviousMedia(episode: episode)
-                        self.vm.newPlayer(startTime: .zero)
+                        self.vm.newPlayer(episode: episode)
                     }
                     action.state = self.vm.mediaSource.id == episode.mediaSources.first?.id ? .on : .off
                     return action

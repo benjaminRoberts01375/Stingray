@@ -12,8 +12,6 @@ import SwiftUI
 final class PlayerViewModel {
     /// Player with formatted URL already set
     public var player: AVPlayer?
-    /// Subtitle identifier from the media source in play
-    public var selectedSubtitleID: String?
     /// Audio identifier from the media source in play
     public var selectedAudioID: String
     /// Video identifier from the media source in play
@@ -48,8 +46,12 @@ final class PlayerViewModel {
     }
     
     /// Creates a new player based on current state
-    /// - Parameter startTime: Where the video should start from
-    public func newPlayer(startTime: CMTime) {
+    /// - Parameters:
+    ///   - startTime: Where the video should start from
+    ///   - videoID: Video stream identifier. Nil = existing video ID
+    ///   - audioID: Audio stream identifier. Nil = existing audio ID
+    ///   - subtitleID: Subtitle stream identifier (empty for no subtitles). Nil = existing subtitle ID
+    public func newPlayer(startTime: CMTime, videoID: String? = nil, audioID: String? = nil, subtitleID: String? = nil) {
         if let existingPlayer = player {
             existingPlayer.pause()
             streamingService.playbackEnd()
@@ -64,9 +66,9 @@ final class PlayerViewModel {
         
         guard let player = streamingService.playbackStart(
             mediaSource: mediaSource,
-            videoID: selectedVideoID,
-            audioID: selectedAudioID,
-            subtitleID: selectedSubtitleID,
+            videoID: videoID ?? self.streamingService.playerProgress?.videoID ?? "0",
+            audioID: audioID ?? self.streamingService.playerProgress?.audioID ?? "1",
+            subtitleID: subtitleID ?? self.streamingService.playerProgress?.subtitleID, // nil is no subtitles
             bitrate: bitrate
         )
         else { return }
@@ -78,7 +80,7 @@ final class PlayerViewModel {
         // Update user settings
         let userModel = UserModel()
         guard var currentUser = userModel.getDefaultUser() else { return }
-        currentUser.usesSubtitles = selectedSubtitleID != nil
+        currentUser.usesSubtitles = self.streamingService.playerProgress?.subtitleID != nil
         switch self.bitrate {
         case .full:
             currentUser.bitrate = nil
@@ -88,32 +90,19 @@ final class PlayerViewModel {
         userModel.updateUser(currentUser)
     }
     
-    /// Generate new video, audio, and subtitle IDs based on the currently playing episode. Old values are assumed to be in this view model
-    /// - Parameter episode: Episode to advance to
-    public func newIDsFromPreviousMedia(episode: any TVEpisodeProtocol) {
-        // Get new video stream
-        if let oldVideoStream = mediaSource.videoStreams.first(where: { selectedVideoID == $0.id }),
-           let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video) {
-            self.selectedVideoID = newVideoStream.id
-        } else {
-            self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? "0"
+    /// Creates a new player based on current state and new episode
+    /// - Parameter episode: Episode to transition into
+    public func newPlayer(episode: any TVEpisodeProtocol) {
+        guard let oldVideoStream = mediaSource.videoStreams.first(where: { selectedVideoID == $0.id }),
+              let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video),
+              let oldAudioStream = mediaSource.audioStreams.first(where: { selectedAudioID == $0.id }),
+              let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio)
+        else { return }
+        var newSubtitleStream: (any MediaStreamProtocol)?
+        if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { self.streamingService.playerProgress?.subtitleID == $0.id }) {
+            newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle)
         }
-        // Get new audio stream
-        if let oldAudioStream = mediaSource.audioStreams.first(where: { selectedAudioID == $0.id }),
-           let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio) {
-            self.selectedAudioID = newAudioStream.id
-        } else {
-            self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? "1"
-        }
-        // Get new subtitle stream - keep it off if it's off
-        if self.selectedSubtitleID != nil {
-            if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { selectedSubtitleID == $0.id }),
-               let newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle) {
-                self.selectedSubtitleID = newSubtitleStream.id
-            } else {
-                self.selectedSubtitleID = episode.mediaSources.first?.subtitleStreams.first?.id
-            }
-        }
+        self.newPlayer(startTime: .zero, videoID: newVideoStream.id, audioID: newAudioStream.id, subtitleID: newSubtitleStream?.id)
     }
     
     deinit {
