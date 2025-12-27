@@ -40,7 +40,7 @@ struct PlayerView: View {
             self.vm.newPlayer(
                 startTime: self.vm.startTime,
                 videoID: self.vm.selectedVideoID,
-                audioID: self.vm.selectedAudioID,
+                audioID: self.vm.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.audioStreams.first?.id ?? "1"),
                 subtitleID: subtitleID
             )
         }
@@ -78,10 +78,9 @@ struct PlayerView: View {
                     image: UIImage(systemName: "speaker.wave.2"),
                     children: self.vm.mediaSource.audioStreams.map({ audioStream in
                         let action = UIAction(title: audioStream.title) { _ in
-                            self.vm.selectedAudioID = audioStream.id
-                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, audioID: audioStream.id)
                         }
-                        action.state = self.vm.selectedAudioID == audioStream.id ? .on : .off
+                        action.state = self.vm.streamingService.playerProgress?.audioID == audioStream.id ? .on : .off
                         return action
                     })
                 )

@@ -12,8 +12,6 @@ import SwiftUI
 final class PlayerViewModel {
     /// Player with formatted URL already set
     public var player: AVPlayer?
-    /// Audio identifier from the media source in play
-    public var selectedAudioID: String
     /// Video identifier from the media source in play
     public var selectedVideoID: String
     /// Media source in play
@@ -36,7 +34,6 @@ final class PlayerViewModel {
         seasons: [any TVSeasonProtocol]?
     ) {
         self.player = nil
-        self.selectedAudioID = mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? "1")
         self.selectedVideoID = mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? "0")
         self.bitrate = .full
         self.mediaSource = mediaSource
@@ -93,9 +90,9 @@ final class PlayerViewModel {
     /// Creates a new player based on current state and new episode
     /// - Parameter episode: Episode to transition into
     public func newPlayer(episode: any TVEpisodeProtocol) {
-        guard let oldVideoStream = mediaSource.videoStreams.first(where: { selectedVideoID == $0.id }),
+        guard let oldVideoStream = mediaSource.videoStreams.first(where: { self.streamingService.playerProgress?.videoID == $0.id }),
               let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video),
-              let oldAudioStream = mediaSource.audioStreams.first(where: { selectedAudioID == $0.id }),
+              let oldAudioStream = mediaSource.audioStreams.first(where: { self.streamingService.playerProgress?.audioID == $0.id }),
               let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio)
         else { return }
         var newSubtitleStream: (any MediaStreamProtocol)?
