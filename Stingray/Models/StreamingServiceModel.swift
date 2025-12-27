@@ -14,7 +14,13 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var serviceURL: URL { get }
     
     func retrieveLibraries() async
-    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?, bitrate: Bitrate) -> AVPlayer?
+    func playbackStart(
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Bitrate
+    ) -> AVPlayer?
     func playbackEnd()
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
 }
@@ -235,7 +241,13 @@ public final class JellyfinModel: StreamingServiceProtocol {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
     
-    func playbackStart(mediaSource: any MediaSourceProtocol, videoID: Int, audioID: Int, subtitleID: Int?, bitrate: Bitrate) -> AVPlayer? {
+    func playbackStart(
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Bitrate
+    ) -> AVPlayer? {
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
         let bitrate = switch bitrate {
@@ -293,9 +305,9 @@ final class JellyfinPlayerProgress {
     private var timer: Timer?
     private let mediaID: String
     private var mediaSource: any MediaSourceProtocol
-    private let videoID: Int
-    private let audioID: Int
-    private let subtitleID: Int?
+    private let videoID: String
+    private let audioID: String
+    private let subtitleID: String?
     private let playbackSessionID: String
     private let userSessionID: String
     private let accessToken: String
@@ -305,9 +317,9 @@ final class JellyfinPlayerProgress {
         network: any AdvancedNetworkProtocol,
         mediaID: String,
         mediaSource: any MediaSourceProtocol,
-        videoID: Int,
-        audioID: Int,
-        subtitleID: Int?,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
         playbackSessionID: String,
         userSessionID: String,
         accessToken: String

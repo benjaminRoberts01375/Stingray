@@ -104,7 +104,7 @@ public protocol MediaPersonProtocol {
 }
 
 public protocol MediaStreamProtocol: Identifiable {
-    var id: Int { get }
+    var id: String { get }
     var title: String { get }
     var type: StreamType { get }
     var bitrate: Int { get }
@@ -374,7 +374,8 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
         let audioStreams = allStreams.filter { $0.type == .audio }
         self.subtitleStreams = allStreams.filter { $0.type == .subtitle }
         
-        if let defaultAudioIndex = try container.decodeIfPresent(Int.self, forKey: .defaultAudioIndex) {
+        if let defaultAudioIndexInt = try container.decodeIfPresent(Int.self, forKey: .defaultAudioIndex) {
+            let defaultAudioIndex = String(defaultAudioIndexInt)
             for i in audioStreams.indices {
                 if audioStreams[i].id == defaultAudioIndex { audioStreams[i].isDefault = true }
                 else { audioStreams[i].isDefault = false }
@@ -390,7 +391,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
 
 @Observable
 public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
-    public var id: Int
+    public var id: String
     public var title: String
     public var type: StreamType
     public var bitrate: Int
@@ -412,7 +413,8 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         let rawType = try container.decodeIfPresent(String.self, forKey: .type) ?? ""
         self.type = StreamType(rawValue: rawType) ?? .unknown
         
-        self.id = try container.decodeIfPresent(Int.self, forKey: .id) ?? Int.random(in: 0..<Int.max)
+        let intID = try container.decodeIfPresent(Int.self, forKey: .id) ?? Int.random(in: 0..<Int.max)
+        self.id = String(intID)
         self.title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
         self.codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
         self.isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false

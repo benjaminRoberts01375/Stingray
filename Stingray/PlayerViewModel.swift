@@ -13,11 +13,11 @@ final class PlayerViewModel {
     /// Player with formatted URL already set
     public var player: AVPlayer?
     /// Subtitle identifier from the media source in play
-    public var selectedSubtitleID: Int?
+    public var selectedSubtitleID: String?
     /// Audio identifier from the media source in play
-    public var selectedAudioID: Int
+    public var selectedAudioID: String
     /// Video identifier from the media source in play
-    public var selectedVideoID: Int
+    public var selectedVideoID: String
     /// Media source in play
     public var mediaSource: any MediaSourceProtocol
     /// Time to start the player at
@@ -38,8 +38,8 @@ final class PlayerViewModel {
         seasons: [any TVSeasonProtocol]?
     ) {
         self.player = nil
-        self.selectedAudioID = mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? 1)
-        self.selectedVideoID = mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? 0)
+        self.selectedAudioID = mediaSource.audioStreams.first { $0.isDefault }?.id ?? (mediaSource.audioStreams.first?.id ?? "1")
+        self.selectedVideoID = mediaSource.videoStreams.first { $0.isDefault }?.id ?? (mediaSource.videoStreams.first?.id ?? "0")
         self.bitrate = .full
         self.mediaSource = mediaSource
         self.startTime = startTime ?? .zero
@@ -96,14 +96,14 @@ final class PlayerViewModel {
            let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video) {
             self.selectedVideoID = newVideoStream.id
         } else {
-            self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? 0
+            self.selectedVideoID = episode.mediaSources.first?.videoStreams.first?.id ?? "0"
         }
         // Get new audio stream
         if let oldAudioStream = mediaSource.audioStreams.first(where: { selectedAudioID == $0.id }),
            let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio) {
             self.selectedAudioID = newAudioStream.id
         } else {
-            self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? 1
+            self.selectedAudioID = episode.mediaSources.first?.audioStreams.first?.id ?? "1"
         }
         // Get new subtitle stream - keep it off if it's off
         if self.selectedSubtitleID != nil {

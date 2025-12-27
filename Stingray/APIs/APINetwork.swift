@@ -62,9 +62,9 @@ public protocol AdvancedNetworkProtocol {
         accessToken: String,
         contentID: String,
         bitrate: Int,
-        subtitleID: Int?,
-        audioID: Int,
-        videoID: Int,
+        subtitleID: String?,
+        audioID: String,
+        videoID: String,
         sessionID: String
     ) -> AVPlayerItem?
     /// Get all media data for a seasons
@@ -87,8 +87,8 @@ public protocol AdvancedNetworkProtocol {
     func updatePlaybackStatus(
         itemID: String,
         mediaSourceID: String,
-        audioStreamIndex: Int,
-        subtitleStreamIndex: Int?,
+        audioStreamIndex: String,
+        subtitleStreamIndex: String?,
         playbackPosition: Int,
         playSessionID: String,
         userSessionID: String,
@@ -432,9 +432,9 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         accessToken: String,
         contentID: String,
         bitrate: Int,
-        subtitleID: Int?,
-        audioID: Int,
-        videoID: Int,
+        subtitleID: String?,
+        audioID: String,
+        videoID: String,
         sessionID: String
     ) -> AVPlayerItem? {
         var params: [URLQueryItem] = [
@@ -463,8 +463,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     func updatePlaybackStatus(
         itemID: String,
         mediaSourceID: String,
-        audioStreamIndex: Int,
-        subtitleStreamIndex: Int?,
+        audioStreamIndex: String,
+        subtitleStreamIndex: String?,
         playbackPosition: Int,
         playSessionID: String,
         userSessionID: String,
@@ -474,8 +474,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         struct PlaybackStatusStats: Encodable {
             let itemID: String
             let mediaSourceID: String
-            let audioStreamIndex: Int
-            let subtitleStreamIndex: Int
+            let audioStreamIndex: String
+            let subtitleStreamIndex: String
             let positionTicks: Int
             let playSessionID: String
             let userSessionID: String
@@ -512,7 +512,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             itemID: itemID,
             mediaSourceID: mediaSourceID,
             audioStreamIndex: audioStreamIndex,
-            subtitleStreamIndex: subtitleStreamIndex ?? -1,
+            subtitleStreamIndex: subtitleStreamIndex ?? "-1",
             positionTicks: playbackPosition,
             playSessionID: playSessionID,
             userSessionID: userSessionID,
