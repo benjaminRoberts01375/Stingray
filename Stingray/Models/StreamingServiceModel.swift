@@ -407,6 +407,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     
     func stop() {
         let playbackTicks = Int(self.player.currentTime().seconds * 10_000_000)
+        self.timer?.invalidate()
         self.mediaSource.startTicks = playbackTicks
         Task {
             do {
