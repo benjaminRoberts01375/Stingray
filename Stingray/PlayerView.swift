@@ -238,13 +238,40 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         controller.showsPlaybackControls = true
         controller.transportBarCustomMenuItems = transportBarCustomMenuItems
         controller.appliesPreferredDisplayCriteriaAutomatically = true
-        controller.allowsPictureInPicturePlayback = false
+        controller.allowsPictureInPicturePlayback = true
         controller.allowedSubtitleOptionLanguages = .init(["nerd"])
+        controller.delegate = context.coordinator
         return controller
     }
     
     func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
         uiViewController.player = player
         uiViewController.transportBarCustomMenuItems = transportBarCustomMenuItems
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
+    class Coordinator: NSObject, AVPlayerViewControllerDelegate {
+        // Called just before PiP starts
+        func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
+            print("About to enter PiP")
+        }
+        
+        // Called after PiP has started
+        func playerViewControllerDidStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
+            print("Did enter PiP")
+        }
+        
+        // Called just before PiP stops
+        func playerViewControllerWillStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
+            print("About to exit PiP")
+        }
+        
+        // Called after PiP has stopped
+        func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
+            print("Did exit PiP")
+        }
     }
 }
