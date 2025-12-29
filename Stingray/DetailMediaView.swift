@@ -180,7 +180,7 @@ struct DetailMediaView: View {
                     }
                     .focused($focus, equals: .overview)
                 }
-                .padding(.vertical)
+                .padding(.vertical, 64)
                 
                 ScrollView(.horizontal) {
                     HStack {
