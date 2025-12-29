@@ -9,6 +9,9 @@ import SwiftUI
 
 public struct LibraryView: View {
     @State var library: any LibraryProtocol
+    
+    @Binding var navigation: NavigationPath
+    
     let streamingService: StreamingServiceProtocol
     let cardWidth = CGFloat(200)
     let cardSpacing = CGFloat(50)
@@ -24,7 +27,7 @@ public struct LibraryView: View {
                     .padding(.vertical)
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
-                    MediaGridView(allMedia: allMedia, streamingService: streamingService)
+                    MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
                 } else {
                     VStack(alignment: .center) {
                         Text("This library appears to be empty.")
@@ -44,13 +47,15 @@ public struct MediaGridView: View {
     let allMedia: [any MediaProtocol]
     let streamingService: any StreamingServiceProtocol
     
+    @Binding var navigation: NavigationPath
+    
     public var body: some View {
         let columns = [
             GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
         ]
         LazyVGrid(columns: columns, spacing: cardSpacing) {
             ForEach(allMedia, id: \.id) { media in
-                NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService)) {
+                NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService, navigation: $navigation)) {
                     MediaCard(media: media, streamingService: streamingService)
                         .frame(width: cardWidth, height: cardHeight)
                 }

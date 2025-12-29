@@ -9,14 +9,17 @@ import SwiftUI
 
 struct HomeView: View {
     let streamingService: StreamingServiceProtocol
+    
     @State private var dashboardCache: [String: [SlimMedia]] = [:]
+    @Binding var navigation: NavigationPath
     
     var body: some View {
         VStack(alignment: .leading) {
             DashboardRow(
                 title: "Next Up",
                 streamingService: streamingService,
-                cache: $dashboardCache
+                cache: $dashboardCache,
+                navigation: $navigation
             ) {
                 await streamingService.retrieveUpNext()
             }
@@ -25,7 +28,8 @@ struct HomeView: View {
             DashboardRow(
                 title: "Recently Added",
                 streamingService: streamingService,
-                cache: $dashboardCache
+                cache: $dashboardCache,
+                navigation: $navigation
             ) {
                 await streamingService.retrieveRecentlyAdded(.all)
             }
@@ -34,7 +38,8 @@ struct HomeView: View {
             DashboardRow(
                 title: "Latest Movies",
                 streamingService: streamingService,
-                cache: $dashboardCache
+                cache: $dashboardCache,
+                navigation: $navigation
             ) {
                 await streamingService.retrieveRecentlyAdded(.movie)
             }
@@ -43,7 +48,8 @@ struct HomeView: View {
             DashboardRow(
                 title: "Latest Shows",
                 streamingService: streamingService,
-                cache: $dashboardCache
+                cache: $dashboardCache,
+                navigation: $navigation
             ) {
                 await streamingService.retrieveRecentlyAdded(.tv)
             }
@@ -56,6 +62,7 @@ fileprivate struct DashboardRow: View {
     let title: String
     let streamingService: StreamingServiceProtocol
     @Binding var cache: [String: [SlimMedia]]
+    @Binding var navigation: NavigationPath
     let fetchMedia: () async -> [SlimMedia]
     
     @State private var status: DashboardRowStatus = .unstarted
@@ -86,7 +93,7 @@ fileprivate struct DashboardRow: View {
             case .unstarted, .retrieving:
                 MediaNavigationLoadingPicker()
             case .complete(let newMedia):
-                MediaPicker(streamingService: streamingService, pickerMedia: newMedia)
+                MediaPicker(streamingService: streamingService, pickerMedia: newMedia, navigation: $navigation)
             case .empty:
                 EmptyView()
             }
@@ -107,11 +114,13 @@ fileprivate struct MediaPicker: View {
     var streamingService: StreamingServiceProtocol
     let pickerMedia: [SlimMedia]
     
+    @Binding var navigation: NavigationPath
+    
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
                 ForEach(pickerMedia) { media in
-                    MediaNavigation(media: media, streamingService: streamingService)
+                    MediaNavigation(media: media, streamingService: streamingService, navigation: $navigation)
                 }
             }
         }
@@ -122,9 +131,11 @@ fileprivate struct MediaNavigation: View {
     var media: SlimMedia
     var streamingService: StreamingServiceProtocol
     
+    @Binding var navigation: NavigationPath
+    
     var body: some View {
         NavigationLink {
-            MediaDetailLoader(mediaID: media.id, parentID: media.parentID, streamingService: streamingService)
+            MediaDetailLoader(mediaID: media.id, parentID: media.parentID, streamingService: streamingService, navigation: $navigation)
         } label: {
             MediaCard(media: media, streamingService: streamingService)
                 .frame(width: 200, height: 370)
@@ -138,10 +149,12 @@ struct MediaDetailLoader: View {
     let parentID: String?
     let streamingService: StreamingServiceProtocol
     
+    @Binding var navigation: NavigationPath
+    
     var body: some View {
         switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
         case .found(let foundMedia):
-            DetailMediaView(media: foundMedia, streamingService: streamingService)
+            DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
         case .temporarilyNotFound:
             ProgressView("Loading Libraries...")
         case .notFound:

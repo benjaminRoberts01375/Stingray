@@ -9,14 +9,16 @@ import SwiftUI
 
 public struct SearchView: View {
     var streamingService: StreamingServiceProtocol
+    
     @State var searchText: String = ""
     @State var searchResults: SearchStatus = .empty
+    @Binding var navigation: NavigationPath
     
     public var body: some View {
         ScrollView {
             switch searchResults {
             case .found(let allMedia):
-                MediaGridView(allMedia: allMedia, streamingService: streamingService)
+                MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
             case .temporarilyNotFound:
                 ProgressView("Not found yet, but we're still getting your media...")
             case .notFound:

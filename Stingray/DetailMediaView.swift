@@ -19,6 +19,8 @@ struct DetailMediaView: View {
     @State private var shouldShowMetaData: Bool = false
     @FocusState private var focus: ButtonType?
     
+    @Binding var navigation: NavigationPath
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             MediaBackgroundView(
@@ -45,11 +47,22 @@ struct DetailMediaView: View {
                         EmptyView()
                     case .movies(let sources):
                         ForEach(sources, id: \.id) { source in
-                            MovieNavigationView(mediaSource: source, streamingService: streamingService, focus: $focus)
+                            MovieNavigationView(
+                                mediaSource: source,
+                                streamingService: streamingService,
+                                focus: $focus,
+                                navigation: $navigation
+                            )
                         }
                     case .tv(let seasons):
                         if let seasons = seasons, let episode = Self.getNextUp(from: seasons) ?? seasons.first?.episodes.first {
-                            TVEpisodeNavigationView(seasons: seasons, streamingService: streamingService, episode: episode, focus: $focus)
+                            TVEpisodeNavigationView(
+                                seasons: seasons,
+                                streamingService: streamingService,
+                                episode: episode,
+                                focus: $focus,
+                                navigation: $navigation
+                            )
                         } else {
                             ProgressView("Loading seasons...")
                         }
@@ -89,7 +102,8 @@ struct DetailMediaView: View {
                                         media: media,
                                         seasons: seasons,
                                         streamingService: streamingService,
-                                        focus: $focus
+                                        focus: $focus,
+                                        navigation: $navigation
                                     )
                                 }
                             }
@@ -348,6 +362,7 @@ fileprivate struct MovieNavigationView: View {
     let streamingService: any StreamingServiceProtocol
     
     @FocusState.Binding var focus: ButtonType?
+    @Binding var navigation: NavigationPath
     
     var body: some View {
         let startTicks = Double(mediaSource.startTicks > 15 * 60 * 10_000_000 ? mediaSource.startTicks : 0)
@@ -358,7 +373,8 @@ fileprivate struct MovieNavigationView: View {
                     startTime: CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: nil
-                )
+                ),
+                navigation: $navigation
             )
             .id(mediaSource.id)
         } label: {
@@ -379,6 +395,7 @@ fileprivate struct TVEpisodeNavigationView: View {
     let episode: any TVEpisodeProtocol
     
     @FocusState.Binding var focus: ButtonType?
+    @Binding var navigation: NavigationPath
     
     var body: some View {
         if let mediaSource = episode.mediaSources.first {
@@ -390,7 +407,8 @@ fileprivate struct TVEpisodeNavigationView: View {
                         startTime: .zero,
                         streamingService: streamingService,
                         seasons: seasons
-                    )
+                    ),
+                    navigation: $navigation
                 )
             } label: {
                 Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(episode.title)")
@@ -406,7 +424,8 @@ fileprivate struct TVEpisodeNavigationView: View {
                             startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                             streamingService: streamingService,
                             seasons: seasons
-                        )
+                        ),
+                        navigation: $navigation
                     )
                 } label: {
                     Text("Resume \(episode.title)")
@@ -496,6 +515,7 @@ fileprivate struct EpisodeSelectorView: View {
     let streamingService: any StreamingServiceProtocol
     
     @FocusState.Binding var focus: ButtonType?
+    @Binding var navigation: NavigationPath
     
     var body: some View {
         ForEach(seasons, id: \.id) { season in
@@ -507,7 +527,8 @@ fileprivate struct EpisodeSelectorView: View {
                         streamingService: streamingService,
                         seasons: seasons,
                         episode: episode,
-                        focus: $focus
+                        focus: $focus,
+                        navigation: $navigation
                     )
                 }
             }
@@ -522,17 +543,19 @@ fileprivate struct EpisodeNavigationView: View {
     let seasons: [any TVSeasonProtocol]
     let episode: any TVEpisodeProtocol
     
+    @Binding var navigation: NavigationPath
+    
     var body: some View {
         NavigationLink {
             PlayerView(
-                vm: (
+                vm: 
                     PlayerViewModel(
                         mediaSource: mediaSource,
                         startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                         streamingService: streamingService,
                         seasons: seasons
-                    )
-                )
+                    ),
+                navigation: $navigation
             )
             .id(mediaSource.id)
         } label: {
@@ -558,6 +581,8 @@ fileprivate struct EpisodeView: View {
     let episode: any TVEpisodeProtocol
     
     @FocusState.Binding var focus: ButtonType?
+    @Binding var navigation: NavigationPath
+    
     @FocusState private var isFocused: Bool?
     @State var showDetails = false
     
@@ -568,7 +593,8 @@ fileprivate struct EpisodeView: View {
                 mediaSource: source,
                 streamingService: streamingService,
                 seasons: seasons,
-                episode: episode
+                episode: episode,
+                navigation: $navigation
             )
             .frame(width: 400, height: 325)
             .focused($focus, equals: .media(episode.id))

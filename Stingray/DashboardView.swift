@@ -33,13 +33,13 @@ struct DashboardView: View {
                         }
                         
                         Tab(value: "search") {
-                            SearchView(streamingService: streamingService)
+                            SearchView(streamingService: streamingService, navigation: $navigationPath)
                         } label: {
                             Text("Search")
                         }
                         Tab(value: "home") {
                             ScrollView {
-                                HomeView(streamingService: streamingService)
+                                HomeView(streamingService: streamingService, navigation: $navigationPath)
                                     .scrollClipDisabled()
                             }
                         } label: {
@@ -47,7 +47,7 @@ struct DashboardView: View {
                         }
                         ForEach(libraries.indices, id: \.self) { index in
                             Tab(value: libraries[index].id) {
-                                LibraryView(library: libraries[index], streamingService: streamingService)
+                                LibraryView(library: libraries[index], navigation: $navigationPath, streamingService: streamingService)
                             } label: {
                                 Text(libraries[index].title)
                             }
@@ -59,7 +59,8 @@ struct DashboardView: View {
                 MediaDetailLoader(
                     mediaID: request.mediaID,
                     parentID: request.parentID,
-                    streamingService: streamingService
+                    streamingService: streamingService,
+                    navigation: $navigationPath
                 )
             }
         }

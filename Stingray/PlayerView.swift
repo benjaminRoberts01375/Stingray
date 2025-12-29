@@ -10,8 +10,7 @@ import SwiftUI
 
 struct PlayerView: View {
     @State var vm: PlayerViewModel
-    
-    init(vm: PlayerViewModel) { self.vm = vm }
+    @Binding var navigation: NavigationPath
     
     var body: some View {
         VStack {
