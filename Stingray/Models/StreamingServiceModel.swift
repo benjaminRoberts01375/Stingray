@@ -20,7 +20,9 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
         videoID: String,
         audioID: String,
         subtitleID: String?,
-        bitrate: Bitrate
+        bitrate: Bitrate,
+        title: String,
+        subtitle: String?
     ) -> AVPlayer?
     func playbackEnd()
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
@@ -250,7 +252,9 @@ public final class JellyfinModel: StreamingServiceProtocol {
         videoID: String,
         audioID: String,
         subtitleID: String?,
-        bitrate: Bitrate
+        bitrate: Bitrate,
+        title: String,
+        subtitle: String?
     ) -> AVPlayer? {
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
@@ -268,7 +272,9 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 subtitleID: subtitleID,
                 audioID: audioID,
                 videoID: videoID,
-                sessionID: sessionID
+                sessionID: sessionID,
+                title: title,
+                subtitle: subtitle
               )
         else { return nil }
         let player = AVPlayer(playerItem: playerItem)

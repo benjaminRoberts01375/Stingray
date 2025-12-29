@@ -78,12 +78,32 @@ final class PlayerViewModel: Hashable {
             print("Failed to configure audio session: \(error)")
         }
         
+        var title = ""
+        var subtitle = ""
+        if let seasons = self.seasons { // TV Shows
+            for season in seasons {
+                if let episode = (season.episodes.first { $0.mediaSources.first?.id == mediaSource.id }) {
+                    subtitle = "Season \(season.seasonNumber), Episode \(episode.episodeNumber)"
+                    break
+                }
+            }
+            
+            let allEpisodes = seasons.flatMap(\.episodes)
+            let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == mediaSource.id }
+            title = currentEpisode?.title ?? ""
+        }
+        else { // Movies
+            title = mediaSource.name
+        }
+        
         guard let player = streamingService.playbackStart(
             mediaSource: mediaSource,
             videoID: videoID ?? self.playerProgress?.videoID ?? "0",
             audioID: audioID ?? self.playerProgress?.audioID ?? "1",
             subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
-            bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full
+            bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full,
+            title: title,
+            subtitle: subtitle
         )
         else { return }
         

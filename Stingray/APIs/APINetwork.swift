@@ -57,6 +57,8 @@ public protocol AdvancedNetworkProtocol {
     ///   - audioID: Audio ID to be used
     ///   - videoID: Video ID to be used
     ///   - sessionID: A one-off token to not be reused when changing settings
+    ///   - title: Main title of the content to be shown
+    ///   - subtitle: An optional descriptor of the content (ex. season 2, episode 4)
     /// - Returns: Player ready for streaming
     func getStreamingContent(
         accessToken: String,
@@ -65,7 +67,9 @@ public protocol AdvancedNetworkProtocol {
         subtitleID: String?,
         audioID: String,
         videoID: String,
-        sessionID: String
+        sessionID: String,
+        title: String,
+        subtitle: String?
     ) -> AVPlayerItem?
     /// Get all media data for a seasons
     /// - Parameters:
@@ -435,7 +439,9 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         subtitleID: String?,
         audioID: String,
         videoID: String,
-        sessionID: String
+        sessionID: String,
+        title: String,
+        subtitle: String?
     ) -> AVPlayerItem? {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "playSessionID", value: sessionID),
@@ -453,11 +459,27 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
         }
         
-        return self.buildAVPlayerItem(
+        guard let item = self.buildAVPlayerItem(
             path: "/Videos/\(contentID)/main.m3u8",
             urlParams: params,
             headers: ["X-MediaBrowser-Token": accessToken]
-        )
+        ) else { return nil }
+        
+        // Set the title metadata
+        let titleMetadata = AVMutableMetadataItem()
+        titleMetadata.identifier = .commonIdentifierTitle
+        titleMetadata.value = title as NSString
+        titleMetadata.extendedLanguageTag = "und"
+        
+        // Set the subtitle/description metadata
+        let subtitleMetadata = AVMutableMetadataItem()
+        subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
+        subtitleMetadata.value = (subtitle ?? "") as NSString
+        subtitleMetadata.extendedLanguageTag = "und"
+        
+        item.externalMetadata = [titleMetadata, subtitleMetadata]
+        
+        return item
     }
     
     func updatePlaybackStatus(
