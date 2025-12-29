@@ -9,6 +9,7 @@ import AVKit
 import SwiftUI
 
 struct PlayerView: View {
+    @Environment(\.dismiss) var dismiss
     @State var vm: PlayerViewModel
     @Binding var navigation: NavigationPath
     
@@ -17,8 +18,15 @@ struct PlayerView: View {
             if let player = self.vm.player {
                 AVPlayerViewControllerRepresentable(
                     player: player,
-                    transportBarCustomMenuItems: makeTransportBarItems()
-                )
+                    transportBarCustomMenuItems: makeTransportBarItems(),
+                ) {
+                    self.vm.navigationPath = self.navigation
+                    dismiss()
+                } onRestoreFromPiP: {
+                    if let restoredPath = self.vm.navigationPath {
+                        self.navigation = restoredPath
+                    }
+                }
             }
         }
         .onAppear {
@@ -231,6 +239,14 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     let player: AVPlayer
     let transportBarCustomMenuItems: [UIMenuElement]
     
+    // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
+    let onStartPiP: () -> Void
+    let onRestoreFromPiP: () -> Void
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onStartPiP: onStartPiP, onRestoreFromPiP: onRestoreFromPiP)
+    }
+    
     func makeUIViewController(context: Context) -> AVPlayerViewController {
         let controller = AVPlayerViewController()
         controller.player = player
@@ -240,6 +256,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         controller.allowsPictureInPicturePlayback = true
         controller.allowedSubtitleOptionLanguages = .init(["nerd"])
         controller.delegate = context.coordinator
+        
         return controller
     }
     
@@ -248,29 +265,51 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         uiViewController.transportBarCustomMenuItems = transportBarCustomMenuItems
     }
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-    
     class Coordinator: NSObject, AVPlayerViewControllerDelegate {
-        // Called just before PiP starts
+        let onStartPiP: () -> Void
+        let onRestoreFromPiP: () -> Void
+        
+        // Controlling PiP to keep us alive
+        private static var activePiPCoordinators = Set<Coordinator>()
+        
+        init(onStartPiP: @escaping () -> Void, onRestoreFromPiP: @escaping () -> Void) {
+            self.onStartPiP = onStartPiP
+            self.onRestoreFromPiP = onRestoreFromPiP
+        }
+        
+        // Start PiP
         func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
-            print("About to enter PiP")
+            self.onStartPiP()
+            Self.activePiPCoordinators.insert(self)  // Keep self alive
         }
         
-        // Called after PiP has started
-        func playerViewControllerDidStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
-            print("Did enter PiP")
-        }
-        
-        // Called just before PiP stops
-        func playerViewControllerWillStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
-            print("About to exit PiP")
-        }
-        
-        // Called after PiP has stopped
+        // Stop PiP
         func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
-            print("Did exit PiP")
+            Self.activePiPCoordinators.remove(self)  // Release self
+        }
+        
+        // Emergency stop PiP?
+        func playerViewController(
+            _ playerViewController: AVPlayerViewController,
+            failedToStartPictureInPictureWithError error: Error
+        ) {
+            Self.activePiPCoordinators.remove(self)
+        }
+        
+        // Hide main player during PiP
+        func playerViewControllerShouldAutomaticallyDismissAtPictureInPictureStart(
+            _ playerViewController: AVPlayerViewController
+        ) -> Bool {
+            true
+        }
+        
+        // Completion handler conformance with stopping logic
+        func playerViewController(
+            _ playerViewController: AVPlayerViewController,
+            restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
+        ) {
+            onRestoreFromPiP()
+            completionHandler(true)
         }
     }
 }

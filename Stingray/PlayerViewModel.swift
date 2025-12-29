@@ -23,6 +23,8 @@ final class PlayerViewModel: Hashable {
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
     /// Seasons of a TV show if available (may be a movie)
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
+    /// Store and restore the current navigation path
+    @ObservationIgnored public var navigationPath: NavigationPath?
     
     // Hashable Conformance
     static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
