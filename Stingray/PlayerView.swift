@@ -26,6 +26,8 @@ struct PlayerView: View {
                     if let restoredPath = self.vm.navigationPath {
                         self.navigation = restoredPath
                     }
+                } onStopFromPiP: {
+                    self.vm.stopPlayer()
                 }
             }
         }
@@ -242,9 +244,10 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
     let onStartPiP: () -> Void
     let onRestoreFromPiP: () -> Void
+    let onStopFromPiP: () -> Void
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(onStartPiP: onStartPiP, onRestoreFromPiP: onRestoreFromPiP)
+        Coordinator(onStartPiP: onStartPiP, onRestoreFromPiP: onRestoreFromPiP, onStopFromPiP: onStopFromPiP)
     }
     
     func makeUIViewController(context: Context) -> AVPlayerViewController {
@@ -268,46 +271,54 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     class Coordinator: NSObject, AVPlayerViewControllerDelegate {
         let onStartPiP: () -> Void
         let onRestoreFromPiP: () -> Void
+        let onStopFromPiP: () -> Void
         
-        // Controlling PiP to keep us alive
         private static var activePiPCoordinators = Set<Coordinator>()
         
-        init(onStartPiP: @escaping () -> Void, onRestoreFromPiP: @escaping () -> Void) {
+        // Track whether we're restoring vs closing
+        private var isRestoringFromPiP = false
+        
+        init(onStartPiP: @escaping () -> Void, onRestoreFromPiP: @escaping () -> Void, onStopFromPiP: @escaping () -> Void) {
             self.onStartPiP = onStartPiP
             self.onRestoreFromPiP = onRestoreFromPiP
+            self.onStopFromPiP = onStopFromPiP
         }
         
-        // Start PiP
         func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
+            print("PiP starting")
             self.onStartPiP()
-            Self.activePiPCoordinators.insert(self)  // Keep self alive
+            Self.activePiPCoordinators.insert(self) // Keep self alive
         }
         
-        // Stop PiP
         func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
-            Self.activePiPCoordinators.remove(self)  // Release self
+            if !isRestoringFromPiP {
+                onStopFromPiP()
+            }
+            
+            isRestoringFromPiP = false // Reset for next time
+            Self.activePiPCoordinators.remove(self)
         }
         
-        // Emergency stop PiP?
         func playerViewController(
             _ playerViewController: AVPlayerViewController,
             failedToStartPictureInPictureWithError error: Error
         ) {
+            print("PiP failed to start: \(error)")
             Self.activePiPCoordinators.remove(self)
         }
         
-        // Hide main player during PiP
         func playerViewControllerShouldAutomaticallyDismissAtPictureInPictureStart(
             _ playerViewController: AVPlayerViewController
         ) -> Bool {
             true
         }
         
-        // Completion handler conformance with stopping logic
         func playerViewController(
             _ playerViewController: AVPlayerViewController,
             restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
         ) {
+            print("Restoring UI from PiP")
+            isRestoringFromPiP = true // Flag that this is a restore, not a close
             onRestoreFromPiP()
             completionHandler(true)
         }

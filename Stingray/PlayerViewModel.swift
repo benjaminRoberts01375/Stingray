@@ -120,6 +120,13 @@ final class PlayerViewModel: Hashable {
         self.newPlayer(startTime: .zero, videoID: newVideoStream.id, audioID: newAudioStream.id, subtitleID: newSubtitleStream?.id)
     }
     
+    func stopPlayer() {
+        player?.pause()
+        player = nil
+        self.playerProgress = nil
+        streamingService.playbackEnd()
+    }
+    
     deinit {
         player?.pause()
         streamingService.playbackEnd()
