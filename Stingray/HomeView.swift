@@ -134,8 +134,8 @@ fileprivate struct MediaNavigation: View {
     @Binding var navigation: NavigationPath
     
     var body: some View {
-        NavigationLink {
-            MediaDetailLoader(mediaID: media.id, parentID: media.parentID, streamingService: streamingService, navigation: $navigation)
+        Button {
+            navigation.append(media)
         } label: {
             MediaCard(media: media, streamingService: streamingService)
                 .frame(width: 200, height: 370)

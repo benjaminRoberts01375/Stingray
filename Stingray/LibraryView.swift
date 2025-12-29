@@ -47,7 +47,7 @@ public struct MediaGridView: View {
     let allMedia: [any MediaProtocol]
     let streamingService: any StreamingServiceProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
     public var body: some View {
         let columns = [
@@ -55,7 +55,9 @@ public struct MediaGridView: View {
         ]
         LazyVGrid(columns: columns, spacing: cardSpacing) {
             ForEach(allMedia, id: \.id) { media in
-                NavigationLink(destination: DetailMediaView(media: media, streamingService: streamingService, navigation: $navigation)) {
+                Button {
+                    navigation.append(AnyMedia(media: media))
+                } label: {
                     MediaCard(media: media, streamingService: streamingService)
                         .frame(width: cardWidth, height: cardHeight)
                 }

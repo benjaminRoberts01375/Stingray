@@ -9,7 +9,7 @@ import AVKit
 import SwiftUI
 
 @Observable
-final class PlayerViewModel {
+final class PlayerViewModel: Hashable {
     /// Player with formatted URL already set
     public var player: AVPlayer?
     /// Media source in play
@@ -23,6 +23,17 @@ final class PlayerViewModel {
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
     /// Seasons of a TV show if available (may be a movie)
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
+    
+    // Hashable Conformance
+    static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
+        lhs.mediaSource.id == rhs.mediaSource.id &&
+        lhs.startTime == rhs.startTime
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(mediaSource.id)
+        hasher.combine(startTime.seconds)
+    }
     
     /// Normal init for setting up a player
     public init(

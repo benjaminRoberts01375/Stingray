@@ -10,7 +10,7 @@ import Foundation
 // MARK: Protocols
 
 /// Define the shape of a piece of media
-public protocol MediaProtocol: Identifiable, SlimMediaProtocol {
+public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
     var tagline: String { get }
     var description: String { get }
     var imageTags: any MediaImagesProtocol { get }
@@ -23,7 +23,7 @@ public protocol MediaProtocol: Identifiable, SlimMediaProtocol {
     var people: [MediaPersonProtocol] { get }
 }
 
-public protocol SlimMediaProtocol: Identifiable {
+public protocol SlimMediaProtocol: Identifiable, Hashable {
     var id: String { get }
     var title: String { get }
     var imageTags: any MediaImagesProtocol { get }
@@ -226,6 +226,15 @@ public final class MediaModel: MediaProtocol, Decodable {
             }
         }
     }
+    
+    // Hashable conformance
+    public static func == (lhs: MediaModel, rhs: MediaModel) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 @Observable
@@ -260,6 +269,15 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         
         self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)
+    }
+    
+    // Hashable conformance
+    public static func == (lhs: SlimMedia, rhs: SlimMedia) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 

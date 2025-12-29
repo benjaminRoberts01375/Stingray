@@ -63,6 +63,17 @@ struct DashboardView: View {
                     navigation: $navigationPath
                 )
             }
+            .navigationDestination(for: SlimMedia.self) { slimMedia in
+                MediaDetailLoader(
+                    mediaID: slimMedia.id,
+                    parentID: slimMedia.parentID,
+                    streamingService: streamingService,
+                    navigation: $navigationPath
+                )
+            }
+            .navigationDestination(for: AnyMedia.self) { anyMedia in
+                DetailMediaView(media: anyMedia.media, streamingService: streamingService, navigation: $navigationPath)
+            }
         }
         .onChange(of: deepLinkRequest) { _, newValue in
             guard let request = newValue else { return }
@@ -73,5 +84,18 @@ struct DashboardView: View {
             self.selectedTab = "home"
             Task { await streamingService.retrieveLibraries() }
         }
+    }
+}
+
+/// A type-erased wrapper for MediaProtocol that conforms to Hashable
+struct AnyMedia: Hashable {
+    let media: any MediaProtocol
+    
+    static func == (lhs: AnyMedia, rhs: AnyMedia) -> Bool {
+        lhs.media.id == rhs.media.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(media.id)
     }
 }

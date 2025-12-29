@@ -103,7 +103,7 @@ public struct SearchView: View {
 extension String {
     /// A sliding Levenshtein Distance calculator, designed to give long names no disadvantage. For example searching for "Assass"
     /// will have a perfect result against "Assassination Classroom" since the full title is truncated to the length of the original search
-    /// term.
+    /// term. 0 = a perfect match, values greater than 0 are less good of a match.
     /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
     func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
         let selfLower = self.lowercased()

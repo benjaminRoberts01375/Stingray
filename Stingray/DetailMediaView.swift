@@ -243,6 +243,9 @@ struct DetailMediaView: View {
             }
         }
         .onAppear { focus = .play }
+        .navigationDestination(for: PlayerViewModel.self) { vm in
+            PlayerView(vm: vm, navigation: $navigation)
+        }
     }
     
     static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
@@ -366,17 +369,15 @@ fileprivate struct MovieNavigationView: View {
     
     var body: some View {
         let startTicks = Double(mediaSource.startTicks > 15 * 60 * 10_000_000 ? mediaSource.startTicks : 0)
-        NavigationLink {
-            PlayerView(
-                vm: PlayerViewModel(
+        Button {
+            navigation.append(
+                PlayerViewModel(
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: nil
-                ),
-                navigation: $navigation
+                )
             )
-            .id(mediaSource.id)
         } label: {
             if startTicks != 0 { // Restart if watched less than 15 minutes
                 Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
@@ -400,15 +401,14 @@ fileprivate struct TVEpisodeNavigationView: View {
     var body: some View {
         if let mediaSource = episode.mediaSources.first {
             // Always restart episode button
-            NavigationLink {
-                PlayerView(
-                    vm: PlayerViewModel(
+            Button {
+                navigation.append(
+                    PlayerViewModel(
                         mediaSource: mediaSource,
                         startTime: .zero,
                         streamingService: streamingService,
                         seasons: seasons
-                    ),
-                    navigation: $navigation
+                    )
                 )
             } label: {
                 Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(episode.title)")
@@ -417,15 +417,14 @@ fileprivate struct TVEpisodeNavigationView: View {
             
             // If the next episode to play already has progress
             if mediaSource.startTicks != 0 {
-                NavigationLink {
-                    PlayerView(
-                        vm: PlayerViewModel(
+                Button {
+                    navigation.append(
+                        PlayerViewModel(
                             mediaSource: mediaSource,
                             startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                             streamingService: streamingService,
                             seasons: seasons
-                        ),
-                        navigation: $navigation
+                        )
                     )
                 } label: {
                     Text("Resume \(episode.title)")
@@ -546,18 +545,15 @@ fileprivate struct EpisodeNavigationView: View {
     @Binding var navigation: NavigationPath
     
     var body: some View {
-        NavigationLink {
-            PlayerView(
-                vm: 
-                    PlayerViewModel(
-                        mediaSource: mediaSource,
-                        startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                        streamingService: streamingService,
-                        seasons: seasons
-                    ),
-                navigation: $navigation
+        Button {
+            navigation.append(
+                PlayerViewModel(
+                    mediaSource: mediaSource,
+                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    streamingService: streamingService,
+                    seasons: seasons
+                )
             )
-            .id(mediaSource.id)
         } label: {
             VStack(spacing: 0) {
                 EpisodeArtView(episode: episode, streamingService: streamingService)
@@ -634,7 +630,7 @@ fileprivate struct EpisodeView: View {
                                     media: media,
                                     logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
                                 )
-                                    .padding()
+                                .padding()
                                 Spacer()
                                 Text(overview)
                                     .padding()
