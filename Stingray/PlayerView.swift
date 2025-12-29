@@ -56,6 +56,7 @@ struct PlayerView: View {
                 bitrate: bitrate
             )
         }
+        .onDisappear { self.vm.stopPlayer() }
         .ignoresSafeArea(.all)
     }
     
