@@ -184,28 +184,7 @@ struct DetailMediaView: View {
                 }
                 .padding(.vertical, 64)
                 
-                ScrollView(.horizontal) {
-                    HStack {
-                        ForEach(media.people, id: \.id) { person in
-                            Button { /* Temp Workaround */ } label: {
-                                VStack {
-                                    ActorImage(media: media, streamingService: streamingService, person: person)
-                                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                                        .frame(width: 300)
-                                    Text(person.name)
-                                        .multilineTextAlignment(.center)
-                                        .font(.headline)
-                                    Text(person.role)
-                                        .multilineTextAlignment(.center)
-                                        .font(.caption)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.horizontal)
-                        }
-                    }
-                }
-                .scrollClipDisabled()
+                ActorBrowserView(media: media, streamingService: streamingService)
                 
             }
             .scrollClipDisabled()
@@ -277,6 +256,38 @@ struct DetailMediaView: View {
             return allEpisodes.first ?? mostRecentEpisode.element
         }
         return allEpisodes[mostRecentEpisode.offset + 1]
+    }
+}
+
+// MARK: Actor browser
+public struct ActorBrowserView: View {
+    // Media to pull actors from
+    let media: any MediaProtocol
+    let streamingService: any StreamingServiceProtocol
+    
+    public var body: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(media.people, id: \.id) { person in
+                    Button { /* Temp Workaround */ } label: {
+                        VStack {
+                            ActorImage(media: media, streamingService: streamingService, person: person)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .frame(width: 300)
+                            Text(person.name)
+                                .multilineTextAlignment(.center)
+                                .font(.headline)
+                            Text(person.role)
+                                .multilineTextAlignment(.center)
+                                .font(.caption)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .padding()
+                }
+            }
+        }
+        .scrollClipDisabled()
     }
 }
 

@@ -19,6 +19,7 @@ struct PlayerView: View {
                 AVPlayerViewControllerRepresentable(
                     player: player,
                     transportBarCustomMenuItems: makeTransportBarItems(),
+                    streamingService: self.vm.streamingService,
                     media: self.vm.media,
                     mediaSource: self.vm.mediaSource
                 ) {
@@ -240,7 +241,7 @@ struct PlayerView: View {
     }
 }
 
-fileprivate struct Description: View {
+fileprivate struct PlayerDescriptionView: View {
     let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
     
@@ -268,7 +269,9 @@ fileprivate struct Description: View {
                         .padding(.bottom)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
                 .modifier(MaterialEffectModifier())
+                
                 switch media.mediaType {
                 case .collections, .movies:
                     EmptyView()
@@ -285,6 +288,7 @@ fileprivate struct Description: View {
                                 .multilineTextAlignment(.leading)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding()
                         .modifier(MaterialEffectModifier())
                     }
                 }
@@ -293,20 +297,35 @@ fileprivate struct Description: View {
     }
 }
 
+fileprivate struct PlayerPeopleView: View {
+    let media: any MediaProtocol
+    let streamingService: any StreamingServiceProtocol
+    
+    var body: some View {
+        ActorBrowserView(media: self.media, streamingService: self.streamingService)
+            .padding()
+            .padding(.horizontal, 24)
+            .modifier(MaterialEffectModifier())
+    }
+}
+
 fileprivate struct MaterialEffectModifier: ViewModifier {
     let padding = 20.0
+    let radius = 24.0
     
     func body(content: Content) -> some View {
         if #available(tvOS 26.0, *) {
             content
                 .padding(padding)
-                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                .glassEffect(.regular, in: .rect(cornerRadius: radius))
                 .padding(-padding)
+                .clipShape(RoundedRectangle(cornerRadius: radius))
         } else {
             content
                 .padding(padding)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 24))
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: radius))
                 .padding(-padding)
+                .clipShape(RoundedRectangle(cornerRadius: radius))
         }
     }
 }
@@ -314,6 +333,7 @@ fileprivate struct MaterialEffectModifier: ViewModifier {
 struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     let player: AVPlayer
     let transportBarCustomMenuItems: [UIMenuElement]
+    let streamingService: any StreamingServiceProtocol
     let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
     
@@ -338,13 +358,16 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         
         // Series & episode description
         let descTab = UIHostingController(
-            rootView: Description(media: media, mediaSource: mediaSource)
+            rootView: PlayerDescriptionView(media: media, mediaSource: mediaSource)
         )
         descTab.title = "Description"
         descTab.preferredContentSize = CGSize(width: 0, height: 350)
         
-        controller.customInfoViewControllers = [descTab]
+        let peopleTab = UIHostingController(rootView: PlayerPeopleView(media: media, streamingService: streamingService))
+        peopleTab.title = "People"
+        peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
         
+        controller.customInfoViewControllers = [descTab, peopleTab]
         return controller
     }
     
