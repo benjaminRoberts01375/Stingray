@@ -247,6 +247,9 @@ fileprivate struct Description: View {
     var body: some View {
         VStack {
             MediaMetadataView(media: media)
+                .padding(.bottom)
+                .shadow(color: .black.opacity(1), radius: 10)
+            
             HStack(alignment: .top) {
                 VStack(alignment: .leading) {
                     let isTVSeries = {
