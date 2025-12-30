@@ -48,6 +48,7 @@ struct DetailMediaView: View {
                     case .movies(let sources):
                         ForEach(sources, id: \.id) { source in
                             MovieNavigationView(
+                                media: media,
                                 mediaSource: source,
                                 streamingService: streamingService,
                                 focus: $focus,
@@ -60,6 +61,7 @@ struct DetailMediaView: View {
                                 seasons: seasons,
                                 streamingService: streamingService,
                                 episode: episode,
+                                media: media,
                                 focus: $focus,
                                 navigation: $navigation
                             )
@@ -361,6 +363,7 @@ fileprivate struct MediaLogoView: View {
 
 // MARK: Movie play buttons
 fileprivate struct MovieNavigationView: View {
+    let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
     
@@ -372,6 +375,7 @@ fileprivate struct MovieNavigationView: View {
         Button {
             navigation.append(
                 PlayerViewModel(
+                    media: media,
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
@@ -394,6 +398,7 @@ fileprivate struct TVEpisodeNavigationView: View {
     let seasons: [any TVSeasonProtocol]
     let streamingService: any StreamingServiceProtocol
     let episode: any TVEpisodeProtocol
+    let media: any MediaProtocol
     
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
@@ -404,6 +409,7 @@ fileprivate struct TVEpisodeNavigationView: View {
             Button {
                 navigation.append(
                     PlayerViewModel(
+                        media: media,
                         mediaSource: mediaSource,
                         startTime: .zero,
                         streamingService: streamingService,
@@ -420,6 +426,7 @@ fileprivate struct TVEpisodeNavigationView: View {
                 Button {
                     navigation.append(
                         PlayerViewModel(
+                            media: media,
                             mediaSource: mediaSource,
                             startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                             streamingService: streamingService,
@@ -536,7 +543,7 @@ fileprivate struct EpisodeSelectorView: View {
 }
 
 fileprivate struct EpisodeNavigationView: View {
-    let mediaID: String
+    let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
     let streamingService: any StreamingServiceProtocol
     let seasons: [any TVSeasonProtocol]
@@ -548,6 +555,7 @@ fileprivate struct EpisodeNavigationView: View {
         Button {
             navigation.append(
                 PlayerViewModel(
+                    media: media,
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
                     streamingService: streamingService,
@@ -585,7 +593,7 @@ fileprivate struct EpisodeView: View {
     var body: some View {
         VStack {
             EpisodeNavigationView(
-                mediaID: media.id,
+                media: media,
                 mediaSource: source,
                 streamingService: streamingService,
                 seasons: seasons,

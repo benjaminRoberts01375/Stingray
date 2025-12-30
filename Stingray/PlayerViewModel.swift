@@ -12,8 +12,33 @@ import SwiftUI
 final class PlayerViewModel: Hashable {
     /// Player with formatted URL already set
     public var player: AVPlayer?
+    /// Media that contains the source to play
+    public var media: any MediaProtocol
     /// Media source in play
-    public var mediaSource: any MediaSourceProtocol
+    public var mediaSourceID: String {
+        didSet {
+            switch self.media.mediaType {
+            case .collections:
+                break
+            case .movies(let mediaSources):
+                self.mediaSource = mediaSources.first { $0.id == self.mediaSourceID } ?? self.mediaSource
+                return
+            case .tv(let seasons):
+                guard let seasons = seasons else { return }
+                for season in seasons {
+                    for episode in season.episodes {
+                        if let mediaSource = episode.mediaSources.first, mediaSource.id == self.mediaSourceID {
+                            self.mediaSource = mediaSource
+                            return
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /// Quickly get the media source from the media source ID
+    public private(set) var mediaSource: any MediaSourceProtocol
+    
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
@@ -28,28 +53,31 @@ final class PlayerViewModel: Hashable {
     
     // Hashable Conformance
     static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
-        lhs.mediaSource.id == rhs.mediaSource.id &&
+        lhs.mediaSourceID == rhs.mediaSourceID &&
         lhs.startTime == rhs.startTime
     }
     
     func hash(into hasher: inout Hasher) {
-        hasher.combine(mediaSource.id)
+        hasher.combine(media.id)
         hasher.combine(startTime.seconds)
     }
     
     /// Normal init for setting up a player
     public init(
+        media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
         streamingService: StreamingServiceProtocol,
         seasons: [any TVSeasonProtocol]?
     ) {
         self.player = nil
-        self.mediaSource = mediaSource
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
         self.seasons = seasons
         self.playerProgress = nil
+        self.mediaSourceID = mediaSource.id
+        self.mediaSource = mediaSource
+        self.media = media
     }
     
     /// Creates a new player based on current state
