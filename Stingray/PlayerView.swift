@@ -19,6 +19,8 @@ struct PlayerView: View {
                 AVPlayerViewControllerRepresentable(
                     player: player,
                     transportBarCustomMenuItems: makeTransportBarItems(),
+                    media: self.vm.media,
+                    mediaSource: self.vm.mediaSource
                 ) {
                     self.vm.navigationPath = self.navigation
                     dismiss()
@@ -238,9 +240,79 @@ struct PlayerView: View {
     }
 }
 
+fileprivate struct Description: View {
+    let media: any MediaProtocol
+    let mediaSource: any MediaSourceProtocol
+    
+    var body: some View {
+        VStack {
+            MediaMetadataView(media: media)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading) {
+                    let isTVSeries = {
+                        if case .tv = self.media.mediaType {
+                            return true
+                        }
+                        return false
+                    }()
+                    Text("\(isTVSeries ? "Series " : "")Description")
+                        .font(.title3.bold())
+                        .multilineTextAlignment(.leading)
+                        .padding(.bottom)
+                    Text(self.media.description)
+                        .font(.body)
+                        .multilineTextAlignment(.leading)
+                        .padding(.bottom)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .modifier(MaterialEffectModifier())
+                switch media.mediaType {
+                case .collections, .movies:
+                    EmptyView()
+                case .tv(let seasons):
+                    if let seasons = seasons,
+                       let episode = (seasons.flatMap(\.episodes).first { $0.mediaSources.first?.id == self.mediaSource.id }),
+                       let episodeDescription = episode.overview {
+                        VStack(alignment: .leading) {
+                            Text("Episode Description")
+                                .font(.title3.bold())
+                                .multilineTextAlignment(.leading)
+                            Text(episodeDescription)
+                                .font(.body)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .modifier(MaterialEffectModifier())
+                    }
+                }
+            }
+        }
+    }
+}
+
+fileprivate struct MaterialEffectModifier: ViewModifier {
+    let padding = 20.0
+    
+    func body(content: Content) -> some View {
+        if #available(tvOS 26.0, *) {
+            content
+                .padding(padding)
+                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                .padding(-padding)
+        } else {
+            content
+                .padding(padding)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 24))
+                .padding(-padding)
+        }
+    }
+}
+
 struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     let player: AVPlayer
     let transportBarCustomMenuItems: [UIMenuElement]
+    let media: any MediaProtocol
+    let mediaSource: any MediaSourceProtocol
     
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
     let onStartPiP: () -> Void
@@ -260,6 +332,15 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         controller.allowsPictureInPicturePlayback = true
         controller.allowedSubtitleOptionLanguages = .init(["nerd"])
         controller.delegate = context.coordinator
+        
+        // Series & episode description
+        let descTab = UIHostingController(
+            rootView: Description(media: media, mediaSource: mediaSource)
+        )
+        descTab.title = "Description"
+        descTab.preferredContentSize = CGSize(width: 0, height: 350)
+        
+        controller.customInfoViewControllers = [descTab]
         
         return controller
     }

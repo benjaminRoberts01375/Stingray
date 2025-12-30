@@ -346,17 +346,26 @@ fileprivate struct MediaLogoView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 800, alignment: .center)
             }
+            MediaMetadataView(media: media)
+        }
+    }
+}
+
+// MARK: Movie metadata
+public struct MediaMetadataView: View {
+    /// Media to show metadata for
+    let media: any MediaProtocol
+    
+    public var body: some View {
+        if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
+            let items: [String] = [
+                media.maturity,
+                media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
+                media.duration?.roundedTime()
+            ].compactMap { $0 }
             
-            if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
-                let items: [String] = [
-                    media.maturity,
-                    media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                    media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                    media.duration?.roundedTime()
-                ].compactMap { $0 }
-                
-                Text(items.joined(separator: " • "))
-            }
+            Text(items.joined(separator: " • "))
         }
     }
 }
