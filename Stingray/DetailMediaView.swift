@@ -606,7 +606,7 @@ fileprivate struct EpisodeView: View {
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
     
-    @FocusState private var isFocused: Bool?
+    @FocusState private var isFocused: Bool
     @State var showDetails = false
     
     var body: some View {
@@ -622,6 +622,8 @@ fileprivate struct EpisodeView: View {
             .frame(width: 400, height: 325)
             .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
+            .offset(y: isFocused ? -16 : 0)
+            .animation(.easeOut(duration: 0.5), value: isFocused)
             .onMoveCommand { direction in
                 if direction == .up, let seasonID = (seasons.first { $0.episodes.contains { $0.id == episode.id } }?.id) {
                     self.focus = .season(seasonID)
@@ -674,15 +676,13 @@ fileprivate struct EpisodeView: View {
                 .padding(16)
                 .background {
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(isFocused ?? false ? 0.1 : 0))
+                        .fill(Color.white.opacity(isFocused ? 0.1 : 0))
                 }
                 .padding(-16)
             }
             .buttonStyle(.plain)
             .focused($isFocused, equals: true)
             .focused($focus, equals: .media(episode.id))
-            .animation(.easeOut(duration: 0.5), value: isFocused)
-            .padding(.top, isFocused ?? false ? 16 : 0)
         }
     }
 }
