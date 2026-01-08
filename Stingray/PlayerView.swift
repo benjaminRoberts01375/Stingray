@@ -35,33 +35,7 @@ struct PlayerView: View {
                 }
             }
         }
-        .onAppear {
-            // Only run if player hasn't been set up yet
-            guard self.vm.player == nil else { return }
-            
-            let userModel = UserModel()
-            var subtitleID: String?
-            var bitrate: Bitrate = .full
-            if let defaultUser = userModel.getDefaultUser() {
-                if defaultUser.usesSubtitles {
-                    subtitleID = self.vm.mediaSource.subtitleStreams.first {
-                        $0.isDefault
-                    }?.id ?? self.vm.mediaSource.subtitleStreams.first?.id
-                }
-                if let bitrateBits = defaultUser.bitrate {
-                    bitrate = .limited(bitrateBits)
-                }
-            }
-            self.vm.newPlayer(
-                startTime: self.vm.startTime,
-                videoID: self.vm.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.videoStreams.first?.id ?? "0"),
-                audioID: self.vm.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.vm.mediaSource.audioStreams.first?.id ?? "1"),
-                subtitleID: subtitleID,
-                bitrate: bitrate
-            )
-        }
-        .onDisappear {
-            // Only stop the player if PiP is not active
+        .onDisappear { // Only stop the player if PiP is not active
             if AVPlayerViewControllerRepresentable.Coordinator.activePiPCoordinator == nil {
                 print("Stopping player")
                 self.vm.stopPlayer()

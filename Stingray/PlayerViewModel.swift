@@ -78,6 +78,32 @@ final class PlayerViewModel: Hashable {
         self.mediaSourceID = mediaSource.id
         self.mediaSource = mediaSource
         self.media = media
+        
+        let userModel = UserModel()
+        var subtitleID: String?
+        var bitrate: Bitrate = .full
+        
+        if let defaultUser = userModel.getDefaultUser() {
+            // Setup subtitles
+            if defaultUser.usesSubtitles {
+                subtitleID = self.mediaSource.subtitleStreams.first {
+                    $0.isDefault
+                }?.id ?? self.mediaSource.subtitleStreams.first?.id
+            }
+            // Setup bitrate
+            if let bitrateBits = defaultUser.bitrate {
+                bitrate = .limited(bitrateBits)
+            }
+        }
+        
+        self.newPlayer(
+            startTime: self.startTime,
+            videoID: self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0"),
+            audioID: self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1"),
+            subtitleID: subtitleID,
+            bitrate: bitrate
+        )
+        
     }
     
     /// Creates a new player based on current state
