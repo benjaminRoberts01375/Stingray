@@ -31,33 +31,37 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var title: String
     public var media: MediaStatus
     public var id: String
+    public var libraryType: String
     
-    init(title: String, id: String) {
+    init(title: String, id: String, libraryType: String) {
         self.title = title
         self.media = .unloaded
         self.id = id
+        self.libraryType = libraryType
     }
     
     enum CodingKeys: String, CodingKey {
         case title = "Name"
         case media = "media"
         case id = "Id"
+        case libraryType = "CollectionType"
     }
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
+        var title = ""
         do {
-            self.title = try container.decode(String.self, forKey: .title)
+            title = try container.decode(String.self, forKey: .title)
         } catch {
             print("Failed to decode title: \(error)")
             throw error
         }
-        
+        self.title = title
         do {
             self.id = try container.decode(String.self, forKey: .id)
+            self.libraryType = try container.decode(String.self, forKey: .libraryType)
         } catch {
-            print("Failed to decode id: \(error)")
+            print("Failed to decode for \(title)")
             throw error
         }
         self.media = .unloaded // Don't even try to decode media here
