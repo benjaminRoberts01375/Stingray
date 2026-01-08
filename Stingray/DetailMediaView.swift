@@ -231,8 +231,12 @@ struct DetailMediaView: View {
     
     static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
         let allEpisodes = seasons.flatMap(\.episodes)
+        if let firstEpisode = allEpisodes.first, firstEpisode.lastPlayed == nil {
+            return firstEpisode
+        }
         guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
-            previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
+            print(currentEpisode.element.lastPlayed ?? .distantPast)
+            return previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
         }),
               let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
         else { return allEpisodes.first }
