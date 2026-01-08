@@ -182,7 +182,12 @@ struct DetailMediaView: View {
                     }
                     .focused($focus, equals: .overview)
                 }
-                .padding(.vertical, 64)
+                .padding(.vertical, {
+                    switch self.media.mediaType {
+                    case .tv: 64
+                    default: 0
+                    }
+                }())
                 
                 ActorBrowserView(media: media, streamingService: streamingService)
                 
@@ -235,7 +240,6 @@ struct DetailMediaView: View {
             return firstEpisode
         }
         guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
-            print(currentEpisode.element.lastPlayed ?? .distantPast)
             return previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
         }),
               let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
