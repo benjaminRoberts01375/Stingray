@@ -354,18 +354,25 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         
         context.coordinator.playerViewController = controller
         
-        // Series & episode description
-        let descTab = UIHostingController(
-            rootView: PlayerDescriptionView(media: media, mediaSource: mediaSource)
-        )
-        descTab.title = "Description"
-        descTab.preferredContentSize = CGSize(width: 0, height: 350)
+        var playerTabs: [UIViewController] = []
         
-        let peopleTab = UIHostingController(rootView: PlayerPeopleView(media: media, streamingService: streamingService))
-        peopleTab.title = "People"
-        peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+        if !self.media.description.isEmpty {
+            // Series & episode description
+            let descTab = UIHostingController(
+                rootView: PlayerDescriptionView(media: media, mediaSource: mediaSource)
+            )
+            descTab.title = "Description"
+            descTab.preferredContentSize = CGSize(width: 0, height: 350)
+            playerTabs.append(descTab)
+        }
         
-        controller.customInfoViewControllers = [descTab, peopleTab]
+        if !self.media.people.isEmpty {
+            let peopleTab = UIHostingController(rootView: PlayerPeopleView(media: media, streamingService: streamingService))
+            peopleTab.title = "People"
+            peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+            playerTabs.append(peopleTab)
+        }
+        controller.customInfoViewControllers = playerTabs
         return controller
     }
     
