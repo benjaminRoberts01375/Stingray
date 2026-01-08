@@ -316,6 +316,7 @@ protocol PlayerProtocol {
     var audioID: String { get }
     var videoID: String { get }
     var bitrate: Bitrate { get }
+    var mediaSource: any MediaSourceProtocol { get }
     
     func start()
     func stop()
@@ -326,7 +327,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     private let network: any AdvancedNetworkProtocol
     private var timer: Timer?
     private let mediaID: String
-    private var mediaSource: any MediaSourceProtocol
+    var mediaSource: any MediaSourceProtocol
     let videoID: String
     let bitrate: Bitrate
     let audioID: String

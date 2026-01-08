@@ -523,7 +523,6 @@ fileprivate struct SeasonSelectorView: View {
             // Track which season is active when focus changes
             switch newValue {
             case .media(let mediaID):
-                print("Changed media ID to \(mediaID)")
                 if let season = seasons.first(where: { $0.episodes.contains { $0.id == mediaID } }) {
                     lastFocusedSeasonID = season.id
                 }

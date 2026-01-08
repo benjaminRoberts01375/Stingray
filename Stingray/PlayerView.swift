@@ -17,6 +17,7 @@ struct PlayerView: View {
         VStack {
             if let player = self.vm.player {
                 AVPlayerViewControllerRepresentable(
+                    id: self.vm.mediaSourceID,
                     player: player,
                     transportBarCustomMenuItems: makeTransportBarItems(),
                     streamingService: self.vm.streamingService,
@@ -59,7 +60,13 @@ struct PlayerView: View {
                 bitrate: bitrate
             )
         }
-        .onDisappear { self.vm.stopPlayer() }
+        .onDisappear {
+            // Only stop the player if PiP is not active
+            if AVPlayerViewControllerRepresentable.Coordinator.activePiPCoordinator == nil {
+                print("Stopping player")
+                self.vm.stopPlayer()
+            }
+        }
         .ignoresSafeArea(.all)
     }
     
@@ -331,6 +338,7 @@ fileprivate struct MaterialEffectModifier: ViewModifier {
 }
 
 struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    let id: String
     let player: AVPlayer
     let transportBarCustomMenuItems: [UIMenuElement]
     let streamingService: any StreamingServiceProtocol
@@ -343,7 +351,21 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     let onStopFromPiP: () -> Void
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(onStartPiP: onStartPiP, onRestoreFromPiP: onRestoreFromPiP, onStopFromPiP: onStopFromPiP)
+        let coordinator = Coordinator(
+            id: id,
+            onStartPiP: self.onStartPiP,
+            onRestoreFromPiP: self.onRestoreFromPiP,
+            onStopFromPiP: self.onStopFromPiP,
+        )
+        
+        // Should we kill the current PiP stream because the user is now watching something new?
+        if Self.Coordinator.activePiPCoordinator?.id != nil && self.mediaSource.id != Self.Coordinator.activePiPCoordinator?.id {
+            print("Killing PiP Coordinator")
+            // Stop the previous player to kill PiP
+            Self.Coordinator.activePiPCoordinator?.stopPlayer()
+            Self.Coordinator.activePiPCoordinator = nil
+        }
+        return coordinator
     }
     
     func makeUIViewController(context: Context) -> AVPlayerViewController {
@@ -355,6 +377,8 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         controller.allowsPictureInPicturePlayback = true
         controller.allowedSubtitleOptionLanguages = .init(["nerd"])
         controller.delegate = context.coordinator
+        
+        context.coordinator.playerViewController = controller
         
         // Series & episode description
         let descTab = UIHostingController(
@@ -380,31 +404,48 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         let onStartPiP: () -> Void
         let onRestoreFromPiP: () -> Void
         let onStopFromPiP: () -> Void
+        let id: String
         
-        private static var activePiPCoordinators = Set<Coordinator>()
+        // Maintain a reference to a PiP instance
+        weak var playerViewController: AVPlayerViewController?
+        // Maintain a reference to this Coordinator while PiP is active
+        static var activePiPCoordinator: Coordinator?
         
         // Track whether we're restoring vs closing
         private var isRestoringFromPiP = false
         
-        init(onStartPiP: @escaping () -> Void, onRestoreFromPiP: @escaping () -> Void, onStopFromPiP: @escaping () -> Void) {
+        init(
+            id: String,
+            onStartPiP: @escaping () -> Void,
+            onRestoreFromPiP: @escaping () -> Void,
+            onStopFromPiP: @escaping () -> Void,
+        ) {
+            self.id = id
             self.onStartPiP = onStartPiP
             self.onRestoreFromPiP = onRestoreFromPiP
             self.onStopFromPiP = onStopFromPiP
         }
         
+        func stopPlayer() {
+            // On tvOS, stopping the player will end PiP automatically
+            playerViewController?.player?.pause()
+            playerViewController?.player?.replaceCurrentItem(with: nil)
+        }
+        
         func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
             print("PiP starting")
             self.onStartPiP()
-            Self.activePiPCoordinators.insert(self) // Keep self alive
+            Self.activePiPCoordinator = self // Keep self alive
         }
         
         func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
+            print("PiP stopped")
             if !isRestoringFromPiP {
                 onStopFromPiP()
             }
             
             isRestoringFromPiP = false // Reset for next time
-            Self.activePiPCoordinators.remove(self)
+            Self.activePiPCoordinator = nil
         }
         
         func playerViewController(
@@ -412,7 +453,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             failedToStartPictureInPictureWithError error: Error
         ) {
             print("PiP failed to start: \(error)")
-            Self.activePiPCoordinators.remove(self)
+            Self.activePiPCoordinator = nil
         }
         
         func playerViewControllerShouldAutomaticallyDismissAtPictureInPictureStart(

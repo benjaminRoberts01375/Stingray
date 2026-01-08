@@ -94,11 +94,7 @@ final class PlayerViewModel: Hashable {
         subtitleID: String? = nil,
         bitrate: Bitrate? = nil
     ) {
-        if let existingPlayer = player {
-            existingPlayer.pause()
-            streamingService.playbackEnd()
-            self.player = nil
-        }
+        self.stopPlayer()
         
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
