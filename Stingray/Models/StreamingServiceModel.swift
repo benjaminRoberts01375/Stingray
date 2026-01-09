@@ -28,16 +28,22 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
 }
 
+/// Describes the current setup status for a downloaded library
 enum LibraryStatus {
+    /// The library object has been created but hasn't fetched
     case waiting
+    /// The library object has been created and is fetching
     case retrieving
+    /// Some of the library's content is available, but we're still fetching
     case available([LibraryModel])
+    /// All of this library's content has been downloaded
     case complete([LibraryModel])
+    /// The library has errored out
     case error(Error)
 }
 
 /// Denotes the availablity of a piece of media
-enum MediaLookupStatus {
+public enum MediaLookupStatus {
     /// The requested media was found
     case found(any MediaProtocol)
     /// The requested media was not found, but may be available once libraries finish downloading
@@ -314,15 +320,24 @@ public final class JellyfinModel: StreamingServiceProtocol {
     }
 }
 
+/// Describes a data structure for storing player data. Note that you must call `start()` and `stop()` manually.
 protocol PlayerProtocol {
+    /// Player object
     var player: AVPlayer { get }
+    /// ID for the subtitles based on the server
     var subtitleID: String? { get }
+    /// ID for the audio stream based on the server
     var audioID: String { get }
+    /// ID for the video stream based on the server
     var videoID: String { get }
+    /// Video bitrate
     var bitrate: Bitrate { get }
+    /// Encompasing media source that contains the actual data
     var mediaSource: any MediaSourceProtocol { get }
     
+    /// Streaming is beginning
     func start()
+    /// Streaming has permanently ended for this session
     func stop()
 }
 

@@ -1,8 +1,6 @@
 # Included paths
 included:
-  - Source
-  - Map Map
-  - GPSTrackingLA
+  - Stingray
 # Excluded paths
 excluded:
   - Carthage
@@ -59,6 +57,10 @@ line_length:
 trailing_semicolon: error
 
 force_cast: warning
+
+missing_docs:
+  warning: [open, public, fileprivate, internal, private]
+  excludes_extensions: false
 
 # Disabled rules
 disabled_rules:

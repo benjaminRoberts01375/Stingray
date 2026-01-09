@@ -33,21 +33,34 @@ public protocol BasicNetworkProtocol {
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
 }
 
+/// Basic descriptor for REST API verbs
 public enum NetworkRequestType: String {
+    /// Corresponds to the GET REST API verb
     case get = "GET"
+    /// Corresponds to the PUT REST API verb
     case put = "PUT"
+    /// Corresponds to the POST REST API verb
     case post = "POST"
+    /// Corresponds to the DELETE REST API verb
     case delete = "DELETE"
 }
 
+/// An advanced error type for networking
 public enum NetworkError: Error, LocalizedError {
+    /// The request URL was invalid
     case invalidURL
+    /// Could not encode JSON
     case encodeJSONFailed(Error)
+    /// Could not send the payload
     case requestFailedToSend(Error)
+    /// Response was bad in some way
     case badResponse(responseCode: Int, response: String?)
+    /// Could not decode the returned JSON
     case decodeJSONFailed(Error, url: URL?)
+    /// An access token is needed
     case missingAccessToken
     
+    /// Describes errors in a human readable format
     public var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -96,9 +109,7 @@ public enum NetworkError: Error, LocalizedError {
 public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     var address: URL
     
-    init(address: URL) {
-        self.address = address
-    }
+    init(address: URL) { self.address = address }
     
     public func request<T: Decodable>(
         verb: NetworkRequestType,

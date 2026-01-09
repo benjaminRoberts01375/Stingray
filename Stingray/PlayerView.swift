@@ -283,7 +283,7 @@ fileprivate struct PlayerPeopleView: View {
     let streamingService: any StreamingServiceProtocol
     
     var body: some View {
-        ActorBrowserView(media: self.media, streamingService: self.streamingService)
+        PeopleBrowserView(media: self.media, streamingService: self.streamingService)
             .padding()
             .padding(.horizontal, 24)
             .modifier(MaterialEffectModifier())

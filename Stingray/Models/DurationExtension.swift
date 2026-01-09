@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 11/20/25.
 //
 
+/// Extend the Duration type to have a rounded time option
 extension Duration {
     /// Rounds a duration into a neatly formatted string.
     /// - Returns: A neatly formatted string.

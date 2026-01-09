@@ -10,26 +10,31 @@ import BlurHashKit
 import SwiftUI
 
 // MARK: Main view
-struct DetailMediaView: View {
+public struct DetailMediaView: View {
+    /// Media that contains content to play
     let media: any MediaProtocol
+    /// Streaming service the user is using
     let streamingService: any StreamingServiceProtocol
+    
+    @Binding var navigation: NavigationPath
     
     @State private var shouldBackgroundBlur: Bool = false
     @State private var shouldRevealBottomShelf: Bool = false
     @State private var shouldShowMetaData: Bool = false
     @FocusState private var focus: ButtonType?
     
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
+    public var body: some View {
         ZStack(alignment: .bottom) {
+            // Background
             MediaBackgroundView(
                 media: media,
                 backgroundImageURL: streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0),
                 shouldBlurBackground: $shouldBackgroundBlur
             )
             
+            // Content
             ScrollView {
+                // Logo and basic metadata
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
                     MediaLogoView(
@@ -83,6 +88,7 @@ struct DetailMediaView: View {
                 switch media.mediaType {
                 case .tv(let seasons):
                     if let seasons, seasons.flatMap(\.episodes).count > 1 {
+                        // Season selector
                         ScrollViewReader { svrProxy in
                             ScrollView(.horizontal) {
                                 HStack {
@@ -98,6 +104,7 @@ struct DetailMediaView: View {
                             .padding(32)
                             .opacity(shouldRevealBottomShelf ? 1 : 0)
                             
+                            // Episode selector
                             ScrollView(.horizontal) {
                                 LazyHStack {
                                     EpisodeSelectorView(
@@ -125,6 +132,7 @@ struct DetailMediaView: View {
                         .focusable(false)
                 }
                 
+                // Metadata
                 // Overview
                 HStack(alignment: .top) {
                     Button {} label: {
@@ -144,6 +152,7 @@ struct DetailMediaView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
                     .focused($focus, equals: .overview)
+                    // Ratings
                     Button {} label: {
                         VStack(alignment: .leading, spacing: 16) {
                             if !media.genres.isEmpty || media.releaseDate != nil || media.maturity != nil {
@@ -189,13 +198,14 @@ struct DetailMediaView: View {
                     }
                 }())
                 
-                ActorBrowserView(media: media, streamingService: streamingService)
+                // People
+                PeopleBrowserView(media: media, streamingService: streamingService)
                 
             }
             .scrollClipDisabled()
             .padding(32)
             .offset(y: shouldRevealBottomShelf ? 0 : 500)
-            .background(alignment: .bottom) {
+            .background(alignment: .bottom) { // Subtle black shadow
                 let titleShadowSize = 800.0
                 Circle()
                     .fill(
@@ -236,14 +246,16 @@ struct DetailMediaView: View {
     
     static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
         let allEpisodes = seasons.flatMap(\.episodes)
+        // If the first episode hasn't been played suggest it
         if let firstEpisode = allEpisodes.first, firstEpisode.lastPlayed == nil {
             return firstEpisode
         }
+        // Get the most recent episode
         guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
             return previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
         }),
               let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
-        else { return allEpisodes.first }
+        else { return allEpisodes.first } // failing getting the most recent, return the first episode
         
         // Watched previous episode all the way through
         if mostRecentMediaSource.startTicks == 0 {
@@ -264,38 +276,6 @@ struct DetailMediaView: View {
             return allEpisodes.first ?? mostRecentEpisode.element
         }
         return allEpisodes[mostRecentEpisode.offset + 1]
-    }
-}
-
-// MARK: Actor browser
-public struct ActorBrowserView: View {
-    // Media to pull actors from
-    let media: any MediaProtocol
-    let streamingService: any StreamingServiceProtocol
-    
-    public var body: some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(media.people, id: \.id) { person in
-                    Button { /* Temp Workaround */ } label: {
-                        VStack {
-                            ActorImage(media: media, streamingService: streamingService, person: person)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .frame(width: 300)
-                            Text(person.name)
-                                .multilineTextAlignment(.center)
-                                .font(.headline)
-                            Text(person.role)
-                                .multilineTextAlignment(.center)
-                                .font(.caption)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .padding()
-                }
-            }
-        }
-        .scrollClipDisabled()
     }
 }
 
@@ -569,41 +549,7 @@ fileprivate struct EpisodeSelectorView: View {
     }
 }
 
-fileprivate struct EpisodeNavigationView: View {
-    let media: any MediaProtocol
-    let mediaSource: any MediaSourceProtocol
-    let streamingService: any StreamingServiceProtocol
-    let seasons: [any TVSeasonProtocol]
-    let episode: any TVEpisodeProtocol
-    
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
-        Button {
-            navigation.append(
-                PlayerViewModel(
-                    media: media,
-                    mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                    streamingService: streamingService,
-                    seasons: seasons
-                )
-            )
-        } label: {
-            VStack(spacing: 0) {
-                EpisodeArtView(episode: episode, streamingService: streamingService)
-                Text(episode.title)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .padding()
-                Spacer(minLength: 0)
-            }
-            .background(.ultraThinMaterial)
-        }
-        .buttonStyle(.card)
-    }
-}
-
+// MARK: Episode summary and navigation
 fileprivate struct EpisodeView: View {
     let media: any MediaProtocol
     let source: any MediaSourceProtocol
@@ -619,6 +565,7 @@ fileprivate struct EpisodeView: View {
     
     var body: some View {
         VStack {
+            // Episode thumbnail with navigation capabilities
             EpisodeNavigationView(
                 media: media,
                 mediaSource: source,
@@ -695,6 +642,42 @@ fileprivate struct EpisodeView: View {
     }
 }
 
+// MARK: Episode thumbnail navigator
+fileprivate struct EpisodeNavigationView: View {
+    let media: any MediaProtocol
+    let mediaSource: any MediaSourceProtocol
+    let streamingService: any StreamingServiceProtocol
+    let seasons: [any TVSeasonProtocol]
+    let episode: any TVEpisodeProtocol
+    
+    @Binding var navigation: NavigationPath
+    
+    var body: some View {
+        Button {
+            navigation.append(
+                PlayerViewModel(
+                    media: media,
+                    mediaSource: mediaSource,
+                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    streamingService: streamingService,
+                    seasons: seasons
+                )
+            )
+        } label: {
+            VStack(spacing: 0) {
+                EpisodeArtView(episode: episode, streamingService: streamingService)
+                Text(episode.title)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding()
+                Spacer(minLength: 0)
+            }
+            .background(.ultraThinMaterial)
+        }
+        .buttonStyle(.card)
+    }
+}
+
 // MARK: Actor Photo
 fileprivate struct ActorImage: View {
     let media: any MediaProtocol
@@ -761,6 +744,39 @@ fileprivate struct EpisodeArtView: View {
     }
 }
 
+// MARK: Actor browser
+public struct PeopleBrowserView: View {
+    // Media to pull people from
+    let media: any MediaProtocol
+    let streamingService: any StreamingServiceProtocol
+    
+    public var body: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(media.people, id: \.id) { person in
+                    Button { /* Temp Workaround */ } label: {
+                        VStack {
+                            ActorImage(media: media, streamingService: streamingService, person: person)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .frame(width: 300)
+                            Text(person.name)
+                                .multilineTextAlignment(.center)
+                                .font(.headline)
+                            Text(person.role)
+                                .multilineTextAlignment(.center)
+                                .font(.caption)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .padding()
+                }
+            }
+        }
+        .scrollClipDisabled()
+    }
+}
+
+/// Types of buttons available on the `DetailMediaView`
 fileprivate enum ButtonType: Hashable {
     case play
     case season(String)

@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct LoginView: View {
-    var userModel = UserModel()
+    internal var userModel = UserModel()
     
-    @Binding var loggedIn: LoginState
-    @State var username: String = ""
-    @State var password: String = ""
-    @State var error: String = ""
-    @State var awaitingLogin: Bool = false
+    @Binding internal var loggedIn: LoginState
+    @State internal var username: String = ""
+    @State internal var password: String = ""
+    @State internal var error: String = ""
+    @State internal var awaitingLogin: Bool = false
     
     @Environment(\.dismiss) private var dismiss
     

@@ -7,8 +7,11 @@
 
 import SwiftUI
 
+/// Login phase of the application
 enum LoginState {
+    /// All users are logged out
     case loggedOut
+    /// There is at least one user signed in
     case loggedIn(any StreamingServiceProtocol)
 }
 

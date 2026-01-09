@@ -7,13 +7,19 @@
 
 import Foundation
 
+/// Basic data to store about the user
 final class UserModel {
+    /// Storage device to permanently store user data
     var storage: UserStorageProtocol
     
+    /// Create the model based on a storage medium
+    /// - Parameter storage: The storage medium
     init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
         self.storage = storage
     }
     
+    /// Adds a user to storage based on a `User` type
+    /// - Parameter user: User to add
     func addUser(_ user: User) {
         var userIDs = storage.getUserIDs()
         userIDs.append(user.id)
@@ -21,19 +27,26 @@ final class UserModel {
         storage.setUserIDs(userIDs)
     }
     
+    /// Gets a user based on a default userID
+    /// - Returns: The default user
     func getDefaultUser() -> User? {
         guard let defaultID = self.storage.getDefaultUserID() else { return nil }
         return self.storage.getUser(userID: defaultID)
     }
     
+    /// Overwrites the existing default user
+    /// - Parameter userID: UserID of the new default user
     func setDefaultUser(userID: String) {
         self.storage.setDefaultUserID(id: userID)
     }
     
+    /// Gets all users
     func getUsers() -> [User] {
         return self.storage.getUserIDs().compactMap { self.storage.getUser(userID: $0) }
     }
     
+    /// Updates a user's stored data
+    /// - Parameter user: Updated `User`
     func updateUser(_ user: User) {
         let userIDs = storage.getUserIDs()
         if !userIDs.contains(user.id) {
@@ -43,6 +56,8 @@ final class UserModel {
         }
     }
     
+    /// Deletes a user based on their ID
+    /// - Parameter userID: ID of the user to delete
     func deleteUser(_ userID: String) {
         let remainingUserIDs = self.storage.getUserIDs().filter { $0 != userID }
         storage.setUserIDs(remainingUserIDs)

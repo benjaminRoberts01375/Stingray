@@ -7,7 +7,11 @@
 
 import Foundation
 
+/// Extend the String type to create a neatly formatted string from Ticks
 extension String {
+    /// Create a neatly formatted string based off the number of ticks a stream may have.
+    /// 10,000,000 ticks = 1 second.
+    /// - Parameter ticks: Stream ticks
     init(ticks: Int) {
         let seconds = Int(Double(ticks) / 10_000_000)
         let hours = seconds / 3600

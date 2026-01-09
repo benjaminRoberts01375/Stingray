@@ -100,23 +100,28 @@ public struct SearchView: View {
     }
 }
 
+/// Extend the String type to include a slidingLevenshteinDistance calculator
 extension String {
     /// A sliding Levenshtein Distance calculator, designed to give long names no disadvantage. For example searching for "Assass"
     /// will have a perfect result against "Assassination Classroom" since the full title is truncated to the length of the original search
-    /// term. 0 = a perfect match, values greater than 0 are less good of a match.
+    /// term. 0 = a perfect match, >0 = an imperfect match.
     /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
     func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
+        // Normalize both strings
         let selfLower = self.lowercased()
         let targetLower = structuredTarget.lowercased()
         
+        // Short circuit if they're identical
         if selfLower == targetLower { return 0 }
         
         let targetChars = Array(targetLower)
         let sourceChars = Array(selfLower.prefix(targetChars.count))
         let length = min(sourceChars.count, targetChars.count)
         
+        // Short circuit if the search term is blank
         if length == 0 { return 0 }
         
+        // This Levenshtein Distance calculator is heavily optimized to only keep two rows of the matrix in memory at a time
         var previousRow = Array(0...length)
         var currentRow = Array(repeating: 0, count: length + 1)
         
@@ -139,8 +144,12 @@ extension String {
     }
 }
 
+/// Scores a piece of media based on the sortTitle for searching
 struct MediaScore {
+    /// Associated media
     let media: any MediaProtocol
+    /// Score of the media
     let score: Int
+    /// Title the score is based on
     let sortTitle: String
 }

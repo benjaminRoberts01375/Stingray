@@ -72,7 +72,14 @@ public protocol MediaSourceProtocol: Identifiable {
     var durationTicks: Int? { get }
 }
 
+/// Extend the MediaSourceProtocol to allow for getting similar streams
 extension MediaSourceProtocol {
+    /// Gets a streams based on stream type and title. This is good for having an existing stream for an episode, and finding a similar one
+    /// for the next episode.
+    /// - Parameters:
+    ///   - baseStream: Initial stream to pull metadata from.
+    ///   - streamType: Desired type of stream.
+    /// - Returns: A potential matching stream.
     func getSimilarStream(baseStream: any MediaStreamProtocol, streamType: StreamType) -> (any MediaStreamProtocol)? {
         var streams: [any MediaStreamProtocol]
         switch streamType {
