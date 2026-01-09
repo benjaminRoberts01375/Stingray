@@ -1,0 +1,27 @@
+# Based on the Immich feature request template: https://github.com/immich-app/immich/blob/main/.github/DISCUSSION_TEMPLATE/feature-request.yaml
+
+title: '[Feature] feature-name-goes-here'
+labels: ['feature']
+
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Please use this form to request new feature for Stingray.
+        Stick to only a single feature per request. If you list multiple 
+        different features at once, your request will be closed.
+
+  - type: checkboxes
+    attributes:
+      label: >-
+        I have searched the existing feature requests, both open and closed, to
+        make sure this is not a duplicate request.
+        options:
+        - label: 'Yes'
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: The feature
+    validations:
+      required: true
