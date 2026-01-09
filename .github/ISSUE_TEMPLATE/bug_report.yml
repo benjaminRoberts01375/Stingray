@@ -2,6 +2,10 @@
 
 name: Report an issue with Stingray
 description: Something maybe not working with Stingray?
+labels:
+  - Bug
+  - Needs Triage
+  
 body:
   - type: checkboxes
     attributes:
