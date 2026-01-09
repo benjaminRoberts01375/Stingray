@@ -8,6 +8,7 @@
 
 ### A super native, super fast Jellyfin client
 
+![License](https://img.shields.io/badge/License-MIT-red)
 ![platforms](https://img.shields.io/badge/platforms-tvOS-green) ![tvOS](https://img.shields.io/badge/tvOS-18%2E0%2B-blue)
 
 # Key Features
