@@ -1,0 +1,68 @@
+# Based on Immich's issue format https://github.com/immich-app/immich/blob/main/.github/ISSUE_TEMPLATE/bug_report.yaml
+
+name: Report an issue with Stingray
+description: Something maybe not working with Stingray?
+body:
+  - type: checkboxes
+    attributes:
+      validations:
+        required: true
+      label: I have searched the existing issues to make sure this is not a duplicate report.
+      options:
+        - label: 'Yes'
+
+  - type: markdown
+    attributes:
+      value: This issue form is for reporting bugs only!
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: About the Bug
+      description: >-
+        Describe the issue you are experiencing here, to communicate to the
+        maintainers. Tell us what you were trying to do and what happened.
+
+        Provide a clear and concise description of what the problem is.
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: 'How do you trigger this bug? Please walk us through it step by step.'
+      value: |
+        1. Open Stingray
+        2. 
+        3. 
+        ...
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Environment
+
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: Stingray version
+      placeholder: 1.0.0
+
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: Version of the Jellyfin server you're using. This can be found at the top of the Jellyfin dashboard.
+      placeholder: 10.11.5
+
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: If you have any additional information for us, use the field below.
+
+  - type: markdown
+    attributes:
+      value: Thank you for submitting the form.
