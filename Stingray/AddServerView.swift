@@ -49,7 +49,7 @@ struct AddServerView: View {
                 SecureField("Password", text: $password)
             }
             if error != "" {
-                Text("Error: \(error)")
+                Text(error)
                     .foregroundStyle(.red)
                     .padding(.vertical)
             }
@@ -109,7 +109,46 @@ struct AddServerView: View {
                 let streamingService = try await JellyfinModel.login(url: url, username: username, password: password)
                 self.loggedIn = .loggedIn(streamingService)
             } catch {
-                self.error = error.localizedDescription
+                if let netErr = error as? NetworkError {
+                    switch netErr {
+                    case .invalidURL:
+                        switch self.httpProcol {
+                        case .http:
+                            self.error = "Invalid HTTP URL. Check your hostname and port."
+                        case .https:
+                            self.error = "Invalid HTTPS URL. Check your URL."
+                        }
+                    case .encodeJSONFailed:
+                        self.error = "Failed to send request to server. " +
+                            "This may be because of some tricky characters in your username and password."
+                    case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
+                        switch self.httpProcol {
+                        case .http:
+                            self.error = "Could not find your Jellyfin server. Please check your hostname and port."
+                        case .https:
+                            self.error = "Could not find your Jellyfin server. Please check your URL."
+                        }
+                    case .badResponse(let responseCode, _):
+                        switch responseCode {
+                        case 401:
+                            self.error = "Invalid username or password."
+                        case 404:
+                            switch self.httpProcol {
+                            case .http:
+                                self.error = "Could not find your Jellyfin server. Please check your hostname and port."
+                            case .https:
+                                self.error = "Could not find your Jellyfin server. Please check your URL."
+                            }
+                        default:
+                            self.error = "An unexpected error occurred. Please make sure your login details are correct."
+                        }
+                    }
+                    print("Error signing in: \(error.localizedDescription)")
+                } else {
+                    // Handle other types of errors
+                    print("Other error: \(error)")
+                    self.error = "An unexpected error occurred. Please make sure your login details are correct."
+                }
                 awaitingLogin = false
             }
         }
