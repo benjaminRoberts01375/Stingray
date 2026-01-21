@@ -473,9 +473,9 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(String.self, forKey: .id)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.role = try container.decode(String.self, forKey: .role)
+        self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
+        self.name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Anonymous"
+        self.role = try container.decodeIfPresent(String.self, forKey: .role) ?? "Unknown Roll"
         self.imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
     }
 }
