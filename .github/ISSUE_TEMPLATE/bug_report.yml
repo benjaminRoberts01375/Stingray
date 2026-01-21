@@ -50,15 +50,22 @@ body:
 
   - type: input
     attributes:
-      label: Stingray version
-      placeholder: 1.0.0
+      label: Stingray version. Check the bottom of the Stingray Home tab.
+      placeholder: 1.0.1
     validations:
       required: true
 
   - type: input
     attributes:
-      label: Version of the Jellyfin server you're using. This can be found at the top of the Jellyfin dashboard.
+      label: Version of the Jellyfin server you're using. Check the bottom of the Stingray Home tab.
       placeholder: 10.11.5
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Apple TV and tvOS version. Check the bottom of the Stingray Home tab.
+      placeholder: Apple TV A2343 on tvOS 26.2
     validations:
       required: true
 
