@@ -36,7 +36,7 @@ body:
       label: Reproduction steps
       description: 'How do you trigger this bug? Please walk us through it step by step.'
       value: |
-        1. Open Stingray
+        1. Open Stingray with HTTP(S)
         2. 
         3. 
         ...
@@ -66,6 +66,10 @@ body:
     attributes:
       label: Additional information
       description: If you have any additional information for us, use the field below.
+      value: |
+        - Approximate number of movies: 
+        - Approximate number of shows: 
+        - Approximate number of libraries: 
 
   - type: markdown
     attributes:
