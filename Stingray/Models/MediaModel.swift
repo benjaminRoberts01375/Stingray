@@ -104,8 +104,6 @@ public protocol MediaPersonProtocol {
     var name: String { get }
     /// How they contributed to the media
     var role: String { get }
-    /// Type of contribution. Ex. Director
-    var type: String { get }
     /// Preview hashes
     var imageHashes: MediaImageBlurHashes? { get }
 }
@@ -464,14 +462,12 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var id: String
     public var name: String
     public var role: String
-    public var type: String
     public var imageHashes: MediaImageBlurHashes?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
         case role = "Role"
-        case type = "Type"
         case imageHashes = "ImageBlurHashes"
     }
     
@@ -480,7 +476,6 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
         self.id = try container.decode(String.self, forKey: .id)
         self.name = try container.decode(String.self, forKey: .name)
         self.role = try container.decode(String.self, forKey: .role)
-        self.type = try container.decode(String.self, forKey: .type)
         self.imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
     }
 }
