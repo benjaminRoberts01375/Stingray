@@ -135,7 +135,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
             
             let libraries =
             try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
-                .filter { $0.libraryType != "boxsets" && $0.libraryType != "" } // Temp fix until we support collections
+                .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
             
             self.libraryStatus = .available(libraries)
             try await withThrowingTaskGroup(of: Void.self) { group in
