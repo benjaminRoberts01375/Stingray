@@ -140,7 +140,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     }
     
     func retrieveLibraries() async {
-        let batchSize = 50
+        let maxConcurrentLibraries = 2
         
         do {
             self.libraryStatus = .retrieving
@@ -149,51 +149,74 @@ public final class JellyfinModel: StreamingServiceProtocol {
             try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
                 .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
             
+            if libraries.isEmpty { return }
+            
             self.libraryStatus = .available(libraries)
             try await withThrowingTaskGroup(of: Void.self) { group in
-                for library in libraries {
-                    group.addTask {
-                        var currentIndex = 0
-                        var allMedia: [MediaModel] = []
-                        if case .available(let existingMedia) = await library.media {
-                            allMedia = existingMedia
-                        }
-                        
-                        while true {
-                            let incomingMedia = try await self.networkAPI.getLibraryMedia(
-                                accessToken: self.accessToken,
-                                libraryId: library.id,
-                                index: currentIndex,
-                                count: batchSize,
-                                sortOrder: .ascending,
-                                sortBy: .SortName,
-                                mediaTypes: [.movies([]), .tv(nil)]
-                            )
-                            
-                            allMedia.append(contentsOf: incomingMedia)
-                            
-                            // Update the UI after each batch
-                            await MainActor.run { [allMedia] in
-                                library.media = .available(allMedia)
-                            }
-                            
-                            // If we received fewer items than requested, we've reached the end
-                            if incomingMedia.count < batchSize {
-                                await MainActor.run { [allMedia] in
-                                    library.media = .complete(allMedia)
-                                }
-                                break
-                            }
-                            
-                            currentIndex += batchSize
-                        }
+                var libraryIterator = libraries.makeIterator()
+                var runningTasks = 0
+                
+                // Fill up to maxConcurrentLibraries initially
+                while runningTasks < maxConcurrentLibraries {
+                    if let library = libraryIterator.next() {
+                        group.addTask { try await self.retrieveLibraryContent(library: library) }
+                        runningTasks += 1
+                    }
+                    else { break }
+                }
+                
+                // As tasks complete, start new ones
+                for try await _ in group {
+                    runningTasks -= 1
+                    
+                    if let library = libraryIterator.next() {
+                        group.addTask { try await self.retrieveLibraryContent(library: library) }
+                        runningTasks += 1
                     }
                 }
-                try await group.waitForAll()
+                
                 self.libraryStatus = .complete(libraries)
             }
         } catch {
             self.libraryStatus = .error(error)
+        }
+    }
+    
+    public func retrieveLibraryContent(library: LibraryModel) async throws {
+        let batchSize = 100
+        var currentIndex = 0
+        var allMedia: [MediaModel] = []
+        if case .available(let existingMedia) = library.media {
+            allMedia = existingMedia
+        }
+        
+        while true {
+            let incomingMedia = try await self.networkAPI.getLibraryMedia(
+                accessToken: self.accessToken,
+                libraryId: library.id,
+                index: currentIndex,
+                count: batchSize,
+                sortOrder: .ascending,
+                sortBy: .SortName,
+                mediaTypes: [.movies([]), .tv(nil)]
+            )
+            
+            allMedia.append(contentsOf: incomingMedia)
+            
+            // Update the UI after each batch
+            await MainActor.run { [allMedia] in
+                library.media = .available(allMedia)
+            }
+            
+            // If we received fewer items than requested, we've reached the end
+            if incomingMedia.count < batchSize {
+                await MainActor.run { [allMedia] in
+                    library.media = .complete(allMedia)
+                }
+                break
+            }
+            
+            currentIndex += batchSize
         }
     }
     
