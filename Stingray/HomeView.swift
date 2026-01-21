@@ -65,6 +65,9 @@ struct HomeView: View {
                 } else {
                     ProgressView()
                 }
+                // tvOS version
+                let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+                Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
             }
             .foregroundStyle(.gray.opacity(0.5))
             .frame(maxWidth: .infinity)
