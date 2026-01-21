@@ -59,7 +59,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         self.title = title
         do {
             self.id = try container.decode(String.self, forKey: .id)
-            self.libraryType = try container.decode(String.self, forKey: .libraryType)
+            self.libraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
         } catch {
             print("Failed to decode for \(title)")
             throw error
