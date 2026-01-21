@@ -33,7 +33,7 @@ To use Stingray, you must have a Jellyfin server setup either on your own networ
 
 ### Home
 
-![Home screen](https://github.com/user-attachments/assets/59caae77-93ad-4f5f-8b99-dc877027ba5b)
+![Home](https://github.com/user-attachments/assets/6da1375b-a57c-4829-9e6b-827d47d146d9)
 Quickly continue shows, and browse newly uploaded content.
 
 ### Player
