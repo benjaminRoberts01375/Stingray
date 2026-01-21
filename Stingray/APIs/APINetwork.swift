@@ -162,6 +162,7 @@ public struct APILoginResponse: Decodable {
     let userId: String
     let accessToken: String
     let serverId: String
+    var serverVersion: String?
     
     var description: String {
         return "User's name: \(userName), SessionID: \(sessionId), userID: \(userId), accessToken: \(accessToken), serverID: \(serverId)"
@@ -198,6 +199,9 @@ public struct APILoginResponse: Decodable {
         // Decode flat fields
         accessToken = try container.decode(String.self, forKey: .accessToken)
         serverId = try container.decode(String.self, forKey: .serverId)
+        
+        // Gets filled in later
+        serverVersion = nil
     }
 }
 
@@ -206,6 +210,23 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     
     init(network: BasicNetworkProtocol) {
         self.network = network
+    }
+    
+    /// Gets the current version of the Jellyfin server
+    /// - Parameter accessToken: User's access token for the Jellyfin server.
+    /// - Returns: The version of the server in this format: `xx.xx.xx`. There's no "v" at the start.
+    func getServerVersion(accessToken: String) async throws -> String {
+        struct Root: Decodable { let Version: String }
+        
+        let root: Root = try await network.request(
+            verb: .get,
+            path: "/System/Info",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: nil,
+            body: nil
+        )
+        
+        return root.Version
     }
     
     func login(username: String, password: String) async throws -> APILoginResponse {
@@ -229,6 +250,16 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             "Username": username,
             "Pw": password
         ]
+        
+        var loginInfo: APILoginResponse = try await network.request(
+            verb: .post,
+            path: "/Users/AuthenticateByName",
+            headers: nil,
+            urlParams: nil,
+            body: requestBody
+        )
+        loginInfo.serverVersion = try await self.getServerVersion(accessToken: loginInfo.accessToken)
+        
         return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, urlParams: nil, body: requestBody)
     }
     

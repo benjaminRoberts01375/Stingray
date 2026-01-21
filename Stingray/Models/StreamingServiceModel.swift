@@ -11,6 +11,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var libraryStatus: LibraryStatus { get }
     var usersName: String { get }
     var userID: String { get }
+    var serverVersion: String? { get }
     var serviceURL: URL { get }
     var playerProgress: PlayerProtocol? { get }
     
@@ -70,6 +71,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var sessionID: String
     var accessToken: String
     var serverID: String
+    var serverVersion: String?
     var serviceURL: URL
     var playerProgress: PlayerProtocol?
     
@@ -82,7 +84,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
         serviceURL: URL
     ) {
         // APIs
-        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        self.networkAPI = network
         
         // Misc properties
         self.libraryStatus = .waiting
@@ -92,11 +95,19 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.accessToken = accessToken
         self.sessionID = sessionID
         self.serviceURL = serviceURL
+        Task {
+            do {
+                self.serverVersion = try await network.getServerVersion(accessToken: self.accessToken)
+            } catch {
+                self.serverVersion = "Unknown"
+            }
+        }
     }
     
     private init(response: APILoginResponse, serviceURL: URL) {
         // APIs
-        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        self.networkAPI = network
         
         // Properties
         self.usersName = response.userName
@@ -106,6 +117,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.serverID = response.serverId
         self.libraryStatus = .waiting
         self.serviceURL = serviceURL
+        self.serverVersion = response.serverVersion
     }
     
     static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
