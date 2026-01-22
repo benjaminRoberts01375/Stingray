@@ -7,10 +7,10 @@ We appreciate every contribution, and we're happy about every new contributor. S
 1. Get a Mac and Apple TV. While an Apple TV is optional, it makes development significantly easier since the simulator doesn't support every feature an Apple TV does (Ex. PiP). One important note is that a developer account isn't needed to actually develop, though it can make life easier as it prolongs the amount of time an application (like Stingray) can be installed for. 1 Week -> 1 Year. Additionally, while Stingray doesn't require any of Apple's server APIs, if it one day does, an Apple Developer Account will be required.
 2. Download [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) for development, which will allow you to connect to physical devices and simulators. We do use a couple packages which are already set up with the included Xcode project file.
 3. Finally if you want to run Stingray on a physical device or simulator, you'll need to setup a team within Xcode:
-    1. In Xcode, open settings by either going to `Xcode > Settings...` or using `command + comma`
+    1. In Xcode, open settings by either going to `Xcode > Settings...` or using `Command + ,`
     2. Open "Apple Accounts"
-    3. Add your Apple Account
-    4. Close the settings panel
+    3. Add your Apple Account.
+    4. Close the settings panel.
     5. Back in the main Xcode window, select the `Stingray` project from the sidebar.
     6. Select `Stingray` from the `TARGETS`.
     7. Select `Signing & Capabilities` from the top tab bar.
@@ -24,7 +24,8 @@ We appreciate every contribution, and we're happy about every new contributor. S
 
 ## General
 
-Please try to keep pull requests as focused as possible. A PR should do exactly one thing and not bleed into other, unrelated areas. The smaller a PR, the fewer changes are likely needed, and the quicker it will likely be merged. For larger/more impactful PRs, please reach out to us first to discuss your plans. The best way to do this is through our [discussions](https://github.com/benjaminRoberts01375/Stingray/discussions/new?category=ideas).
+1. Please try to keep pull requests as focused as possible. A PR should do exactly one thing and not bleed into other, unrelated areas. The smaller a PR, the fewer changes are likely needed, and the quicker it will likely be merged. For larger/more impactful PRs, please reach out to us first to discuss your plans. The best way to do this is through our [discussions](https://github.com/benjaminRoberts01375/Stingray/discussions/new?category=ideas).
+2. Please ensure all class/struct/enum variables and functions are commented. With Xcode, you can generate a comment template with `Option + Command + /`.
 
 ## Finding Work
   
