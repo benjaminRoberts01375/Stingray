@@ -118,7 +118,7 @@ fileprivate struct MediaPicker: View {
     
     var body: some View {
         ScrollView(.horizontal) {
-            HStack {
+            LazyHStack(spacing: 20) {
                 ForEach(pickerMedia) { media in
                     MediaNavigation(media: media, streamingService: streamingService, navigation: $navigation)
                 }
@@ -169,7 +169,7 @@ fileprivate struct MediaNavigationLoadingPicker: View {
     private let numOfPlaceholders: Int = Int.random(in: 4..<8)
     var body: some View {
         ScrollView(.horizontal) {
-            HStack {
+            LazyHStack(spacing: 20) {
                 ForEach(0..<numOfPlaceholders, id: \.self) { index in
                     MediaNavigationLoadingCard()
                         .opacity(Double(1 - (Double(index) / Double(numOfPlaceholders))))
