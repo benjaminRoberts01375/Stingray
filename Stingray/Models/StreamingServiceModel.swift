@@ -159,7 +159,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 // Fill up to maxConcurrentLibraries initially
                 while runningTasks < maxConcurrentLibraries {
                     if let library = libraryIterator.next() {
-                        group.addTask { try await self.retrieveLibraryContent(library: library) }
+                        group.addTask { await self.retrieveLibraryContent(library: library) }
                         runningTasks += 1
                     }
                     else { break }
@@ -170,7 +170,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
                     runningTasks -= 1
                     
                     if let library = libraryIterator.next() {
-                        group.addTask { try await self.retrieveLibraryContent(library: library) }
+                        group.addTask { await self.retrieveLibraryContent(library: library) }
                         runningTasks += 1
                     }
                 }
@@ -182,7 +182,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    public func retrieveLibraryContent(library: LibraryModel) async throws {
+    public func retrieveLibraryContent(library: LibraryModel) async {
         let batchSize = 100
         var currentIndex = 0
         var allMedia: [MediaModel] = []
@@ -191,15 +191,21 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
         
         while true {
-            let incomingMedia = try await self.networkAPI.getLibraryMedia(
-                accessToken: self.accessToken,
-                libraryId: library.id,
-                index: currentIndex,
-                count: batchSize,
-                sortOrder: .ascending,
-                sortBy: .SortName,
-                mediaTypes: [.movies([]), .tv(nil)]
-            )
+            let incomingMedia: [MediaModel]
+            do {
+                incomingMedia = try await self.networkAPI.getLibraryMedia(
+                    accessToken: self.accessToken,
+                    libraryId: library.id,
+                    index: currentIndex,
+                    count: batchSize,
+                    sortOrder: .ascending,
+                    sortBy: .SortName,
+                    mediaTypes: [.movies([]), .tv(nil)]
+                )
+            } catch {
+                library.media = .error(error)
+                return
+            }
             
             allMedia.append(contentsOf: incomingMedia)
             
