@@ -142,49 +142,51 @@ public final class JellyfinModel: StreamingServiceProtocol {
     func retrieveLibraries() async {
         let maxConcurrentLibraries = 2
         
+        self.libraryStatus = .retrieving
+        let libraries: [LibraryModel]
         do {
-            self.libraryStatus = .retrieving
-            
-            let libraries =
+            libraries =
             try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
                 .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
             
-            if libraries.isEmpty { return }
-            
-            self.libraryStatus = .available(libraries)
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                var libraryIterator = libraries.makeIterator()
-                var runningTasks = 0
-                
-                // Fill up to maxConcurrentLibraries initially
-                while runningTasks < maxConcurrentLibraries {
-                    if let library = libraryIterator.next() {
-                        group.addTask { await self.retrieveLibraryContent(library: library) }
-                        runningTasks += 1
-                    }
-                    else { break }
-                }
-                
-                // As tasks complete, start new ones
-                for try await _ in group {
-                    runningTasks -= 1
-                    
-                    if let library = libraryIterator.next() {
-                        group.addTask { await self.retrieveLibraryContent(library: library) }
-                        runningTasks += 1
-                    }
-                }
-                
-                self.libraryStatus = .complete(libraries)
-            }
         } catch {
             self.libraryStatus = .error(error)
+            return
+        }
+        
+        if libraries.isEmpty { return }
+        
+        self.libraryStatus = .available(libraries)
+        await withTaskGroup(of: Void.self) { group in
+            var libraryIterator = libraries.makeIterator()
+            var runningTasks = 0
+            
+            // Fill up to maxConcurrentLibraries initially
+            while runningTasks < maxConcurrentLibraries {
+                if let library = libraryIterator.next() {
+                    group.addTask { await self.retrieveLibraryContent(library: library) }
+                    runningTasks += 1
+                }
+                else { break }
+            }
+            
+            // As tasks complete, start new ones
+            for await _ in group {
+                runningTasks -= 1
+                
+                if let library = libraryIterator.next() {
+                    group.addTask { await self.retrieveLibraryContent(library: library) }
+                    runningTasks += 1
+                }
+            }
+            
+            self.libraryStatus = .complete(libraries)
         }
     }
-    
-    public func retrieveLibraryContent(library: LibraryModel) async {
-        let batchSize = 100
-        var currentIndex = 0
+
+public func retrieveLibraryContent(library: LibraryModel) async {
+    let batchSize = 100
+    var currentIndex = 0
         var allMedia: [MediaModel] = []
         if case .available(let existingMedia) = library.media {
             allMedia = existingMedia
