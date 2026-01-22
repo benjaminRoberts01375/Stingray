@@ -95,7 +95,25 @@ struct AddServerView: View {
         case .http:
             url = URL(string: "http://\(httpHostname):\(httpPort)")
         case .https:
-            url = URL(string: "https://\(httpHostname)")
+            // Normalize the URL input:
+            // 1. Strip any existing protocol (user might enter "https://example.com")
+            // 2. Remove trailing slashes for consistency
+            var normalizedHost = httpHostname
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Remove protocol prefix if user included it (fixes issue #7)
+            if normalizedHost.lowercased().hasPrefix("https://") {
+                normalizedHost = String(normalizedHost.dropFirst(8))
+            } else if normalizedHost.lowercased().hasPrefix("http://") {
+                normalizedHost = String(normalizedHost.dropFirst(7))
+            }
+            
+            // Remove trailing slash
+            while normalizedHost.hasSuffix("/") {
+                normalizedHost = String(normalizedHost.dropLast())
+            }
+            
+            url = URL(string: "https://\(normalizedHost)")
         }
         guard let url else {
             error = "Invalid URL"
