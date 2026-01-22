@@ -116,6 +116,61 @@ public protocol AdvancedNetworkProtocol {
     ///   - userID: ID of the user
     /// - Returns: Formatted URL
     func getUserImageURL(userID: String) -> URL?
+    
+    // MARK: - Live TV
+    
+    /// Check if Live TV is enabled on the server
+    /// - Parameter accessToken: Access token for the server
+    /// - Returns: Live TV info including enabled status
+    func getLiveTVInfo(accessToken: String) async throws -> LiveTVInfo
+    
+    /// Get all Live TV channels
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - includeCurrentProgram: Whether to include the currently playing program
+    /// - Returns: Array of Live TV channels
+    func getLiveTVChannels(accessToken: String, includeCurrentProgram: Bool) async throws -> [LiveTVChannel]
+    
+    /// Get Live TV programs (EPG data) for a time range
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - channelIds: Optional specific channel IDs to fetch
+    ///   - startDate: Start of the time range
+    ///   - endDate: End of the time range
+    /// - Returns: Array of Live TV programs
+    func getLiveTVPrograms(
+        accessToken: String,
+        channelIds: [String]?,
+        startDate: Date,
+        endDate: Date
+    ) async throws -> [LiveTVProgram]
+    
+    /// Get a streaming URL for a Live TV channel
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - channelId: The channel to stream
+    ///   - sessionID: Unique session identifier
+    /// - Returns: AVPlayerItem configured for the live stream
+    func getLiveTVStream(
+        accessToken: String,
+        channelId: String,
+        sessionID: String
+    ) -> AVPlayerItem?
+    
+    /// Get the channel logo URL
+    /// - Parameters:
+    ///   - channelId: The channel ID
+    ///   - width: Desired width
+    /// - Returns: URL for the channel logo
+    func getChannelLogoURL(channelId: String, width: Int) -> URL?
+    
+    /// Get a program image URL
+    /// - Parameters:
+    ///   - programId: The program ID
+    ///   - imageType: Type of image (primary, thumb, backdrop)
+    ///   - width: Desired width
+    /// - Returns: URL for the program image
+    func getProgramImageURL(programId: String, imageType: MediaImageType, width: Int) -> URL?
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -598,6 +653,121 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         ]
         
         return network.buildURL(path: "/UserImage", urlParams: params)
+    }
+    
+    // MARK: - Live TV
+    
+    func getLiveTVInfo(accessToken: String) async throws -> LiveTVInfo {
+        return try await network.request(
+            verb: .get,
+            path: "/LiveTv/Info",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: nil,
+            body: nil
+        )
+    }
+    
+    func getLiveTVChannels(accessToken: String, includeCurrentProgram: Bool) async throws -> [LiveTVChannel] {
+        struct Root: Decodable {
+            let items: [LiveTVChannel]
+            
+            enum CodingKeys: String, CodingKey {
+                case items = "Items"
+            }
+        }
+        
+        let params: [URLQueryItem] = [
+            URLQueryItem(name: "AddCurrentProgram", value: includeCurrentProgram ? "true" : "false"),
+            URLQueryItem(name: "SortBy", value: "SortName"),
+            URLQueryItem(name: "SortOrder", value: "Ascending")
+        ]
+        
+        let root: Root = try await network.request(
+            verb: .get,
+            path: "/LiveTv/Channels",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: params,
+            body: nil
+        )
+        return root.items
+    }
+    
+    func getLiveTVPrograms(
+        accessToken: String,
+        channelIds: [String]?,
+        startDate: Date,
+        endDate: Date
+    ) async throws -> [LiveTVProgram] {
+        struct Root: Decodable {
+            let items: [LiveTVProgram]
+            
+            enum CodingKeys: String, CodingKey {
+                case items = "Items"
+            }
+        }
+        
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime]
+        
+        var params: [URLQueryItem] = [
+            URLQueryItem(name: "MinStartDate", value: dateFormatter.string(from: startDate)),
+            URLQueryItem(name: "MaxEndDate", value: dateFormatter.string(from: endDate)),
+            URLQueryItem(name: "Fields", value: "Overview,Genres"),
+            URLQueryItem(name: "EnableImages", value: "true"),
+            URLQueryItem(name: "SortBy", value: "StartDate"),
+            URLQueryItem(name: "SortOrder", value: "Ascending")
+        ]
+        
+        if let channelIds = channelIds, !channelIds.isEmpty {
+            params.append(URLQueryItem(name: "ChannelIds", value: channelIds.joined(separator: ",")))
+        }
+        
+        let root: Root = try await network.request(
+            verb: .get,
+            path: "/LiveTv/Programs",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: params,
+            body: nil
+        )
+        return root.items
+    }
+    
+    func getLiveTVStream(
+        accessToken: String,
+        channelId: String,
+        sessionID: String
+    ) -> AVPlayerItem? {
+        let params: [URLQueryItem] = [
+            URLQueryItem(name: "PlaySessionId", value: sessionID),
+            URLQueryItem(name: "Container", value: "ts,mp4,mkv"),
+            URLQueryItem(name: "AudioCodec", value: "aac,ac3,eac3,mp3"),
+            URLQueryItem(name: "VideoCodec", value: "h264,hevc"),
+            URLQueryItem(name: "TranscodingProtocol", value: "hls")
+        ]
+        
+        return buildAVPlayerItem(
+            path: "/LiveTv/Channels/\(channelId)/stream",
+            urlParams: params,
+            headers: ["X-MediaBrowser-Token": accessToken]
+        )
+    }
+    
+    func getChannelLogoURL(channelId: String, width: Int) -> URL? {
+        let params: [URLQueryItem] = [
+            URLQueryItem(name: "fillWidth", value: String(width)),
+            URLQueryItem(name: "quality", value: "95")
+        ]
+        
+        return network.buildURL(path: "/LiveTv/Channels/\(channelId)/Images/Primary", urlParams: params)
+    }
+    
+    func getProgramImageURL(programId: String, imageType: MediaImageType, width: Int) -> URL? {
+        let params: [URLQueryItem] = [
+            URLQueryItem(name: "fillWidth", value: String(width)),
+            URLQueryItem(name: "quality", value: "95")
+        ]
+        
+        return network.buildURL(path: "/LiveTv/Programs/\(programId)/Images/\(imageType.rawValue)", urlParams: params)
     }
 }
 

@@ -26,6 +26,26 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     ) -> AVPlayer?
     func playbackEnd()
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
+    
+    // MARK: - Live TV
+    
+    /// Check if Live TV is available on this server
+    func getLiveTVInfo() async throws -> LiveTVInfo
+    
+    /// Get all Live TV channels
+    func getLiveTVChannels(includeCurrentProgram: Bool) async throws -> [LiveTVChannel]
+    
+    /// Get Live TV programs (EPG) for a time range
+    func getLiveTVPrograms(channelIds: [String]?, startDate: Date, endDate: Date) async throws -> [LiveTVProgram]
+    
+    /// Start playing a Live TV channel
+    func playLiveTVChannel(channelId: String, channelName: String) -> AVPlayer?
+    
+    /// Get channel logo URL
+    func getChannelLogoURL(channelId: String, width: Int) -> URL?
+    
+    /// Get program image URL
+    func getProgramImageURL(programId: String, imageType: MediaImageType, width: Int) -> URL?
 }
 
 /// Describes the current setup status for a downloaded library
@@ -317,6 +337,62 @@ public final class JellyfinModel: StreamingServiceProtocol {
         let url = networkAPI.getUserImageURL(userID: userID)
         print("Profile URL: \(url?.absoluteString ?? "No URL")")
         return url
+    }
+    
+    // MARK: - Live TV
+    
+    func getLiveTVInfo() async throws -> LiveTVInfo {
+        return try await networkAPI.getLiveTVInfo(accessToken: accessToken)
+    }
+    
+    func getLiveTVChannels(includeCurrentProgram: Bool) async throws -> [LiveTVChannel] {
+        return try await networkAPI.getLiveTVChannels(
+            accessToken: accessToken,
+            includeCurrentProgram: includeCurrentProgram
+        )
+    }
+    
+    func getLiveTVPrograms(channelIds: [String]?, startDate: Date, endDate: Date) async throws -> [LiveTVProgram] {
+        return try await networkAPI.getLiveTVPrograms(
+            accessToken: accessToken,
+            channelIds: channelIds,
+            startDate: startDate,
+            endDate: endDate
+        )
+    }
+    
+    func playLiveTVChannel(channelId: String, channelName: String) -> AVPlayer? {
+        let sessionID = UUID().uuidString
+        
+        guard let playerItem = networkAPI.getLiveTVStream(
+            accessToken: accessToken,
+            channelId: channelId,
+            sessionID: sessionID
+        ) else { return nil }
+        
+        // Set the title metadata
+        let titleMetadata = AVMutableMetadataItem()
+        titleMetadata.identifier = .commonIdentifierTitle
+        titleMetadata.value = channelName as NSString
+        titleMetadata.extendedLanguageTag = "und"
+        
+        // Set Live TV indicator
+        let subtitleMetadata = AVMutableMetadataItem()
+        subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
+        subtitleMetadata.value = "Live TV" as NSString
+        subtitleMetadata.extendedLanguageTag = "und"
+        
+        playerItem.externalMetadata = [titleMetadata, subtitleMetadata]
+        
+        return AVPlayer(playerItem: playerItem)
+    }
+    
+    func getChannelLogoURL(channelId: String, width: Int) -> URL? {
+        return networkAPI.getChannelLogoURL(channelId: channelId, width: width)
+    }
+    
+    func getProgramImageURL(programId: String, imageType: MediaImageType, width: Int) -> URL? {
+        return networkAPI.getProgramImageURL(programId: programId, imageType: imageType, width: width)
     }
 }
 

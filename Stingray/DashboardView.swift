@@ -45,6 +45,13 @@ struct DashboardView: View {
                         } label: {
                             Text("Home")
                         }
+                        
+                        Tab(value: "livetv") {
+                            LiveTVView(streamingService: streamingService)
+                        } label: {
+                            Text("Live TV")
+                        }
+                        
                         ForEach(libraries.indices, id: \.self) { index in
                             Tab(value: libraries[index].id) {
                                 LibraryView(library: libraries[index], navigation: $navigationPath, streamingService: streamingService)
