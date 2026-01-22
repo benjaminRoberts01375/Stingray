@@ -449,10 +449,19 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
             URLQueryItem(name: "videoBitRate", value: String(bitrate)),
-            // Let Jellyfin decide based on client capabilities
-            URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
+            // Audio codecs supported by Apple TV
+            URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,truehd,dts,alac,mp3,flac"),
+            // Video codecs supported by Apple TV (h264 and hevc including 10-bit HDR)
             URLQueryItem(name: "videoCodec", value: "h264,hevc"),
-            URLQueryItem(name: "profile", value: "main")
+            // HEVC profiles: main (8-bit SDR), main10 (10-bit for HDR content)
+            // Fixes issue #14: HDR content was being transcoded to SDR due to "main" only profile
+            URLQueryItem(name: "videoProfile", value: "main,main10,main 10"),
+            // Video range types supported by Apple TV 4K:
+            // - SDR: Standard dynamic range
+            // - HDR10: HDR10 static metadata
+            // - HLG: Hybrid Log-Gamma
+            // - DOVIWithHDR10/DOVIWithHLG: Dolby Vision with fallback layer (profile 5, 7, 8)
+            URLQueryItem(name: "videoRangeType", value: "SDR,HDR10,HLG,DOVIWithHDR10,DOVIWithHLG")
         ]
         
         if let subtitleID = subtitleID {

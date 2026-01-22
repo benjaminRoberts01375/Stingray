@@ -75,14 +75,14 @@ fileprivate struct DashboardRow: View {
             default:
                 Text(title)
                     .font(.title2.bold())
-                    .task {
-                        // Check if we already have cached data
-                        if let cachedMedia = cache[title] {
-                            status = cachedMedia.isEmpty ? .empty : .complete(cachedMedia)
-                            return
+                    .task(id: streamingService.userID) {
+                        // Show cached data immediately if available (prevents flicker)
+                        if let cachedMedia = cache[title], !cachedMedia.isEmpty {
+                            status = .complete(cachedMedia)
                         }
                         
-                        // Only fetch if not cached
+                        // Always fetch fresh data in background to ensure accuracy
+                        // This fixes issue #16 where "Continue Watching" shows stale episodes
                         let response = await fetchMedia()
                         cache[title] = response
                         status = response.isEmpty ? .empty : .complete(response)
