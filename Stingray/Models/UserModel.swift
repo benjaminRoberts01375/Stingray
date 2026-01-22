@@ -9,6 +9,9 @@ import Foundation
 
 /// Basic data to store about the user
 final class UserModel {
+    /// Shared instance to avoid repeated instantiation
+    static let shared = UserModel()
+    
     /// Storage device to permanently store user data
     var storage: UserStorageProtocol
     
