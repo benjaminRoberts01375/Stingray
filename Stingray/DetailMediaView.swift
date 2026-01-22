@@ -356,15 +356,20 @@ public struct MediaMetadataView: View {
     let media: any MediaProtocol
     
     public var body: some View {
-        if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
-            let items: [String] = [
-                media.maturity,
-                media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                media.duration?.roundedTime()
-            ].compactMap { $0 }
-            
-            Text(items.joined(separator: " • "))
+        if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil || media.hasHDR {
+            HStack(spacing: 8) {
+                let items: [String] = [
+                    media.maturity,
+                    media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                    media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
+                    media.duration?.roundedTime()
+                ].compactMap { $0 }
+                
+                Text(items.joined(separator: " • "))
+                
+                // HDR Badge
+                HDRBadgeView(videoRangeType: media.bestVideoRangeType)
+            }
         }
     }
 }

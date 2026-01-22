@@ -94,6 +94,30 @@ extension MediaSourceProtocol {
         }
         return streams.first { $0.title == baseStream.title }
     }
+    
+    /// Returns the best (highest quality) video range type from this media source's video streams
+    var bestVideoRangeType: VideoRangeType {
+        // Priority: Dolby Vision > HDR10+ > HDR10 > HLG > SDR
+        let rangeTypes = videoStreams.map { $0.videoRangeType }
+        
+        if rangeTypes.contains(where: { $0.isDolbyVision }) {
+            return rangeTypes.first { $0.isDolbyVision } ?? .sdr
+        }
+        if rangeTypes.contains(.hdr10Plus) { return .hdr10Plus }
+        if rangeTypes.contains(.hdr10) { return .hdr10 }
+        if rangeTypes.contains(.hlg) { return .hlg }
+        return .sdr
+    }
+    
+    /// Whether this media source has any HDR content
+    var hasHDR: Bool {
+        videoStreams.contains { $0.videoRangeType.isHDR }
+    }
+    
+    /// Whether this media source has Dolby Vision content
+    var hasDolbyVision: Bool {
+        videoStreams.contains { $0.videoRangeType.isDolbyVision }
+    }
 }
 
 /// Data about a person for a piece of media
@@ -117,6 +141,55 @@ public protocol MediaStreamProtocol: Identifiable {
     var bitrate: Int { get }
     var codec: String { get }
     var isDefault: Bool { get }
+    /// The video range type (SDR, HDR10, Dolby Vision, etc.)
+    var videoRangeType: VideoRangeType { get }
+}
+
+/// Represents the dynamic range type of a video stream
+public enum VideoRangeType: String, Decodable, Equatable {
+    case sdr = "SDR"
+    case hdr10 = "HDR10"
+    case hdr10Plus = "HDR10Plus"
+    case hlg = "HLG"
+    case dolbyVision = "DOVI"
+    case dolbyVisionWithHDR10 = "DOVIWithHDR10"
+    case dolbyVisionWithHLG = "DOVIWithHLG"
+    case unknown
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        self = VideoRangeType(rawValue: rawValue) ?? .unknown
+    }
+    
+    /// Whether this is any form of HDR content
+    public var isHDR: Bool {
+        self != .sdr && self != .unknown
+    }
+    
+    /// Whether this is Dolby Vision content
+    public var isDolbyVision: Bool {
+        switch self {
+        case .dolbyVision, .dolbyVisionWithHDR10, .dolbyVisionWithHLG:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    /// User-friendly display name
+    public var displayName: String {
+        switch self {
+        case .sdr: return "SDR"
+        case .hdr10: return "HDR10"
+        case .hdr10Plus: return "HDR10+"
+        case .hlg: return "HLG"
+        case .dolbyVision: return "Dolby Vision"
+        case .dolbyVisionWithHDR10: return "Dolby Vision"
+        case .dolbyVisionWithHLG: return "Dolby Vision"
+        case .unknown: return "Unknown"
+        }
+    }
 }
 
 public protocol TVSeasonProtocol: Identifiable {
@@ -422,6 +495,15 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var bitrate: Int
     public var codec: String
     public var isDefault: Bool
+    public var videoRangeType: VideoRangeType
+    /// Color space (e.g., bt709, bt2020)
+    public var colorSpace: String?
+    /// Color transfer function (e.g., sdr, pq, hlg)
+    public var colorTransfer: String?
+    /// Color primaries (e.g., bt709, bt2020)
+    public var colorPrimaries: String?
+    /// Dolby Vision profile number (5, 7, 8, etc.)
+    public var dolbyVisionProfile: Int?
     
     enum CodingKeys: String, CodingKey {
         case id = "Index"
@@ -430,6 +512,11 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         case bitrate = "BitRate"
         case codec = "Codec"
         case isDefault = "IsDefault"
+        case videoRangeType = "VideoRangeType"
+        case colorSpace = "ColorSpace"
+        case colorTransfer = "ColorTransfer"
+        case colorPrimaries = "ColorPrimaries"
+        case videoDoViTitle = "VideoDoViTitle"
     }
     
     public init(from decoder: Decoder) throws {
@@ -447,6 +534,20 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         if codec == "av1" {
             self.bitrate = Int(Double(self.bitrate) * 1.75) // AV1 isn't supported, but it's so good that we need way more bits
         }
+        
+        // HDR metadata
+        self.videoRangeType = try container.decodeIfPresent(VideoRangeType.self, forKey: .videoRangeType) ?? .sdr
+        self.colorSpace = try container.decodeIfPresent(String.self, forKey: .colorSpace)
+        self.colorTransfer = try container.decodeIfPresent(String.self, forKey: .colorTransfer)
+        self.colorPrimaries = try container.decodeIfPresent(String.self, forKey: .colorPrimaries)
+        
+        // Parse Dolby Vision profile from the title if present (e.g., "Dolby Vision Profile 8")
+        if let doViTitle = try container.decodeIfPresent(String.self, forKey: .videoDoViTitle) {
+            let pattern = /Profile (\d+)/
+            if let match = doViTitle.firstMatch(of: pattern) {
+                self.dolbyVisionProfile = Int(match.1)
+            }
+        }
     }
     
     public static func == (lhs: MediaStream, rhs: MediaStream) -> Bool {
@@ -455,7 +556,8 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         lhs.type == rhs.type &&
         lhs.bitrate == rhs.bitrate &&
         lhs.codec == rhs.codec &&
-        lhs.isDefault == rhs.isDefault
+        lhs.isDefault == rhs.isDefault &&
+        lhs.videoRangeType == rhs.videoRangeType
     }
 }
 
@@ -579,5 +681,50 @@ public enum MediaType: Decodable {
         case .tv:
             return "Series"
         }
+    }
+    
+    /// Returns all media sources from this media type
+    var mediaSources: [any MediaSourceProtocol] {
+        switch self {
+        case .collections:
+            return []
+        case .movies(let sources):
+            return sources
+        case .tv(let seasons):
+            guard let seasons else { return [] }
+            return seasons.flatMap { $0.episodes.flatMap { $0.mediaSources } }
+        }
+    }
+}
+
+// MARK: - HDR Helpers for MediaProtocol
+
+extension MediaProtocol {
+    /// Returns the best video range type across all media sources
+    var bestVideoRangeType: VideoRangeType {
+        let sources = mediaType.mediaSources
+        guard !sources.isEmpty else { return .sdr }
+        
+        // Check for Dolby Vision first (highest priority)
+        if sources.contains(where: { $0.hasDolbyVision }) {
+            return sources.first { $0.hasDolbyVision }?.bestVideoRangeType ?? .dolbyVision
+        }
+        
+        // Then check for any HDR
+        if let hdrSource = sources.first(where: { $0.hasHDR }) {
+            return hdrSource.bestVideoRangeType
+        }
+        
+        return .sdr
+    }
+    
+    /// Whether this media has any HDR content
+    var hasHDR: Bool {
+        mediaType.mediaSources.contains { $0.hasHDR }
+    }
+    
+    /// Whether this media has Dolby Vision content
+    var hasDolbyVision: Bool {
+        mediaType.mediaSources.contains { $0.hasDolbyVision }
     }
 }

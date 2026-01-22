@@ -449,10 +449,15 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
             URLQueryItem(name: "videoBitRate", value: String(bitrate)),
-            // Let Jellyfin decide based on client capabilities
-            URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
+            // Audio codecs supported by Apple TV
+            URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,truehd,dts,alac,mp3,flac"),
+            // Video codecs: h264, hevc (including 10-bit for HDR)
             URLQueryItem(name: "videoCodec", value: "h264,hevc"),
-            URLQueryItem(name: "profile", value: "main")
+            // HEVC profiles: main (8-bit SDR), main10 (10-bit HDR/DV)
+            URLQueryItem(name: "videoProfile", value: "main,main10"),
+            // Video range types supported by Apple TV 4K
+            // SDR, HDR10, HLG, and Dolby Vision (with HDR10/HLG fallback layers)
+            URLQueryItem(name: "videoRangeType", value: "SDR,HDR10,HLG,DOVIWithHDR10,DOVIWithHLG")
         ]
         
         if let subtitleID = subtitleID {

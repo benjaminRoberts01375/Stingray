@@ -91,7 +91,12 @@ struct PlayerView: View {
                     title: "Video",
                     image: UIImage(systemName: "display"),
                     children: self.vm.mediaSource.videoStreams.map({ videoStream in
-                        let action = UIAction(title: videoStream.title) { _ in
+                        // Build title with HDR badge if applicable
+                        var title = videoStream.title
+                        if videoStream.videoRangeType.isHDR {
+                            title += " • \(videoStream.videoRangeType.displayName)"
+                        }
+                        let action = UIAction(title: title) { _ in
                             self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, videoID: videoStream.id)
                         }
                         action.state = self.vm.playerProgress?.videoID == videoStream.id ? .on : .off
