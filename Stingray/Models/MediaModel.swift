@@ -548,7 +548,20 @@ public enum MediaType: Decodable {
         case "Series":
             self = .tv(nil)
         default:
-            fatalError("Unknown media type: \(stringValue)")
+            throw InitError.unknownType(MediaType.collections.rawValue)
+        }
+    }
+    
+    /// Errors pertaining to failed setup
+    public enum InitError: Error {
+        /// The media type is unknown.
+        case unknownType(String)
+        
+        var description: String {
+            switch self {
+            case .unknownType(let badType):
+                "Unknown media type: \(badType)"
+            }
         }
     }
     
