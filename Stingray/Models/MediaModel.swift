@@ -548,7 +548,7 @@ public enum MediaType: Decodable {
         case "Series":
             self = .tv(nil)
         default:
-            throw InitError.unknownType(MediaType.collections.rawValue)
+            throw InitError.unknownType(stringValue)
         }
     }
     
