@@ -96,6 +96,31 @@ public struct UserView: View {
                 }
             }
             .buttonStyle(.plain)
+            
+            // Settings button
+            NavigationLink {
+                AppSettingsView()
+            } label: {
+                VStack(alignment: .center) {
+                    Image(systemName: "gearshape.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.gray, .gray.opacity(0.7)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .accessibilityLabel("Settings icon")
+                        .padding(.top, 30)
+                        .padding(.horizontal, 40)
+                    Spacer()
+                    Text("Settings")
+                        .font(.callout.bold())
+                }
+            }
+            .buttonStyle(.plain)
         }
     }
     

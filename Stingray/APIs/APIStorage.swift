@@ -11,6 +11,8 @@ public enum StorageKeys: String {
     case defaultUserID = "defaultUserID"
     case userIDs = "userIDs"
     case user = "user"
+    /// Whether to show the splash animation on app launch
+    case showSplashAnimation = "showSplashAnimation"
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
