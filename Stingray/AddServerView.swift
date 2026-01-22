@@ -68,20 +68,24 @@ struct AddServerView: View {
         }
         .onAppear {
             print("Attempting to set up from storage")
-            guard let defaultUser = UserModel().getDefaultUser() else {
+            
+            // Use TVProfileManager to determine which user to log in
+            // Priority: 1) ATV profile mapped user, 2) Default user
+            guard let userToLogin = TVProfileManager.shared.getUserForAppLaunch() else {
                 print("Failed to setup from storage, showing login screen")
                 return
             }
-            switch defaultUser.serviceType {
+            
+            switch userToLogin.serviceType {
             case .Jellyfin(let userJellyfin):
                 loggedIn = .loggedIn(
                     JellyfinModel(
-                        userDisplayName: defaultUser.displayName,
-                        userID: defaultUser.id,
-                        serviceID: defaultUser.serviceID,
+                        userDisplayName: userToLogin.displayName,
+                        userID: userToLogin.id,
+                        serviceID: userToLogin.serviceID,
                         accessToken: userJellyfin.accessToken,
                         sessionID: userJellyfin.sessionID,
-                        serviceURL: defaultUser.serviceURL
+                        serviceURL: userToLogin.serviceURL
                     )
                 )
             }

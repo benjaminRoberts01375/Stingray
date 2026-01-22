@@ -11,6 +11,8 @@ public enum StorageKeys: String {
     case defaultUserID = "defaultUserID"
     case userIDs = "userIDs"
     case user = "user"
+    /// Maps Apple TV profile identifiers to Jellyfin user IDs
+    case atvProfileMapping = "atvProfileMapping"
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs

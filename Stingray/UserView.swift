@@ -12,13 +12,16 @@ public struct UserView: View {
     var streamingService: any StreamingServiceProtocol
     @Binding var loggedIn: LoginState
     
+    private let profileManager = TVProfileManager.shared
+    
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
             ForEach(users.getUsers()) { user in
                 Button {
                     switchUser(user: user)
                 } label: {
-                    VStack(alignment: .center) {
+                    ZStack(alignment: .topTrailing) {
+                        VStack(alignment: .center) {
                             switch user.serviceType {
                             case .Jellyfin:
                                 AsyncImage(
@@ -55,9 +58,18 @@ public struct UserView: View {
                                     }
                                 }
                             }
-                        Spacer()
-                        Text(user.displayName)
-                            .font(.callout.bold())
+                            Spacer()
+                            Text(user.displayName)
+                                .font(.callout.bold())
+                        }
+                        
+                        // Show link indicator if this user is linked to the current ATV profile
+                        if profileManager.isUserLinkedToCurrentProfile(user.id) {
+                            Image(systemName: "link.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.white, .blue)
+                                .padding(8)
+                        }
                     }
                     .padding(16)
                     .padding(.horizontal, 16)
@@ -68,8 +80,24 @@ public struct UserView: View {
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
+                    // Profile linking options (only show if ATV profiles are available)
+                    if profileManager.isProfilesAvailable {
+                        if profileManager.isUserLinkedToCurrentProfile(user.id) {
+                            Button("Unlink from Apple TV Profile", systemImage: "link.badge.minus") {
+                                profileManager.unlinkUser(user.id)
+                            }
+                        } else {
+                            Button("Link to Apple TV Profile", systemImage: "link.badge.plus") {
+                                profileManager.linkCurrentProfileToUser(user.id)
+                            }
+                        }
+                        Divider()
+                    }
+                    
                     Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
                         let userModel = UserModel()
+                        // Unlink the user from any ATV profile before deleting
+                        profileManager.unlinkUser(user.id)
                         userModel.deleteUser(user.id)
                         if self.streamingService.userID == user.id {
                             if let nextUser = userModel.getUsers().first {
