@@ -404,7 +404,9 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     }
     
     func start() {
-        self.timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        // 5-second interval is sufficient for Jellyfin's playback tracking
+        // while reducing network requests by 80% compared to 1-second updates
+        self.timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task {
                 do {
