@@ -8,7 +8,7 @@
 import SwiftUI
 
 public struct UserView: View {
-    var users = UserModel()
+    var users = UserModel.shared
     var streamingService: any StreamingServiceProtocol
     @Binding var loggedIn: LoginState
     
@@ -69,10 +69,9 @@ public struct UserView: View {
                 .buttonStyle(.plain)
                 .contextMenu {
                     Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
-                        let userModel = UserModel()
-                        userModel.deleteUser(user.id)
+                        UserModel.shared.deleteUser(user.id)
                         if self.streamingService.userID == user.id {
-                            if let nextUser = userModel.getUsers().first {
+                            if let nextUser = UserModel.shared.getUsers().first {
                                 self.switchUser(user: nextUser)
                             } else {
                                 self.loggedIn = .loggedOut

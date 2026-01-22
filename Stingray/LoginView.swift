@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct LoginView: View {
-    internal var userModel = UserModel()
-    
     @Binding internal var loggedIn: LoginState
     @State internal var username: String = ""
     @State internal var password: String = ""

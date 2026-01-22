@@ -79,11 +79,10 @@ final class PlayerViewModel: Hashable {
         self.mediaSource = mediaSource
         self.media = media
         
-        let userModel = UserModel()
         var subtitleID: String?
         var bitrate: Bitrate = .full
         
-        if let defaultUser = userModel.getDefaultUser() {
+        if let defaultUser = UserModel.shared.getDefaultUser() {
             // Setup subtitles
             if defaultUser.usesSubtitles {
                 subtitleID = self.mediaSource.subtitleStreams.first {
@@ -163,8 +162,7 @@ final class PlayerViewModel: Hashable {
         self.player?.play()
         
         // Update user settings
-        let userModel = UserModel()
-        guard var currentUser = userModel.getDefaultUser() else { return }
+        guard var currentUser = UserModel.shared.getDefaultUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
         switch bitrate {
         case .full, .none:
@@ -172,7 +170,7 @@ final class PlayerViewModel: Hashable {
         case .limited(let newBitrate):
             currentUser.bitrate = newBitrate
         }
-        userModel.updateUser(currentUser)
+        UserModel.shared.updateUser(currentUser)
     }
     
     /// Creates a new player based on current state and new episode
