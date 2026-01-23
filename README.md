@@ -77,6 +77,7 @@ Extensive content metadata.
 - [ ] Episode thumbnails where the thumbnail cannot fill the container should use the loaded thumbnail to blur background, instead of the unreliable blur hash.
 - [ ] Continue watching can suggest wrong episode.
 - [ ] Optionally blur unwatched TV episodes.
+- [ ] Replace options for continuing and restarting episodes with an alert to be shared with movies for consistency.
 
 ### Playback
 
