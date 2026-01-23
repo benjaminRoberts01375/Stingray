@@ -59,7 +59,7 @@ Extensive content metadata.
 - [ ] Show all available profiles on Jellyfin server.
 - [ ] Allow "locking" some profiles with a pin.
 - [ ] Move profiles to home screen.
-  - [ ] Repurpose existing profile screen for settings.
+  - [ ] Repurpose existing profile screen for settings, continue to show profiles there.
 
 ### Settings
 
