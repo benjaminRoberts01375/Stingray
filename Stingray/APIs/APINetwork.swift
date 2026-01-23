@@ -475,15 +475,37 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         subtitle: String?
     ) -> AVPlayerItem? {
         var params: [URLQueryItem] = [
+            // Media selection
             URLQueryItem(name: "playSessionID", value: sessionID),
             URLQueryItem(name: "mediaSourceID", value: contentID),
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
+            
+            // Video config
             URLQueryItem(name: "videoBitRate", value: String(bitrate)),
-            // Let Jellyfin decide based on client capabilities
+            URLQueryItem(name: "videoCodec", value: "hevc,h264"),
+            URLQueryItem(name: "container", value: "mp4"),
+            URLQueryItem(name: "transcodingContainer", value: "mp4"),
+            URLQueryItem(name: "allowVideoStreamCopy", value: "true"),
+            URLQueryItem(name: "hevc-videobitdepth", value: "10"),
+            URLQueryItem(name: "hevc-rangetype", value: "SDR,HDR10,HDR10Plus,DOVI,DOVIWithHDR10,DOVIWithSDR,DOVIWithHDR10Plus"),
+            URLQueryItem(name: "hevc-level", value: "153"),
+            URLQueryItem(name: "hevc-profile", value: "main10"),
+            URLQueryItem(name: "hevc-codectag", value: "hvc1,dvh1"),
+            URLQueryItem(name: "deInterlace", value: "true"),
+            URLQueryItem(name: "h265-codectag", value: "hvc1,dvh1,dvhe"),
+            
+            // Audio config
             URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
-            URLQueryItem(name: "videoCodec", value: "h264,hevc"),
-            URLQueryItem(name: "profile", value: "main")
+            URLQueryItem(name: "allowAudioStreamCopy", value: "true"),
+            URLQueryItem(name: "enableAudioVbrEncoding", value: "true"),
+            
+            // Streaming config
+            URLQueryItem(name: "breakOnNonKeyFrames", value: "true"),
+            URLQueryItem(name: "requireAVC", value: "false"),
+            URLQueryItem(name: "segmentContainer", value: "mp4"),
+            URLQueryItem(name: "copyTimestamps", value: "true"),
+            URLQueryItem(name: "enableAutoStreamCopy", value: "true")
         ]
         
         if let subtitleID = subtitleID {
