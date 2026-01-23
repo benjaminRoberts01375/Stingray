@@ -82,6 +82,12 @@ Extensive content metadata.
 
 - [ ] HDR support.
 - [ ] Live TV.
+- [ ] Add a "Streaming Stats" page in the player to show current playback status.
+  - [ ] Is Transcoding & Reason.
+  - [ ] HDR standard, tone mapping to SDR, or native SDR.
+  - [ ] Current bitrate (could be variable).
+  - [ ] Playback resolution.
+- [ ] Restart (episode) button.
 
 ### Code Quality
 
