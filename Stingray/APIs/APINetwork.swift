@@ -20,7 +20,7 @@ public protocol AdvancedNetworkProtocol {
     /// - Parameter accessToken: Access token for the server
     /// - Parameter userID: ID of the user to get libraries for
     /// - Returns: Libraries
-    func getLibraries(accessToken: String, userID: String) async throws -> [LibraryModel]
+    func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel]
     /// Gets all media for a given library in chunks
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -116,6 +116,24 @@ public protocol AdvancedNetworkProtocol {
     ///   - userID: ID of the user
     /// - Returns: Formatted URL
     func getUserImageURL(userID: String) -> URL?
+}
+
+public enum LibraryErrors: RError {
+    case gettingLibraries(RError)
+    
+    public var next: (any Error)? {
+        switch self {
+        case .gettingLibraries(let next):
+            return next
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .gettingLibraries:
+            return "Failed to get libraries"
+        }
+    }
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -263,7 +281,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, urlParams: nil, body: requestBody)
     }
     
-    func getLibraries(accessToken: String, userID: String) async throws -> [LibraryModel] {
+    func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {
         struct Root: Decodable {
             let items: [LibraryModel]
             
@@ -271,14 +289,16 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case items = "Items"
             }
         }
-        let root: Root = try await network.request(
-            verb: .get,
-            path: "/Users/\(userID)/Views",
-            headers: ["X-MediaBrowser-Token":accessToken],
-            urlParams: nil,
-            body: nil
-        )
-        return root.items
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/Users/\(userID)/Views",
+                headers: ["X-MediaBrowser-Token":accessToken],
+                urlParams: nil,
+                body: nil
+            )
+            return root.items
+        } catch let error { throw LibraryErrors.gettingLibraries(error) }
     }
     
     func getLibraryMedia(

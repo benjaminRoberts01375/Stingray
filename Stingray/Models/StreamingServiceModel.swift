@@ -40,7 +40,7 @@ enum LibraryStatus {
     /// All of this library's content has been downloaded
     case complete([LibraryModel])
     /// The library has errored out
-    case error(Error)
+    case error(RError)
 }
 
 /// Denotes the availablity of a piece of media
