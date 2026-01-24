@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol RError: LocalizedError {
+public protocol RError: LocalizedError, Error {
     /// Next available error in the chain of errors.
     var next: (any Error)? { get }
     /// Description of this error.
