@@ -15,7 +15,7 @@ public protocol AdvancedNetworkProtocol {
     ///   - username: User's username
     ///   - password: User's password
     /// - Returns: Credentials and user data from server
-    func login(username: String, password: String) async throws -> APILoginResponse
+    func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse
     /// Gets all libraries from a server
     /// - Parameter accessToken: Access token for the server
     /// - Parameter userID: ID of the user to get libraries for
@@ -136,6 +136,30 @@ public enum LibraryErrors: RError {
     }
 }
 
+/// Errors related to logging in
+public enum AccountErrors: RError {
+    /// Failed to log into server.
+    case loginFailed(RError)
+    /// Failed to get the server's version,
+    case serverVersionFailed(RError)
+    
+    public var next: (any Error)? {
+        switch self {
+        case .loginFailed(let next), .serverVersionFailed(let next):
+            return next
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .loginFailed:
+            return "Login failed"
+        case .serverVersionFailed:
+            return "Failed to get server version"
+        }
+    }
+}
+
 public enum LibraryMediaSortOrder: String {
     case ascending = "Ascending"
     case Descending = "Descending"
@@ -233,21 +257,25 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     /// Gets the current version of the Jellyfin server
     /// - Parameter accessToken: User's access token for the Jellyfin server.
     /// - Returns: The version of the server in this format: `xx.xx.xx`. There's no "v" at the start.
-    func getServerVersion(accessToken: String) async throws -> String {
+    func getServerVersion(accessToken: String) async throws(AccountErrors) -> String {
         struct Root: Decodable { let Version: String }
         
-        let root: Root = try await network.request(
-            verb: .get,
-            path: "/System/Info",
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: nil,
-            body: nil
-        )
-        
-        return root.Version
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/System/Info",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: nil,
+                body: nil
+            )
+            
+            return root.Version
+        } catch {
+            throw AccountErrors.serverVersionFailed(error)
+        }
     }
     
-    func login(username: String, password: String) async throws -> APILoginResponse {
+    func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
             let SessionInfo: SessionInfo
@@ -269,16 +297,17 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             "Pw": password
         ]
         
-        var loginInfo: APILoginResponse = try await network.request(
-            verb: .post,
-            path: "/Users/AuthenticateByName",
-            headers: nil,
-            urlParams: nil,
-            body: requestBody
-        )
-        loginInfo.serverVersion = try await self.getServerVersion(accessToken: loginInfo.accessToken)
-        
-        return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, urlParams: nil, body: requestBody)
+        do {
+            return try await network.request(
+                verb: .post,
+                path: "/Users/AuthenticateByName",
+                headers: nil,
+                urlParams: nil,
+                body: requestBody
+            )
+        } catch {
+            throw AccountErrors.loginFailed(error)
+        }
     }
     
     func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {
