@@ -29,4 +29,14 @@ extension RError {
         
         return parts.joined(separator: " -> ")
     }
+    
+    /// Gets the last error in the chain of errors. Useful for writing summary error messages
+    /// - Returns: The last error in the chain
+    public func last() -> (any RError) {
+        var current: RError = self
+        while let next = current.next {
+            current = next
+        }
+        return current
+    }
 }
