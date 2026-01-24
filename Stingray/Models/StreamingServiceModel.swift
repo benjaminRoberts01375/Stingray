@@ -120,22 +120,26 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.serverVersion = response.serverVersion
     }
     
-    static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
+    static func login(url: URL, username: String, password: String) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        let response = try await networkAPI.login(username: username, password: password)
-        UserModel.shared.addUser(
-            User(
-                serviceURL: url,
-                serviceType: .Jellyfin(
-                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-                ),
-                serviceID: response.serverId,
-                id: response.userId,
-                displayName: response.userName
+        do {
+            let response = try await networkAPI.login(username: username, password: password)
+            UserModel.shared.addUser(
+                User(
+                    serviceURL: url,
+                    serviceType: .Jellyfin(
+                        UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+                    ),
+                    serviceID: response.serverId,
+                    id: response.userId,
+                    displayName: response.userName
+                )
             )
-        )
-        UserModel.shared.setDefaultUser(userID: response.userId)
-        return JellyfinModel(response: response, serviceURL: url)
+            UserModel.shared.setDefaultUser(userID: response.userId)
+            return JellyfinModel(response: response, serviceURL: url)
+        } catch {
+            throw AccountErrors.loginFailed(error)
+        }
     }
     
     func retrieveLibraries() async {
