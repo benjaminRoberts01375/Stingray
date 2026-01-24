@@ -23,7 +23,7 @@ public protocol BasicNetworkProtocol {
         headers: [String : String]?,
         urlParams: [URLQueryItem]?,
         body: (any Encodable)?
-    ) async throws -> T
+    ) async throws(NetworkError) -> T
     
     /// Allows simple URL building using the URL type.
     /// - Parameters:
@@ -124,7 +124,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         headers: [String : String]? = nil,
         urlParams: [URLQueryItem]? = nil,
         body: (any Encodable)? = nil
-    ) async throws -> T {
+    ) async throws(NetworkError) -> T {
         // Setup URL with path
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
             throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
