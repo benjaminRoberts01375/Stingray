@@ -45,11 +45,10 @@ public enum NetworkRequestType: String {
     case delete = "DELETE"
 }
 
-/// An advanced error type for networking
-public enum NetworkError: Error, LocalizedError {
-    /// The request URL was invalid
-    case invalidURL
-    /// Could not encode JSON
+public enum NetworkError: RError {
+    /// The request URL was invalid.
+    case invalidURL(String)
+    /// Could not encode JSON.
     case encodeJSONFailed(Error)
     /// Could not send the payload
     case requestFailedToSend(Error)
@@ -60,18 +59,26 @@ public enum NetworkError: Error, LocalizedError {
     /// An access token is needed
     case missingAccessToken
     
-    /// Describes errors in a human readable format
-    public var errorDescription: String? {
+    var next: (any Error)? {
         switch self {
-        case .invalidURL:
-            return "Invalid URL"
-        case .encodeJSONFailed(let error):
-            return "Unable to encode JSON: \(error.localizedDescription)"
-        case .requestFailedToSend(let error):
-            return "The request failed to send: \(error.localizedDescription)"
-        case .badResponse(let responseCode, let response):
-            return "Got a bad response from the server. Error: \(responseCode), \(response ?? "Unknown error")"
-        case .decodeJSONFailed(let error, let url):
+        case .invalidURL, .badResponse, .missingAccessToken:
+            return nil
+        case .encodeJSONFailed(let error), .requestFailedToSend(let error), .decodeJSONFailed(let error, _):
+            return error
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .invalidURL(let description):
+            return "The requested URL was invalid: \(description)"
+        case .encodeJSONFailed:
+            return "Unable to encode JSON"
+        case .requestFailedToSend:
+            return "Request failed to send"
+        case .badResponse(let code, let text):
+            return "Received a bad response from the server - \(code) \(text ?? "")"
+        case .decodeJSONFailed(let error, let url): // Special handling for decode errors
             let urlString = url?.absoluteString ?? "unknown URL"
             // Provide detailed information about decoding errors
             if let decodingError = error as? DecodingError {
@@ -98,9 +105,9 @@ public enum NetworkError: Error, LocalizedError {
                     return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
                 }
             }
-            return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
+            return "Failed to decode JSON"
         case .missingAccessToken:
-            return "Missing access token"
+            return "An access token is needed"
         }
     }
 }
@@ -120,7 +127,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     ) async throws -> T {
         // Setup URL with path
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
-            throw NetworkError.invalidURL
+            throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
         }
         
         print("Reaching out to \(url.absoluteString)")
