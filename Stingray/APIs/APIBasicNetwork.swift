@@ -59,14 +59,7 @@ public enum NetworkError: RError {
     /// An access token is needed
     case missingAccessToken
     
-    public var next: (any Error)? {
-        switch self {
-        case .invalidURL, .badResponse, .missingAccessToken:
-            return nil
-        case .encodeJSONFailed(let error), .requestFailedToSend(let error), .decodeJSONFailed(let error, _):
-            return error
-        }
-    }
+    public var next: (any RError)? { return nil }
     
     public var errorDescription: String {
         switch self {

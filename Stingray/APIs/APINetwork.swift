@@ -121,7 +121,7 @@ public protocol AdvancedNetworkProtocol {
 public enum LibraryErrors: RError {
     case gettingLibraries(RError)
     
-    public var next: (any Error)? {
+    public var next: (RError)? {
         switch self {
         case .gettingLibraries(let next):
             return next
@@ -143,7 +143,7 @@ public enum AccountErrors: RError {
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
     
-    public var next: (any Error)? {
+    public var next: (RError)? {
         switch self {
         case .loginFailed(let next), .serverVersionFailed(let next):
             return next
