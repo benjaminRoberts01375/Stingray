@@ -131,7 +131,7 @@ public enum LibraryErrors: RError {
     public var errorDescription: String {
         switch self {
         case .gettingLibraries:
-            return "Failed to get libraries"
+            return "Failed to get library data"
         }
     }
 }
