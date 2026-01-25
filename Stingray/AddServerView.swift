@@ -109,7 +109,7 @@ struct AddServerView: View {
                 let streamingService = try await JellyfinModel.login(url: url, username: username, password: password)
                 self.loggedIn = .loggedIn(streamingService)
             } catch {
-                if let netErr = error as? NetworkError {
+                if let rError = error as? RError, let netErr = rError.last() as? NetworkError {
                     switch netErr {
                     case .invalidURL:
                         switch self.httpProcol {
