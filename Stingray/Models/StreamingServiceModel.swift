@@ -43,6 +43,24 @@ enum LibraryStatus {
     case error(RError)
 }
 
+enum StreamingServiceErrors: RError {
+    case LibrarySetupFailed(RError?)
+    
+    var errorDescription: String {
+        switch self {
+        case .LibrarySetupFailed:
+            "Failed to create library"
+        }
+    }
+    
+    var next: (any RError)? {
+        switch self {
+        case .LibrarySetupFailed(let err):
+            return err
+        }
+    }
+}
+
 /// Denotes the availablity of a piece of media
 public enum MediaLookupStatus {
     /// The requested media was found
@@ -151,9 +169,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
             libraries =
             try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
                 .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
-            
         } catch {
-            self.libraryStatus = .error(error)
+            self.libraryStatus = .error(StreamingServiceErrors.LibrarySetupFailed(error))
             return
         }
         
