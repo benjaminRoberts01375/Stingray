@@ -27,7 +27,7 @@ extension RError {
             current = err.next
         }
         
-        return parts.joined(separator: " -> ")
+        return "\n\t→ \(parts.joined(separator: "\n\t→ "))"
     }
     
     /// Gets the last error in the chain of errors. Useful for writing summary error messages
