@@ -11,7 +11,8 @@ struct LoginView: View {
     @Binding internal var loggedIn: LoginState
     @State internal var username: String = ""
     @State internal var password: String = ""
-    @State internal var error: String = ""
+    @State internal var error: RError?
+    @State internal var errorSummary: String = ""
     @State internal var awaitingLogin: Bool = false
     
     @Environment(\.dismiss) private var dismiss
@@ -36,9 +37,8 @@ struct LoginView: View {
                     ProgressView()
                 }
                 
-                if error != "" {
-                    Text("Error: \(error)")
-                        .foregroundStyle(.red)
+                if let error = self.error {
+                    ErrorView(error: error, summary: errorSummary)
                         .padding(.vertical)
                 }
             }
@@ -62,16 +62,19 @@ struct LoginView: View {
                 } catch let error as RError {
                     if let netErr = error.last() as? NetworkError {
                         let scheme: HttpProtocol = streamingService.serviceURL.scheme == "https" ? .https : .http
-                        self.error = Self.overrideNetErrorMessage(netErr: netErr, httpProtocol: scheme)
+                        self.errorSummary = Self.overrideNetErrorMessage(netErr: netErr, httpProtocol: scheme)
+                        self.error = AccountErrors.loginFailed(error)
                     } else {
-                        self.error = "Failed to login. Please try again."
+                        self.error = AccountErrors.loginFailed(nil)
+                        self.errorSummary = "Failed to login. Please try again."
                     }
                     
                     awaitingLogin = false
                 }
             }
         case .loggedOut:
-            self.error = "There's no streaming service is configured, so we aren't sure how you got here."
+            self.errorSummary = "There's no streaming service is configured, so we aren't sure how you got here."
+            self.error = AccountErrors.loginFailed(nil)
         }
     }
     
