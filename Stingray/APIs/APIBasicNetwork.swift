@@ -94,8 +94,15 @@ public enum JSONError: RError {
     case failedJSONDecode(String, Error)
     /// Failed to encode JSON at all. The `String` denotes the object's name
     case failedJSONEncode(String)
+    /// The unwrapped key is an unexpected value.
+    case unexpectedKey(RError)
     
-    public var next: (any RError)? { nil }
+    public var next: (any RError)? {
+        switch self {
+        case .unexpectedKey(let err): return err
+        default: return nil
+        }
+    }
     
     public var errorDescription: String {
         switch self {
@@ -131,6 +138,8 @@ public enum JSONError: RError {
             return "JSON failed to decode for \(objectName)"
         case .failedJSONEncode(let objectName):
             return "Failed to encode JSON for \(objectName)"
+        case .unexpectedKey:
+            return "The unwraped JSON value was unexpected"
         }
     }
 }

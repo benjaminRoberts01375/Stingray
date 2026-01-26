@@ -8,6 +8,25 @@
 import AVKit
 import SwiftUI
 
+public enum AdvancedNetworkErrors: RError {
+    case failedRecentlyAdded(RError)
+    case failedUpNext(RError)
+    
+    public var next: (any RError)? {
+        switch self {
+        case .failedRecentlyAdded(let err), .failedUpNext(let err):
+            return err
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .failedRecentlyAdded: return "Failed to get recently added list"
+        case .failedUpNext: return "Failed to get up next list"
+        }
+    }
+}
+
 /// Defines a network that is reliant on primitives already created by `BasicNetworkProtocol`
 public protocol AdvancedNetworkProtocol {
     /// Log-in a user via a username and password
@@ -105,12 +124,12 @@ public protocol AdvancedNetworkProtocol {
     ///   - contentType: Type of media to retrieve
     ///   - accessToken: Access token for the server
     /// - Returns: A silm verion of the media type
-    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws -> [SlimMedia]
+    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia]
     
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
-    func getUpNext(accessToken: String) async throws -> [SlimMedia]
+    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia]
     /// Generates a URL to get the user's profile image
     /// - Parameters:
     ///   - userID: ID of the user
@@ -127,12 +146,16 @@ public enum LibraryErrors: RError {
     case gettingSeasons(RError, String)
     /// Failed to get a single season. The `String` value is the ID of the season
     case gettingSeason(RError, String)
+    /// Failed to get the media for a season. The `String` value is the ID of the season
+    case gettingSeasonMedia(RError, String)
     /// The library failed for some unknown reason.
     case unknown(String)
     
     public var next: (RError)? {
         switch self {
         case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
+            return next
+        case .gettingSeasonMedia(let next, _):
             return next
         case .unknown:
             return nil
@@ -145,6 +168,7 @@ public enum LibraryErrors: RError {
         case .gettingLibraryMedia(_, let name): return "Failed to get library content for library \(name)"
         case .gettingSeasons(_, let name): return "Failed to get seasons for library \(name)"
         case .gettingSeason(_, let id): return "Failed to get the season with the ID \(id)"
+        case .gettingSeasonMedia(_, let id): return "Failed to get the season media for the season \(id)"
         case .unknown(let name): return "The library \(name) has failed to setup."
         }
     }
@@ -265,6 +289,23 @@ public struct APILoginResponse: Decodable {
             else { throw JSONError.failedJSONDecode("APILoginResponse", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch { throw JSONError.failedJSONDecode("APILoginResponse", error) }
+    }
+}
+
+enum JellyfinNetworkErrors: RError {
+    case playbackUpdateFailed(RError)
+    
+    var next: (any RError)? {
+        switch self {
+        case .playbackUpdateFailed(let err):
+            return err
+        }
+    }
+    
+    var errorDescription: String {
+        switch self {
+        case .playbackUpdateFailed: return "Failed to update playback status"
+        }
     }
 }
 
@@ -632,7 +673,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         userSessionID: String,
         playbackStatus: PlaybackStatus,
         accessToken: String
-    ) async throws {
+    ) async throws(JellyfinNetworkErrors) {
         struct PlaybackStatusStats: Encodable {
             let itemID: String
             let mediaSourceID: String
@@ -681,16 +722,18 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             isPaused: isPaused,
         )
         
-        let _: EmptyResponse = try await network.request(
-            verb: .post,
-            path: path,
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: nil,
-            body: stats
-        )
+        do {
+            let _: EmptyResponse = try await network.request(
+                verb: .post,
+                path: path,
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: nil,
+                body: stats
+            )
+        } catch { throw JellyfinNetworkErrors.playbackUpdateFailed(error) }
     }
     
-    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws -> [SlimMedia] {
+    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
@@ -705,30 +748,38 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "includeItemTypes", value: "Series"))
         }
         
-        return try await network.request(
-            verb: .get,
-            path: "/Items/Latest",
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: params,
-            body: nil
-        )
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/Items/Latest",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: params,
+                body: nil
+            )
+        } catch {
+            throw AdvancedNetworkErrors.failedRecentlyAdded(error)
+        }
     }
     
-    func getUpNext(accessToken: String) async throws -> [SlimMedia] {
+    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
         struct Root: Decodable {
             let Items: [SlimMedia]
         }
         
         let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]
         
-        let root: Root = try await network.request(
-            verb: .get,
-            path: "/Shows/NextUp",
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: params,
-            body: nil
-        )
-        return root.Items
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/Shows/NextUp",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: params,
+                body: nil
+            )
+            return root.Items
+        } catch {
+            throw AdvancedNetworkErrors.failedRecentlyAdded(error)
+        }
     }
     
     func getUserImageURL(userID: String) -> URL? {

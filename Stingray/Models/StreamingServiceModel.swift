@@ -312,8 +312,9 @@ public func retrieveLibraryContent(library: LibraryModel) async {
         }
     }
     
-    func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
-        return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
+    func getSeasonMedia(seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
+        do { return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID) }
+        catch { throw LibraryErrors.gettingSeasonMedia(error, seasonID) }
     }
     
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {

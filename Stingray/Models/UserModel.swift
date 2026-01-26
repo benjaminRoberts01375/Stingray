@@ -91,7 +91,7 @@ public enum ServiceType: Codable {
         case type, jellyfinData
     }
     
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws(JSONError) {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
         case .Jellyfin(let data):

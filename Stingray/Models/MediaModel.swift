@@ -7,6 +7,22 @@
 
 import Foundation
 
+// MARK: Errors
+public enum MediaError: RError {
+    /// The media is an unknown type. The `String` value is the type attempted to be made
+    case unknownMediaType(String)
+    
+    public var errorDescription: String {
+        switch self {
+        case .unknownMediaType:
+            return "Unknown media type"
+        }
+    }
+    
+    public var next: (any RError)? { nil }
+}
+
+
 // MARK: Protocols
 
 /// Define the shape of a piece of media
@@ -265,19 +281,27 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         case parentPrimaryImage = "SeriesPrimaryImageTag"
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
-        self.parentID = try container.decodeIfPresent(String.self, forKey: .parentID)
-        
-        self.id = try container.decodeIfPresent(String.self, forKey: .seriesID) ??
-        container.decode(String.self, forKey: .id)
-        
-        self.title = try container.decodeIfPresent(String.self, forKey: .seriesTitle) ??
-        container.decode(String.self, forKey: .title)
-        
-        self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
-        MediaImages(thumbnail: nil, logo: nil, primary: nil)
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
+            self.parentID = try container.decodeIfPresent(String.self, forKey: .parentID)
+            
+            self.id = try container.decodeIfPresent(String.self, forKey: .seriesID) ??
+            container.decode(String.self, forKey: .id)
+            
+            self.title = try container.decodeIfPresent(String.self, forKey: .seriesTitle) ??
+            container.decode(String.self, forKey: .title)
+            
+            self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
+            MediaImages(thumbnail: nil, logo: nil, primary: nil)
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "SlimMedia") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "SlimMedia") }
+            else { throw JSONError.failedJSONDecode("SlimMedia", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch let error { throw JSONError.failedJSONDecode("SlimMedia", error) }
     }
     
     // Hashable conformance
@@ -314,11 +338,19 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
         self.primary = primary
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.thumbnail = try container.decodeIfPresent(String.self, forKey: .thumbnail)
-        self.logo = try container.decodeIfPresent(String.self, forKey: .logo)
-        self.primary = try container.decodeIfPresent(String.self, forKey: .primary)
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.thumbnail = try container.decodeIfPresent(String.self, forKey: .thumbnail)
+            self.logo = try container.decodeIfPresent(String.self, forKey: .logo)
+            self.primary = try container.decodeIfPresent(String.self, forKey: .primary)
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "MediaImages") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "MediaImages") }
+            else { throw JSONError.failedJSONDecode("MediaImages", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch let error { throw JSONError.failedJSONDecode("MediaImages", error) }
     }
 }
 
@@ -343,12 +375,20 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
         lhs.backdrop == rhs.backdrop
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)
-        self.thumb = try container.decodeIfPresent([String: String].self, forKey: .thumb)
-        self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)
-        self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)
+            self.thumb = try container.decodeIfPresent([String: String].self, forKey: .thumb)
+            self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)
+            self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Image Blur Hash") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Media Image Blur Hash") }
+            else { throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
     }
     
     public func getBlurHash(for key: MediaImageType) -> String? {
@@ -564,9 +604,20 @@ public enum MediaType: Decodable {
     case movies([any MediaSourceProtocol])
     case tv([TVSeason]?)
     
-    public init (from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let stringValue = try container.decode(String.self)
+    public init (from decoder: Decoder) throws(JSONError) {
+        let container: any SingleValueDecodingContainer
+        let stringValue: String
+        
+        do {
+            container = try decoder.singleValueContainer()
+            stringValue = try container.decode(String.self)
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Image Blur Hash") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Media Image Blur Hash") }
+            else { throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
         
         switch stringValue {
         case MediaType.collections.rawValue:
@@ -576,20 +627,7 @@ public enum MediaType: Decodable {
         case "Series":
             self = .tv(nil)
         default:
-            throw InitError.unknownType(stringValue)
-        }
-    }
-    
-    /// Errors pertaining to failed setup
-    public enum InitError: Error {
-        /// The media type is unknown.
-        case unknownType(String)
-        
-        var description: String {
-            switch self {
-            case .unknownType(let badType):
-                "Unknown media type: \(badType)"
-            }
+            throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
         }
     }
     
