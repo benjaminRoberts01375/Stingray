@@ -453,7 +453,6 @@ fileprivate struct PlayNavigationView: View {
                         )
                     } label: {
                         Label(mediaSource.name, systemImage: "play.fill")
-                        Text("Start from \(String(ticks: mediaSource.startTicks))")
                     }
                 }
             }
