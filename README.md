@@ -7,8 +7,6 @@
 ![License](https://img.shields.io/badge/License-MIT-red)
 ![platforms](https://img.shields.io/badge/platforms-tvOS-green) ![tvOS](https://img.shields.io/badge/tvOS-18%2E0%2B-blue)
 
-Download from the [AppStore](https://apps.apple.com/us/app/stingray-streaming/id6756280505) or [TestFlight](https://testflight.apple.com/join/GSgjYB22):
-
 [![Download on Apple TV](https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-apple-tv.svg)](https://apps.apple.com/us/app/stingray-streaming/id6756280505)&nbsp;&nbsp;&nbsp;<a href="https://testflight.apple.com/join/GSgjYB22"><img src="https://testflight.apple.com/images/testflight-iOS-400x400_1x_40.png" width="50pt" alt="Download on TestFlight"></a>
 
 ## Key Features
