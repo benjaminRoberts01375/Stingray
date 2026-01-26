@@ -341,38 +341,6 @@ public struct MediaMetadataView: View {
     }
 }
 
-// MARK: Movie play buttons
-fileprivate struct MovieNavigationView: View {
-    let media: any MediaProtocol
-    let mediaSource: any MediaSourceProtocol
-    let streamingService: any StreamingServiceProtocol
-    
-    @FocusState.Binding var focus: ButtonType?
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
-        let startTicks = Double(mediaSource.startTicks > 15 * 60 * 10_000_000 ? mediaSource.startTicks : 0)
-        Button {
-            navigation.append(
-                PlayerViewModel(
-                    media: media,
-                    mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1),
-                    streamingService: streamingService,
-                    seasons: nil
-                )
-            )
-        } label: {
-            if startTicks != 0 { // Restart if watched less than 15 minutes
-                Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
-            } else {
-                Text("Play \(mediaSource.name)")
-            }
-        }
-        .focused($focus, equals: .play)
-    }
-}
-
 // MARK: Play button
 fileprivate struct PlayNavigationView: View {
     private let media: any MediaProtocol
@@ -503,58 +471,6 @@ fileprivate struct PlayNavigationView: View {
             }
             .accessibilityLabel("Play button menu")
             .focused($focus, equals: .play)
-        }
-    }
-}
-
-// MARK: Episode play buttons
-fileprivate struct TVEpisodeNavigationView: View {
-    let seasons: [any TVSeasonProtocol]
-    let streamingService: any StreamingServiceProtocol
-    let episode: any TVEpisodeProtocol
-    let media: any MediaProtocol
-    
-    @FocusState.Binding var focus: ButtonType?
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
-        if let mediaSource = episode.mediaSources.first {
-            // Always restart episode button
-            Button {
-                navigation.append(
-                    PlayerViewModel(
-                        media: media,
-                        mediaSource: mediaSource,
-                        startTime: .zero,
-                        streamingService: streamingService,
-                        seasons: seasons
-                    )
-                )
-            } label: {
-                Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(episode.title)")
-            }
-            .focused($focus, equals: .play)
-            
-            // If the next episode to play already has progress
-            if mediaSource.startTicks != 0 {
-                Button {
-                    navigation.append(
-                        PlayerViewModel(
-                            media: media,
-                            mediaSource: mediaSource,
-                            startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                            streamingService: streamingService,
-                            seasons: seasons
-                        )
-                    )
-                } label: {
-                    Text("Resume \(episode.title)")
-                }
-                .focused($focus, equals: .play)
-            }
-        } else {
-            Text("Error loading episode")
-                .foregroundStyle(.red)
         }
     }
 }
