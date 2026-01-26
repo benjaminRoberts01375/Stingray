@@ -151,8 +151,8 @@ public enum MediaError: RError {
     
     public var errorDescription: String {
         switch self {
-        case .unknownMediaType:
-            return "Unknown media type"
+        case .unknownMediaType(let mediaType):
+            return "Unknown media type \"\(mediaType)\""
         }
     }
     
