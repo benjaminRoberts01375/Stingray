@@ -15,12 +15,15 @@ public struct ErrorView: View {
     let summary: String
     /// Tracks whether or not the error has been expanded
     @State private var isExpanded: Bool = false
+    /// Tracks the current focus for changing colors
+    @FocusState private var isFocused: Bool
     
     public var body: some View {
         Button { self.isExpanded = true }
-        label: { ErrorSummaryView(summary: summary) }
+        label: { ErrorSummaryView(summary: summary, altColors: isFocused) }
             .buttonStyle(.plain)
-            .padding()
+            .padding(.horizontal, 70)
+            .focused($isFocused, equals: true)
             .sheet(isPresented: $isExpanded) { ErrorExpandedView(error: error) }
     }
 }
@@ -29,17 +32,19 @@ public struct ErrorView: View {
 fileprivate struct ErrorSummaryView: View {
     /// User-facing error to show before expanding
     let summary: String
+    /// Should switch into a high-contrast mode
+    let altColors: Bool
     
     var body: some View {
         Text(summary)
-            .foregroundStyle(.red)
+            .foregroundStyle(altColors ? .black : .red)
             .padding()
             .background {
                 RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(.red, lineWidth: 2)
+                    .strokeBorder(altColors ? .clear : .red, lineWidth: 2)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(.red.opacity(0.25))
+                            .fill(altColors ? .clear : .red.opacity(0.25))
                     )
             }
     }
@@ -61,11 +66,11 @@ fileprivate struct ErrorExpandedView: View {
 }
 
 #Preview {
-    ErrorSummaryView(summary: "Stingray went kaplooey.")
+    ErrorSummaryView(summary: "Stingray went kaplooey.", altColors: false)
 }
 
 #Preview {
-    ErrorSummaryView(summary: "Stingray went kaplooey.")
+    ErrorSummaryView(summary: "Stingray went kaplooey.", altColors: false)
         .sheet(isPresented: .constant(true)) {
             ErrorExpandedView(error: NetworkError.decodeJSONFailed(JSONError.missingKey("Nerd", "Preview"), url: nil))
         }
