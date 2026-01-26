@@ -19,7 +19,7 @@ struct DashboardView: View {
             VStack {
                 switch streamingService.libraryStatus {
                 case .waiting, .retrieving: ProgressView()
-                case .error(let err): ErrorView(error: err, summary: "The server formatted the library metadata unexpectedly.")
+                case .error(let err): ErrorView(error: err, summary: "The server formatted the library's metadata unexpectedly.")
                 case .available(let libraries), .complete(let libraries):
                     TabView(selection: $selectedTab) {
                         Tab(value: "users") {
