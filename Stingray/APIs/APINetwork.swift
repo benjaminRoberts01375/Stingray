@@ -8,25 +8,6 @@
 import AVKit
 import SwiftUI
 
-public enum AdvancedNetworkErrors: RError {
-    case failedRecentlyAdded(RError)
-    case failedUpNext(RError)
-    
-    public var next: (any RError)? {
-        switch self {
-        case .failedRecentlyAdded(let err), .failedUpNext(let err):
-            return err
-        }
-    }
-    
-    public var errorDescription: String {
-        switch self {
-        case .failedRecentlyAdded: return "Failed to get recently added list"
-        case .failedUpNext: return "Failed to get up next list"
-        }
-    }
-}
-
 /// Defines a network that is reliant on primitives already created by `BasicNetworkProtocol`
 public protocol AdvancedNetworkProtocol {
     /// Log-in a user via a username and password
@@ -137,67 +118,6 @@ public protocol AdvancedNetworkProtocol {
     func getUserImageURL(userID: String) -> URL?
 }
 
-public enum LibraryErrors: RError {
-    /// Failed ot get library metadata
-    case gettingLibraries(RError)
-    /// Failed to get library media. The `String` value is the name/id of the library
-    case gettingLibraryMedia(RError, String)
-    /// Failed to get seasons. The `String` value is the name/id of the library
-    case gettingSeasons(RError, String)
-    /// Failed to get a single season. The `String` value is the ID of the season
-    case gettingSeason(RError, String)
-    /// Failed to get the media for a season. The `String` value is the ID of the season
-    case gettingSeasonMedia(RError, String)
-    /// The library failed for some unknown reason.
-    case unknown(String)
-    
-    public var next: (RError)? {
-        switch self {
-        case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
-            return next
-        case .gettingSeasonMedia(let next, _):
-            return next
-        case .unknown:
-            return nil
-        }
-    }
-    
-    public var errorDescription: String {
-        switch self {
-        case .gettingLibraries: return "Failed to get library data"
-        case .gettingLibraryMedia(_, let name): return "Failed to get library content for library \(name)"
-        case .gettingSeasons(_, let name): return "Failed to get seasons for library \(name)"
-        case .gettingSeason(_, let id): return "Failed to get the season with the ID \(id)"
-        case .gettingSeasonMedia(_, let id): return "Failed to get the season media for the season \(id)"
-        case .unknown(let name): return "The library \(name) has failed to setup."
-        }
-    }
-}
-
-/// Errors related to logging in
-public enum AccountErrors: RError {
-    /// Failed to log into server.
-    case loginFailed(RError)
-    /// Failed to get the server's version,
-    case serverVersionFailed(RError)
-    
-    public var next: (RError)? {
-        switch self {
-        case .loginFailed(let next), .serverVersionFailed(let next):
-            return next
-        }
-    }
-    
-    public var errorDescription: String {
-        switch self {
-        case .loginFailed:
-            return "Login failed"
-        case .serverVersionFailed:
-            return "Failed to get server version"
-        }
-    }
-}
-
 public enum LibraryMediaSortOrder: String {
     case ascending = "Ascending"
     case Descending = "Descending"
@@ -289,23 +209,6 @@ public struct APILoginResponse: Decodable {
             else { throw JSONError.failedJSONDecode("APILoginResponse", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch { throw JSONError.failedJSONDecode("APILoginResponse", error) }
-    }
-}
-
-enum JellyfinNetworkErrors: RError {
-    case playbackUpdateFailed(RError)
-    
-    var next: (any RError)? {
-        switch self {
-        case .playbackUpdateFailed(let err):
-            return err
-        }
-    }
-    
-    var errorDescription: String {
-        switch self {
-        case .playbackUpdateFailed: return "Failed to update playback status"
-        }
     }
 }
 

@@ -57,10 +57,10 @@
 				APIs/APIStorage.swift,
 				APIs/APIUserStorage.swift,
 				Models/MediaModel.swift,
+				Models/RError.swift,
 				Models/StreamingServiceBasicModel.swift,
 				Models/URLExtension.swift,
 				Models/UserModel.swift,
-				RError.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};

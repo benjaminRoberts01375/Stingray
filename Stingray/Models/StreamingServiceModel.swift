@@ -43,24 +43,6 @@ enum LibraryStatus {
     case error(RError)
 }
 
-enum StreamingServiceErrors: RError {
-    case LibrarySetupFailed(RError?)
-    
-    var errorDescription: String {
-        switch self {
-        case .LibrarySetupFailed:
-            "Failed to create library"
-        }
-    }
-    
-    var next: (any RError)? {
-        switch self {
-        case .LibrarySetupFailed(let err):
-            return err
-        }
-    }
-}
-
 /// Denotes the availablity of a piece of media
 public enum MediaLookupStatus {
     /// The requested media was found

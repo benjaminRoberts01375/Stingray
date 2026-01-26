@@ -7,22 +7,6 @@
 
 import Foundation
 
-// MARK: Errors
-public enum MediaError: RError {
-    /// The media is an unknown type. The `String` value is the type attempted to be made
-    case unknownMediaType(String)
-    
-    public var errorDescription: String {
-        switch self {
-        case .unknownMediaType:
-            return "Unknown media type"
-        }
-    }
-    
-    public var next: (any RError)? { nil }
-}
-
-
 // MARK: Protocols
 
 /// Define the shape of a piece of media
