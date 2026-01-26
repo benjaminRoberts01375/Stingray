@@ -98,6 +98,9 @@ public enum JSONError: RError {
     public var next: (any RError)? {
         switch self {
         case .unexpectedKey(let err): return err
+        case .failedJSONDecode(_, let err):
+            if let rError = err as? RError { return rError }
+            return nil
         default: return nil
         }
     }
@@ -233,14 +236,14 @@ public enum LibraryErrors: RError {
 /// Errors related to logging in
 public enum AccountErrors: RError {
     /// Failed to log into server.
-    case loginFailed(RError)
+    case loginFailed(RError?)
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
     
     public var next: (RError)? {
         switch self {
-        case .loginFailed(let next), .serverVersionFailed(let next):
-            return next
+        case .loginFailed(let next): return next
+        case .serverVersionFailed(let next): return next
         }
     }
     

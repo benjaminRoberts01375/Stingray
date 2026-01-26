@@ -22,9 +22,7 @@ public struct LibraryView: View {
             case .unloaded, .waiting:
                 ProgressView()
             case .error(let err):
-                Text("Error: \(err.rDescription())")
-                    .foregroundStyle(.red)
-                    .padding(.vertical)
+                ErrorView(error: err, summary: "The server formatted the library media unexpectedly.")
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
                     MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
