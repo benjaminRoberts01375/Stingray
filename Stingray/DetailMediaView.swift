@@ -457,6 +457,7 @@ fileprivate struct PlayNavigationView: View {
                     }
                 }
             }
+            .accessibilityLabel("Play button menu")
         }
         // If there's any that are somewhat played, present options to restart
         else {
@@ -469,7 +470,9 @@ fileprivate struct PlayNavigationView: View {
                                     PlayerViewModel(
                                         media: media,
                                         mediaSource: mediaSource,
-                                        startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                                        startTime: CMTimeMakeWithSeconds(
+                                            Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1
+                                        ),
                                         streamingService: self.streamingService,
                                         seasons: self.seasons
                                     )
