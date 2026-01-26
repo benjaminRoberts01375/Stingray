@@ -9,14 +9,14 @@ import SwiftUI
 
 struct AddServerView: View {
     @Binding var loggedIn: LoginState
-    @State var httpProcol: HttpProtocol = .http
-    @State var httpHostname: String = ""
-    @State var httpPort: String = "8096"
-    @State var username: String = ""
-    @State var password: String = ""
-    @State var error: RError? = nil
-    @State var errorSummary: String = ""
-    @State var awaitingLogin: Bool = false
+    @State private var httpProcol: HttpProtocol = .http
+    @State private var httpHostname: String = ""
+    @State private var httpPort: String = "8096"
+    @State private var username: String = ""
+    @State private var password: String = ""
+    @State private var error: RError?
+    @State private var errorSummary: String = ""
+    @State private var awaitingLogin: Bool = false
     
     var body: some View {
         VStack {
