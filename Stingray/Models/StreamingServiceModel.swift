@@ -258,7 +258,7 @@ public func retrieveLibraryContent(library: LibraryModel) async {
         do {
             return try await networkAPI.getUpNext(accessToken: accessToken)
         } catch {
-            print("Up next failed: \(error.localizedDescription)")
+            print("Up next failed: \(error.rDescription())")
             return []
         }
     }
