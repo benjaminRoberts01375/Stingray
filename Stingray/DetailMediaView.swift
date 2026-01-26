@@ -46,35 +46,7 @@ public struct DetailMediaView: View {
                 .frame(height: 350)
                 
                 // Play buttons
-                HStack {
-                    switch media.mediaType {
-                    case .collections:
-                        EmptyView()
-                    case .movies(let sources):
-                        ForEach(sources, id: \.id) { source in
-                            MovieNavigationView(
-                                media: media,
-                                mediaSource: source,
-                                streamingService: streamingService,
-                                focus: $focus,
-                                navigation: $navigation
-                            )
-                        }
-                    case .tv(let seasons):
-                        if let seasons = seasons, let episode = Self.getNextUp(from: seasons) ?? seasons.first?.episodes.first {
-                            TVEpisodeNavigationView(
-                                seasons: seasons,
-                                streamingService: streamingService,
-                                episode: episode,
-                                media: media,
-                                focus: $focus,
-                                navigation: $navigation
-                            )
-                        } else {
-                            ProgressView("Loading seasons...")
-                        }
-                    }
-                }
+                PlayNavigationView(focus: $focus, navigation: $navigation, media: media, streamingService: streamingService)
                 .disabled({
                     switch focus {
                     case .play, .overview, .season, nil:
@@ -397,6 +369,96 @@ fileprivate struct MovieNavigationView: View {
                 Text("Play \(mediaSource.name)")
             }
         }
+        .focused($focus, equals: .play)
+    }
+}
+
+// MARK: Play button
+fileprivate struct PlayNavigationView: View {
+    private let media: any MediaProtocol
+    private let streamingService: any StreamingServiceProtocol
+    private var title: String
+    private let mediaSources: [any MediaSourceProtocol]
+    private let seasons: [any TVSeasonProtocol]?
+    
+    @FocusState.Binding var focus: ButtonType?
+    @Binding var navigation: NavigationPath
+    
+    init(
+        focus: FocusState<ButtonType?>.Binding,
+        navigation: Binding<NavigationPath>,
+        media: any MediaProtocol,
+        streamingService: any StreamingServiceProtocol
+    ) {
+        self._focus = focus
+        self._navigation = navigation
+        self.media = media
+        self.streamingService = streamingService
+        switch media.mediaType {
+        case .movies(let sources):
+            self.title = media.title
+            self.mediaSources = sources
+            self.seasons = nil
+            
+        case .tv(let seasons):
+            guard let seasons = seasons,
+            let nextEpisode = DetailMediaView.getNextUp(from: seasons)
+            else {
+                self.title = "Error"
+                self.mediaSources = []
+                self.seasons = nil
+                break
+            }
+            self.title = nextEpisode.title
+            self.mediaSources = nextEpisode.mediaSources
+            self.seasons = seasons
+            
+        default: // Collections
+            self.title = "Unsupported"
+            self.mediaSources = []
+            self.seasons = nil
+        }
+    }
+    
+    var body: some View {
+        Menu("\(Image(systemName: "play.fill")) \(title)") {
+            Section("Resume") {
+                ForEach(mediaSources, id: \.id) { mediaSource in
+                    Button {
+                        self.navigation.append(
+                            PlayerViewModel(
+                                media: media,
+                                mediaSource: mediaSource,
+                                startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                                streamingService: self.streamingService,
+                                seasons: self.seasons
+                            )
+                        )
+                    } label: {
+                        Label(mediaSource.name, systemImage: "play.fill")
+                        Text("Start from \(String(ticks: mediaSource.startTicks))")
+                    }
+                }
+            }
+            Section("Restart") {
+                ForEach(mediaSources, id: \.id) { mediaSource in
+                    Button {
+                        self.navigation.append(
+                            PlayerViewModel(
+                                media: media,
+                                mediaSource: mediaSource,
+                                startTime: .zero,
+                                streamingService: self.streamingService,
+                                seasons: self.seasons
+                            )
+                        )
+                    } label: {
+                        Label(mediaSource.name, systemImage: "memories")
+                    }
+                }
+            }
+        }
+        .accessibilityLabel("Play button menu")
         .focused($focus, equals: .play)
     }
 }
