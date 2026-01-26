@@ -8,11 +8,6 @@
 import SwiftUI
 
 struct AddServerView: View {
-    enum HttpProtocol: String, CaseIterable {
-        case http = "http"
-        case https = "https"
-    }
-    
     @Binding var loggedIn: LoginState
     @State var httpProcol: HttpProtocol = .http
     @State var httpHostname: String = ""
@@ -110,39 +105,7 @@ struct AddServerView: View {
                 self.loggedIn = .loggedIn(streamingService)
             } catch {
                 if let rError = error as? RError, let netErr = rError.last() as? NetworkError {
-                    switch netErr {
-                    case .invalidURL:
-                        switch self.httpProcol {
-                        case .http:
-                            self.error = "Invalid HTTP URL. Check your hostname and port."
-                        case .https:
-                            self.error = "Invalid HTTPS URL. Check your URL."
-                        }
-                    case .encodeJSONFailed:
-                        self.error = "Failed to send request to server. " +
-                            "This may be because of some tricky characters in your username and password."
-                    case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
-                        switch self.httpProcol {
-                        case .http:
-                            self.error = "Could not find your Jellyfin server. Please check your hostname and port."
-                        case .https:
-                            self.error = "Could not find your Jellyfin server. Please check your URL."
-                        }
-                    case .badResponse(let responseCode, _):
-                        switch responseCode {
-                        case 401:
-                            self.error = "Invalid username or password."
-                        case 404:
-                            switch self.httpProcol {
-                            case .http:
-                                self.error = "Could not find your Jellyfin server. Please check your hostname and port."
-                            case .https:
-                                self.error = "Could not find your Jellyfin server. Please check your URL."
-                            }
-                        default:
-                            self.error = "An unexpected error occurred. Please make sure your login details are correct."
-                        }
-                    }
+                    self.error = LoginView.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
                     print("Error signing in: \(rError.rDescription())")
                 } else {
                     // Handle other types of errors
