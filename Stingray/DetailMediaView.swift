@@ -439,7 +439,7 @@ fileprivate struct PlayNavigationView: View {
         }
         // If there are multiple sources but all unwatched, show only "play" options that start from beginning
         else if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
-            Menu("\(Image(systemName: "play.fill")) \(title)") {
+            Menu("\(Image(systemName: "play")) \(title)") {
                 ForEach(mediaSources, id: \.id) { mediaSource in
                     Button {
                         self.navigation.append(
@@ -460,7 +460,7 @@ fileprivate struct PlayNavigationView: View {
         }
         // If there's any that are somewhat played, present options to restart
         else {
-            Menu("\(Image(systemName: "play.fill")) \(title)") {
+            Menu("\(Image(systemName: "play")) \(title)") {
                 Section("Resume") {
                     ForEach(mediaSources, id: \.id) { mediaSource in
                         if mediaSource.startTicks != 0 {
