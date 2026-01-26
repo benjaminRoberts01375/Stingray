@@ -421,45 +421,61 @@ fileprivate struct PlayNavigationView: View {
     }
     
     var body: some View {
-        Menu("\(Image(systemName: "play.fill")) \(title)") {
-            Section("Resume") {
-                ForEach(mediaSources, id: \.id) { mediaSource in
-                    Button {
-                        self.navigation.append(
-                            PlayerViewModel(
-                                media: media,
-                                mediaSource: mediaSource,
-                                startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                                streamingService: self.streamingService,
-                                seasons: self.seasons
+        if mediaSources.count == 1 && self.mediaSources[0].startTicks == 0 {
+            let mediaSource = self.mediaSources[0]
+            Button {
+                self.navigation.append(
+                    PlayerViewModel(
+                        media: media,
+                        mediaSource: mediaSource,
+                        startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                        streamingService: self.streamingService,
+                        seasons: self.seasons
+                    )
+                )
+            } label: { Label(mediaSource.name, systemImage: "play.fill") }
+                .focused($focus, equals: .play)
+        } else {
+            Menu("\(Image(systemName: "play.fill")) \(title)") {
+                Section("Resume") {
+                    ForEach(mediaSources, id: \.id) { mediaSource in
+                        Button {
+                            self.navigation.append(
+                                PlayerViewModel(
+                                    media: media,
+                                    mediaSource: mediaSource,
+                                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                                    streamingService: self.streamingService,
+                                    seasons: self.seasons
+                                )
                             )
-                        )
-                    } label: {
-                        Label(mediaSource.name, systemImage: "play.fill")
-                        Text("Start from \(String(ticks: mediaSource.startTicks))")
+                        } label: {
+                            Label(mediaSource.name, systemImage: "play.fill")
+                            Text("Start from \(String(ticks: mediaSource.startTicks))")
+                        }
+                    }
+                }
+                Section("Restart") {
+                    ForEach(mediaSources, id: \.id) { mediaSource in
+                        Button {
+                            self.navigation.append(
+                                PlayerViewModel(
+                                    media: media,
+                                    mediaSource: mediaSource,
+                                    startTime: .zero,
+                                    streamingService: self.streamingService,
+                                    seasons: self.seasons
+                                )
+                            )
+                        } label: {
+                            Label(mediaSource.name, systemImage: "memories")
+                        }
                     }
                 }
             }
-            Section("Restart") {
-                ForEach(mediaSources, id: \.id) { mediaSource in
-                    Button {
-                        self.navigation.append(
-                            PlayerViewModel(
-                                media: media,
-                                mediaSource: mediaSource,
-                                startTime: .zero,
-                                streamingService: self.streamingService,
-                                seasons: self.seasons
-                            )
-                        )
-                    } label: {
-                        Label(mediaSource.name, systemImage: "memories")
-                    }
-                }
-            }
+            .accessibilityLabel("Play button menu")
+            .focused($focus, equals: .play)
         }
-        .accessibilityLabel("Play button menu")
-        .focused($focus, equals: .play)
     }
 }
 
