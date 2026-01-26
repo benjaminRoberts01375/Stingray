@@ -23,7 +23,7 @@ public enum MediaStatus {
     /// All library content is available
     case complete([MediaModel])
     /// Loading library content failed with an error
-    case error(Error)
+    case error(RError)
 }
 
 @Observable

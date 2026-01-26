@@ -39,7 +39,7 @@ public protocol AdvancedNetworkProtocol {
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaType]?
-    ) async throws -> [MediaModel]
+    ) async throws(LibraryErrors) -> [MediaModel]
     /// Generates a URL for an image
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -76,7 +76,7 @@ public protocol AdvancedNetworkProtocol {
     ///   - accessToken: Access token for the server
     ///   - seasonID: ID of the season
     /// - Returns: Season data
-    func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason]
+    func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason]
     /// Updates the server about the current playback status
     /// - Parameters:
     ///   - itemID: Media ID of the currently played content
@@ -119,19 +119,33 @@ public protocol AdvancedNetworkProtocol {
 }
 
 public enum LibraryErrors: RError {
+    /// Failed ot get library metadata
     case gettingLibraries(RError)
+    /// Failed to get library media. The `String` value is the name/id of the library
+    case gettingLibraryMedia(RError, String)
+    /// Failed to get seasons. The `String` value is the name/id of the library
+    case gettingSeasons(RError, String)
+    /// Failed to get a single season. The `String` value is the ID of the season
+    case gettingSeason(RError, String)
+    /// The library failed for some unknown reason.
+    case unknown(String)
     
     public var next: (RError)? {
         switch self {
-        case .gettingLibraries(let next):
+        case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
             return next
+        case .unknown:
+            return nil
         }
     }
     
     public var errorDescription: String {
         switch self {
-        case .gettingLibraries:
-            return "Failed to get library data"
+        case .gettingLibraries: return "Failed to get library data"
+        case .gettingLibraryMedia(_, let name): return "Failed to get library content for library \(name)"
+        case .gettingSeasons(_, let name): return "Failed to get seasons for library \(name)"
+        case .gettingSeason(_, let id): return "Failed to get the season with the ID \(id)"
+        case .unknown(let name): return "The library \(name) has failed to setup."
         }
     }
 }
@@ -345,7 +359,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaType]?
-    ) async throws -> [MediaModel] {
+    ) async throws(LibraryErrors) -> [MediaModel] {
         struct Root: Decodable {
             let items: [MediaModel]
             
@@ -371,36 +385,42 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
         }
         
-        let response: Root = try await network.request(
-            verb: .get,
-            path: "/Items",
-            headers: ["X-MediaBrowser-Token":accessToken],
-            urlParams: params,
-            body: nil
-        )
-        try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
-            for (index, item) in response.items.enumerated() {
-                switch item.mediaType {
-                case .tv:
-                    // Capture the id before creating the task
-                    let itemId = item.id
-                    group.addTask {
-                        let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
-                        return (index, seasons)
-                    }
-                default:
-                    break
-                }
-            }
+        do {
+            let response: Root = try await network.request(
+                verb: .get,
+                path: "/Items",
+                headers: ["X-MediaBrowser-Token":accessToken],
+                urlParams: params,
+                body: nil
+            )
             
-            for try await (index, seasons) in group {
-                response.items[index].mediaType = .tv(seasons)
+            try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
+                for (index, item) in response.items.enumerated() {
+                    switch item.mediaType {
+                    case .tv:
+                        // Capture the id before creating the task
+                        let itemId = item.id
+                        group.addTask {
+                            let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
+                            return (index, seasons)
+                        }
+                    default:
+                        break
+                    }
+                }
+                do {
+                    for try await (index, seasons) in group {
+                        response.items[index].mediaType = .tv(seasons)
+                    }
+                } catch let error as RError { throw LibraryErrors.gettingSeasons(error, libraryId) }
             }
+            return response.items
         }
-        return response.items
+        catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
+        catch { throw LibraryErrors.unknown(libraryId) }
     }
     
-    func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason] {
+    func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
         struct Root: Decodable {
             let items: [TVSeason]
             
@@ -495,14 +515,17 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "fields", value: "MediaSources"),
             URLQueryItem(name: "fields", value: "Overview")
         ]
-        let response: Root = try await network.request(
-            verb: .get,
-            path: "/Shows/\(seasonID)/Episodes",
-            headers: ["X-MediaBrowser-Token":accessToken],
-            urlParams: params,
-            body: nil
-        )
-        return response.items
+        do {
+            let response: Root = try await network.request(
+                verb: .get,
+                path: "/Shows/\(seasonID)/Episodes",
+                headers: ["X-MediaBrowser-Token":accessToken],
+                urlParams: params,
+                body: nil
+            )
+            return response.items
+        }
+        catch let error as RError { throw LibraryErrors.gettingSeason(error, seasonID) }
     }
     
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {

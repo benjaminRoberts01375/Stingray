@@ -22,7 +22,7 @@ public struct LibraryView: View {
             case .unloaded, .waiting:
                 ProgressView()
             case .error(let err):
-                Text("Error: \(err.localizedDescription)")
+                Text("Error: \(err.rDescription())")
                     .foregroundStyle(.red)
                     .padding(.vertical)
             case .available(let allMedia), .complete(let allMedia):
