@@ -21,7 +21,7 @@ struct DashboardView: View {
                 case .waiting, .retrieving:
                     ProgressView()
                 case .error(let err):
-                    Text("Error loading libraries: \(err.localizedDescription)")
+                    Text("Error loading libraries: \(err.rDescription())")
                         .foregroundStyle(.red)
                     
                 case .available(let libraries), .complete(let libraries):

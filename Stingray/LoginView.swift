@@ -59,8 +59,8 @@ struct LoginView: View {
                     )
                     self.loggedIn = .loggedIn(streamingService)
                     dismiss()
-                } catch {
-                    self.error = error.localizedDescription
+                } catch let error as RError {
+                    self.error = error.rDescription()
                     awaitingLogin = false
                 }
             }

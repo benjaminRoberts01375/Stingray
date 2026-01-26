@@ -40,7 +40,7 @@ enum LibraryStatus {
     /// All of this library's content has been downloaded
     case complete([LibraryModel])
     /// The library has errored out
-    case error(Error)
+    case error(RError)
 }
 
 /// Denotes the availablity of a piece of media
@@ -120,22 +120,26 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.serverVersion = response.serverVersion
     }
     
-    static func login(url: URL, username: String, password: String) async throws -> JellyfinModel {
+    static func login(url: URL, username: String, password: String) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        let response = try await networkAPI.login(username: username, password: password)
-        UserModel.shared.addUser(
-            User(
-                serviceURL: url,
-                serviceType: .Jellyfin(
-                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-                ),
-                serviceID: response.serverId,
-                id: response.userId,
-                displayName: response.userName
+        do {
+            let response = try await networkAPI.login(username: username, password: password)
+            UserModel.shared.addUser(
+                User(
+                    serviceURL: url,
+                    serviceType: .Jellyfin(
+                        UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+                    ),
+                    serviceID: response.serverId,
+                    id: response.userId,
+                    displayName: response.userName
+                )
             )
-        )
-        UserModel.shared.setDefaultUser(userID: response.userId)
-        return JellyfinModel(response: response, serviceURL: url)
+            UserModel.shared.setDefaultUser(userID: response.userId)
+            return JellyfinModel(response: response, serviceURL: url)
+        } catch {
+            throw AccountErrors.loginFailed(error)
+        }
     }
     
     func retrieveLibraries() async {
@@ -147,9 +151,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
             libraries =
             try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
                 .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
-            
         } catch {
-            self.libraryStatus = .error(error)
+            self.libraryStatus = .error(StreamingServiceErrors.LibrarySetupFailed(error))
             return
         }
         
@@ -237,7 +240,7 @@ public func retrieveLibraryContent(library: LibraryModel) async {
         do {
             return try await networkAPI.getUpNext(accessToken: accessToken)
         } catch {
-            print("Up next failed: \(error.localizedDescription)")
+            print("Up next failed: \(error.rDescription())")
             return []
         }
     }
@@ -291,8 +294,9 @@ public func retrieveLibraryContent(library: LibraryModel) async {
         }
     }
     
-    func getSeasonMedia(seasonID: String) async throws -> [TVSeason] {
-        return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID)
+    func getSeasonMedia(seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
+        do { return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID) }
+        catch { throw LibraryErrors.gettingSeasonMedia(error, seasonID) }
     }
     
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {

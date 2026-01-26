@@ -109,7 +109,7 @@ struct AddServerView: View {
                 let streamingService = try await JellyfinModel.login(url: url, username: username, password: password)
                 self.loggedIn = .loggedIn(streamingService)
             } catch {
-                if let netErr = error as? NetworkError {
+                if let rError = error as? RError, let netErr = rError.last() as? NetworkError {
                     switch netErr {
                     case .invalidURL:
                         switch self.httpProcol {
@@ -143,7 +143,7 @@ struct AddServerView: View {
                             self.error = "An unexpected error occurred. Please make sure your login details are correct."
                         }
                     }
-                    print("Error signing in: \(error.localizedDescription)")
+                    print("Error signing in: \(rError.rDescription())")
                 } else {
                     // Handle other types of errors
                     print("Other error: \(error)")
