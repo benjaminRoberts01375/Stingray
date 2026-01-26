@@ -226,24 +226,31 @@ public struct APILoginResponse: Decodable {
         case userId = "UserId"
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        // Decode nested User
-        let userContainer = try container.nestedContainer(keyedBy: UserKeys.self, forKey: .user)
-        userName = try userContainer.decode(String.self, forKey: .name)
-        
-        // Decode nested SessionInfo
-        let sessionContainer = try container.nestedContainer(keyedBy: SessionInfoKeys.self, forKey: .sessionInfo)
-        sessionId = try sessionContainer.decode(String.self, forKey: .id)
-        userId = try sessionContainer.decode(String.self, forKey: .userId)
-        
-        // Decode flat fields
-        accessToken = try container.decode(String.self, forKey: .accessToken)
-        serverId = try container.decode(String.self, forKey: .serverId)
-        
-        // Gets filled in later
-        serverVersion = nil
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            
+            // Decode nested User
+            let userContainer = try container.nestedContainer(keyedBy: UserKeys.self, forKey: .user)
+            userName = try userContainer.decode(String.self, forKey: .name)
+            
+            // Decode nested SessionInfo
+            let sessionContainer = try container.nestedContainer(keyedBy: SessionInfoKeys.self, forKey: .sessionInfo)
+            sessionId = try sessionContainer.decode(String.self, forKey: .id)
+            userId = try sessionContainer.decode(String.self, forKey: .userId)
+            
+            // Decode flat fields
+            accessToken = try container.decode(String.self, forKey: .accessToken)
+            serverId = try container.decode(String.self, forKey: .serverId)
+            
+            serverVersion = nil
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "APILoginResponse") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "APILoginResponse") }
+            else { throw JSONError.failedJSONDecode("APILoginResponse", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch { throw JSONError.failedJSONDecode("APILoginResponse", error) }
     }
 }
 
@@ -397,57 +404,64 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         struct Root: Decodable {
             let items: [TVSeason]
             
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
-                var tempSeasons: [TVSeason] = []
-                var standInEpisodeNumber: Int = 0
-                
-                while !seasonsContainer.isAtEnd {
-                    standInEpisodeNumber += 1
-                    let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
-                    let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
+            init(from decoder: Decoder) throws(JSONError) {
+                do {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
+                    var tempSeasons: [TVSeason] = []
+                    var standInEpisodeNumber: Int = 0
                     
-                    let episode: TVEpisode = TVEpisode(
-                        id: try episodeContainer.decode(String.self, forKey: .id),
-                        blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
-                        title: try episodeContainer.decode(String.self, forKey: .title),
-                        episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
-                        mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? [],
-                        lastPlayed: {
-                            guard let dateString = try? userDataContainer.decodeIfPresent(
-                                String.self,
-                                forKey: .lastPlayedDate
-                            ) else { return nil }
-                            let formatter = ISO8601DateFormatter()
-                            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                            return formatter.date(from: dateString)
-                        }(),
-                        overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
-                    )
-                    let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
-                    episodeContainer.decode(String.self, forKey: .seriesID)
-                    
-                    if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
-                        for mediaSourceIndex in episode.mediaSources.indices {
-                            episode.mediaSources[mediaSourceIndex].startTicks = playbackTicks
+                    while !seasonsContainer.isAtEnd {
+                        standInEpisodeNumber += 1 // Fallback season number if it's not present
+                        let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
+                        let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
+                        
+                        let episode: TVEpisode = TVEpisode(
+                            id: try episodeContainer.decode(String.self, forKey: .id),
+                            blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
+                            title: try episodeContainer.decode(String.self, forKey: .title),
+                            episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
+                            mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? [],
+                            lastPlayed: {
+                                guard let dateString = try? userDataContainer.decodeIfPresent(
+                                    String.self,
+                                    forKey: .lastPlayedDate
+                                ) else { return nil }
+                                let formatter = ISO8601DateFormatter()
+                                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                                return formatter.date(from: dateString)
+                            }(),
+                            overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
+                        )
+                        let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
+                        episodeContainer.decode(String.self, forKey: .seriesID)
+                        
+                        if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
+                            for mediaSourceIndex in episode.mediaSources.indices {
+                                episode.mediaSources[mediaSourceIndex].startTicks = playbackTicks
+                            }
+                        }
+                        
+                        if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) {
+                            tempSeasons[seasonIndex].episodes.append(episode)
+                        } else {
+                            let newSeason = TVSeason(
+                                id: seasonID,
+                                title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
+                                episodes: [episode],
+                                seasonNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
+                            )
+                            tempSeasons.append(newSeason)
                         }
                     }
-                    
-                    if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Season already exists, append the episode
-                        tempSeasons[seasonIndex].episodes.append(episode)
-                    } else {
-                        // New season, create it with the first episode
-                        let newSeason = TVSeason(
-                            id: seasonID,
-                            title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
-                            episodes: [episode],
-                            seasonNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
-                        )
-                        tempSeasons.append(newSeason)
-                    }
+                    self.items = tempSeasons
                 }
-                self.items = tempSeasons
+                catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Root") }
+                catch DecodingError.valueNotFound(_, let context) {
+                    if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Root") }
+                    else { throw JSONError.failedJSONDecode("Season Media", DecodingError.valueNotFound(Any.self, context)) }
+                }
+                catch { throw JSONError.failedJSONDecode("Season Media", error) }
             }
             
             private enum CodingKeys: String, CodingKey {

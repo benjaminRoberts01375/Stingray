@@ -47,23 +47,20 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         case libraryType = "CollectionType"
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        var title = ""
+    public init(from decoder: Decoder) throws(JSONError) {
         do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            
             title = try container.decode(String.self, forKey: .title)
-        } catch {
-            print("Failed to decode title: \(error)")
-            throw error
+            id = try container.decode(String.self, forKey: .id)
+            libraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
+            media = .unloaded
         }
-        self.title = title
-        do {
-            self.id = try container.decode(String.self, forKey: .id)
-            self.libraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
-        } catch {
-            print("Failed to decode for \(title)")
-            throw error
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "LibraryModel") }
+            else { throw JSONError.failedJSONDecode("LibraryModel", DecodingError.valueNotFound(Any.self, context)) }
         }
-        self.media = .unloaded // Don't even try to decode media here
+        catch { throw JSONError.failedJSONDecode("LibraryModel", error) }
     }
 }

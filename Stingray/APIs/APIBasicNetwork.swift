@@ -55,11 +55,16 @@ public enum NetworkError: RError {
     /// Response was bad in some way
     case badResponse(responseCode: Int, response: String?)
     /// Could not decode the returned JSON
-    case decodeJSONFailed(Error, url: URL?)
+    case decodeJSONFailed((any RError)?, url: URL?)
     /// An access token is needed
     case missingAccessToken
     
-    public var next: (any RError)? { return nil }
+    public var next: (any RError)? {
+        switch self {
+        case .decodeJSONFailed(let error, _): return error
+        default: return nil
+        }
+    }
     
     public var errorDescription: String {
         switch self {
@@ -71,36 +76,61 @@ public enum NetworkError: RError {
             return "Request failed to send"
         case .badResponse(let code, let text):
             return "Received a bad response from the server - \(code) \(text ?? "")"
-        case .decodeJSONFailed(let error, let url): // Special handling for decode errors
-            let urlString = url?.absoluteString ?? "unknown URL"
-            // Provide detailed information about decoding errors
+        case .decodeJSONFailed(_, let url):
+            return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL")"
+        case .missingAccessToken:
+            return "An access token is needed"
+        }
+    }
+}
+
+public enum JSONError: RError {
+    /// Denotes a missing entry in a given JSON object. First `String` denotes the key, and the second `String` denotes the object's name
+    case missingKey(String, String)
+    /// Denotes a missing JSON object within another JSON object. First `String` denotes the key,
+    /// and the second `String` denotes the object's name
+    case missingContainer(String, String)
+    /// Failed to decode JSON at all. The `String` denotes the object's name, `Error` is the thrown JSON error
+    case failedJSONDecode(String, Error)
+    /// Failed to encode JSON at all. The `String` denotes the object's name
+    case failedJSONEncode(String)
+    
+    public var next: (any RError)? { nil }
+    
+    public var errorDescription: String {
+        switch self {
+        case .missingKey(let key, let objectName):
+            return "The key \(key) was missing from the JSON object \(objectName)"
+        case .missingContainer(let containerName, let parentObjectName):
+            return "The JSON object \(containerName) was missing from the JSON object \(parentObjectName)"
+        case .failedJSONDecode(let objectName, let error):
             if let decodingError = error as? DecodingError {
                 switch decodingError {
                 case .keyNotFound(let key, let context):
                     let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-                    return "Unable to decode JSON from \(urlString): Missing key '\(key.stringValue)' at \(path)"
+                    return "Unable to decode JSON for \(objectName): Missing key '\(key.stringValue)' at \(path)"
                 case .valueNotFound(let type, let context):
                     let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-                    return "Unable to decode JSON from \(urlString): Missing value of type '\(type)' at \(path)"
+                    return "Unable to decode JSON for \(objectName): Missing value of type '\(type)' at \(path)"
                 case .typeMismatch(let type, let context):
                     let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
                     return """
-                        Unable to decode JSON from \(urlString): Type mismatch for '\(type)' at \(path). \
+                        Unable to decode JSON for \(objectName): Type mismatch for '\(type)' at \(path). \
                         \(context.debugDescription)
                         """
                 case .dataCorrupted(let context):
                     let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
                     return """
-                        Unable to decode JSON from \(urlString): Data corrupted at \(path). \
+                        Unable to decode JSON for \(objectName): Data corrupted at \(path). \
                         \(context.debugDescription)
                         """
                 @unknown default:
-                    return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
+                    return "Unable to decode JSON  \(objectName): \(error.localizedDescription)"
                 }
             }
-            return "Failed to decode JSON"
-        case .missingAccessToken:
-            return "An access token is needed"
+            return "JSON failed to decode for \(objectName)"
+        case .failedJSONEncode(let objectName):
+            return "Failed to encode JSON for \(objectName)"
         }
     }
 }
@@ -179,20 +209,17 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
             )
         }
         
-        // Decode the JSON response with more helpful errors
+        // Decode the JSON response
         do {
             let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
             return decodedResponse
-        } catch let DecodingError.dataCorrupted(context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.dataCorrupted(context), url: url)
-        } catch let DecodingError.keyNotFound(key, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.keyNotFound(key, context), url: url)
-        } catch let DecodingError.valueNotFound(value, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.valueNotFound(value, context), url: url)
-        } catch let DecodingError.typeMismatch(type, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.typeMismatch(type, context), url: url)
-        } catch {
+        } catch let jsonError as JSONError {
+            throw NetworkError.decodeJSONFailed(jsonError, url: url)
+        } catch let error as RError {
+            // Fallback for any non-JSONError decode failures
             throw NetworkError.decodeJSONFailed(error, url: url)
+        } catch {
+            throw NetworkError.decodeJSONFailed(nil, url: nil)
         }
     }
     
