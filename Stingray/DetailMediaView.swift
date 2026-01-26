@@ -421,6 +421,7 @@ fileprivate struct PlayNavigationView: View {
     }
     
     var body: some View {
+        // If there's only one source and it's unwatched, go right into playing
         if mediaSources.count == 1 && self.mediaSources[0].startTicks == 0 {
             let mediaSource = self.mediaSources[0]
             Button {
@@ -435,7 +436,30 @@ fileprivate struct PlayNavigationView: View {
                 )
             } label: { Label(mediaSource.name, systemImage: "play.fill") }
                 .focused($focus, equals: .play)
-        } else {
+        }
+        // If there are multiple sources but all unwatched, show only "play" options that start from beginning
+        else if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
+            Menu("\(Image(systemName: "play.fill")) \(title)") {
+                ForEach(mediaSources, id: \.id) { mediaSource in
+                    Button {
+                        self.navigation.append(
+                            PlayerViewModel(
+                                media: media,
+                                mediaSource: mediaSource,
+                                startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                                streamingService: self.streamingService,
+                                seasons: self.seasons
+                            )
+                        )
+                    } label: {
+                        Label(mediaSource.name, systemImage: "play.fill")
+                        Text("Start from \(String(ticks: mediaSource.startTicks))")
+                    }
+                }
+            }
+        }
+        // If there's any that are somewhat played, present options to restart
+        else {
             Menu("\(Image(systemName: "play.fill")) \(title)") {
                 Section("Resume") {
                     ForEach(mediaSources, id: \.id) { mediaSource in
