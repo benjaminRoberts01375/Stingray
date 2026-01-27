@@ -402,7 +402,7 @@ fileprivate struct PlayNavigationView: View {
                         seasons: self.seasons
                     )
                 )
-            } label: { Label(mediaSource.name, systemImage: "play.fill") }
+            } label: { Label(self.title, systemImage: "play.fill") }
                 .focused($focus, equals: .play)
         }
         // If there are multiple sources but all unwatched, show only "play" options that start from beginning
