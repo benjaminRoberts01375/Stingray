@@ -146,6 +146,7 @@ final class PlayerViewModel: Hashable {
             else { title = self.mediaSource.name }
         case .movies(let sources):
             title = self.media.title
+            if sources.count > 1 { subtitle = self.mediaSource.name }
         default: title = self.media.title
         }
         
