@@ -418,36 +418,14 @@ fileprivate struct PlayNavigationView: View {
             // Single item that's partially watched - show streamlined menu
             else {
                 Menu("\(Image(systemName: "play")) \(title)") {
-                    Button {
-                        self.navigation.append(
-                            PlayerViewModel(
-                                media: media,
-                                mediaSource: mediaSources[0],
-                                startTime: CMTimeMakeWithSeconds(
-                                    Double(mediaSources[0].startTicks / 10_000_000), preferredTimescale: 1
-                                ),
-                                streamingService: self.streamingService,
-                                seasons: self.seasons
-                            )
-                        )
-                    } label: {
+                    Button { navigateToPlayer(for: mediaSources[0], startTicks: mediaSources[0].startTicks) }
+                    label: {
                         Label("Resume \(media.title)", systemImage: "play.fill")
                         Text("Continue from \(String(ticks: mediaSources[0].startTicks))")
                     }
                     .id(mediaSources[0].id)
-                    Button {
-                        self.navigation.append(
-                            PlayerViewModel(
-                                media: media,
-                                mediaSource: mediaSources[0],
-                                startTime: .zero,
-                                streamingService: self.streamingService,
-                                seasons: self.seasons
-                            )
-                        )
-                    } label: {
-                        Label("Restart \(media.title)", systemImage: "memories")
-                    }
+                    Button { navigateToPlayer(for: mediaSources[0], startTicks: .zero) }
+                    label: { Label("Restart \(media.title)", systemImage: "memories") }
                     .id(mediaSources[0].id)
                 }
                 .onAppear { self.focus = .play }
@@ -463,19 +441,8 @@ fileprivate struct PlayNavigationView: View {
             if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
                 Menu("\(Image(systemName: "play")) \(title)") {
                     ForEach(mediaSources, id: \.id) { mediaSource in
-                        Button {
-                            self.navigation.append(
-                                PlayerViewModel(
-                                    media: media,
-                                    mediaSource: mediaSource,
-                                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                                    streamingService: self.streamingService,
-                                    seasons: self.seasons
-                                )
-                            )
-                        } label: {
-                            Label(mediaSource.name, systemImage: "play.fill")
-                        }
+                        Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks) }
+                        label: { Label(mediaSource.name, systemImage: "play.fill") }
                         .id(mediaSource.id)
                     }
                 }
@@ -491,18 +458,7 @@ fileprivate struct PlayNavigationView: View {
                     Section("Resume") {
                         ForEach(mediaSources, id: \.id) { mediaSource in
                             if mediaSource.startTicks != 0 {
-                                Button {
-                                    self.navigation.append(
-                                        PlayerViewModel(
-                                            media: media,
-                                            mediaSource: mediaSource,
-                                            startTime: CMTimeMakeWithSeconds(
-                                                Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1
-                                            ),
-                                            streamingService: self.streamingService,
-                                            seasons: self.seasons
-                                        )
-                                    )
+                                Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks)
                                 } label: {
                                     Label(mediaSource.name, systemImage: "play.fill")
                                     Text("Continue from \(String(ticks: mediaSource.startTicks))")
@@ -513,19 +469,8 @@ fileprivate struct PlayNavigationView: View {
                     }
                     Section("Restart") {
                         ForEach(mediaSources, id: \.id) { mediaSource in
-                            Button {
-                                self.navigation.append(
-                                    PlayerViewModel(
-                                        media: media,
-                                        mediaSource: mediaSource,
-                                        startTime: .zero,
-                                        streamingService: self.streamingService,
-                                        seasons: self.seasons
-                                    )
-                                )
-                            } label: {
-                                Label(mediaSource.name, systemImage: "memories")
-                            }
+                            Button { navigateToPlayer(for: mediaSource, startTicks: .zero) }
+                            label: { Label(mediaSource.name, systemImage: "memories") }
                             .id(mediaSource.id)
                         }
                     }
@@ -537,6 +482,20 @@ fileprivate struct PlayNavigationView: View {
                 .defaultFocus($focus, .play, priority: .userInitiated)
             }
         }
+    }
+    
+    func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startTicks: Int) {
+        self.navigation.append(
+            PlayerViewModel(
+                media: media,
+                mediaSource: mediaSource,
+                startTime: CMTimeMakeWithSeconds(
+                    Double(startTicks / 10_000_000), preferredTimescale: 1
+                ),
+                streamingService: self.streamingService,
+                seasons: self.seasons
+            )
+        )
     }
 }
 
