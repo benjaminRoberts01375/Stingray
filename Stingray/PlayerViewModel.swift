@@ -129,24 +129,28 @@ final class PlayerViewModel: Hashable {
         
         var title = ""
         var subtitle = ""
-        if let seasons = self.seasons { // TV Shows
-            for season in seasons {
-                if let episode = (season.episodes.first { $0.mediaSources.first?.id == mediaSource.id }) {
-                    subtitle = "Season \(season.seasonNumber), Episode \(episode.episodeNumber)"
-                    break
+        
+        switch self.media.mediaType {
+        case .tv(let seasons):
+            if let seasons = seasons { // TV Shows
+                for season in seasons {
+                    if let episode = (season.episodes.first { $0.mediaSources.first?.id == self.mediaSource.id }) {
+                        subtitle = "Season \(season.seasonNumber), Episode \(episode.episodeNumber)"
+                        break
+                    }
                 }
+                let allEpisodes = seasons.flatMap(\.episodes)
+                let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == self.mediaSource.id }
+                title = currentEpisode?.title ?? ""
             }
-            
-            let allEpisodes = seasons.flatMap(\.episodes)
-            let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == mediaSource.id }
-            title = currentEpisode?.title ?? ""
-        }
-        else { // Movies
-            title = mediaSource.name
+            else { title = self.mediaSource.name }
+        case .movies(let sources):
+            title = self.media.title
+        default: title = self.media.title
         }
         
         guard let player = streamingService.playbackStart(
-            mediaSource: mediaSource,
+            mediaSource: self.mediaSource,
             videoID: videoID ?? self.playerProgress?.videoID ?? "0",
             audioID: audioID ?? self.playerProgress?.audioID ?? "1",
             subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
