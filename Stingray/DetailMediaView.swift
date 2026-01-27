@@ -198,6 +198,11 @@ public struct DetailMediaView: View {
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
+        .task { // Yep. I hate it too. Apple TVs are having issues selecting the play button if it changes type.
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
+                self.focus = .play
+            }
+        }
         .onChange(of: focus) { _, newValue in
             switch newValue {
             case .media, .season, .overview:
@@ -210,7 +215,6 @@ public struct DetailMediaView: View {
                 break
             }
         }
-        .onAppear { focus = .play }
         .navigationDestination(for: PlayerViewModel.self) { vm in
             PlayerView(vm: vm, navigation: $navigation)
         }
@@ -403,7 +407,11 @@ fileprivate struct PlayNavigationView: View {
                     )
                 )
             } label: { Label(self.title, systemImage: "play.fill") }
+                .onAppear { self.focus = .play }
+                .accessibilityLabel("Play button menu")
                 .focused($focus, equals: .play)
+                .id(mediaSource.id)
+                .defaultFocus($focus, .play, priority: .userInitiated)
         }
         // If there are multiple sources but all unwatched, show only "play" options that start from beginning
         else if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
@@ -422,9 +430,14 @@ fileprivate struct PlayNavigationView: View {
                     } label: {
                         Label(mediaSource.name, systemImage: "play.fill")
                     }
+                    .id(mediaSource.id)
                 }
             }
+            .onAppear { self.focus = .play }
             .accessibilityLabel("Play button menu")
+            .focused($focus, equals: .play)
+            .id("Play-button")
+            .defaultFocus($focus, .play, priority: .userInitiated)
         }
         // If there's any that are somewhat played, present options to restart
         else {
@@ -448,6 +461,7 @@ fileprivate struct PlayNavigationView: View {
                                 Label(mediaSource.name, systemImage: "play.fill")
                                 Text("Continue from \(String(ticks: mediaSource.startTicks))")
                             }
+                            .id(mediaSource.id)
                         }
                     }
                 }
@@ -466,11 +480,15 @@ fileprivate struct PlayNavigationView: View {
                         } label: {
                             Label(mediaSource.name, systemImage: "memories")
                         }
+                        .id(mediaSource.id)
                     }
                 }
             }
+            .onAppear { self.focus = .play }
             .accessibilityLabel("Play button menu")
             .focused($focus, equals: .play)
+            .id("Play-button")
+            .defaultFocus($focus, .play, priority: .userInitiated)
         }
     }
 }
