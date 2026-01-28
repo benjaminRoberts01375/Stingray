@@ -47,7 +47,7 @@ extension [RError] {
     /// - Returns: Formatted description.
     public func rDescription() -> String {
         return self.reduce("") { (result, error) -> String in
-            return result + "\n\t\t→ \(error.errorDescription)"
+            return result + "\n\t→ \(error.errorDescription)"
         }
     }
 }
