@@ -185,7 +185,7 @@ public final class MediaModel: MediaProtocol, Decodable {
             
             id = try container.decode(String.self, forKey: .id)
             
-            genres = try container.decode([String].self, forKey: .genres)
+            genres = try container.decodeIfPresent([String].self, forKey: .genres) ?? []
             
             maturity = try container.decodeIfPresent(String.self, forKey: .maturity)
             
