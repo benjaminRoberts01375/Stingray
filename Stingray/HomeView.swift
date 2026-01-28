@@ -136,7 +136,7 @@ fileprivate struct MediaPicker: View {
     
     var body: some View {
         ScrollView(.horizontal) {
-            HStack {
+            LazyHStack {
                 ForEach(pickerMedia) { media in
                     MediaCard(media: media, streamingService: streamingService) { navigation.append(media) }
                 }
