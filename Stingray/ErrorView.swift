@@ -24,7 +24,7 @@ public struct ErrorView: View {
             .buttonStyle(.plain)
             .padding(.horizontal, 70)
             .focused($isFocused, equals: true)
-            .sheet(isPresented: $isExpanded) { ErrorExpandedView(error: error) }
+            .sheet(isPresented: $isExpanded) { ErrorExpandedView(errorDesc: error.rDescription) }
     }
 }
 
@@ -53,12 +53,12 @@ fileprivate struct ErrorSummaryView: View {
 /// Show a verbose version of an RError
 public struct ErrorExpandedView: View {
     /// Verbose error thrown by Stingray
-    let error: RError
+    let errorDesc: () -> String
     
     public var body: some View {
         VStack(alignment: .leading) {
             Text("Error:")
-            Text(error.rDescription())
+            Text(errorDesc())
         }
         .padding(.horizontal, 50)
         .padding(.vertical, 20)
@@ -72,6 +72,6 @@ public struct ErrorExpandedView: View {
 #Preview {
     ErrorSummaryView(summary: "Stingray went kaplooey.", altColors: false)
         .sheet(isPresented: .constant(true)) {
-            ErrorExpandedView(error: NetworkError.decodeJSONFailed(JSONError.missingKey("Nerd", "Preview"), url: nil))
+            ErrorExpandedView(errorDesc: NetworkError.decodeJSONFailed(JSONError.missingKey("Nerd", "Preview"), url: nil).rDescription)
         }
 }
