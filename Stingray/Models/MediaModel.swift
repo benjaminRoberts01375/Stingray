@@ -377,11 +377,12 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         )
         
         self.parentID = container.decodeFieldSafely(
-            String.self,
+            String?.self,
             forKey: .parentID,
-            default: UUID().uuidString,
+            default: nil,
             errBucket: &errBucket,
-            errLabel: "Slim Media"
+            errLabel: "Slim Media",
+            required: false
         )
         
         self.title = container.decodeFieldSafely(
