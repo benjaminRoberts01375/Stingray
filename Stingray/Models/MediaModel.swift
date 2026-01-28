@@ -149,6 +149,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var mediaType: MediaType
     public var duration: Duration?
     public var people: [any MediaPersonProtocol]
+    public var errors: [RError]?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -167,56 +168,94 @@ public final class MediaModel: MediaProtocol, Decodable {
         case userData = "UserData"
     }
     
-    public init(from decoder: Decoder) throws(JSONError) {
-        do {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            
-            title = try container.decode(String.self, forKey: .title)
-            
-            let taglines = try container.decodeIfPresent([String].self, forKey: .taglines)
-            tagline = taglines?.first ?? ""
-            
-            description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
-            
-            imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
-                MediaImages(thumbnail: nil, logo: nil, primary: nil)
-            
-            imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
-            
-            id = try container.decode(String.self, forKey: .id)
-            
-            genres = try container.decodeIfPresent([String].self, forKey: .genres) ?? []
-            
-            maturity = try container.decodeIfPresent(String.self, forKey: .maturity)
-            
-            let mediaType = try container.decode(MediaType.self, forKey: .mediaType)
-            switch mediaType {
-            case .movies:
-                let movieSources = try container.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? []
-                let userDataContainer = try container.decode(UserData.self, forKey: .userData)
-                if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
-                    movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
-                }
-                self.mediaType = .movies(movieSources)
-            default:
-                self.mediaType = mediaType
-            }
-            
-            if let runtimeTicks = try container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {
-                duration = .nanoseconds(100 * runtimeTicks)
-            } else {
-                duration = nil
-            }
-            
-            if let dateString = try container.decodeIfPresent(String.self, forKey: .releaseDate) {
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                releaseDate = formatter.date(from: dateString)
-            } else {
-                releaseDate = nil
-            }
-            
-            people = try container.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []
+    /// Sets up a Media Model from JSON
+    /// - Parameter decoder: JSON decoder
+    /// - throws: `DecodingError.typeMismatch` if the encountered stored value is not a keyed container.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        var errBucket: [any RError] = []
+        id = container.decodeFieldSafely(
+            String.self,
+            forKey: .id,
+            default: UUID().uuidString,
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        title = container.decodeFieldSafely(
+            String.self,
+            forKey: .title,
+            default: "Unknown Title",
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        let taglines = container.decodeFieldSafely(
+            [String].self,
+            forKey: .taglines,
+            default: [],
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        tagline = taglines.first ?? ""
+        
+        description = container.decodeFieldSafely(
+            String.self,
+            forKey: .description,
+            default: "",
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        imageTags = container.decodeFieldSafely(
+            MediaImages.self,
+            forKey: .imageTags,
+            default: MediaImages(thumbnail: nil, logo: nil, primary: nil),
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        imageBlurHashes = container.decodeFieldSafely(
+            MediaImageBlurHashes?.self,
+            forKey: .imageBlurHashes,
+            default: nil,
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        genres = container.decodeFieldSafely(
+            [String].self,
+            forKey: .genres,
+            default: [],
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        maturity = container.decodeFieldSafely(
+            String?.self,
+            forKey: .maturity,
+            default: nil,
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        let mediaType = container.decodeFieldSafely(
+            MediaType.self,
+            forKey: .mediaType,
+            default: .unknown,
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        switch mediaType {
+        case .movies:
+            let movieSources = container.decodeFieldSafely(
+                [MediaSource].self,
+                forKey: .mediaSources,
+                default: [],
+                errBucket: &errBucket,
+                errLabel: "Media Model"
+            )
             
             struct UserData: Decodable {
                 let playbackPositionTicks: Int
@@ -227,13 +266,53 @@ public final class MediaModel: MediaProtocol, Decodable {
                     case mediaItemID = "ItemId"
                 }
             }
+            
+            let userDataContainer = container.decodeFieldSafely(
+                UserData.self,
+                forKey: .userData,
+                default: UserData(playbackPositionTicks: .zero, mediaItemID: UUID().uuidString),
+                errBucket: &errBucket,
+                errLabel: "Media Model"
+            )
+            if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
+                movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
+            }
+            self.mediaType = .movies(movieSources)
+        default:
+            self.mediaType = mediaType
         }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "MediaModel") }
-        catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "MediaModel") }
-            else { throw JSONError.failedJSONDecode("MediaModel", DecodingError.valueNotFound(Any.self, context)) }
-        }
-        catch let error { throw JSONError.failedJSONDecode("MediaModel", error) }
+        
+        let runtimeTicks = container.decodeFieldSafely(
+            Int?.self,
+            forKey: .duration,
+            default: nil,
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        if let runtimeTicks = runtimeTicks, runtimeTicks != 0 { duration = .nanoseconds(100 * runtimeTicks) }
+        else { duration = nil }
+        
+        if let dateString = container.decodeFieldSafely(
+            String?.self,
+            forKey: .releaseDate,
+            default: nil,
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        ) {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            releaseDate = formatter.date(from: dateString)
+        } else { releaseDate = nil }
+        
+        people = container.decodeFieldSafely(
+            [MediaPerson].self,
+            forKey: .people,
+            default: [],
+            errBucket: &errBucket,
+            errLabel: "Media Model"
+        )
+        
+        if !errBucket.isEmpty { errors = errBucket } // Otherwise nil
     }
     
     // Hashable conformance
