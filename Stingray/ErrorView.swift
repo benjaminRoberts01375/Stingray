@@ -51,11 +51,11 @@ fileprivate struct ErrorSummaryView: View {
 }
 
 /// Show a verbose version of an RError
-fileprivate struct ErrorExpandedView: View {
+public struct ErrorExpandedView: View {
     /// Verbose error thrown by Stingray
     let error: RError
     
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading) {
             Text("Error:")
             Text(error.rDescription())
