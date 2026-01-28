@@ -69,7 +69,7 @@ struct MediaCard: View {
         .buttonStyle(.card)
         .contextMenu {
             if self.media.errors != nil {
-                Button("Show Error", systemImage: "exclamationmark.circle", role: .destructive) { self.showError = true }
+                Button("Show Error", systemImage: "exclamationmark.octagon", role: .destructive) { self.showError = true }
             }
         }
         .sheet(isPresented: $showError) {
