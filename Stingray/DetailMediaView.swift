@@ -393,95 +393,83 @@ fileprivate struct PlayNavigationView: View {
     }
     
     var body: some View {
-        // Single source button and menu
-        if mediaSources.count == 1 {
-            // Single item that's unwatched - show button
-            if self.mediaSources[0].startTicks == 0 {
+        Group {
+            // Single source button and menu
+            if mediaSources.count == 1 {
                 let mediaSource = self.mediaSources[0]
-                Button {
-                    self.navigation.append(
-                        PlayerViewModel(
-                            media: media,
-                            mediaSource: mediaSource,
-                            startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                            streamingService: self.streamingService,
-                            seasons: self.seasons
+                // Single item that's unwatched - show button
+                if mediaSource.startTicks == 0 {
+                    Button {
+                        self.navigation.append(
+                            PlayerViewModel(
+                                media: media,
+                                mediaSource: mediaSource,
+                                startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                                streamingService: self.streamingService,
+                                seasons: self.seasons
+                            )
                         )
-                    )
-                } label: { Label(self.title, systemImage: "play.fill") }
-                    .onAppear { self.focus = .play }
-                    .accessibilityLabel("Play button menu")
-                    .focused($focus, equals: .play)
-                    .id(mediaSource.id)
-                    .defaultFocus($focus, .play, priority: .userInitiated)
-            }
-            // Single item that's partially watched - show streamlined menu
-            else {
-                Menu("\(Image(systemName: "play")) \(title)") {
-                    Button { navigateToPlayer(for: mediaSources[0], startTicks: mediaSources[0].startTicks) }
-                    label: {
-                        Label("Resume \(media.title)", systemImage: "play.fill")
-                        Text("Continue from \(String(ticks: mediaSources[0].startTicks))")
-                    }
-                    .id(mediaSources[0].id)
-                    Button { navigateToPlayer(for: mediaSources[0], startTicks: .zero) }
-                    label: { Label("Restart \(media.title)", systemImage: "memories") }
-                    .id(mediaSources[0].id)
+                    } label: { Label(self.title, systemImage: "play.fill") }
+                        .accessibilityLabel("Play button")
                 }
-                .onAppear { self.focus = .play }
-                .accessibilityLabel("Play button menu")
-                .focused($focus, equals: .play)
-                .id("Play-button")
-                .defaultFocus($focus, .play, priority: .userInitiated)
-            }
-        }
-        // Multiple media sources
-        else {
-            // If there are multiple sources but all unwatched, show only "play" options that start from beginning
-            if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
-                Menu("\(Image(systemName: "play")) \(title)") {
-                    ForEach(mediaSources, id: \.id) { mediaSource in
+                // Single item that's partially watched - show streamlined menu
+                else {
+                    Menu("\(Image(systemName: "play")) \(title)") {
                         Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks) }
-                        label: { Label(mediaSource.name, systemImage: "play.fill") }
-                        .id(mediaSource.id)
+                        label: {
+                            Label("Resume \(media.title)", systemImage: "play.fill")
+                            Text("Continue from \(String(ticks: mediaSource.startTicks))")
+                        }
+                        Button { navigateToPlayer(for: mediaSource, startTicks: .zero) }
+                        label: { Label("Restart \(media.title)", systemImage: "memories") }
                     }
+                    .accessibilityLabel("Play button menu")
                 }
-                .onAppear { self.focus = .play }
-                .accessibilityLabel("Play button menu")
-                .focused($focus, equals: .play)
-                .id("Play-button")
-                .defaultFocus($focus, .play, priority: .userInitiated)
             }
-            // If there's any that are somewhat played, present options to restart
+            // Multiple media sources
             else {
-                Menu("\(Image(systemName: "play")) \(title)") {
-                    Section("Resume") {
+                // If there are multiple sources but all unwatched, show only "play" options that start from beginning
+                if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
+                    Menu("\(Image(systemName: "play")) \(title)") {
                         ForEach(mediaSources, id: \.id) { mediaSource in
-                            if mediaSource.startTicks != 0 {
-                                Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks)
-                                } label: {
-                                    Label(mediaSource.name, systemImage: "play.fill")
-                                    Text("Continue from \(String(ticks: mediaSource.startTicks))")
-                                }
+                            Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks) }
+                            label: { Label(mediaSource.name, systemImage: "play.fill") }
                                 .id(mediaSource.id)
+                        }
+                    }
+                    .accessibilityLabel("Play button menu")
+                }
+                // If there's any that are somewhat played, present options to restart
+                else {
+                    Menu("\(Image(systemName: "play")) \(title)") {
+                        Section("Resume") {
+                            ForEach(mediaSources, id: \.id) { mediaSource in
+                                if mediaSource.startTicks != 0 {
+                                    Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks)
+                                    } label: {
+                                        Label(mediaSource.name, systemImage: "play.fill")
+                                        Text("Continue from \(String(ticks: mediaSource.startTicks))")
+                                    }
+                                    .id(mediaSource.id)
+                                }
+                            }
+                        }
+                        Section("Restart") {
+                            ForEach(mediaSources, id: \.id) { mediaSource in
+                                Button { navigateToPlayer(for: mediaSource, startTicks: .zero) }
+                                label: { Label(mediaSource.name, systemImage: "memories") }
+                                    .id(mediaSource.id)
                             }
                         }
                     }
-                    Section("Restart") {
-                        ForEach(mediaSources, id: \.id) { mediaSource in
-                            Button { navigateToPlayer(for: mediaSource, startTicks: .zero) }
-                            label: { Label(mediaSource.name, systemImage: "memories") }
-                            .id(mediaSource.id)
-                        }
-                    }
+                    .accessibilityLabel("Play button menu")
                 }
-                .onAppear { self.focus = .play }
-                .accessibilityLabel("Play button menu")
-                .focused($focus, equals: .play)
-                .id("Play-button")
-                .defaultFocus($focus, .play, priority: .userInitiated)
             }
         }
+        .onAppear { self.focus = .play }
+        .focused($focus, equals: .play)
+        .id("Play-button")
+        .defaultFocus($focus, .play, priority: .userInitiated)
     }
     
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startTicks: Int) {
