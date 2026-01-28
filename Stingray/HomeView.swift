@@ -138,21 +138,10 @@ fileprivate struct MediaPicker: View {
         ScrollView(.horizontal) {
             HStack {
                 ForEach(pickerMedia) { media in
-                    MediaNavigation(media: media, streamingService: streamingService, navigation: $navigation)
+                    MediaCard(media: media, streamingService: streamingService) { navigation.append(media) }
                 }
             }
         }
-    }
-}
-
-fileprivate struct MediaNavigation: View {
-    var media: SlimMedia
-    var streamingService: StreamingServiceProtocol
-    
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
-        MediaCard(media: media, streamingService: streamingService) { navigation.append(media) }
     }
 }
 
