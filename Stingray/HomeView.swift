@@ -152,13 +152,7 @@ fileprivate struct MediaNavigation: View {
     @Binding var navigation: NavigationPath
     
     var body: some View {
-        Button {
-            navigation.append(media)
-        } label: {
-            MediaCard(media: media, streamingService: streamingService)
-                .frame(width: 200, height: 370)
-        }
-        .buttonStyle(.card)
+        MediaCard(media: media, streamingService: streamingService) { navigation.append(media) }
     }
 }
 
