@@ -206,7 +206,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .description,
             default: "",
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         
         imageTags = container.decodeFieldSafely(
@@ -214,7 +215,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .imageTags,
             default: MediaImages(thumbnail: nil, logo: nil, primary: nil),
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         
         imageBlurHashes = container.decodeFieldSafely(
@@ -222,7 +224,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .imageBlurHashes,
             default: nil,
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         
         genres = container.decodeFieldSafely(
@@ -230,7 +233,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .genres,
             default: [],
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         
         maturity = container.decodeFieldSafely(
@@ -238,7 +242,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .maturity,
             default: nil,
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         
         let mediaType = container.decodeFieldSafely(
@@ -246,7 +251,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .mediaType,
             default: .unknown,
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         switch mediaType {
         case .movies:
@@ -273,7 +279,8 @@ public final class MediaModel: MediaProtocol, Decodable {
                 forKey: .userData,
                 default: UserData(playbackPositionTicks: .zero, mediaItemID: UUID().uuidString),
                 errBucket: &errBucket,
-                errLabel: "Media Model"
+                errLabel: "Media Model",
+                required: false
             )
             if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
                 movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
@@ -288,7 +295,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .duration,
             default: nil,
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         if let runtimeTicks = runtimeTicks, runtimeTicks != 0 { duration = .nanoseconds(100 * runtimeTicks) }
         else { duration = nil }
@@ -298,7 +306,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .releaseDate,
             default: nil,
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         ) {
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -310,7 +319,8 @@ public final class MediaModel: MediaProtocol, Decodable {
             forKey: .people,
             default: [],
             errBucket: &errBucket,
-            errLabel: "Media Model"
+            errLabel: "Media Model",
+            required: false
         )
         
         if !errBucket.isEmpty { errors = errBucket } // Otherwise nil
@@ -379,7 +389,8 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
             forKey: .imageBlurHashes,
             default: nil,
             errBucket: &errBucket,
-            errLabel: "Slim Media"
+            errLabel: "Slim Media",
+            required: false
         )
         
         self.imageTags = container.decodeFieldSafely(
@@ -387,7 +398,8 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
             forKey: .imageTags,
             default: MediaImages(thumbnail: nil, logo: nil, primary: nil),
             errBucket: &errBucket,
-            errLabel: "Slim Media"
+            errLabel: "Slim Media",
+            required: false
         )
     }
     
