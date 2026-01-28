@@ -46,6 +46,11 @@ struct MediaCard: View {
                 .padding(.top, 5)
             Spacer()
         }
+        .background {
+            if !(self.media.errors?.isEmpty ?? true) {
+                Color.red.opacity(0.25)
+            }
+        }
         .id(media.id) // Stabilize view identity
     }
 }
