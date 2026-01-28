@@ -23,7 +23,9 @@ struct MediaCard: View {
     }
     
     var body: some View {
-        Button { action() }
+        Button {
+            if self.media.errors == nil { action() }
+        }
         label: {
             VStack(spacing: 0) {
                 if media.imageTags.primary != nil {
