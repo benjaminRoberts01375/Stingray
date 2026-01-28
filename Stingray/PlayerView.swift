@@ -254,7 +254,7 @@ fileprivate struct PlayerDescriptionView: View {
                 .modifier(MaterialEffectModifier())
                 
                 switch media.mediaType {
-                case .collections, .movies, .unknown:
+                case .movies, .unknown:
                     EmptyView()
                 case .tv(let seasons):
                     if let seasons = seasons,

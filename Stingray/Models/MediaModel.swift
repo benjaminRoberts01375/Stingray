@@ -718,7 +718,6 @@ public enum StreamType: String, Decodable, Equatable {
 }
 
 public enum MediaType: Decodable {
-    case collections
     case movies([any MediaSourceProtocol])
     case tv([TVSeason]?)
     case unknown
@@ -739,8 +738,6 @@ public enum MediaType: Decodable {
         catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
         
         switch stringValue {
-        case MediaType.collections.rawValue:
-            self = .collections
         case "Movie":
             self = .movies([])
         case "Series":
@@ -752,8 +749,6 @@ public enum MediaType: Decodable {
     
     var rawValue: String {
         switch self {
-        case .collections:
-            return "BoxSet"
         case .movies:
             return "Movie"
         case .tv:
