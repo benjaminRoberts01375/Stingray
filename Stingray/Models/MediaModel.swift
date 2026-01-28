@@ -587,6 +587,7 @@ public enum MediaType: Decodable {
     case collections
     case movies([any MediaSourceProtocol])
     case tv([TVSeason]?)
+    case unknown
     
     public init (from decoder: Decoder) throws(JSONError) {
         let container: any SingleValueDecodingContainer
@@ -623,6 +624,8 @@ public enum MediaType: Decodable {
             return "Movie"
         case .tv:
             return "Series"
+        case .unknown:
+            return "Unknown"
         }
     }
 }

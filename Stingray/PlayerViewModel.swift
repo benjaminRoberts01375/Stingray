@@ -18,7 +18,7 @@ final class PlayerViewModel: Hashable {
     public var mediaSourceID: String {
         didSet {
             switch self.media.mediaType {
-            case .collections:
+            case .collections, .unknown:
                 break
             case .movies(let mediaSources):
                 self.mediaSource = mediaSources.first { $0.id == self.mediaSourceID } ?? self.mediaSource
