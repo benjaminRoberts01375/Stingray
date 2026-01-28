@@ -415,6 +415,8 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
             errLabel: "Slim Media",
             required: false
         )
+        
+        if !errBucket.isEmpty { errors = errBucket } // Otherwise nil
     }
     
     // Hashable conformance
