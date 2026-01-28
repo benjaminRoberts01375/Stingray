@@ -372,7 +372,8 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
                 required: false
             ),
             errBucket: &errBucket,
-            errLabel: "Slim Media"
+            errLabel: "Slim Media",
+            required: false
         )
         
         self.parentID = container.decodeFieldSafely(
@@ -395,7 +396,8 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
                 required: false
             ),
             errBucket: &errBucket,
-            errLabel: "Slim Media"
+            errLabel: "Slim Media",
+            required: false
         )
         
         self.imageBlurHashes = container.decodeFieldSafely(
