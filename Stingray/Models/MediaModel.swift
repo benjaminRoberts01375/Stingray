@@ -362,8 +362,15 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         
         self.id = container.decodeFieldSafely(
             String.self,
-            forKey: .id,
-            default: UUID().uuidString,
+            forKey: .seriesID,
+            default: container.decodeFieldSafely(
+                String.self,
+                forKey: .id,
+                default: UUID().uuidString,
+                errBucket: &errBucket,
+                errLabel: "Slim Media",
+                required: false
+            ),
             errBucket: &errBucket,
             errLabel: "Slim Media"
         )
@@ -378,8 +385,15 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         
         self.title = container.decodeFieldSafely(
             String.self,
-            forKey: .title,
-            default: "Unknown title",
+            forKey: .seriesTitle,
+            default: container.decodeFieldSafely(
+                String.self,
+                forKey: .title,
+                default: "Unknown Title",
+                errBucket: &errBucket,
+                errLabel: "Slim Media",
+                required: false
+            ),
             errBucket: &errBucket,
             errLabel: "Slim Media"
         )
