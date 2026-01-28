@@ -41,6 +41,17 @@ extension RError {
     }
 }
 
+/// Extend arrays of `RError` to provide recursive descriptions formatted in a reasonable manner.
+extension [RError] {
+    /// Recursive description. Prints this error's description and all subsequent ones.
+    /// - Returns: Formatted description.
+    public func rDescription() -> String {
+        return self.reduce("") { (result, error) -> String in
+            return result + "\n\t\t→ \(error.errorDescription)"
+        }
+    }
+}
+
 // MARK: Error Implementations
 
 public enum NetworkError: RError {
