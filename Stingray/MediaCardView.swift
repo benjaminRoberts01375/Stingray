@@ -12,6 +12,7 @@ struct MediaCard: View {
     let media: any SlimMediaProtocol
     let url: URL?
     let action: @MainActor () -> Void
+    @State var showError: Bool = false
     
     static let cardSize = CGSize(width: 200, height: 370)
     static let imageHeight = Self.cardSize.height - 85
@@ -66,6 +67,16 @@ struct MediaCard: View {
             }
         }
         .buttonStyle(.card)
+        .contextMenu {
+            if self.media.errors != nil {
+                Button("Show Error", systemImage: "exclamationmark.circle", role: .destructive) { self.showError = true }
+            }
+        }
+        .sheet(isPresented: $showError) {
+            if let errors = self.media.errors {
+                ErrorExpandedView(errorDesc: errors.rDescription)
+            }
+        }
         .frame(width: Self.cardSize.width, height: Self.cardSize.height)
         .id(media.id) // Stabilize view identity
     }
