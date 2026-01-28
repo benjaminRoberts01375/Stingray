@@ -28,6 +28,7 @@ public protocol SlimMediaProtocol: Identifiable, Hashable {
     var title: String { get }
     var imageTags: any MediaImagesProtocol { get }
     var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
+    var errors: [RError]? { get }
 }
 
 /// Track image IDs for a piece of media
@@ -332,6 +333,7 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
     public var imageTags: any MediaImagesProtocol
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var parentID: String?
+    public var errors: [any RError]?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -344,27 +346,49 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         case parentPrimaryImage = "SeriesPrimaryImageTag"
     }
     
-    public init(from decoder: Decoder) throws(JSONError) {
-        do {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
-            self.parentID = try container.decodeIfPresent(String.self, forKey: .parentID)
-            
-            self.id = try container.decodeIfPresent(String.self, forKey: .seriesID) ??
-            container.decode(String.self, forKey: .id)
-            
-            self.title = try container.decodeIfPresent(String.self, forKey: .seriesTitle) ??
-            container.decode(String.self, forKey: .title)
-            
-            self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
-            MediaImages(thumbnail: nil, logo: nil, primary: nil)
-        }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "SlimMedia") }
-        catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "SlimMedia") }
-            else { throw JSONError.failedJSONDecode("SlimMedia", DecodingError.valueNotFound(Any.self, context)) }
-        }
-        catch let error { throw JSONError.failedJSONDecode("SlimMedia", error) }
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        var errBucket: [any RError] = []
+        
+        self.id = container.decodeFieldSafely(
+            String.self,
+            forKey: .id,
+            default: UUID().uuidString,
+            errBucket: &errBucket,
+            errLabel: "Slim Media"
+        )
+        
+        self.parentID = container.decodeFieldSafely(
+            String.self,
+            forKey: .parentID,
+            default: UUID().uuidString,
+            errBucket: &errBucket,
+            errLabel: "Slim Media"
+        )
+        
+        self.title = container.decodeFieldSafely(
+            String.self,
+            forKey: .title,
+            default: "Unknown title",
+            errBucket: &errBucket,
+            errLabel: "Slim Media"
+        )
+        
+        self.imageBlurHashes = container.decodeFieldSafely(
+            MediaImageBlurHashes?.self,
+            forKey: .imageBlurHashes,
+            default: nil,
+            errBucket: &errBucket,
+            errLabel: "Slim Media"
+        )
+        
+        self.imageTags = container.decodeFieldSafely(
+            MediaImages.self,
+            forKey: .imageTags,
+            default: MediaImages(thumbnail: nil, logo: nil, primary: nil),
+            errBucket: &errBucket,
+            errLabel: "Slim Media"
+        )
     }
     
     // Hashable conformance
