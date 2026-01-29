@@ -841,7 +841,7 @@ public struct SpecialFeaturesView: View {
                 ProgressView("Loading special features...")
             case .loaded(let rows):
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                    SpecialFeaturesRow(streamingService: streamingService, rowData: row, navigation: $navigation)
+                    SpecialFeaturesRow(streamingService: streamingService, rowData: row, media: media, navigation: $navigation)
                 }
             }
         }
@@ -852,16 +852,19 @@ public struct SpecialFeaturesRow: View {
     let streamingService: any StreamingServiceProtocol
     let rowData: [any SpecialFeaturesProtocol]
     let title: String
+    let media: any MediaProtocol
     
     @Binding var navigation: NavigationPath
     
     init(
         streamingService: any StreamingServiceProtocol,
         rowData: [any SpecialFeaturesProtocol],
+        media: any MediaProtocol,
         navigation: Binding<NavigationPath>
     ) {
         self.streamingService = streamingService
         self.rowData = rowData
+        self.media = media
         self.title = rowData[0].featureType
         self._navigation = navigation
     }
@@ -873,7 +876,22 @@ public struct SpecialFeaturesRow: View {
             ScrollView(.horizontal) {
                 LazyHStack {
                     ForEach(rowData, id: \.id) { specialFeature in
-                        Text(specialFeature.title)
+                        if let mediaSource = specialFeature.mediaSources.first {
+                            Button {
+                                navigation.append(
+                                    PlayerViewModel(
+                                        media: media,
+                                        mediaSource: mediaSource,
+                                        startTime: .zero,
+                                        streamingService: streamingService,
+                                        seasons: nil
+                                    )
+                                )
+                            } label: {
+                                Text(specialFeature.title)
+                            }
+                            .buttonStyle(.card)
+                        }
                     }
                 }
             }
