@@ -60,6 +60,7 @@
 				Models/RError.swift,
 				Models/SlimMediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
+				Models/TimeIntervalExtension.swift,
 				Models/URLExtension.swift,
 				Models/UserModel.swift,
 			);
