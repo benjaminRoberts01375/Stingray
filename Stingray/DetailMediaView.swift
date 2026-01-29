@@ -890,6 +890,7 @@ public struct SpecialFeaturesRow: View {
                                     Spacer(minLength: 0)
                                     Text(specialFeature.title)
                                         .lineLimit(2)
+                                        .multilineTextAlignment(.center)
                                         .padding(.horizontal, 10)
                                     Spacer(minLength: 0)
                                 }
