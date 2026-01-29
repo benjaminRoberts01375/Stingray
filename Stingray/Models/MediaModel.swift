@@ -39,7 +39,7 @@ public protocol MediaSourceProtocol: Identifiable {
 
 public protocol SpecialFeaturesProtocol: Identifiable {
     var id: String { get }
-    var featureType: String? { get }
+    var featureType: String { get }
     var sortTitle: String? { get }
     var title: String { get }
     var mediaSources: [MediaSource] { get }
@@ -567,7 +567,7 @@ public enum MediaType: Decodable {
 
 public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
     public let id: String
-    public let featureType: String?
+    public let featureType: String
     public let sortTitle: String?
     public let title: String
     public let mediaSources: [MediaSource]
