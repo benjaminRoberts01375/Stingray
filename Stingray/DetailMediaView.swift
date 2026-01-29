@@ -753,28 +753,24 @@ fileprivate struct ArtView: View {
     @State private var imageOpacity: Double = 0
     
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
-                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
-                    Image(uiImage: blurImage)
+        ZStack {
+            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
+               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
+                Image(uiImage: blurImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipped()
+                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
+            }
+            if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
+                AsyncImage(url: url) { image in
+                    image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                        .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-                }
-                if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: geo.size.width, height: geo.size.height)
-                            .animation(.easeOut(duration: 0.5), value: imageOpacity)
-                            .onAppear { imageOpacity = 1 }
-                    } placeholder: {
-                        EmptyView()
-                    }
+                        .aspectRatio(contentMode: .fit)
+                        .animation(.easeOut(duration: 0.5), value: imageOpacity)
+                        .onAppear { imageOpacity = 1 }
+                } placeholder: {
+                    EmptyView()
                 }
             }
         }
