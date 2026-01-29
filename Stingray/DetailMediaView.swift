@@ -174,9 +174,10 @@ public struct DetailMediaView: View {
                 SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
                 
                 // People
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("People")
-                        .font(.title.bold())
+                        .font(.title3.bold())
+                        .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
                 }
                 
@@ -871,9 +872,10 @@ public struct SpecialFeaturesRow: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(self.title)
-                .font(.title.bold())
+                .font(.title3.bold())
+                .padding(.top)
             ScrollView(.horizontal) {
                 LazyHStack {
                     ForEach(rowData, id: \.id) { specialFeature in
