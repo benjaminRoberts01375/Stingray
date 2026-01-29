@@ -250,8 +250,7 @@ public struct DetailMediaView: View {
         }
         
         // Likely marked by Stingray that the user didn't finish
-        if let durationTicks = mostRecentMediaSource.durationTicks,
-           Double(mostRecentMediaSource.startPoint) < 0.9 * Double(durationTicks) {
+        if mostRecentMediaSource.startPoint < 0.9 * mostRecentMediaSource.duration {
             return mostRecentEpisode.element
         }
         

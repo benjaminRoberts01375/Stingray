@@ -33,7 +33,7 @@ public protocol MediaSourceProtocol: Identifiable {
     var audioStreams: [any MediaStreamProtocol] { get }
     var subtitleStreams: [any MediaStreamProtocol] { get }
     var startPoint: TimeInterval { get set }
-    var durationTicks: Int? { get }
+    var duration: TimeInterval { get }
 }
 
 public protocol SpecialFeaturesProtocol: Displayable {
@@ -337,7 +337,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var audioStreams: [any MediaStreamProtocol]
     public var subtitleStreams: [any MediaStreamProtocol]
     public var startPoint: TimeInterval
-    public var durationTicks: Int?
+    public var duration: TimeInterval
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -354,7 +354,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
             
             id = try container.decode(String.self, forKey: .id)
             name = try container.decode(String.self, forKey: .name)
-            durationTicks = try container.decodeIfPresent(Int.self, forKey: .duration)
+            duration = try container.decodeIfPresent(TimeInterval.self, forKey: .duration) ?? .zero
             
             let allStreams = try container.decodeIfPresent([MediaStream].self, forKey: .mediaStreams) ?? []
             
