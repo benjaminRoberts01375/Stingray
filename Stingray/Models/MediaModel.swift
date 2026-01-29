@@ -52,7 +52,7 @@ public enum SpecialFeaturesStatus {
     /// Special features have been requested but have not yet returned
     case loading
     /// Special feature have been fully loaded
-    case loaded([[any MediaSourceProtocol]])
+    case loaded([[any SpecialFeaturesProtocol]])
 }
 
 /// Extend the MediaSourceProtocol to allow for getting similar streams
@@ -311,12 +311,12 @@ public final class MediaModel: MediaProtocol, Decodable {
     }
     
     public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
-        // Group by featureType, then extract media sources for each group
-        let groupedSources = Dictionary(grouping: specialFeatures, by: \.featureType)
+        // Group by featureType
+        let groupedFeatures = Dictionary(grouping: specialFeatures, by: \.featureType)
             .values
-            .map { $0.flatMap(\.mediaSources) }
+            .map { $0 as [any SpecialFeaturesProtocol] }
         
-        self.specialFeatures = .loaded(groupedSources)
+        self.specialFeatures = .loaded(groupedFeatures)
     }
     
     // Hashable conformance
