@@ -7,12 +7,16 @@
 
 import Foundation
 
-public protocol SlimMediaProtocol: Identifiable, Hashable {
+public protocol SlimMediaProtocol: Displayable, Identifiable, Hashable {
     var id: String { get }
     var title: String { get }
-    var imageTags: any MediaImagesProtocol { get }
-    var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
     var errors: [RError]? { get }
+}
+
+public protocol Displayable: Identifiable {
+    var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
+    var imageTags: (any MediaImagesProtocol)? { get }
+    var id: String { get }
 }
 
 /// Track image IDs for a piece of media
@@ -51,7 +55,7 @@ public enum MediaImageType: String {
 public final class SlimMedia: SlimMediaProtocol, Decodable {
     public var id: String
     public var title: String
-    public var imageTags: any MediaImagesProtocol
+    public var imageTags: (any MediaImagesProtocol)?
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var parentID: String?
     public var errors: [any RError]?
