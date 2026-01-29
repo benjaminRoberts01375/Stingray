@@ -20,3 +20,28 @@ extension String {
         self = String(format: "%d:%02d:%02d", hours, minutes, secs)
     }
 }
+
+/// Extend the `String` type to convert PascalCase to word with spaces. Ex. "MyName" ->
+/// Example: "MyName" -> "My Name"
+/// Made by an LLM - modified by a human
+extension String {
+    /// Converts a PascalCase string to a space-separated string
+    /// Example: "MyName" -> "My Name"
+    func pascalCaseToSpaces() -> String {
+        // Handle empty strings
+        if self.isEmpty { return self }
+        
+        var result = ""
+        for (index, character) in self.enumerated() {
+            // Make sure we don't add a random space at the start of the string
+            let isFirst = index == 0
+            let isUppercase = character.isUppercase
+            if isUppercase && !isFirst { result.append(" ") }
+            
+            // Add to string. Shouldn't be *too* bad since arrays grow by doubling the capacity
+            result.append(character)
+        }
+        
+        return result
+    }
+}
