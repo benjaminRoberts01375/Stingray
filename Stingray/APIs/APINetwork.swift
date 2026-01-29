@@ -116,6 +116,12 @@ public protocol AdvancedNetworkProtocol {
     ///   - userID: ID of the user
     /// - Returns: Formatted URL
     func getUserImageURL(userID: String) -> URL?
+    /// Loads special features for a given media ID.
+    /// - Parameters:
+    ///   - mediaID: ID of media to gather special features for
+    ///   - accessToken: Access token for the server
+    /// - Returns: Special features
+    func loadSpecialFeatures(mediaID: String, accessToken: String) async throws(AdvancedNetworkErrors) -> [SpecialFeature]
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -691,6 +697,18 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         ]
         
         return network.buildURL(path: "/UserImage", urlParams: params)
+    }
+    
+    public func loadSpecialFeatures(mediaID: String, accessToken: String) async throws(AdvancedNetworkErrors) -> [SpecialFeature] {
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/Items/\(mediaID)/SpecialFeatures",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: nil,
+                body: nil
+            )
+        } catch { throw AdvancedNetworkErrors.failedSpecialFeatures(error) }
     }
 }
 

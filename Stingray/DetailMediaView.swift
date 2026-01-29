@@ -203,6 +203,10 @@ public struct DetailMediaView: View {
                 self.focus = .play
             }
         }
+        .task {
+            do { try await self.streamingService.getSpecialFeatures(for: self.media) }
+            catch {}
+        }
         .onChange(of: focus) { _, newValue in
             switch newValue {
             case .media, .season, .overview:
