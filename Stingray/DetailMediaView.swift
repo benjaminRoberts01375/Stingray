@@ -170,6 +170,9 @@ public struct DetailMediaView: View {
                     }
                 }())
                 
+                // Special features
+                SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
+                
                 // People
                 PeopleBrowserView(media: media, streamingService: streamingService)
                 
@@ -202,10 +205,6 @@ public struct DetailMediaView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
                 self.focus = .play
             }
-        }
-        .task {
-            do { try await self.streamingService.getSpecialFeatures(for: self.media) }
-            catch {}
         }
         .onChange(of: focus) { _, newValue in
             switch newValue {
@@ -820,4 +819,64 @@ fileprivate enum ButtonType: Hashable {
     case season(String)
     case media(String)
     case overview
+}
+
+public struct SpecialFeaturesView: View {
+    let streamingService: any StreamingServiceProtocol
+    let media: any MediaProtocol
+    
+    @Binding var navigation: NavigationPath
+    
+    public var body: some View {
+        VStack {
+            switch self.media.specialFeatures {
+            case .unloaded:
+                Color.clear
+                    .task {
+                        print("Attempting to get special features...")
+                        do { try await self.streamingService.getSpecialFeatures(for: self.media) }
+                        catch {}
+                    }
+            case .loading:
+                ProgressView("Loading special features...")
+            case .loaded(let rows):
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    SpecialFeaturesRow(streamingService: streamingService, rowData: row, navigation: $navigation)
+                }
+            }
+        }
+    }
+}
+
+public struct SpecialFeaturesRow: View {
+    let streamingService: any StreamingServiceProtocol
+    let rowData: [any SpecialFeaturesProtocol]
+    let title: String
+    
+    @Binding var navigation: NavigationPath
+    
+    init(
+        streamingService: any StreamingServiceProtocol,
+        rowData: [any SpecialFeaturesProtocol],
+        navigation: Binding<NavigationPath>
+    ) {
+        self.streamingService = streamingService
+        self.rowData = rowData
+        self.title = rowData[0].featureType
+        self._navigation = navigation
+    }
+    
+    public var body: some View {
+        VStack(alignment: .leading) {
+            Text(self.title)
+                .font(.title.bold())
+            ScrollView(.horizontal) {
+                LazyHStack {
+                    ForEach(rowData, id: \.id) { specialFeature in
+                        Text(specialFeature.title)
+                    }
+                }
+            }
+        }
+    }
 }
