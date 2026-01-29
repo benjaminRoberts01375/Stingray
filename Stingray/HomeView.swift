@@ -60,10 +60,9 @@ struct HomeView: View {
                 Text("Stingray v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")") // Stingray
                 // Jellyfin
                 Text(" • Jellyfin Server ")
-                if let version = self.streamingService.serverVersion {
-                    Text("v\(version)")
-                } else {
-                    ProgressView()
+                if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
+                if let version = self.streamingService.serverVersion { Text("v\(version)") }
+                else { ProgressView()
                 }
                 // tvOS version
                 let osVersion = ProcessInfo.processInfo.operatingSystemVersion

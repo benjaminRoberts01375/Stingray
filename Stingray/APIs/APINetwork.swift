@@ -227,9 +227,12 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     
     /// Gets the current version of the Jellyfin server
     /// - Parameter accessToken: User's access token for the Jellyfin server.
-    /// - Returns: The version of the server in this format: `xx.xx.xx`. There's no "v" at the start.
-    func getServerVersion(accessToken: String) async throws(AccountErrors) -> String {
-        struct Root: Decodable { let Version: String }
+    /// - Returns: The version of the server in this format: `xx.xx.xx` with no "v" at the start, and the name of the server.
+    func getServerVersion(accessToken: String) async throws(AccountErrors) -> (String, String) {
+        struct Root: Decodable {
+            let Version: String
+            let ServerName: String
+        }
         
         do {
             let root: Root = try await network.request(
@@ -240,7 +243,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
             
-            return root.Version
+            return (root.Version, root.ServerName)
         } catch {
             throw AccountErrors.serverVersionFailed(error)
         }

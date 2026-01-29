@@ -55,7 +55,7 @@ Extensive content metadata.
 
 ### Profiles
 
-- [ ] Show Jellyfin server name.
+- [x] Show Jellyfin server name.
 - [ ] Show all available profiles on Jellyfin server.
 - [ ] Allow "locking" some profiles with a pin.
 - [ ] Move profiles to home screen.

@@ -11,6 +11,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     var libraryStatus: LibraryStatus { get }
     var usersName: String { get }
     var userID: String { get }
+    var serverName: String? { get }
     var serverVersion: String? { get }
     var serviceURL: URL { get }
     var playerProgress: PlayerProtocol? { get }
@@ -71,6 +72,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var userID: String
     var sessionID: String
     var accessToken: String
+    var serverName: String?
     var serverID: String
     var serverVersion: String?
     var serviceURL: URL
@@ -98,9 +100,13 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.serviceURL = serviceURL
         Task {
             do {
-                self.serverVersion = try await network.getServerVersion(accessToken: self.accessToken)
-            } catch {
+                let (serverVersion, serverName) = try await network.getServerVersion(accessToken: self.accessToken)
+                self.serverVersion = serverVersion
+                self.serverName = serverName
+            }
+            catch {
                 self.serverVersion = "Unknown"
+                self.serverName = "Unknown"
             }
         }
     }
