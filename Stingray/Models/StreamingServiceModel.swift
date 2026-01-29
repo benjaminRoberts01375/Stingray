@@ -27,6 +27,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     ) -> AVPlayer?
     func playbackEnd()
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
+    func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
 }
 
 /// Describes the current setup status for a downloaded library
@@ -301,6 +302,19 @@ public func retrieveLibraryContent(library: LibraryModel) async {
     
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
+    }
+
+    public func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors) {
+        do {
+            media.loadSpecialFeatures(
+                specialFeatures: try await self.networkAPI.loadSpecialFeatures(mediaID: media.id, accessToken: self.accessToken)
+            )
+            print("Loaded special features")
+        }
+        catch {
+            print("Failed to load special features")
+            throw LibraryErrors.specialFeaturesFailed(error, media.title)
+        }
     }
     
     func playbackStart(

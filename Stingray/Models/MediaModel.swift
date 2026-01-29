@@ -310,6 +310,15 @@ public final class MediaModel: MediaProtocol, Decodable {
         if !errBucket.isEmpty { errors = errBucket } // Otherwise nil
     }
     
+    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
+        // Group by featureType, then extract media sources for each group
+        let groupedSources = Dictionary(grouping: specialFeatures, by: \.featureType)
+            .values
+            .map { $0.flatMap(\.mediaSources) }
+        
+        self.specialFeatures = .loaded(groupedSources)
+    }
+    
     // Hashable conformance
     public static func == (lhs: MediaModel, rhs: MediaModel) -> Bool {
         lhs.id == rhs.id
