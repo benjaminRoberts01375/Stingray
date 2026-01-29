@@ -108,7 +108,7 @@ public protocol TVEpisodeProtocol: Displayable {
     var title: String { get }
     var episodeNumber: Int { get }
     var mediaSources: [any MediaSourceProtocol] { get }
-    var lastPlayed: Date? { get }
+    var lastPlayed: Date? { get set }
     var overview: String? { get }
 }
 

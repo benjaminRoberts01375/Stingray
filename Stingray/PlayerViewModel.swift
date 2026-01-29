@@ -95,6 +95,7 @@ final class PlayerViewModel: Hashable {
             }
         }
         
+        self.savePlaybackDate()
         self.newPlayer(
             startTime: self.startTime,
             videoID: self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0"),
@@ -198,6 +199,24 @@ final class PlayerViewModel: Hashable {
         player = nil
         self.playerProgress = nil
         streamingService.playbackEnd()
+    }
+    
+    func savePlaybackDate() {
+        switch self.media.mediaType {
+        case .tv(let seasons):
+            if var seasons = seasons {
+                for seasonIndex in seasons.indices {
+                    for episodeIndex in seasons[seasonIndex].episodes.indices {
+                        let episode = seasons[seasonIndex].episodes[episodeIndex]
+                        if (episode.mediaSources.contains { $0.id == self.mediaSource.id }) {
+                            seasons[seasonIndex].episodes[episodeIndex].lastPlayed = Date.now
+                            return
+                        }
+                    }
+                }
+            }
+        default: break
+        }
     }
     
     deinit {
