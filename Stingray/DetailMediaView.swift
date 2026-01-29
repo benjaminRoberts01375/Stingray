@@ -777,7 +777,6 @@ fileprivate struct ArtView: View {
                 }
             }
         }
-        .aspectRatio(16 / 9, contentMode: .fit)
     }
 }
 
