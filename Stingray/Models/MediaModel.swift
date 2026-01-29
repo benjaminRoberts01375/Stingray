@@ -21,6 +21,10 @@ public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
     var mediaType: MediaType { get }
     var duration: Duration? { get }
     var people: [MediaPersonProtocol] { get }
+    var specialFeatures: SpecialFeaturesStatus { get set }
+    
+    /// Load special features for this media
+    func loadSpecialFeatures(specialFeatures: [SpecialFeature])
 }
 
 public protocol MediaSourceProtocol: Identifiable {
@@ -31,6 +35,24 @@ public protocol MediaSourceProtocol: Identifiable {
     var subtitleStreams: [any MediaStreamProtocol] { get }
     var startTicks: Int { get set }
     var durationTicks: Int? { get }
+}
+
+public protocol SpecialFeaturesProtocol: Identifiable {
+    var id: String { get }
+    var featureType: String? { get }
+    var sortTitle: String? { get }
+    var title: String { get }
+    var mediaSources: [MediaSource] { get }
+}
+
+/// Denotes the current status for downloading special features
+public enum SpecialFeaturesStatus {
+    /// Special features have not been fetched
+    case unloaded
+    /// Special features have been requested but have not yet returned
+    case loading
+    /// Special feature have been fully loaded
+    case loaded([[any MediaSourceProtocol]])
 }
 
 /// Extend the MediaSourceProtocol to allow for getting similar streams
@@ -111,6 +133,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var duration: Duration?
     public var people: [any MediaPersonProtocol]
     public var errors: [RError]?
+    public var specialFeatures: SpecialFeaturesStatus
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -134,6 +157,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     /// - throws: `DecodingError.typeMismatch` if the encountered stored value is not a keyed container.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.specialFeatures = .unloaded
         
         var errBucket: [any RError] = []
         id = container.decodeFieldSafely(
@@ -529,5 +553,21 @@ public enum MediaType: Decodable {
         case .unknown:
             return "Unknown"
         }
+    }
+}
+
+public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
+    public let id: String
+    public let featureType: String?
+    public let sortTitle: String?
+    public let title: String
+    public let mediaSources: [MediaSource]
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case title = "Name"
+        case featureType = "ExtraType"
+        case sortTitle = "SortName"
+        case mediaSources = "MediaSources"
     }
 }
