@@ -308,7 +308,13 @@ public final class MediaModel: MediaProtocol, Decodable {
     public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
         let specialFeatures = specialFeatures.map { feature in
             if feature.featureType == "Unknown" { feature.featureType = "Extras" }
-            else { feature.featureType = feature.featureType.pascalCaseToSpaces() }
+            else {
+                feature.featureType =
+                feature.featureType.pascalCaseToSpaces()
+                if !feature.featureType.hasSuffix("s") && feature.featureType != "theme-music" { // Make plural
+                    feature.featureType += "s"
+                }
+            }
             return feature
         }
         // Group by featureType
