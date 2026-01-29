@@ -702,7 +702,7 @@ fileprivate struct EpisodeNavigationView: View {
             )
         } label: {
             VStack(spacing: 0) {
-                EpisodeArtView(episode: episode, streamingService: streamingService)
+                ArtView(media: episode, streamingService: streamingService)
                 Text(episode.title)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -745,8 +745,8 @@ fileprivate struct ActorImage: View {
 }
 
 // MARK: Episode Art
-fileprivate struct EpisodeArtView: View {
-    let episode: any TVEpisodeProtocol
+fileprivate struct ArtView: View {
+    let media: any Displayable
     let streamingService: any StreamingServiceProtocol
     
     @State private var imageOpacity: Double = 0
@@ -754,7 +754,7 @@ fileprivate struct EpisodeArtView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                if let blurHash = episode.imageBlurHashes?.getBlurHash(for: .primary),
+                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
                     Image(uiImage: blurImage)
                         .resizable()
@@ -763,7 +763,7 @@ fileprivate struct EpisodeArtView: View {
                         .clipped()
                         .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                 }
-                if let url = streamingService.getImageURL(imageType: .primary, mediaID: episode.id, width: 800) {
+                if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
                     AsyncImage(url: url) { image in
                         image
                             .resizable()
