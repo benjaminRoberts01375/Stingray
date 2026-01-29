@@ -611,7 +611,6 @@ fileprivate struct EpisodeView: View {
                 episode: episode,
                 navigation: $navigation
             )
-            .frame(width: 400, height: 325)
             .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
             .offset(y: isFocused ? -16 : 0)
@@ -703,12 +702,14 @@ fileprivate struct EpisodeNavigationView: View {
         } label: {
             VStack(spacing: 0) {
                 ArtView(media: episode, streamingService: streamingService)
+                Spacer(minLength: 0)
                 Text(episode.title)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .padding()
                 Spacer(minLength: 0)
             }
+            .frame(width: 400, height: 325)
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
