@@ -311,6 +311,11 @@ public final class MediaModel: MediaProtocol, Decodable {
     }
     
     public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
+        let specialFeatures = specialFeatures.map { feature in
+            if feature.featureType == "Unknown" { feature.featureType = "Extras" }
+            else { feature.featureType = feature.featureType.pascalCaseToSpaces() }
+            return feature
+        }
         // Group by featureType
         let groupedFeatures = Dictionary(grouping: specialFeatures, by: \.featureType)
             .values
@@ -567,7 +572,7 @@ public enum MediaType: Decodable {
 
 public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
     public let id: String
-    public let featureType: String
+    public var featureType: String
     public let sortTitle: String?
     public let title: String
     public let mediaSources: [MediaSource]
