@@ -754,7 +754,7 @@ fileprivate struct EpisodeArtView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                if let blurHash = episode.blurHashes?.getBlurHash(for: .primary),
+                if let blurHash = episode.imageBlurHashes?.getBlurHash(for: .primary),
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
                     Image(uiImage: blurImage)
                         .resizable()

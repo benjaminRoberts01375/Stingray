@@ -13,7 +13,6 @@ import Foundation
 public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
     var tagline: String { get }
     var description: String { get }
-    var imageTags: any MediaImagesProtocol { get }
     var id: String { get }
     var genres: [String] { get }
     var maturity: String? { get }
@@ -37,12 +36,11 @@ public protocol MediaSourceProtocol: Identifiable {
     var durationTicks: Int? { get }
 }
 
-public protocol SpecialFeaturesProtocol: Identifiable {
-    var id: String { get }
+public protocol SpecialFeaturesProtocol: Displayable {
     var featureType: String { get }
     var sortTitle: String? { get }
     var title: String { get }
-    var mediaSources: [MediaSource] { get }
+    var mediaSources: [any MediaSourceProtocol] { get }
 }
 
 /// Denotes the current status for downloading special features
@@ -107,9 +105,8 @@ public protocol TVSeasonProtocol: Identifiable {
     var seasonNumber: Int { get }
 }
 
-public protocol TVEpisodeProtocol: Identifiable {
+public protocol TVEpisodeProtocol: Displayable {
     var id: String { get }
-    var blurHashes: MediaImageBlurHashes? { get }
     var title: String { get }
     var episodeNumber: Int { get }
     var mediaSources: [any MediaSourceProtocol] { get }
@@ -123,7 +120,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
     public var tagline: String
     public var description: String
-    public var imageTags: any MediaImagesProtocol
+    public var imageTags: (any MediaImagesProtocol)?
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var id: String
     public var genres: [String]
@@ -494,8 +491,9 @@ public final class TVSeason: TVSeasonProtocol {
 
 @Observable
 public final class TVEpisode: TVEpisodeProtocol {
+    public var imageTags: (any MediaImagesProtocol)?
     public var id: String
-    public var blurHashes: MediaImageBlurHashes?
+    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var title: String
     public var episodeNumber: Int
     public var mediaSources: [any MediaSourceProtocol]
@@ -512,7 +510,7 @@ public final class TVEpisode: TVEpisodeProtocol {
         overview: String? = nil
     ) {
         self.id = id
-        self.blurHashes = blurHashes
+        self.imageBlurHashes = blurHashes
         self.title = title
         self.episodeNumber = episodeNumber
         self.mediaSources = mediaSources
@@ -575,7 +573,9 @@ public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
     public var featureType: String
     public let sortTitle: String?
     public let title: String
-    public let mediaSources: [MediaSource]
+    public let mediaSources: [any MediaSourceProtocol]
+    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    public var imageTags: (any MediaImagesProtocol)?
     
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -583,5 +583,19 @@ public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
         case featureType = "ExtraType"
         case sortTitle = "SortName"
         case mediaSources = "MediaSources"
+        case imageBlurHashes = "ImageBlurHashes"
+        case imageTags = "ImageTags"
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.id = try container.decode(String.self, forKey: .id)
+        self.featureType = try container.decode(String.self, forKey: .featureType)
+        self.sortTitle = try container.decodeIfPresent(String.self, forKey: .sortTitle)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.mediaSources = try container.decode([MediaSource].self, forKey: .mediaSources)
+        self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
+        self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags)
     }
 }
