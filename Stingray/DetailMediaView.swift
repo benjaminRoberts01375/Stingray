@@ -842,6 +842,7 @@ public struct SpecialFeaturesView: View {
             case .loaded(let rows):
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                     SpecialFeaturesRow(streamingService: streamingService, rowData: row, media: media, navigation: $navigation)
+                        .focusSection()
                 }
             }
         }
