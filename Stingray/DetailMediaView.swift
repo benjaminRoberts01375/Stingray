@@ -884,13 +884,23 @@ public struct SpecialFeaturesRow: View {
                                     )
                                 )
                             } label: {
-                                Text(specialFeature.title)
+                                VStack(spacing: 0) {
+                                    ArtView(media: specialFeature, streamingService: self.streamingService)
+                                        .frame(maxHeight: 250)
+                                    Spacer(minLength: 0)
+                                    Text(specialFeature.title)
+                                        .lineLimit(2)
+                                        .padding(.horizontal, 10)
+                                    Spacer(minLength: 0)
+                                }
+                                .frame(width: 400, height: 325)
                             }
                             .buttonStyle(.card)
                         }
                     }
                 }
             }
+            .scrollClipDisabled()
         }
     }
 }
