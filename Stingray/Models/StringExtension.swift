@@ -12,8 +12,8 @@ extension String {
     /// Create a neatly formatted string based off the number of ticks a stream may have.
     /// 10,000,000 ticks = 1 second.
     /// - Parameter ticks: Stream ticks
-    init(ticks: Int) {
-        let seconds = Int(Double(ticks) / 10_000_000)
+    init(duration: TimeInterval) {
+        let seconds = Int(duration)
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         let secs = (seconds % 3600) % 60

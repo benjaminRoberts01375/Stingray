@@ -409,7 +409,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         
                         if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
                             for mediaSourceIndex in episode.mediaSources.indices {
-                                episode.mediaSources[mediaSourceIndex].startTicks = playbackTicks
+                                episode.mediaSources[mediaSourceIndex].startPoint = TimeInterval(ticks: playbackTicks)
                             }
                         }
                         

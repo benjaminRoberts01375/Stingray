@@ -242,7 +242,7 @@ public struct DetailMediaView: View {
         else { return allEpisodes.first } // failing getting the most recent, return the first episode
         
         // Watched previous episode all the way through
-        if mostRecentMediaSource.startTicks == 0 {
+        if mostRecentMediaSource.startPoint == 0 {
             if mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
                 return allEpisodes.first ?? mostRecentEpisode.element
             }
@@ -251,7 +251,7 @@ public struct DetailMediaView: View {
         
         // Likely marked by Stingray that the user didn't finish
         if let durationTicks = mostRecentMediaSource.durationTicks,
-           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) {
+           Double(mostRecentMediaSource.startPoint) < 0.9 * Double(durationTicks) {
             return mostRecentEpisode.element
         }
         
@@ -406,13 +406,13 @@ fileprivate struct PlayNavigationView: View {
             if mediaSources.count == 1 {
                 let mediaSource = self.mediaSources[0]
                 // Single item that's unwatched - show button
-                if mediaSource.startTicks == 0 {
+                if mediaSource.startPoint == 0 {
                     Button {
                         self.navigation.append(
                             PlayerViewModel(
                                 media: media,
                                 mediaSource: mediaSource,
-                                startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                                startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
                                 streamingService: self.streamingService,
                                 seasons: self.seasons
                             )
@@ -423,12 +423,12 @@ fileprivate struct PlayNavigationView: View {
                 // Single item that's partially watched - show streamlined menu
                 else {
                     Menu("\(Image(systemName: "play")) \(title)") {
-                        Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks) }
+                        Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
                         label: {
                             Label("Resume \(media.title)", systemImage: "play.fill")
-                            Text("Continue from \(String(ticks: mediaSource.startTicks))")
+                            Text("Continue from \(String(duration: mediaSource.startPoint))")
                         }
-                        Button { navigateToPlayer(for: mediaSource, startTicks: .zero) }
+                        Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
                         label: { Label("Restart \(media.title)", systemImage: "memories") }
                     }
                     .accessibilityLabel("Play button menu")
@@ -437,10 +437,10 @@ fileprivate struct PlayNavigationView: View {
             // Multiple media sources
             else {
                 // If there are multiple sources but all unwatched, show only "play" options that start from beginning
-                if (mediaSources.allSatisfy { $0.startTicks == 0 }) {
+                if (mediaSources.allSatisfy { $0.startPoint == 0 }) {
                     Menu("\(Image(systemName: "play")) \(title)") {
                         ForEach(mediaSources, id: \.id) { mediaSource in
-                            Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks) }
+                            Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
                             label: { Label(mediaSource.name, systemImage: "play.fill") }
                                 .id(mediaSource.id)
                         }
@@ -452,11 +452,11 @@ fileprivate struct PlayNavigationView: View {
                     Menu("\(Image(systemName: "play")) \(title)") {
                         Section("Resume") {
                             ForEach(mediaSources, id: \.id) { mediaSource in
-                                if mediaSource.startTicks != 0 {
-                                    Button { navigateToPlayer(for: mediaSource, startTicks: mediaSource.startTicks)
+                                if mediaSource.startPoint != 0 {
+                                    Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint)
                                     } label: {
                                         Label(mediaSource.name, systemImage: "play.fill")
-                                        Text("Continue from \(String(ticks: mediaSource.startTicks))")
+                                        Text("Continue from \(String(duration: mediaSource.startPoint))")
                                     }
                                     .id(mediaSource.id)
                                 }
@@ -464,7 +464,7 @@ fileprivate struct PlayNavigationView: View {
                         }
                         Section("Restart") {
                             ForEach(mediaSources, id: \.id) { mediaSource in
-                                Button { navigateToPlayer(for: mediaSource, startTicks: .zero) }
+                                Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
                                 label: { Label(mediaSource.name, systemImage: "memories") }
                                     .id(mediaSource.id)
                             }
@@ -480,14 +480,12 @@ fileprivate struct PlayNavigationView: View {
         .defaultFocus($focus, .play, priority: .userInitiated)
     }
     
-    func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startTicks: Int) {
+    func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
             PlayerViewModel(
                 media: media,
                 mediaSource: mediaSource,
-                startTime: CMTimeMakeWithSeconds(
-                    Double(startTicks / 10_000_000), preferredTimescale: 1
-                ),
+                startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1),
                 streamingService: self.streamingService,
                 seasons: self.seasons
             )
@@ -699,7 +697,7 @@ fileprivate struct EpisodeNavigationView: View {
                 PlayerViewModel(
                     media: media,
                     mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: seasons
                 )

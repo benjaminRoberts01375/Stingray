@@ -32,7 +32,7 @@ public protocol MediaSourceProtocol: Identifiable {
     var videoStreams: [any MediaStreamProtocol] { get }
     var audioStreams: [any MediaStreamProtocol] { get }
     var subtitleStreams: [any MediaStreamProtocol] { get }
-    var startTicks: Int { get set }
+    var startPoint: TimeInterval { get set }
     var durationTicks: Int? { get }
 }
 
@@ -262,7 +262,7 @@ public final class MediaModel: MediaProtocol, Decodable {
                 required: false
             )
             if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
-                movieSources[defaultIndex].startTicks = userDataContainer.playbackPositionTicks
+                movieSources[defaultIndex].startPoint = TimeInterval(ticks: userDataContainer.playbackPositionTicks)
             }
             self.mediaType = .movies(movieSources)
         default:
@@ -336,11 +336,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var videoStreams: [any MediaStreamProtocol]
     public var audioStreams: [any MediaStreamProtocol]
     public var subtitleStreams: [any MediaStreamProtocol]
-    private var loadingStartTicks: Int?
-    public var startTicks: Int {
-        get { return loadingStartTicks ?? 0 }
-        set { self.loadingStartTicks = newValue }
-    }
+    public var startPoint: TimeInterval
     public var durationTicks: Int?
     
     enum CodingKeys: String, CodingKey {
@@ -354,6 +350,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.startPoint = .zero
             
             id = try container.decode(String.self, forKey: .id)
             name = try container.decode(String.self, forKey: .name)
