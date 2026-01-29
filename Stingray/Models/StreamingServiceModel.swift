@@ -358,7 +358,6 @@ public func retrieveLibraryContent(library: LibraryModel) async {
         self.playerProgress = JellyfinPlayerProgress(
             player: player,
             network: networkAPI,
-            mediaID: mediaSource.id,
             mediaSource: mediaSource,
             videoID: videoID,
             audioID: audioID,
@@ -411,7 +410,6 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     let player: AVPlayer
     private let network: any AdvancedNetworkProtocol
     private var timer: Timer?
-    private let mediaID: String
     var mediaSource: any MediaSourceProtocol
     let videoID: String
     let bitrate: Bitrate
@@ -424,7 +422,6 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     init(
         player: AVPlayer,
         network: any AdvancedNetworkProtocol,
-        mediaID: String,
         mediaSource: any MediaSourceProtocol,
         videoID: String,
         audioID: String,
@@ -436,7 +433,6 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     ) {
         self.player = player
         self.network = network
-        self.mediaID = mediaID
         self.mediaSource = mediaSource
         self.videoID = videoID
         self.bitrate = bitrate
@@ -450,7 +446,6 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         Task {
             do {
                 try await self.network.updatePlaybackStatus(
-                    itemID: self.mediaID,
                     mediaSourceID: self.mediaSource.id,
                     audioStreamIndex: self.audioID,
                     subtitleStreamIndex: self.subtitleID,
@@ -482,7 +477,6 @@ final class JellyfinPlayerProgress: PlayerProtocol {
                         playbackStatus = .paused
                     }
                     try await self.network.updatePlaybackStatus(
-                        itemID: self.mediaID,
                         mediaSourceID: self.mediaSource.id,
                         audioStreamIndex: self.audioID,
                         subtitleStreamIndex: self.subtitleID,
@@ -504,7 +498,6 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         Task {
             do {
                 try await self.network.updatePlaybackStatus(
-                    itemID: self.mediaID,
                     mediaSourceID: self.mediaSource.id,
                     audioStreamIndex: self.audioID,
                     subtitleStreamIndex: self.subtitleID,

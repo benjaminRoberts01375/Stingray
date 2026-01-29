@@ -79,7 +79,6 @@ public protocol AdvancedNetworkProtocol {
     func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason]
     /// Updates the server about the current playback status
     /// - Parameters:
-    ///   - itemID: Media ID of the currently played content
     ///   - mediaSourceID: Media source ID of the currently played content
     ///   - audioStreamIndex: Index for audio playback
     ///   - subtitleStreamIndex: Index for subtitle playback
@@ -89,7 +88,6 @@ public protocol AdvancedNetworkProtocol {
     ///   - playbackStatus: Current state of playback (ex. paused, stopped, playing)
     ///   - accessToken: Access token provided by the server
     func updatePlaybackStatus(
-        itemID: String,
         mediaSourceID: String,
         audioStreamIndex: String,
         subtitleStreamIndex: String?,
@@ -576,7 +574,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     }
     
     func updatePlaybackStatus(
-        itemID: String,
         mediaSourceID: String,
         audioStreamIndex: String,
         subtitleStreamIndex: String?,
@@ -624,7 +621,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         
         let stats: PlaybackStatusStats = PlaybackStatusStats(
-            itemID: itemID,
+            itemID: mediaSourceID,
             mediaSourceID: mediaSourceID,
             audioStreamIndex: audioStreamIndex,
             subtitleStreamIndex: subtitleStreamIndex ?? "-1",
