@@ -174,7 +174,11 @@ public struct DetailMediaView: View {
                 SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
                 
                 // People
-                PeopleBrowserView(media: media, streamingService: streamingService)
+                VStack(alignment: .leading) {
+                    Text("People")
+                        .font(.title.bold())
+                    PeopleBrowserView(media: media, streamingService: streamingService)
+                }
                 
             }
             .scrollClipDisabled()
