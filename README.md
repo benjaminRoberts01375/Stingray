@@ -44,7 +44,7 @@ A clean view of the content art with quick access to content metadata.
 
 ### Media Details
 
-![Media details 2](https://github.com/user-attachments/assets/46a7a63e-8c8c-4087-8ade-4c0580a6d1f5)
+![Media Details 2](https://github.com/user-attachments/assets/cf0954fb-7d0d-4a03-a412-3b0050f2d8a4)
 Extensive content metadata.
 
 ## TODO List
@@ -69,7 +69,7 @@ Extensive content metadata.
 
 ### Media Picker
 
-- [ ] Media with errors gets a red background.
+- [x] Media with errors gets a red background.
 - [ ] Unwatched media gets a blue background.
 
 ### Detail Media View
@@ -81,7 +81,7 @@ Extensive content metadata.
 
 ### Playback
 
-- [ ] HDR support.
+- [x] HDR support-ish.
 - [ ] Live TV.
 - [ ] Add a "Streaming Stats" page in the player to show current playback status.
   - [ ] Is Transcoding & Reason.
