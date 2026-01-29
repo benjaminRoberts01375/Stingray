@@ -191,10 +191,11 @@ enum StreamingServiceErrors: RError {
 public enum AdvancedNetworkErrors: RError {
     case failedRecentlyAdded(RError)
     case failedUpNext(RError)
+    case failedSpecialFeatures(RError)
     
     public var next: (any RError)? {
         switch self {
-        case .failedRecentlyAdded(let err), .failedUpNext(let err):
+        case .failedRecentlyAdded(let err), .failedUpNext(let err), .failedSpecialFeatures(let err):
             return err
         }
     }
@@ -203,6 +204,7 @@ public enum AdvancedNetworkErrors: RError {
         switch self {
         case .failedRecentlyAdded: return "Failed to get recently added list"
         case .failedUpNext: return "Failed to get up next list"
+        case .failedSpecialFeatures: return "Failed to get special features list"
         }
     }
 }
@@ -218,6 +220,8 @@ public enum LibraryErrors: RError {
     case gettingSeason(RError, String)
     /// Failed to get the media for a season. The `String` value is the ID of the season
     case gettingSeasonMedia(RError, String)
+    /// Failed to get the special features for a piece of media. The `String` value is the title of the media
+    case specialFeaturesFailed(RError, String)
     /// The library failed for some unknown reason.
     case unknown(String)
     
@@ -225,7 +229,7 @@ public enum LibraryErrors: RError {
         switch self {
         case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
             return next
-        case .gettingSeasonMedia(let next, _):
+        case .gettingSeasonMedia(let next, _), .specialFeaturesFailed(let next, _):
             return next
         case .unknown:
             return nil
@@ -239,6 +243,7 @@ public enum LibraryErrors: RError {
         case .gettingSeasons(_, let name): return "Failed to get seasons for library \(name)"
         case .gettingSeason(_, let id): return "Failed to get the season with the ID \(id)"
         case .gettingSeasonMedia(_, let id): return "Failed to get the season media for the season \(id)"
+        case .specialFeaturesFailed(_, let name): return "Failed to load the special features for \(name)"
         case .unknown(let name): return "The library \(name) has failed to setup."
         }
     }
