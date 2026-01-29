@@ -893,7 +893,7 @@ public struct SpecialFeaturesRow: View {
                                     ArtView(media: specialFeature, streamingService: self.streamingService)
                                         .frame(maxHeight: 250)
                                     Spacer(minLength: 0)
-                                    Text(specialFeature.title)
+                                    Text(mediaSource.name)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.center)
                                         .padding(.horizontal, 10)

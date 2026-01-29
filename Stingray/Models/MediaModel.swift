@@ -38,8 +38,6 @@ public protocol MediaSourceProtocol: Identifiable {
 
 public protocol SpecialFeaturesProtocol: Displayable {
     var featureType: String { get }
-    var sortTitle: String? { get }
-    var title: String { get }
     var mediaSources: [any MediaSourceProtocol] { get }
 }
 
@@ -571,8 +569,6 @@ public enum MediaType: Decodable {
 public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
     public let id: String
     public var featureType: String
-    public let sortTitle: String?
-    public let title: String
     public let mediaSources: [any MediaSourceProtocol]
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var imageTags: (any MediaImagesProtocol)?
@@ -592,8 +588,6 @@ public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
         
         self.id = try container.decode(String.self, forKey: .id)
         self.featureType = try container.decode(String.self, forKey: .featureType)
-        self.sortTitle = try container.decodeIfPresent(String.self, forKey: .sortTitle)
-        self.title = try container.decode(String.self, forKey: .title)
         self.mediaSources = try container.decode([MediaSource].self, forKey: .mediaSources)
         self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
         self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags)
