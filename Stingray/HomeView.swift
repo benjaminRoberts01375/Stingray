@@ -203,8 +203,6 @@ struct SystemInfoView: View {
             Text(" • Jellyfin Server ")
             if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
             if let version = self.streamingService.serverVersion { Text("v\(version)") }
-            else { ProgressView()
-            }
             // tvOS version
             let osVersion = ProcessInfo.processInfo.operatingSystemVersion
             Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
