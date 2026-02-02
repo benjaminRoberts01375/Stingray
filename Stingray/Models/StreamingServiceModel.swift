@@ -105,8 +105,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 self.serverName = serverName
             }
             catch {
-                self.serverVersion = "Unknown"
-                self.serverName = "Unknown"
+                self.serverVersion = nil
+                self.serverName = nil
             }
         }
     }
