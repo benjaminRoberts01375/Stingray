@@ -198,7 +198,10 @@ struct SystemInfoView: View {
     var body: some View {
         // Display Stingray and Jellyfin server versions
         HStack(alignment: .center, spacing: 0) {
-            Text("Stingray v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")") // Stingray
+            if let stingrayVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {  // Stingray
+                Text("Stingray v\(stingrayVersion)")
+            }
+            else { Text("Unknown Stingray Version") }
             // Jellyfin
             Text(" • Jellyfin Server ")
             if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
