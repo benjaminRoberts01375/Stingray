@@ -55,22 +55,7 @@ struct HomeView: View {
             }
             .focusSection()
             
-            // Display Stingray and Jellyfin server versions
-            HStack(alignment: .center, spacing: 0) {
-                Text("Stingray v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")") // Stingray
-                // Jellyfin
-                Text(" • Jellyfin Server ")
-                if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
-                if let version = self.streamingService.serverVersion { Text("v\(version)") }
-                else { ProgressView()
-                }
-                // tvOS version
-                let osVersion = ProcessInfo.processInfo.operatingSystemVersion
-                Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
-            }
-            .foregroundStyle(.gray.opacity(0.5))
-            .frame(maxWidth: .infinity)
-            .padding(.top)
+            SystemInfoView(streamingService: streamingService)
         }
     }
 }
@@ -204,5 +189,28 @@ fileprivate struct MediaNavigationLoadingCard: View {
         }
         .buttonStyle(.card)
         .focusable(false)
+    }
+}
+
+struct SystemInfoView: View {
+    let streamingService: any StreamingServiceProtocol
+    
+    var body: some View {
+        // Display Stingray and Jellyfin server versions
+        HStack(alignment: .center, spacing: 0) {
+            Text("Stingray v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")") // Stingray
+            // Jellyfin
+            Text(" • Jellyfin Server ")
+            if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
+            if let version = self.streamingService.serverVersion { Text("v\(version)") }
+            else { ProgressView()
+            }
+            // tvOS version
+            let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+            Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
+        }
+        .foregroundStyle(.gray.opacity(0.5))
+        .frame(maxWidth: .infinity)
+        .padding(.top)
     }
 }
