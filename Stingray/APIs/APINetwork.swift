@@ -420,7 +420,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                                 id: seasonID,
                                 title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
                                 episodes: [episode],
-                                seasonNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
                             )
                             tempSeasons.append(newSeason)
                         }
