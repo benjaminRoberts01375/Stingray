@@ -413,9 +413,18 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                             }
                         }
                         
-                        if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) {
+                        let seasonTitle = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season"
+                        if seasonTitle == "Specials" { // Episode is a special
+                            let newSeason = TVSeason(
+                                id: UUID().uuidString, // Create a dummy ID since a single episode doesn't really have a unique season
+                                title: "Special",
+                                episodes: [episode]
+                            )
+                            tempSeasons.append(newSeason)
+                        }
+                        else if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Episode is in an existing eason
                             tempSeasons[seasonIndex].episodes.append(episode)
-                        } else {
+                        } else { // Episode needs a new season
                             let newSeason = TVSeason(
                                 id: seasonID,
                                 title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
@@ -463,7 +472,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "enableImages", value: "true"),
             URLQueryItem(name: "fields", value: "MediaSources"),
-            URLQueryItem(name: "fields", value: "Overview")
+            URLQueryItem(name: "fields", value: "Overview"),
+            URLQueryItem(name: "sortBy", value: "AiredEpisodeOrder")
         ]
         do {
             let response: Root = try await network.request(
