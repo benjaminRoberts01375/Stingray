@@ -424,7 +424,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         }
                         else if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Episode is in an existing eason
                             tempSeasons[seasonIndex].episodes.append(episode)
-                        } else { // Episode needs a new season
+                        }
+                        else { // Episode needs a new season
                             let newSeason = TVSeason(
                                 id: seasonID,
                                 title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
