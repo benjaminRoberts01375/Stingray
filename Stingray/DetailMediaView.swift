@@ -514,9 +514,8 @@ fileprivate struct SeasonSelectorView: View {
                         self.focus = .media(firstEpisode.id)
                     }
                 }
-            } label: {
-                Text("Season \(season.seasonNumber)")
             }
+            label: { Text(season.title) }
             .padding(16)
             .background {
                 if season.id == lastFocusedSeasonID {
@@ -630,7 +629,7 @@ fileprivate struct EpisodeView: View {
                     // Season and episode number
                     HStack(spacing: 0) {
                         if let season = (seasons.first { $0.episodes.contains { $0.id == episode.id } }) {
-                            Text("Season \(season.seasonNumber), ")
+                            Text("\(season.title), ")
                         }
                         Text("Episode \(episode.episodeNumber)")
                         Spacer()

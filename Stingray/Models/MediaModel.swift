@@ -100,7 +100,6 @@ public protocol TVSeasonProtocol: Identifiable {
     var id: String { get }
     var title: String { get }
     var episodes: [any TVEpisodeProtocol] { get }
-    var seasonNumber: Int { get }
 }
 
 public protocol TVEpisodeProtocol: Displayable {
@@ -480,13 +479,11 @@ public final class TVSeason: TVSeasonProtocol {
     public var id: String
     public var title: String
     public var episodes: [any TVEpisodeProtocol]
-    public var seasonNumber: Int
     
-    public init(id: String, title: String, episodes: [any TVEpisodeProtocol], seasonNumber: Int) {
+    public init(id: String, title: String, episodes: [any TVEpisodeProtocol]) {
         self.id = id
         self.title = title
         self.episodes = episodes
-        self.seasonNumber = seasonNumber
     }
 }
 

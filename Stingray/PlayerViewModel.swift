@@ -136,7 +136,7 @@ final class PlayerViewModel: Hashable {
             if let seasons = seasons { // TV Shows
                 for season in seasons {
                     if let episode = (season.episodes.first { $0.mediaSources.first?.id == self.mediaSource.id }) {
-                        subtitle = "Season \(season.seasonNumber), Episode \(episode.episodeNumber)"
+                        subtitle = "\(season.title), Episode \(episode.episodeNumber)"
                         break
                     }
                 }
