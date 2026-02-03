@@ -47,7 +47,30 @@ A clean view of the content art with quick access to content metadata.
 ![Media Details 2](https://github.com/user-attachments/assets/cf0954fb-7d0d-4a03-a412-3b0050f2d8a4)
 Extensive content metadata.
 
-## TODO List
+## v1.1.0 TODO List
+
+### Bugs
+
+- [ ] Fix connecting to local Jellyfin clients triggering App Transport Security policy.
+- [x] Even out the padding around text in media posters.
+- [x] Improve errors to show a stack trace with summary.
+- [x] Prevent the `MediaModel` and `SlimMediaModel` from causing loading errors.
+  - [x] Ideally they'd be highlighted in red.
+
+### Code Quality
+
+- [x] Abstract away Jellyfin's "tick" system.
+
+### Features
+
+- [x] Improve HDR support with tone mapping.
+- [x] Show extras and BTS.
+- [ ] Sort specials.
+- [x] Display server name in system info.
+- [x] Rework play buttons to be more consistent between media types, while allowing resume/restart.
+- [x] Improve home screen performance.
+
+## Long-Term TODO List
 
 ### Login
 
@@ -55,7 +78,6 @@ Extensive content metadata.
 
 ### Profiles
 
-- [x] Show Jellyfin server name.
 - [ ] Show all available profiles on Jellyfin server.
 - [ ] Allow "locking" some profiles with a pin.
 - [ ] Move profiles to home screen.
@@ -69,7 +91,6 @@ Extensive content metadata.
 
 ### Media Picker
 
-- [x] Media with errors gets a red background.
 - [ ] Unwatched media gets a blue background.
 
 ### Detail Media View
@@ -81,7 +102,6 @@ Extensive content metadata.
 
 ### Playback
 
-- [x] HDR support-ish.
 - [ ] Live TV.
 - [ ] Add a "Streaming Stats" page in the player to show current playback status.
   - [ ] Is Transcoding & Reason.
