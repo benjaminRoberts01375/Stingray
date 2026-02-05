@@ -381,6 +381,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
                     var tempSeasons: [TVSeason] = []
                     var standInEpisodeNumber: Int = 0
+                    var lastSeasonID: String = ""
                     
                     while !seasonsContainer.isAtEnd {
                         standInEpisodeNumber += 1 // Fallback season number if it's not present
@@ -421,10 +422,20 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                             )
                             tempSeasons.append(newSeason)
                         }
-                        else if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Episode is in an existing eason
-                            tempSeasons[seasonIndex].episodes.append(episode)
+                        else if seasonID == lastSeasonID && tempSeasons.last?.title == "Special" { // Season was split by specials
+                            lastSeasonID = seasonID
+                            let newSeason = TVSeason(
+                                title: (try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season") +
+                                " Cont.",
+                                episodes: [episode],
+                            )
+                            tempSeasons.append(newSeason)
+                        }
+                        else if seasonID == lastSeasonID, let lastSeason = tempSeasons.last { // Episode is in the last season
+                            lastSeason.episodes.append(episode)
                         }
                         else { // Episode needs a new season
+                            lastSeasonID = seasonID
                             let newSeason = TVSeason(
                                 title: try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season",
                                 episodes: [episode],
