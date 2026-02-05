@@ -65,7 +65,7 @@ Extensive content metadata.
 
 - [x] Improve HDR support with tone mapping.
 - [x] Show extras and BTS.
-- [ ] Sort specials.
+- [x] Sort specials.
 - [x] Display server name in system info.
 - [x] Rework play buttons to be more consistent between media types, while allowing resume/restart.
 - [x] Improve home screen performance.
