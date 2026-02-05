@@ -210,7 +210,12 @@ final class PlayerViewModel: Hashable {
                         let episode = seasons[seasonIndex].episodes[episodeIndex]
                         if (episode.mediaSources.contains { $0.id == self.mediaSource.id }) {
                             seasons[seasonIndex].episodes[episodeIndex].lastPlayed = Date.now
-                            return
+                            if self.mediaSource.startPoint >= self.mediaSource.duration * 0.9 ||
+                                self.mediaSource.startPoint < self.mediaSource.duration * 0.1 {
+                                self.mediaSource.startPoint = 0
+                            }
+                            
+                            print(self.mediaSource.startPoint, self.mediaSource.duration * 0.1, self.mediaSource.duration * 0.9, )
                         }
                     }
                 }
