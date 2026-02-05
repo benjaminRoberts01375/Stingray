@@ -360,7 +360,8 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
             
             id = try container.decode(String.self, forKey: .id)
             name = try container.decode(String.self, forKey: .name)
-            duration = try container.decodeIfPresent(TimeInterval.self, forKey: .duration) ?? .zero
+            let durationTicks = try container.decodeIfPresent(Int.self, forKey: .duration) ?? .zero
+            self.duration = TimeInterval(ticks: durationTicks)
             
             let allStreams = try container.decodeIfPresent([MediaStream].self, forKey: .mediaStreams) ?? []
             
