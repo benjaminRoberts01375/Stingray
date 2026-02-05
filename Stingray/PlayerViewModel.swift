@@ -204,7 +204,7 @@ final class PlayerViewModel: Hashable {
     func savePlaybackDate() {
         switch self.media.mediaType {
         case .tv(let seasons):
-            if let seasons = seasons {
+            if var seasons = seasons {
                 for seasonIndex in seasons.indices {
                     for episodeIndex in seasons[seasonIndex].episodes.indices {
                         let episode = seasons[seasonIndex].episodes[episodeIndex]

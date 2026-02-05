@@ -100,7 +100,7 @@ public protocol TVSeasonProtocol: Identifiable {
     /// A generic ID - Not relevant to the ID of the season set by the server
     var id: String { get }
     var title: String { get }
-    var episodes: [any TVEpisodeProtocol] { get }
+    var episodes: [any TVEpisodeProtocol] { get set }
 }
 
 public protocol TVEpisodeProtocol: Displayable {
@@ -528,7 +528,7 @@ public enum StreamType: String, Decodable, Equatable {
 
 public enum MediaType: Decodable {
     case movies([any MediaSourceProtocol])
-    case tv([TVSeason]?)
+    case tv([any TVSeasonProtocol]?)
     case unknown
     
     public init (from decoder: Decoder) throws(JSONError) {
