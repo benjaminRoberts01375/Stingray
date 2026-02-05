@@ -56,12 +56,12 @@
 				APIs/APIBasicNetwork.swift,
 				APIs/APIStorage.swift,
 				APIs/APIUserStorage.swift,
-				Models/DecoderExtension.swift,
-				Models/RError.swift,
+				Extensions/DecoderExtension.swift,
+				Extensions/TimeIntervalExtension.swift,
+				Extensions/URLExtension.swift,
+				Models/RErrorModel.swift,
 				Models/SlimMediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
-				Models/TimeIntervalExtension.swift,
-				Models/URLExtension.swift,
 				Models/UserModel.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
