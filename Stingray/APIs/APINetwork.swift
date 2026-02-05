@@ -329,7 +329,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "fields", value: "Genres"),
             URLQueryItem(name: "fields", value: "Overview"),
             URLQueryItem(name: "fields", value: "people"),
-            URLQueryItem(name: "enableUserData", value: "true")
+            URLQueryItem(name: "enableUserData", value: "true"),
+            URLQueryItem(name: "recursive", value: "true")
         ]
         
         for mediaType in mediaTypes ?? [] {
