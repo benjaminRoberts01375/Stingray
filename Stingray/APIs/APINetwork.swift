@@ -416,7 +416,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         let seasonTitle = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season"
                         if seasonTitle == "Specials" { // Episode is a special
                             let newSeason = TVSeason(
-                                id: UUID().uuidString, // Create a dummy ID since a single episode doesn't really have a unique season
                                 title: "Special",
                                 episodes: [episode]
                             )
@@ -427,8 +426,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         }
                         else { // Episode needs a new season
                             let newSeason = TVSeason(
-                                id: seasonID,
-                                title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
+                                title: try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season",
                                 episodes: [episode],
                             )
                             tempSeasons.append(newSeason)
