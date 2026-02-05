@@ -97,6 +97,7 @@ public protocol MediaStreamProtocol: Identifiable {
 }
 
 public protocol TVSeasonProtocol: Identifiable {
+    /// A generic ID - Not relevant to the ID of the season set by the server
     var id: String { get }
     var title: String { get }
     var episodes: [any TVEpisodeProtocol] { get }
@@ -480,8 +481,8 @@ public final class TVSeason: TVSeasonProtocol {
     public var title: String
     public var episodes: [any TVEpisodeProtocol]
     
-    public init(id: String, title: String, episodes: [any TVEpisodeProtocol]) {
-        self.id = id
+    public init(title: String, episodes: [any TVEpisodeProtocol]) {
+        self.id = UUID().uuidString
         self.title = title
         self.episodes = episodes
     }
