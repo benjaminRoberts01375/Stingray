@@ -8,15 +8,34 @@
 import AVKit
 
 protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
+    /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
     var libraryStatus: LibraryStatus { get }
+    /// The name of the user.
     var usersName: String { get }
+    /// The server ID of the user.
     var userID: String { get }
+    /// The name of the server.
     var serverName: String? { get }
+    /// The server's version. Ex. 10.2.1
     var serverVersion: String? { get }
+    /// Base path of the service.
     var serviceURL: URL { get }
+    /// Track the current playback progress.
     var playerProgress: PlayerProtocol? { get }
     
+    /// Download library data.
     func retrieveLibraries() async
+    
+    /// Inform the server that playback has begun.
+    /// - Parameters:
+    ///   - mediaSource: Media source being watched.
+    ///   - videoID: Video stream ID.
+    ///   - audioID: Audio stream ID.
+    ///   - subtitleID: Subtitle stream ID. Nil = no subtitles.
+    ///   - bitrate: Video bitrate of the stream.
+    ///   - title: Title of the media to put on the player.
+    ///   - subtitle: Subtitle, if available, to put on the player.
+    /// - Returns: Playback device.
     func playbackStart(
         mediaSource: any MediaSourceProtocol,
         videoID: String,
@@ -26,8 +45,19 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
         title: String,
         subtitle: String?
     ) -> AVPlayer?
+    
+    /// Inform the server that playback has ended
     func playbackEnd()
+    
+    /// Link a media ID to a `MediaModel`.
+    /// - Parameters:
+    ///   - mediaID: Media ID to search for.
+    ///   - parentID: Parent the Media ID is a part of (if available).
+    /// - Returns: The found media, noting if the library is not yet finished fetching.
     func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
+    
+    /// Fetch the special features for media.
+    /// - Parameter media: Media to fetch for.
     func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
 }
 
@@ -63,9 +93,12 @@ public enum Bitrate {
     case limited(Int)
 }
 
+/// A harness for connecting to Jellyfin.
 @Observable
 public final class JellyfinModel: StreamingServiceProtocol {
+    /// Network used to connect to Jellyfin
     var networkAPI: AdvancedNetworkProtocol
+    /// Status for downloading the library.
     var libraryStatus: LibraryStatus
     
     var usersName: String
@@ -78,6 +111,14 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var serviceURL: URL
     var playerProgress: PlayerProtocol?
     
+    /// Create a `JellyfinModel` based on known data.
+    /// - Parameters:
+    ///   - userDisplayName: Name of the user.
+    ///   - userID: Server ID of the user.
+    ///   - serviceID: ID of the server.
+    ///   - accessToken: Access token.
+    ///   - sessionID: Validated session identifier.
+    ///   - serviceURL: Base URL to the Jellyfin service.
     public init(
         userDisplayName: String,
         userID: String,
@@ -111,6 +152,10 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
+    /// Create a `JellyfinModel` based on fetched data.
+    /// - Parameters:
+    ///   - response: Fetched data.
+    ///   - serviceURL: Base URL.
     private init(response: APILoginResponse, serviceURL: URL) {
         // APIs
         let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
@@ -127,6 +172,12 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.serverVersion = response.serverVersion
     }
     
+    /// Log into a Jellyfin server.
+    /// - Parameters:
+    ///   - url: Base URL.
+    ///   - username: Signin username.
+    ///   - password: Signin password.
+    /// - Returns: The configured Jellyfin model.
     static func login(url: URL, username: String, password: String) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
         do {
@@ -149,6 +200,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
+    /// Fetch libraries and library media.
     func retrieveLibraries() async {
         let maxConcurrentLibraries = 2
         
@@ -192,10 +244,12 @@ public final class JellyfinModel: StreamingServiceProtocol {
             self.libraryStatus = .complete(libraries)
         }
     }
-
-public func retrieveLibraryContent(library: LibraryModel) async {
-    let batchSize = 100
-    var currentIndex = 0
+    
+    /// Fetch a single library's media.
+    /// - Parameter library: Library to fetch media for.
+    public func retrieveLibraryContent(library: LibraryModel) async {
+        let batchSize = 100
+        var currentIndex = 0
         var allMedia: [MediaModel] = []
         if case .available(let existingMedia) = library.media {
             allMedia = existingMedia
@@ -301,11 +355,6 @@ public func retrieveLibraryContent(library: LibraryModel) async {
         }
     }
     
-    func getSeasonMedia(seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
-        do { return try await networkAPI.getSeasonMedia(accessToken: accessToken, seasonID: seasonID) }
-        catch { throw LibraryErrors.gettingSeasonMedia(error, seasonID) }
-    }
-    
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
@@ -387,7 +436,7 @@ public func retrieveLibraryContent(library: LibraryModel) async {
 
 /// Describes a data structure for storing player data. Note that you must call `start()` and `stop()` manually.
 protocol PlayerProtocol {
-    /// Player object
+    /// Player actively being used to watch content.
     var player: AVPlayer { get }
     /// ID for the subtitles based on the server
     var subtitleID: String? { get }
@@ -406,17 +455,23 @@ protocol PlayerProtocol {
     func stop()
 }
 
+/// Tracks the playback status of Jellyfin content.
 final class JellyfinPlayerProgress: PlayerProtocol {
     let player: AVPlayer
+    /// Network to use for communicating to Jellyfin.
     private let network: any AdvancedNetworkProtocol
+    /// Track how often to page Jellyfin.
     private var timer: Timer?
     var mediaSource: any MediaSourceProtocol
     let videoID: String
     let bitrate: Bitrate
     let audioID: String
     let subtitleID: String?
+    /// Unique ID for playback. If settings are changed, a new ID is needed.
     private let playbackSessionID: String
+    /// Server provided identifier for the session.
     private let userSessionID: String
+    /// API access token.
     private let accessToken: String
     
     init(

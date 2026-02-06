@@ -815,7 +815,7 @@ public struct SpecialFeaturesView: View {
 
 public struct SpecialFeaturesRow: View {
     let streamingService: any StreamingServiceProtocol
-    let rowData: [any SpecialFeaturesProtocol]
+    let rowData: [any SpecialFeatureProtocol]
     let title: String
     let media: any MediaProtocol
     
@@ -823,7 +823,7 @@ public struct SpecialFeaturesRow: View {
     
     init(
         streamingService: any StreamingServiceProtocol,
-        rowData: [any SpecialFeaturesProtocol],
+        rowData: [any SpecialFeatureProtocol],
         media: any MediaProtocol,
         navigation: Binding<NavigationPath>
     ) {

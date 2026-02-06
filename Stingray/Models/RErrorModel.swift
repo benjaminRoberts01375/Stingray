@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// A "Recursive Error", allows for creating a linked list of errors to create a stack trace.
 public protocol RError: LocalizedError {
     /// Next available error in the chain of errors.
     var next: (any RError)? { get }
@@ -53,7 +54,7 @@ extension [RError] {
 }
 
 // MARK: Error Implementations
-
+/// Different ways a network can have an error.
 public enum NetworkError: RError {
     /// The request URL was invalid.
     case invalidURL(String)
@@ -93,6 +94,7 @@ public enum NetworkError: RError {
     }
 }
 
+/// Different ways JSON can have an error.
 public enum JSONError: RError {
     /// Denotes a missing entry in a given JSON object. First `String` denotes the key, and the second `String` denotes the object's name
     case missingKey(String, String)
@@ -156,6 +158,7 @@ public enum JSONError: RError {
     }
 }
 
+/// Different ways creating Media can have an error.
 public enum MediaError: RError {
     /// The media is an unknown type. The `String` value is the type attempted to be made
     case unknownMediaType(String)
@@ -170,7 +173,9 @@ public enum MediaError: RError {
     public var next: (any RError)? { nil }
 }
 
+/// Different ways a `StreamingServiceProtocol` can error out.
 enum StreamingServiceErrors: RError {
+    /// Failed to get initial library data.
     case LibrarySetupFailed(RError?)
     
     var errorDescription: String {
@@ -188,9 +193,13 @@ enum StreamingServiceErrors: RError {
     }
 }
 
+/// Different ways the Advanced Network can error.
 public enum AdvancedNetworkErrors: RError {
+    /// Failed to get recently added media.
     case failedRecentlyAdded(RError)
+    /// Failed to get "up next" (what to watch next).
     case failedUpNext(RError)
+    /// Failed to get special features for a particular `MediaModelProtocol`.
     case failedSpecialFeatures(RError)
     
     public var next: (any RError)? {
@@ -209,6 +218,7 @@ public enum AdvancedNetworkErrors: RError {
     }
 }
 
+/// Different ways a Library can error out while setting up.
 public enum LibraryErrors: RError {
     /// Failed ot get library metadata
     case gettingLibraries(RError)
@@ -249,7 +259,7 @@ public enum LibraryErrors: RError {
     }
 }
 
-/// Errors related to logging in
+/// Errors related to logging in.
 public enum AccountErrors: RError {
     /// Failed to log into server.
     case loginFailed(RError?)
@@ -273,7 +283,9 @@ public enum AccountErrors: RError {
     }
 }
 
+/// Different ways the Jellyfin server can have an error.
 enum JellyfinNetworkErrors: RError {
+    /// Failed to update the playback position.
     case playbackUpdateFailed(RError)
     
     var next: (any RError)? {

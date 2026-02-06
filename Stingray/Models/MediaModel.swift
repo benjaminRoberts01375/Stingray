@@ -11,33 +11,55 @@ import Foundation
 
 /// Define the shape of a piece of media
 public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
+    /// Short descriptor of the media.
     var tagline: String { get }
+    /// Long descriptor of the media.
     var description: String { get }
+    /// ID of the media given by the server.
     var id: String { get }
+    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
     var genres: [String] { get }
+    /// Rating of this media provided by the server. Ex PG, PG-13, R.
     var maturity: String? { get }
+    /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
     var releaseDate: Date? { get }
+    /// Denotes TV show, vs movie, vs... and contains relevant data for that type.
     var mediaType: MediaType { get }
+    /// Estimated runtime of the movie or per-episode.
     var duration: Duration? { get }
+    /// People involved in the creation of this media.
     var people: [MediaPersonProtocol] { get }
+    /// Tracks if the special features have been fetched. If they have been successfully fetched, they'll available through this variable.
     var specialFeatures: SpecialFeaturesStatus { get set }
     
     /// Load special features for this media
     func loadSpecialFeatures(specialFeatures: [SpecialFeature])
 }
 
+/// Media contains at least one media source, like different versions of the same movie. Each version of the movie needs their own video,
+/// audio, and subtitle streams, among other information.
 public protocol MediaSourceProtocol: Identifiable {
+    /// ID provided by the server
     var id: String { get }
+    /// Name of the media source. Ex. different versions of the same movie.
     var name: String { get }
+    /// All available video streams for the source.
     var videoStreams: [any MediaStreamProtocol] { get }
+    /// All available audio streams for the source. Ex. Different languages
     var audioStreams: [any MediaStreamProtocol] { get }
+    /// All available subtitle streams for the source. Ex. Different languages, signs and songs, etc.
     var subtitleStreams: [any MediaStreamProtocol] { get }
+    /// Where in the media source to begin playback.
     var startPoint: TimeInterval { get set }
+    /// How long this media source is.
     var duration: TimeInterval { get }
 }
 
-public protocol SpecialFeaturesProtocol: Displayable {
+/// Special feature for a given media. Ex. BTS, extras, deleted scenes...
+public protocol SpecialFeatureProtocol: Displayable {
+    /// Feature type given by the server.
     var featureType: String { get }
+    /// Data streams.
     var mediaSources: [any MediaSourceProtocol] { get }
 }
 
@@ -48,7 +70,7 @@ public enum SpecialFeaturesStatus {
     /// Special features have been requested but have not yet returned
     case loading
     /// Special feature have been fully loaded
-    case loaded([[any SpecialFeaturesProtocol]])
+    case loaded([[any SpecialFeatureProtocol]])
 }
 
 /// Extend the MediaSourceProtocol to allow for getting similar streams
@@ -75,44 +97,62 @@ extension MediaSourceProtocol {
     }
 }
 
-/// Data about a person for a piece of media
+/// Describes how to hold data about a person for a piece of media
 public protocol MediaPersonProtocol {
     /// ID of the person
     var id: String { get }
-    /// Person's firstname and lastname
+    /// Person's full name
     var name: String { get }
-    /// How they contributed to the media
+    /// How they contributed to the media.
     var role: String { get }
     /// Preview hashes
     var imageHashes: MediaImageBlurHashes? { get }
 }
 
+/// Describes how to hold information regarding a stream's metadata.
 public protocol MediaStreamProtocol: Identifiable {
+    /// ID of the media stream given by the server.
     var id: String { get }
+    /// Title of the media stream. Ex. for subtitles it may read "English [CC]"
     var title: String { get }
+    /// Quickly track what this stream is. Ex. video, audio, subtitles.
     var type: StreamType { get }
+    /// The bitrate of the stream. Ex. The bitrate for a video stream may be 40,000 Kb/sec.
     var bitrate: Int { get }
+    /// Encoding the stream is using. Ex. The codec for a video stream may be H.264, HEVC, AV9, or VP9.
     var codec: String { get }
+    /// Is considered the default stream by the server.
     var isDefault: Bool { get }
 }
 
+/// Describes how to hold information about a TV Season
 public protocol TVSeasonProtocol: Identifiable {
-    /// A generic ID - Not relevant to the ID of the season set by the server
+    /// A generic ID - Not relevant to the ID of the season set by the server.
     var id: String { get }
+    /// Name of the season. Ex: "Special", "Season 2 Cont.", or "Season 1".
     var title: String { get }
+    /// Episodes associated with this season.
     var episodes: [any TVEpisodeProtocol] { get set }
 }
 
+/// Describes how to hold information about a TV Episode.
 public protocol TVEpisodeProtocol: Displayable {
+    /// ID given by the server.
     var id: String { get }
+    /// Name of the episode.
     var title: String { get }
+    /// Episode number in a season.
     var episodeNumber: Int { get }
+    /// Media streams for this episode.
     var mediaSources: [any MediaSourceProtocol] { get }
+    /// Time it was last played. Nil if it was never played.
     var lastPlayed: Date? { get set }
+    /// Longer description of the episode. Nil if none is provided.
     var overview: String? { get }
 }
 
 // MARK: Concrete types
+/// Stores all high-level information about a piece of media.
 @Observable
 public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
@@ -305,6 +345,8 @@ public final class MediaModel: MediaProtocol, Decodable {
         if !errBucket.isEmpty { errors = errBucket } // Otherwise nil
     }
     
+    /// Stores and formats the special features for this media.
+    /// - Parameter specialFeatures: Special features to add.
     public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
         let specialFeatures = specialFeatures.map { feature in
             if feature.featureType == "Unknown" { feature.featureType = "Extras" }
@@ -320,7 +362,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         // Group by featureType
         let groupedFeatures = Dictionary(grouping: specialFeatures, by: \.featureType)
             .values
-            .map { $0 as [any SpecialFeaturesProtocol] }
+            .map { $0 as [any SpecialFeatureProtocol] }
         
         self.specialFeatures = .loaded(groupedFeatures)
     }
@@ -335,6 +377,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     }
 }
 
+/// Holds information about all of a media's sources.
 @Observable
 public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var id: String
@@ -391,6 +434,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     }
 }
 
+/// Holds information about a particular media stream.
 @Observable
 public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var id: String
@@ -444,6 +488,7 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     }
 }
 
+/// Holds information about a single person who worked on a piece of media.
 @Observable
 public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var id: String
@@ -476,12 +521,17 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     }
 }
 
+/// Holds information about a particular TV Season.
 @Observable
 public final class TVSeason: TVSeasonProtocol {
     public var id: String
     public var title: String
     public var episodes: [any TVEpisodeProtocol]
     
+    /// Create a TVSeason with defined episodes.
+    /// - Parameters:
+    ///   - title: Name of the season. Ex: "Special", "Season 2 Cont.", or "Season 1".
+    ///   - episodes: Episodes associated with the season.
     public init(title: String, episodes: [any TVEpisodeProtocol]) {
         self.id = UUID().uuidString
         self.title = title
@@ -596,6 +646,7 @@ public final class TVSeason: TVSeasonProtocol {
     }
 }
 
+/// Holds information about a particular TV Episode.
 @Observable
 public final class TVEpisode: TVEpisodeProtocol {
     public var imageTags: (any MediaImagesProtocol)?
@@ -626,18 +677,29 @@ public final class TVEpisode: TVEpisodeProtocol {
     }
 }
 
+/// Quickly denotes the type of stream a stream is.
 public enum StreamType: String, Decodable, Equatable {
+    /// Denotes a visual stream.
     case video = "Video"
+    /// Denotes an sonic stream.
     case audio = "Audio"
+    /// Denotes a stream that visually describes the audio.
     case subtitle = "Subtitle"
+    /// Unknown stream.
     case unknown
 }
 
+/// Denotes the type of media a `MediaModel` is.
 public enum MediaType: Decodable {
+    /// Movies type with the associated media sources.
     case movies([any MediaSourceProtocol])
+    /// TV type with the associated seasons.
     case tv([any TVSeasonProtocol]?)
+    /// Unknown media type
     case unknown
     
+    /// Create a media type that does not populate its data. Ex. Creates a movie media type with no media sources attached.
+    /// - Parameter decoder: JSON decoder.
     public init (from decoder: Decoder) throws(JSONError) {
         let container: any SingleValueDecodingContainer
         let stringValue: String
@@ -675,7 +737,8 @@ public enum MediaType: Decodable {
     }
 }
 
-public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
+/// Holds a singular special feature's information.
+public final class SpecialFeature: SpecialFeatureProtocol, Decodable {
     public let id: String
     public var featureType: String
     public let mediaSources: [any MediaSourceProtocol]
@@ -692,6 +755,8 @@ public final class SpecialFeature: SpecialFeaturesProtocol, Decodable {
         case imageTags = "ImageTags"
     }
     
+    /// Create a `SpecialFeature` from JSON.
+    /// - Parameter decoder: JSON Decoder.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         

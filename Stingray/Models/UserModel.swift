@@ -104,6 +104,9 @@ public enum ServiceType: Codable {
         }
     }
     
+    /// Create a service type from JSON.
+    /// - Parameter decoder: JSON decoder.
+    /// - Throws `JSONErrors` if the type is unknown.
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -156,6 +159,8 @@ public struct User: Codable, Identifiable {
         self.usesSubtitles = usesSubtitles
     }
     
+    /// Create a user from encoded JSON.
+    /// - Parameter decoder: JSON Decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)

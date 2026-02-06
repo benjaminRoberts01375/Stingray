@@ -7,15 +7,23 @@
 
 import Foundation
 
+/// A slimmed down version of the `MediaModelProtocol` for faster loading.
 public protocol SlimMediaProtocol: Displayable, Identifiable, Hashable {
+    /// ID provided by the server.
     var id: String { get }
+    /// Name of this media.
     var title: String { get }
+    /// Setup errors. Nil if setup was complete without issue.
     var errors: [RError]? { get }
 }
 
+/// A simple protocol that ensures content has the expected image data.
 public protocol Displayable: Identifiable {
+    /// Set of strings to make a crude image with.
     var imageBlurHashes: (any MediaImageBlurHashesProtocol)? { get }
+    /// Set of strings to request fully detailed images with.
     var imageTags: (any MediaImagesProtocol)? { get }
+    /// ID provided by the server.
     var id: String { get }
 }
 
@@ -33,8 +41,6 @@ public protocol MediaImagesProtocol {
 public protocol MediaImageBlurHashesProtocol {
     /// Primary hashes
     var primary: [String: String]? { get }
-    /// Thumbnail hashes
-    var thumb: [String: String]? { get }
     /// Logo hashes
     var logo: [String: String]? { get }
     /// Backdrop hashes
@@ -44,19 +50,24 @@ public protocol MediaImageBlurHashesProtocol {
     func getBlurHash(for key: MediaImageType) -> String?
 }
 
+/// Denotes the type of image desired. Ex. a horizontal vs vertical movie poster image.
 public enum MediaImageType: String {
-    case thumbnail = "Thumb"
+    /// Fancy text of the media's name.
     case logo = "Logo"
+    /// The most frequently used media image type. A vertical movie poster
     case primary = "Primary"
+    /// A more action-packed horizontal image of the media
     case backdrop = "Backdrop"
 }
 
+/// A slimmed down version of the `MediaModel` for faster loading.
 @Observable
 public final class SlimMedia: SlimMediaProtocol, Decodable {
     public var id: String
     public var title: String
     public var imageTags: (any MediaImagesProtocol)?
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    /// A useful ID for linking this object with the full-sized `MediaModel` object.
     public var parentID: String?
     public var errors: [any RError]?
     
@@ -71,6 +82,8 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
         case parentPrimaryImage = "SeriesPrimaryImageTag"
     }
     
+    /// Create a `SlimMedia` from JSON.
+    /// - Parameter decoder: JSON Decoder.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         var errBucket: [any RError] = []
@@ -147,23 +160,21 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
     }
 }
 
+/// Holds hashes used to generate preview images.
 @Observable
 public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesProtocol {
     public var primary: [String: String]?
-    public var thumb: [String: String]?
     public var logo: [String: String]?
     public var backdrop: [String: String]?
     
     enum CodingKeys: String, CodingKey {
         case primary = "Primary"
-        case thumb = "Thumb"
         case logo = "Logo"
         case backdrop = "Backdrop"
     }
     
     public static func == (lhs: MediaImageBlurHashes, rhs: MediaImageBlurHashes) -> Bool {
         lhs.primary == rhs.primary &&
-        lhs.thumb == rhs.thumb &&
         lhs.logo == rhs.logo &&
         lhs.backdrop == rhs.backdrop
     }
@@ -172,7 +183,6 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)
-            self.thumb = try container.decodeIfPresent([String: String].self, forKey: .thumb)
             self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)
             self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)
         }
@@ -188,8 +198,6 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
         switch key {
         case .primary:
             return primary?.values.first
-        case .thumbnail:
-            return thumb?.values.first
         case .logo:
             return logo?.values.first
         case .backdrop:
@@ -198,8 +206,10 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
     }
 }
 
+/// Holds information leading to particular images.
 @Observable
 public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
+    // Equatable conformance
     public static func == (lhs: MediaImages, rhs: MediaImages) -> Bool {
         lhs.thumbnail == rhs.thumbnail &&
         lhs.logo == rhs.logo &&
