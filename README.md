@@ -39,7 +39,7 @@ Supports last episode, picking episodes, next episode, subtitles, audio streams,
 
 ### Media Preview
 
-![Media details 1](https://github.com/user-attachments/assets/12886513-f69a-43fd-a4e9-15fdd714b04c)
+![Media Details 1](https://github.com/user-attachments/assets/fce61426-a6e3-4388-8060-52c20c1ea315)
 A clean view of the content art with quick access to content metadata.
 
 ### Media Details
