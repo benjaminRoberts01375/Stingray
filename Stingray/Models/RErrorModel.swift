@@ -79,10 +79,10 @@ public enum NetworkError: RError {
         switch self {
         case .invalidURL(let description):
             return "The requested URL was invalid: \(description)"
-        case .encodeJSONFailed:
-            return "Unable to encode JSON"
-        case .requestFailedToSend:
-            return "Request failed to send"
+        case .encodeJSONFailed(let err):
+            return "Unable to encode JSON: \(err.localizedDescription)"
+        case .requestFailedToSend(let err):
+            return "Request failed to send: \(err.localizedDescription)"
         case .badResponse(let code, let text):
             return "Received a bad response from the server - \(code) \(text ?? "")"
         case .decodeJSONFailed(_, let url):
