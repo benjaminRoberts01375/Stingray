@@ -55,23 +55,7 @@ struct HomeView: View {
             }
             .focusSection()
             
-            // Display Stingray and Jellyfin server versions
-            HStack(alignment: .center, spacing: 0) {
-                Text("Stingray v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")") // Stingray
-                // Jellyfin
-                Text(" • Jellyfin Server ")
-                if let version = self.streamingService.serverVersion {
-                    Text("v\(version)")
-                } else {
-                    ProgressView()
-                }
-                // tvOS version
-                let osVersion = ProcessInfo.processInfo.operatingSystemVersion
-                Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
-            }
-            .foregroundStyle(.gray.opacity(0.5))
-            .frame(maxWidth: .infinity)
-            .padding(.top)
+            SystemInfoView(streamingService: streamingService)
         }
     }
 }
@@ -136,29 +120,12 @@ fileprivate struct MediaPicker: View {
     
     var body: some View {
         ScrollView(.horizontal) {
-            HStack {
+            LazyHStack {
                 ForEach(pickerMedia) { media in
-                    MediaNavigation(media: media, streamingService: streamingService, navigation: $navigation)
+                    MediaCard(media: media, streamingService: streamingService) { navigation.append(media) }
                 }
             }
         }
-    }
-}
-
-fileprivate struct MediaNavigation: View {
-    var media: SlimMedia
-    var streamingService: StreamingServiceProtocol
-    
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
-        Button {
-            navigation.append(media)
-        } label: {
-            MediaCard(media: media, streamingService: streamingService)
-                .frame(width: 200, height: 370)
-        }
-        .buttonStyle(.card)
     }
 }
 
@@ -222,5 +189,29 @@ fileprivate struct MediaNavigationLoadingCard: View {
         }
         .buttonStyle(.card)
         .focusable(false)
+    }
+}
+
+struct SystemInfoView: View {
+    let streamingService: any StreamingServiceProtocol
+    
+    var body: some View {
+        // Display Stingray and Jellyfin server versions
+        HStack(alignment: .center, spacing: 0) {
+            if let stingrayVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {  // Stingray
+                Text("Stingray v\(stingrayVersion)")
+            }
+            else { Text("Unknown Stingray Version") }
+            // Jellyfin
+            Text(" • Jellyfin Server ")
+            if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
+            if let version = self.streamingService.serverVersion { Text("v\(version)") }
+            // tvOS version
+            let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+            Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
+        }
+        .foregroundStyle(.gray.opacity(0.5))
+        .frame(maxWidth: .infinity)
+        .padding(.top)
     }
 }

@@ -8,19 +8,15 @@
 import SwiftUI
 
 struct AddServerView: View {
-    enum HttpProtocol: String, CaseIterable {
-        case http = "http"
-        case https = "https"
-    }
-    
     @Binding var loggedIn: LoginState
-    @State var httpProcol: HttpProtocol = .http
-    @State var httpHostname: String = ""
-    @State var httpPort: String = "8096"
-    @State var username: String = ""
-    @State var password: String = ""
-    @State var error: String = ""
-    @State var awaitingLogin: Bool = false
+    @State private var httpProcol: HttpProtocol = .http
+    @State private var httpHostname: String = ""
+    @State private var httpPort: String = "8096"
+    @State private var username: String = ""
+    @State private var password: String = ""
+    @State private var error: RError?
+    @State private var errorSummary: String = ""
+    @State private var awaitingLogin: Bool = false
     
     var body: some View {
         VStack {
@@ -48,9 +44,8 @@ struct AddServerView: View {
                 TextField("Username", text: $username)
                 SecureField("Password", text: $password)
             }
-            if error != "" {
-                Text(error)
-                    .foregroundStyle(.red)
+            if let error = self.error {
+                ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
             }
             Spacer()
@@ -98,7 +93,17 @@ struct AddServerView: View {
             url = URL(string: "https://\(httpHostname)")
         }
         guard let url else {
-            error = "Invalid URL"
+            let netError: NetworkError
+            switch httpProcol {
+            case .http:
+                netError = NetworkError.invalidURL("http://\(httpHostname):\(httpPort)")
+                self.error = netError
+                self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
+            case .https:
+                netError = NetworkError.invalidURL("https://\(httpHostname)")
+                self.error = netError
+                self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
+            }
             return
         }
         
@@ -108,49 +113,17 @@ struct AddServerView: View {
             do {
                 let streamingService = try await JellyfinModel.login(url: url, username: username, password: password)
                 self.loggedIn = .loggedIn(streamingService)
-            } catch {
-                if let netErr = error as? NetworkError {
-                    switch netErr {
-                    case .invalidURL:
-                        switch self.httpProcol {
-                        case .http:
-                            self.error = "Invalid HTTP URL. Check your hostname and port."
-                        case .https:
-                            self.error = "Invalid HTTPS URL. Check your URL."
-                        }
-                    case .encodeJSONFailed:
-                        self.error = "Failed to send request to server. " +
-                            "This may be because of some tricky characters in your username and password."
-                    case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
-                        switch self.httpProcol {
-                        case .http:
-                            self.error = "Could not find your Jellyfin server. Please check your hostname and port."
-                        case .https:
-                            self.error = "Could not find your Jellyfin server. Please check your URL."
-                        }
-                    case .badResponse(let responseCode, _):
-                        switch responseCode {
-                        case 401:
-                            self.error = "Invalid username or password."
-                        case 404:
-                            switch self.httpProcol {
-                            case .http:
-                                self.error = "Could not find your Jellyfin server. Please check your hostname and port."
-                            case .https:
-                                self.error = "Could not find your Jellyfin server. Please check your URL."
-                            }
-                        default:
-                            self.error = "An unexpected error occurred. Please make sure your login details are correct."
-                        }
-                    }
-                    print("Error signing in: \(error.localizedDescription)")
+            } catch let error as RError {
+                self.error = AccountErrors.loginFailed(error)
+                if let netErr = error.last() as? NetworkError {
+                    self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
+                    print("Error signing in: \(error.rDescription())")
                 } else {
-                    // Handle other types of errors
+                    self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
                     print("Other error: \(error)")
-                    self.error = "An unexpected error occurred. Please make sure your login details are correct."
                 }
-                awaitingLogin = false
             }
+            awaitingLogin = false
         }
     }
 }

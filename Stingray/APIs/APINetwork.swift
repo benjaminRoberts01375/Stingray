@@ -15,12 +15,12 @@ public protocol AdvancedNetworkProtocol {
     ///   - username: User's username
     ///   - password: User's password
     /// - Returns: Credentials and user data from server
-    func login(username: String, password: String) async throws -> APILoginResponse
+    func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse
     /// Gets all libraries from a server
     /// - Parameter accessToken: Access token for the server
     /// - Parameter userID: ID of the user to get libraries for
     /// - Returns: Libraries
-    func getLibraries(accessToken: String, userID: String) async throws -> [LibraryModel]
+    func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel]
     /// Gets all media for a given library in chunks
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -39,7 +39,7 @@ public protocol AdvancedNetworkProtocol {
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaType]?
-    ) async throws -> [MediaModel]
+    ) async throws(LibraryErrors) -> [MediaModel]
     /// Generates a URL for an image
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -76,10 +76,9 @@ public protocol AdvancedNetworkProtocol {
     ///   - accessToken: Access token for the server
     ///   - seasonID: ID of the season
     /// - Returns: Season data
-    func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason]
+    func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason]
     /// Updates the server about the current playback status
     /// - Parameters:
-    ///   - itemID: Media ID of the currently played content
     ///   - mediaSourceID: Media source ID of the currently played content
     ///   - audioStreamIndex: Index for audio playback
     ///   - subtitleStreamIndex: Index for subtitle playback
@@ -89,7 +88,6 @@ public protocol AdvancedNetworkProtocol {
     ///   - playbackStatus: Current state of playback (ex. paused, stopped, playing)
     ///   - accessToken: Access token provided by the server
     func updatePlaybackStatus(
-        itemID: String,
         mediaSourceID: String,
         audioStreamIndex: String,
         subtitleStreamIndex: String?,
@@ -105,17 +103,23 @@ public protocol AdvancedNetworkProtocol {
     ///   - contentType: Type of media to retrieve
     ///   - accessToken: Access token for the server
     /// - Returns: A silm verion of the media type
-    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws -> [SlimMedia]
+    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia]
     
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
-    func getUpNext(accessToken: String) async throws -> [SlimMedia]
+    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia]
     /// Generates a URL to get the user's profile image
     /// - Parameters:
     ///   - userID: ID of the user
     /// - Returns: Formatted URL
     func getUserImageURL(userID: String) -> URL?
+    /// Loads special features for a given media ID.
+    /// - Parameters:
+    ///   - mediaID: ID of media to gather special features for
+    ///   - accessToken: Access token for the server
+    /// - Returns: Special features
+    func loadSpecialFeatures(mediaID: String, accessToken: String) async throws(AdvancedNetworkErrors) -> [SpecialFeature]
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -184,24 +188,31 @@ public struct APILoginResponse: Decodable {
         case userId = "UserId"
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        // Decode nested User
-        let userContainer = try container.nestedContainer(keyedBy: UserKeys.self, forKey: .user)
-        userName = try userContainer.decode(String.self, forKey: .name)
-        
-        // Decode nested SessionInfo
-        let sessionContainer = try container.nestedContainer(keyedBy: SessionInfoKeys.self, forKey: .sessionInfo)
-        sessionId = try sessionContainer.decode(String.self, forKey: .id)
-        userId = try sessionContainer.decode(String.self, forKey: .userId)
-        
-        // Decode flat fields
-        accessToken = try container.decode(String.self, forKey: .accessToken)
-        serverId = try container.decode(String.self, forKey: .serverId)
-        
-        // Gets filled in later
-        serverVersion = nil
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            
+            // Decode nested User
+            let userContainer = try container.nestedContainer(keyedBy: UserKeys.self, forKey: .user)
+            userName = try userContainer.decode(String.self, forKey: .name)
+            
+            // Decode nested SessionInfo
+            let sessionContainer = try container.nestedContainer(keyedBy: SessionInfoKeys.self, forKey: .sessionInfo)
+            sessionId = try sessionContainer.decode(String.self, forKey: .id)
+            userId = try sessionContainer.decode(String.self, forKey: .userId)
+            
+            // Decode flat fields
+            accessToken = try container.decode(String.self, forKey: .accessToken)
+            serverId = try container.decode(String.self, forKey: .serverId)
+            
+            serverVersion = nil
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "APILoginResponse") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "APILoginResponse") }
+            else { throw JSONError.failedJSONDecode("APILoginResponse", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch { throw JSONError.failedJSONDecode("APILoginResponse", error) }
     }
 }
 
@@ -214,22 +225,29 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     
     /// Gets the current version of the Jellyfin server
     /// - Parameter accessToken: User's access token for the Jellyfin server.
-    /// - Returns: The version of the server in this format: `xx.xx.xx`. There's no "v" at the start.
-    func getServerVersion(accessToken: String) async throws -> String {
-        struct Root: Decodable { let Version: String }
+    /// - Returns: The version of the server in this format: `xx.xx.xx` with no "v" at the start, and the name of the server.
+    func getServerVersion(accessToken: String) async throws(AccountErrors) -> (String, String) {
+        struct Root: Decodable {
+            let Version: String
+            let ServerName: String
+        }
         
-        let root: Root = try await network.request(
-            verb: .get,
-            path: "/System/Info",
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: nil,
-            body: nil
-        )
-        
-        return root.Version
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/System/Info",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: nil,
+                body: nil
+            )
+            
+            return (root.Version, root.ServerName)
+        } catch {
+            throw AccountErrors.serverVersionFailed(error)
+        }
     }
     
-    func login(username: String, password: String) async throws -> APILoginResponse {
+    func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
             let SessionInfo: SessionInfo
@@ -251,19 +269,20 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             "Pw": password
         ]
         
-        var loginInfo: APILoginResponse = try await network.request(
-            verb: .post,
-            path: "/Users/AuthenticateByName",
-            headers: nil,
-            urlParams: nil,
-            body: requestBody
-        )
-        loginInfo.serverVersion = try await self.getServerVersion(accessToken: loginInfo.accessToken)
-        
-        return try await network.request(verb: .post, path: "/Users/AuthenticateByName", headers: nil, urlParams: nil, body: requestBody)
+        do {
+            return try await network.request(
+                verb: .post,
+                path: "/Users/AuthenticateByName",
+                headers: nil,
+                urlParams: nil,
+                body: requestBody
+            )
+        } catch {
+            throw AccountErrors.loginFailed(error)
+        }
     }
     
-    func getLibraries(accessToken: String, userID: String) async throws -> [LibraryModel] {
+    func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {
         struct Root: Decodable {
             let items: [LibraryModel]
             
@@ -271,14 +290,16 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 case items = "Items"
             }
         }
-        let root: Root = try await network.request(
-            verb: .get,
-            path: "/Users/\(userID)/Views",
-            headers: ["X-MediaBrowser-Token":accessToken],
-            urlParams: nil,
-            body: nil
-        )
-        return root.items
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/Users/\(userID)/Views",
+                headers: ["X-MediaBrowser-Token":accessToken],
+                urlParams: nil,
+                body: nil
+            )
+            return root.items
+        } catch let error { throw LibraryErrors.gettingLibraries(error) }
     }
     
     func getLibraryMedia(
@@ -289,7 +310,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaType]?
-    ) async throws -> [MediaModel] {
+    ) async throws(LibraryErrors) -> [MediaModel] {
         struct Root: Decodable {
             let items: [MediaModel]
             
@@ -308,138 +329,76 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "fields", value: "Genres"),
             URLQueryItem(name: "fields", value: "Overview"),
             URLQueryItem(name: "fields", value: "people"),
-            URLQueryItem(name: "enableUserData", value: "true")
+            URLQueryItem(name: "enableUserData", value: "true"),
+            URLQueryItem(name: "recursive", value: "true")
         ]
         
         for mediaType in mediaTypes ?? [] {
             params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
         }
         
-        let response: Root = try await network.request(
-            verb: .get,
-            path: "/Items",
-            headers: ["X-MediaBrowser-Token":accessToken],
-            urlParams: params,
-            body: nil
-        )
-        try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
-            for (index, item) in response.items.enumerated() {
-                switch item.mediaType {
-                case .tv:
-                    // Capture the id before creating the task
-                    let itemId = item.id
-                    group.addTask {
-                        let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
-                        return (index, seasons)
-                    }
-                default:
-                    break
-                }
-            }
+        do {
+            let response: Root = try await network.request(
+                verb: .get,
+                path: "/Items",
+                headers: ["X-MediaBrowser-Token":accessToken],
+                urlParams: params,
+                body: nil
+            )
             
-            for try await (index, seasons) in group {
-                response.items[index].mediaType = .tv(seasons)
+            try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
+                for (index, item) in response.items.enumerated() {
+                    switch item.mediaType {
+                    case .tv:
+                        // Capture the id before creating the task
+                        let itemId = item.id
+                        group.addTask {
+                            let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
+                            return (index, seasons)
+                        }
+                    default:
+                        break
+                    }
+                }
+                do {
+                    for try await (index, seasons) in group {
+                        response.items[index].mediaType = .tv(seasons)
+                    }
+                } catch let error as RError { throw LibraryErrors.gettingSeasons(error, libraryId) }
             }
+            return response.items
         }
-        return response.items
+        catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
+        catch { throw LibraryErrors.unknown(libraryId) }
     }
     
-    func getSeasonMedia(accessToken: String, seasonID: String) async throws -> [TVSeason] {
+    func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
         struct Root: Decodable {
             let items: [TVSeason]
             
-            init(from decoder: Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
-                var tempSeasons: [TVSeason] = []
-                var standInEpisodeNumber: Int = 0
-                
-                while !seasonsContainer.isAtEnd {
-                    standInEpisodeNumber += 1
-                    let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
-                    let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
-                    
-                    let episode: TVEpisode = TVEpisode(
-                        id: try episodeContainer.decode(String.self, forKey: .id),
-                        blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
-                        title: try episodeContainer.decode(String.self, forKey: .title),
-                        episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
-                        mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? [],
-                        lastPlayed: {
-                            guard let dateString = try? userDataContainer.decodeIfPresent(
-                                String.self,
-                                forKey: .lastPlayedDate
-                            ) else { return nil }
-                            let formatter = ISO8601DateFormatter()
-                            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                            return formatter.date(from: dateString)
-                        }(),
-                        overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
-                    )
-                    let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
-                    episodeContainer.decode(String.self, forKey: .seriesID)
-                    
-                    if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
-                        for mediaSourceIndex in episode.mediaSources.indices {
-                            episode.mediaSources[mediaSourceIndex].startTicks = playbackTicks
-                        }
-                    }
-                    
-                    if let seasonIndex = tempSeasons.firstIndex(where: { $0.id == seasonID }) { // Season already exists, append the episode
-                        tempSeasons[seasonIndex].episodes.append(episode)
-                    } else {
-                        // New season, create it with the first episode
-                        let newSeason = TVSeason(
-                            id: seasonID,
-                            title: try episodeContainer.decode(String.self, forKey: .seasonTitle),
-                            episodes: [episode],
-                            seasonNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .seasonNumber) ?? 1
-                        )
-                        tempSeasons.append(newSeason)
-                    }
-                }
-                self.items = tempSeasons
-            }
-            
-            private enum CodingKeys: String, CodingKey {
-                case items = "Items"
-            }
-            
-            private enum SeasonKeys: String, CodingKey {
-                case title = "Name"
-                case id = "Id"
-                case episodeRuntimeTicks = "RunTimeTicks"
-                case episodeNumber = "IndexNumber"
-                case episodeOverview = "Overview"
-                case seasonNumber = "ParentIndexNumber"
-                case blurHashes = "ImageBlurHashes"
-                case mediaSources = "MediaSources"
-                case userData = "UserData"
-                
-                case seasonID = "SeasonId" // The actual season ID
-                case seasonTitle = "SeasonName" // The actual season name
-                case seriesID = "SeriesId" // Fallback for seasonID if SeasonId is missing
-            }
-            
-            enum UserData: String, CodingKey {
-                case lastPlayedDate = "LastPlayedDate"
-                case playbackPosition = "PlaybackPositionTicks"
+            init(from decoder: Decoder) throws(JSONError) {
+                do { self.items = try TVSeason.decodeSeasons(from: decoder) }
+                catch { throw JSONError.failedJSONDecode("Season Media Root", error) }
             }
         }
         
         let params : [URLQueryItem] = [
             URLQueryItem(name: "enableImages", value: "true"),
             URLQueryItem(name: "fields", value: "MediaSources"),
-            URLQueryItem(name: "fields", value: "Overview")
+            URLQueryItem(name: "fields", value: "Overview"),
+            URLQueryItem(name: "sortBy", value: "AiredEpisodeOrder")
         ]
-        let response: Root = try await network.request(
-            verb: .get,
-            path: "/Shows/\(seasonID)/Episodes",
-            headers: ["X-MediaBrowser-Token":accessToken],
-            urlParams: params,
-            body: nil
-        )
-        return response.items
+        do {
+            let response: Root = try await network.request(
+                verb: .get,
+                path: "/Shows/\(seasonID)/Episodes",
+                headers: ["X-MediaBrowser-Token":accessToken],
+                urlParams: params,
+                body: nil
+            )
+            return response.items
+        }
+        catch let error as RError { throw LibraryErrors.gettingSeason(error, seasonID) }
     }
     
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
@@ -475,15 +434,37 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         subtitle: String?
     ) -> AVPlayerItem? {
         var params: [URLQueryItem] = [
+            // Media selection
             URLQueryItem(name: "playSessionID", value: sessionID),
             URLQueryItem(name: "mediaSourceID", value: contentID),
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
+            
+            // Video config
             URLQueryItem(name: "videoBitRate", value: String(bitrate)),
-            // Let Jellyfin decide based on client capabilities
+            URLQueryItem(name: "videoCodec", value: "hevc,h264"),
+            URLQueryItem(name: "container", value: "mp4"),
+            URLQueryItem(name: "transcodingContainer", value: "mp4"),
+            URLQueryItem(name: "allowVideoStreamCopy", value: "true"),
+            URLQueryItem(name: "hevc-videobitdepth", value: "10"),
+            URLQueryItem(name: "hevc-rangetype", value: "SDR,HDR10,HDR10Plus,DOVI,DOVIWithHDR10,DOVIWithSDR,DOVIWithHDR10Plus"),
+            URLQueryItem(name: "hevc-level", value: "153"),
+            URLQueryItem(name: "hevc-profile", value: "main10"),
+            URLQueryItem(name: "hevc-codectag", value: "hvc1,dvh1"),
+            URLQueryItem(name: "deInterlace", value: "true"),
+            URLQueryItem(name: "h265-codectag", value: "hvc1,dvh1,dvhe"),
+            
+            // Audio config
             URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
-            URLQueryItem(name: "videoCodec", value: "h264,hevc"),
-            URLQueryItem(name: "profile", value: "main")
+            URLQueryItem(name: "allowAudioStreamCopy", value: "true"),
+            URLQueryItem(name: "enableAudioVbrEncoding", value: "true"),
+            
+            // Streaming config
+            URLQueryItem(name: "breakOnNonKeyFrames", value: "true"),
+            URLQueryItem(name: "requireAVC", value: "false"),
+            URLQueryItem(name: "segmentContainer", value: "mp4"),
+            URLQueryItem(name: "copyTimestamps", value: "true"),
+            URLQueryItem(name: "enableAutoStreamCopy", value: "true")
         ]
         
         if let subtitleID = subtitleID {
@@ -515,7 +496,6 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     }
     
     func updatePlaybackStatus(
-        itemID: String,
         mediaSourceID: String,
         audioStreamIndex: String,
         subtitleStreamIndex: String?,
@@ -524,7 +504,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         userSessionID: String,
         playbackStatus: PlaybackStatus,
         accessToken: String
-    ) async throws {
+    ) async throws(JellyfinNetworkErrors) {
         struct PlaybackStatusStats: Encodable {
             let itemID: String
             let mediaSourceID: String
@@ -563,7 +543,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         
         let stats: PlaybackStatusStats = PlaybackStatusStats(
-            itemID: itemID,
+            itemID: mediaSourceID,
             mediaSourceID: mediaSourceID,
             audioStreamIndex: audioStreamIndex,
             subtitleStreamIndex: subtitleStreamIndex ?? "-1",
@@ -573,16 +553,18 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             isPaused: isPaused,
         )
         
-        let _: EmptyResponse = try await network.request(
-            verb: .post,
-            path: path,
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: nil,
-            body: stats
-        )
+        do {
+            let _: EmptyResponse = try await network.request(
+                verb: .post,
+                path: path,
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: nil,
+                body: stats
+            )
+        } catch { throw JellyfinNetworkErrors.playbackUpdateFailed(error) }
     }
     
-    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws -> [SlimMedia] {
+    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
@@ -597,30 +579,38 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "includeItemTypes", value: "Series"))
         }
         
-        return try await network.request(
-            verb: .get,
-            path: "/Items/Latest",
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: params,
-            body: nil
-        )
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/Items/Latest",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: params,
+                body: nil
+            )
+        } catch {
+            throw AdvancedNetworkErrors.failedRecentlyAdded(error)
+        }
     }
     
-    func getUpNext(accessToken: String) async throws -> [SlimMedia] {
+    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
         struct Root: Decodable {
             let Items: [SlimMedia]
         }
         
         let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]
         
-        let root: Root = try await network.request(
-            verb: .get,
-            path: "/Shows/NextUp",
-            headers: ["X-MediaBrowser-Token": accessToken],
-            urlParams: params,
-            body: nil
-        )
-        return root.Items
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/Shows/NextUp",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: params,
+                body: nil
+            )
+            return root.Items
+        } catch {
+            throw AdvancedNetworkErrors.failedRecentlyAdded(error)
+        }
     }
     
     func getUserImageURL(userID: String) -> URL? {
@@ -629,6 +619,18 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         ]
         
         return network.buildURL(path: "/UserImage", urlParams: params)
+    }
+    
+    public func loadSpecialFeatures(mediaID: String, accessToken: String) async throws(AdvancedNetworkErrors) -> [SpecialFeature] {
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/Items/\(mediaID)/SpecialFeatures",
+                headers: ["X-MediaBrowser-Token": accessToken],
+                urlParams: nil,
+                body: nil
+            )
+        } catch { throw AdvancedNetworkErrors.failedSpecialFeatures(error) }
     }
 }
 

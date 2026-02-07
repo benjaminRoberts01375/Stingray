@@ -22,9 +22,7 @@ public struct LibraryView: View {
             case .unloaded, .waiting:
                 ProgressView()
             case .error(let err):
-                Text("Error: \(err.localizedDescription)")
-                    .foregroundStyle(.red)
-                    .padding(.vertical)
+                ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
                     MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
@@ -41,9 +39,7 @@ public struct LibraryView: View {
 }
 
 public struct MediaGridView: View {
-    private let cardWidth = 200.0
-    private let cardHeight = 370.0
-    private let cardSpacing = 50.0
+    static let cardSpacing = 50.0
     let allMedia: [any MediaProtocol]
     let streamingService: any StreamingServiceProtocol
     
@@ -51,17 +47,11 @@ public struct MediaGridView: View {
     
     public var body: some View {
         let columns = [
-            GridItem(.adaptive(minimum: cardWidth, maximum: cardWidth), spacing: cardSpacing)
+            GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.height), spacing: Self.cardSpacing)
         ]
-        LazyVGrid(columns: columns, spacing: cardSpacing) {
+        LazyVGrid(columns: columns, spacing: Self.cardSpacing) {
             ForEach(allMedia, id: \.id) { media in
-                Button {
-                    navigation.append(AnyMedia(media: media))
-                } label: {
-                    MediaCard(media: media, streamingService: streamingService)
-                        .frame(width: cardWidth, height: cardHeight)
-                }
-                .buttonStyle(.card)
+                MediaCard(media: media, streamingService: streamingService) { navigation.append(AnyMedia(media: media)) }
             }
         }
     }

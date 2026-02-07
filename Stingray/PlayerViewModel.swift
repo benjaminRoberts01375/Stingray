@@ -18,7 +18,7 @@ final class PlayerViewModel: Hashable {
     public var mediaSourceID: String {
         didSet {
             switch self.media.mediaType {
-            case .collections:
+            case .unknown:
                 break
             case .movies(let mediaSources):
                 self.mediaSource = mediaSources.first { $0.id == self.mediaSourceID } ?? self.mediaSource
@@ -95,6 +95,7 @@ final class PlayerViewModel: Hashable {
             }
         }
         
+        self.savePlaybackDate()
         self.newPlayer(
             startTime: self.startTime,
             videoID: self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0"),
@@ -129,24 +130,29 @@ final class PlayerViewModel: Hashable {
         
         var title = ""
         var subtitle = ""
-        if let seasons = self.seasons { // TV Shows
-            for season in seasons {
-                if let episode = (season.episodes.first { $0.mediaSources.first?.id == mediaSource.id }) {
-                    subtitle = "Season \(season.seasonNumber), Episode \(episode.episodeNumber)"
-                    break
+        
+        switch self.media.mediaType {
+        case .tv(let seasons):
+            if let seasons = seasons { // TV Shows
+                for season in seasons {
+                    if let episode = (season.episodes.first { $0.mediaSources.first?.id == self.mediaSource.id }) {
+                        subtitle = "\(season.title), Episode \(episode.episodeNumber)"
+                        break
+                    }
                 }
+                let allEpisodes = seasons.flatMap(\.episodes)
+                let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == self.mediaSource.id }
+                title = currentEpisode?.title ?? ""
             }
-            
-            let allEpisodes = seasons.flatMap(\.episodes)
-            let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == mediaSource.id }
-            title = currentEpisode?.title ?? ""
-        }
-        else { // Movies
-            title = mediaSource.name
+            else { title = self.mediaSource.name }
+        case .movies(let sources):
+            title = self.media.title
+            if sources.count > 1 { subtitle = self.mediaSource.name }
+        default: title = self.media.title
         }
         
         guard let player = streamingService.playbackStart(
-            mediaSource: mediaSource,
+            mediaSource: self.mediaSource,
             videoID: videoID ?? self.playerProgress?.videoID ?? "0",
             audioID: audioID ?? self.playerProgress?.audioID ?? "1",
             subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
@@ -193,6 +199,29 @@ final class PlayerViewModel: Hashable {
         player = nil
         self.playerProgress = nil
         streamingService.playbackEnd()
+    }
+    
+    func savePlaybackDate() {
+        switch self.media.mediaType {
+        case .tv(let seasons):
+            if var seasons = seasons {
+                for seasonIndex in seasons.indices {
+                    for episodeIndex in seasons[seasonIndex].episodes.indices {
+                        let episode = seasons[seasonIndex].episodes[episodeIndex]
+                        if (episode.mediaSources.contains { $0.id == self.mediaSource.id }) {
+                            seasons[seasonIndex].episodes[episodeIndex].lastPlayed = Date.now
+                            if self.mediaSource.startPoint >= self.mediaSource.duration * 0.9 ||
+                                self.mediaSource.startPoint < self.mediaSource.duration * 0.1 {
+                                self.mediaSource.startPoint = 0
+                            }
+                            
+                            print(self.mediaSource.startPoint, self.mediaSource.duration * 0.1, self.mediaSource.duration * 0.9, )
+                        }
+                    }
+                }
+            }
+        default: break
+        }
     }
     
     deinit {

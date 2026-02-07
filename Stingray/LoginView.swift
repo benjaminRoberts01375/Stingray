@@ -11,7 +11,8 @@ struct LoginView: View {
     @Binding internal var loggedIn: LoginState
     @State internal var username: String = ""
     @State internal var password: String = ""
-    @State internal var error: String = ""
+    @State internal var error: RError?
+    @State internal var errorSummary: String = ""
     @State internal var awaitingLogin: Bool = false
     
     @Environment(\.dismiss) private var dismiss
@@ -36,9 +37,8 @@ struct LoginView: View {
                     ProgressView()
                 }
                 
-                if error != "" {
-                    Text("Error: \(error)")
-                        .foregroundStyle(.red)
+                if let error = self.error {
+                    ErrorView(error: error, summary: errorSummary)
                         .padding(.vertical)
                 }
             }
@@ -59,13 +59,54 @@ struct LoginView: View {
                     )
                     self.loggedIn = .loggedIn(streamingService)
                     dismiss()
-                } catch {
-                    self.error = error.localizedDescription
+                } catch let error as RError {
+                    if let netErr = error.last() as? NetworkError {
+                        let scheme: HttpProtocol = streamingService.serviceURL.scheme == "https" ? .https : .http
+                        self.errorSummary = Self.overrideNetErrorMessage(netErr: netErr, httpProtocol: scheme)
+                        self.error = AccountErrors.loginFailed(error)
+                    } else {
+                        self.error = AccountErrors.loginFailed(nil)
+                        self.errorSummary = "Failed to login. Please try again."
+                    }
+                    
                     awaitingLogin = false
                 }
             }
         case .loggedOut:
-            self.error = "There's no streaming service is configured, so we aren't sure how you got here."
+            self.errorSummary = "There's no streaming service is configured, so we aren't sure how you got here."
+            self.error = AccountErrors.loginFailed(nil)
         }
     }
+    
+    static func overrideNetErrorMessage(netErr: NetworkError, httpProtocol: HttpProtocol) -> String {
+        switch netErr {
+        case .invalidURL:
+            switch httpProtocol {
+            case .http: return "Invalid HTTP URL. Check your hostname and port."
+            case .https: return "Invalid HTTPS URL. Check your URL."
+            }
+        case .encodeJSONFailed: return "Failed to send request to server. " +
+                "This may be because of some tricky characters in your username and password."
+        case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
+            switch httpProtocol {
+            case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
+            case .https: return "Could not find your Jellyfin server. Please check your URL."
+            }
+        case .badResponse(let responseCode, _):
+            switch responseCode {
+            case 401: return "Invalid username or password."
+            case 404:
+                switch httpProtocol {
+                case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
+                case .https: return "Could not find your Jellyfin server. Please check your URL."
+                }
+            default: return "An unexpected error occurred. Please make sure your login details are correct."
+            }
+        }
+    }
+}
+
+enum HttpProtocol: String, CaseIterable {
+    case http = "http"
+    case https = "https"
 }

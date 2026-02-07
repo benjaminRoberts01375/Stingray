@@ -56,9 +56,12 @@
 				APIs/APIBasicNetwork.swift,
 				APIs/APIStorage.swift,
 				APIs/APIUserStorage.swift,
-				Models/MediaModel.swift,
+				Extensions/DecoderExtension.swift,
+				Extensions/TimeIntervalExtension.swift,
+				Extensions/URLExtension.swift,
+				Models/RErrorModel.swift,
+				Models/SlimMediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
-				Models/URLExtension.swift,
 				Models/UserModel.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
@@ -424,7 +427,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -458,7 +461,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -488,7 +491,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray.TopShelf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -518,7 +521,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray.TopShelf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

@@ -18,12 +18,12 @@ struct DashboardView: View {
         NavigationStack(path: $navigationPath) {
             VStack {
                 switch streamingService.libraryStatus {
-                case .waiting, .retrieving:
-                    ProgressView()
+                case .waiting, .retrieving: ProgressView()
                 case .error(let err):
-                    Text("Error loading libraries: \(err.localizedDescription)")
-                        .foregroundStyle(.red)
-                    
+                    VStack {
+                        ErrorView(error: err, summary: "The server formatted the library's metadata unexpectedly.")
+                        SystemInfoView(streamingService: streamingService)
+                    }
                 case .available(let libraries), .complete(let libraries):
                     TabView(selection: $selectedTab) {
                         Tab(value: "users") {

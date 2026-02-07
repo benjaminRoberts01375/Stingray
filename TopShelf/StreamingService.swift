@@ -8,7 +8,7 @@
 import Foundation
 
 public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
-    private var networkAPI: AdvancedNetworkProtocol
+    private var networkAPI: TopShelfNetworkProtocol
     private var accessToken: String
     
     init() throws {

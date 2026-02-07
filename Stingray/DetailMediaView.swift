@@ -46,35 +46,7 @@ public struct DetailMediaView: View {
                 .frame(height: 350)
                 
                 // Play buttons
-                HStack {
-                    switch media.mediaType {
-                    case .collections:
-                        EmptyView()
-                    case .movies(let sources):
-                        ForEach(sources, id: \.id) { source in
-                            MovieNavigationView(
-                                media: media,
-                                mediaSource: source,
-                                streamingService: streamingService,
-                                focus: $focus,
-                                navigation: $navigation
-                            )
-                        }
-                    case .tv(let seasons):
-                        if let seasons = seasons, let episode = Self.getNextUp(from: seasons) ?? seasons.first?.episodes.first {
-                            TVEpisodeNavigationView(
-                                seasons: seasons,
-                                streamingService: streamingService,
-                                episode: episode,
-                                media: media,
-                                focus: $focus,
-                                navigation: $navigation
-                            )
-                        } else {
-                            ProgressView("Loading seasons...")
-                        }
-                    }
-                }
+                PlayNavigationView(focus: $focus, navigation: $navigation, media: media, streamingService: streamingService)
                 .disabled({
                     switch focus {
                     case .play, .overview, .season, nil:
@@ -117,7 +89,7 @@ public struct DetailMediaView: View {
                                 }
                             }
                             .task {
-                                if let nextEpisodeID = Self.getNextUp(from: seasons)?.id {
+                                if let nextEpisodeID = seasons.nextUp()?.id {
                                     svrProxy.scrollTo(nextEpisodeID, anchor: .center)
                                 }
                             }
@@ -198,8 +170,16 @@ public struct DetailMediaView: View {
                     }
                 }())
                 
+                // Special features
+                SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
+                
                 // People
-                PeopleBrowserView(media: media, streamingService: streamingService)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("People")
+                        .font(.title3.bold())
+                        .padding(.top)
+                    PeopleBrowserView(media: media, streamingService: streamingService)
+                }
                 
             }
             .scrollClipDisabled()
@@ -226,6 +206,11 @@ public struct DetailMediaView: View {
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
+        .task { // Yep. I hate it too. Apple TVs are having issues selecting the play button if it changes type.
+            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
+                self.focus = .play
+            }
+        }
         .onChange(of: focus) { _, newValue in
             switch newValue {
             case .media, .season, .overview:
@@ -238,44 +223,9 @@ public struct DetailMediaView: View {
                 break
             }
         }
-        .onAppear { focus = .play }
         .navigationDestination(for: PlayerViewModel.self) { vm in
             PlayerView(vm: vm, navigation: $navigation)
         }
-    }
-    
-    static func getNextUp(from seasons: [any TVSeasonProtocol]) -> (any TVEpisodeProtocol)? {
-        let allEpisodes = seasons.flatMap(\.episodes)
-        // If the first episode hasn't been played suggest it
-        if let firstEpisode = allEpisodes.first, firstEpisode.lastPlayed == nil {
-            return firstEpisode
-        }
-        // Get the most recent episode
-        guard let mostRecentEpisode = (allEpisodes.enumerated().max { previousEpisode, currentEpisode in
-            return previousEpisode.element.lastPlayed ?? .distantPast < currentEpisode.element.lastPlayed ?? .distantPast
-        }),
-              let mostRecentMediaSource = mostRecentEpisode.element.mediaSources.first
-        else { return allEpisodes.first } // failing getting the most recent, return the first episode
-        
-        // Watched previous episode all the way through
-        if mostRecentMediaSource.startTicks == 0 {
-            if mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
-                return allEpisodes.first ?? mostRecentEpisode.element
-            }
-            return allEpisodes[mostRecentEpisode.offset + 1]
-        }
-        
-        // Likely marked by Stingray that the user didn't finish
-        if let durationTicks = mostRecentMediaSource.durationTicks,
-           Double(mostRecentMediaSource.startTicks) < 0.9 * Double(durationTicks) {
-            return mostRecentEpisode.element
-        }
-        
-        // User finished the series, recommend the first episode again
-        if mostRecentEpisode.offset + 1 > allEpisodes.count - 1 {
-            return allEpisodes.first ?? mostRecentEpisode.element
-        }
-        return allEpisodes[mostRecentEpisode.offset + 1]
     }
 }
 
@@ -369,87 +319,143 @@ public struct MediaMetadataView: View {
     }
 }
 
-// MARK: Movie play buttons
-fileprivate struct MovieNavigationView: View {
-    let media: any MediaProtocol
-    let mediaSource: any MediaSourceProtocol
-    let streamingService: any StreamingServiceProtocol
+// MARK: Play button
+fileprivate struct PlayNavigationView: View {
+    private let media: any MediaProtocol
+    private let streamingService: any StreamingServiceProtocol
+    private var title: String
+    private let mediaSources: [any MediaSourceProtocol]
+    private let seasons: [any TVSeasonProtocol]?
     
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
     
-    var body: some View {
-        let startTicks = Double(mediaSource.startTicks > 15 * 60 * 10_000_000 ? mediaSource.startTicks : 0)
-        Button {
-            navigation.append(
-                PlayerViewModel(
-                    media: media,
-                    mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(startTicks / 10_000_000), preferredTimescale: 1),
-                    streamingService: streamingService,
-                    seasons: nil
-                )
-            )
-        } label: {
-            if startTicks != 0 { // Restart if watched less than 15 minutes
-                Text("Play \(mediaSource.name) - \(String(ticks: mediaSource.startTicks))")
-            } else {
-                Text("Play \(mediaSource.name)")
-            }
-        }
-        .focused($focus, equals: .play)
-    }
-}
-
-// MARK: Episode play buttons
-fileprivate struct TVEpisodeNavigationView: View {
-    let seasons: [any TVSeasonProtocol]
-    let streamingService: any StreamingServiceProtocol
-    let episode: any TVEpisodeProtocol
-    let media: any MediaProtocol
-    
-    @FocusState.Binding var focus: ButtonType?
-    @Binding var navigation: NavigationPath
-    
-    var body: some View {
-        if let mediaSource = episode.mediaSources.first {
-            // Always restart episode button
-            Button {
-                navigation.append(
-                    PlayerViewModel(
-                        media: media,
-                        mediaSource: mediaSource,
-                        startTime: .zero,
-                        streamingService: streamingService,
-                        seasons: seasons
-                    )
-                )
-            } label: {
-                Text("\(mediaSource.startTicks == 0 ? "Play" : "Restart") \(episode.title)")
-            }
-            .focused($focus, equals: .play)
+    init(
+        focus: FocusState<ButtonType?>.Binding,
+        navigation: Binding<NavigationPath>,
+        media: any MediaProtocol,
+        streamingService: any StreamingServiceProtocol
+    ) {
+        self._focus = focus
+        self._navigation = navigation
+        self.media = media
+        self.streamingService = streamingService
+        switch media.mediaType {
+        case .movies(let sources):
+            self.title = media.title
+            self.mediaSources = sources
+            self.seasons = nil
             
-            // If the next episode to play already has progress
-            if mediaSource.startTicks != 0 {
-                Button {
-                    navigation.append(
-                        PlayerViewModel(
-                            media: media,
-                            mediaSource: mediaSource,
-                            startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
-                            streamingService: streamingService,
-                            seasons: seasons
-                        )
-                    )
-                } label: {
-                    Text("Resume \(episode.title)")
-                }
-                .focused($focus, equals: .play)
+        case .tv(let seasons):
+            guard let seasons = seasons,
+                  let nextEpisode = seasons.nextUp()
+            else {
+                self.title = "Error"
+                self.mediaSources = []
+                self.seasons = nil
+                break
             }
-        } else {
-            Text("Error loading episode")
-                .foregroundStyle(.red)
+            self.title = nextEpisode.title
+            self.mediaSources = nextEpisode.mediaSources
+            self.seasons = seasons
+            
+        default: // Collections
+            self.title = "Unsupported"
+            self.mediaSources = []
+            self.seasons = nil
         }
+    }
+    
+    var body: some View {
+        Group {
+            // Single source button and menu
+            if mediaSources.count == 1 {
+                let mediaSource = self.mediaSources[0]
+                // Single item that's unwatched - show button
+                if mediaSource.startPoint == 0 {
+                    Button {
+                        self.navigation.append(
+                            PlayerViewModel(
+                                media: media,
+                                mediaSource: mediaSource,
+                                startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
+                                streamingService: self.streamingService,
+                                seasons: self.seasons
+                            )
+                        )
+                    } label: { Label(self.title, systemImage: "play.fill") }
+                        .accessibilityLabel("Play button")
+                }
+                // Single item that's partially watched - show streamlined menu
+                else {
+                    Menu("\(Image(systemName: "play")) \(title)") {
+                        Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
+                        label: {
+                            Label("Resume \(media.title)", systemImage: "play.fill")
+                            Text("Continue from \(String(duration: mediaSource.startPoint))")
+                        }
+                        Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
+                        label: { Label("Restart \(media.title)", systemImage: "memories") }
+                    }
+                    .accessibilityLabel("Play button menu")
+                }
+            }
+            // Multiple media sources
+            else {
+                // If there are multiple sources but all unwatched, show only "play" options that start from beginning
+                if (mediaSources.allSatisfy { $0.startPoint == 0 }) {
+                    Menu("\(Image(systemName: "play")) \(title)") {
+                        ForEach(mediaSources, id: \.id) { mediaSource in
+                            Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
+                            label: { Label(mediaSource.name, systemImage: "play.fill") }
+                                .id(mediaSource.id)
+                        }
+                    }
+                    .accessibilityLabel("Play button menu")
+                }
+                // If there's any that are somewhat played, present options to restart
+                else {
+                    Menu("\(Image(systemName: "play")) \(title)") {
+                        Section("Resume") {
+                            ForEach(mediaSources, id: \.id) { mediaSource in
+                                if mediaSource.startPoint != 0 {
+                                    Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint)
+                                    } label: {
+                                        Label(mediaSource.name, systemImage: "play.fill")
+                                        Text("Continue from \(String(duration: mediaSource.startPoint))")
+                                    }
+                                    .id(mediaSource.id)
+                                }
+                            }
+                        }
+                        Section("Restart") {
+                            ForEach(mediaSources, id: \.id) { mediaSource in
+                                Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
+                                label: { Label(mediaSource.name, systemImage: "memories") }
+                                    .id(mediaSource.id)
+                            }
+                        }
+                    }
+                    .accessibilityLabel("Play button menu")
+                }
+            }
+        }
+        .onAppear { self.focus = .play }
+        .focused($focus, equals: .play)
+        .id("Play-button")
+        .defaultFocus($focus, .play, priority: .userInitiated)
+    }
+    
+    func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
+        self.navigation.append(
+            PlayerViewModel(
+                media: media,
+                mediaSource: mediaSource,
+                startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1),
+                streamingService: self.streamingService,
+                seasons: self.seasons
+            )
+        )
     }
 }
 
@@ -475,9 +481,8 @@ fileprivate struct SeasonSelectorView: View {
                         self.focus = .media(firstEpisode.id)
                     }
                 }
-            } label: {
-                Text("Season \(season.seasonNumber)")
             }
+            label: { Text(season.title) }
             .padding(16)
             .background {
                 if season.id == lastFocusedSeasonID {
@@ -574,7 +579,6 @@ fileprivate struct EpisodeView: View {
                 episode: episode,
                 navigation: $navigation
             )
-            .frame(width: 400, height: 325)
             .focused($focus, equals: .media(episode.id))
             .focused($isFocused, equals: true)
             .offset(y: isFocused ? -16 : 0)
@@ -592,7 +596,7 @@ fileprivate struct EpisodeView: View {
                     // Season and episode number
                     HStack(spacing: 0) {
                         if let season = (seasons.first { $0.episodes.contains { $0.id == episode.id } }) {
-                            Text("Season \(season.seasonNumber), ")
+                            Text("\(season.title), ")
                         }
                         Text("Episode \(episode.episodeNumber)")
                         Spacer()
@@ -658,20 +662,22 @@ fileprivate struct EpisodeNavigationView: View {
                 PlayerViewModel(
                     media: media,
                     mediaSource: mediaSource,
-                    startTime: CMTimeMakeWithSeconds(Double(mediaSource.startTicks / 10_000_000), preferredTimescale: 1),
+                    startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
                     streamingService: streamingService,
                     seasons: seasons
                 )
             )
         } label: {
             VStack(spacing: 0) {
-                EpisodeArtView(episode: episode, streamingService: streamingService)
+                ArtView(media: episode, streamingService: streamingService)
+                Spacer(minLength: 0)
                 Text(episode.title)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .padding()
                 Spacer(minLength: 0)
             }
+            .frame(width: 400, height: 325)
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
@@ -708,39 +714,34 @@ fileprivate struct ActorImage: View {
 }
 
 // MARK: Episode Art
-fileprivate struct EpisodeArtView: View {
-    let episode: any TVEpisodeProtocol
+fileprivate struct ArtView: View {
+    let media: any Displayable
     let streamingService: any StreamingServiceProtocol
     
     @State private var imageOpacity: Double = 0
     
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                if let blurHash = episode.blurHashes?.getBlurHash(for: .primary),
-                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
-                    Image(uiImage: blurImage)
+        ZStack {
+            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
+               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
+                Image(uiImage: blurImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipped()
+                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
+            }
+            if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
+                AsyncImage(url: url) { image in
+                    image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                        .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-                }
-                if let url = streamingService.getImageURL(imageType: .primary, mediaID: episode.id, width: 800) {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: geo.size.width, height: geo.size.height)
-                            .animation(.easeOut(duration: 0.5), value: imageOpacity)
-                            .onAppear { imageOpacity = 1 }
-                    } placeholder: {
-                        EmptyView()
-                    }
+                        .aspectRatio(contentMode: .fit)
+                        .animation(.easeOut(duration: 0.5), value: imageOpacity)
+                        .onAppear { imageOpacity = 1 }
+                } placeholder: {
+                    EmptyView()
                 }
             }
         }
-        .aspectRatio(16 / 9, contentMode: .fit)
     }
 }
 
@@ -782,4 +783,95 @@ fileprivate enum ButtonType: Hashable {
     case season(String)
     case media(String)
     case overview
+}
+
+public struct SpecialFeaturesView: View {
+    let streamingService: any StreamingServiceProtocol
+    let media: any MediaProtocol
+    
+    @Binding var navigation: NavigationPath
+    
+    public var body: some View {
+        VStack {
+            switch self.media.specialFeatures {
+            case .unloaded:
+                Color.clear
+                    .task {
+                        print("Attempting to get special features...")
+                        do { try await self.streamingService.getSpecialFeatures(for: self.media) }
+                        catch {}
+                    }
+            case .loading:
+                ProgressView("Loading special features...")
+            case .loaded(let rows):
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    SpecialFeaturesRow(streamingService: streamingService, rowData: row, media: media, navigation: $navigation)
+                        .focusSection()
+                }
+            }
+        }
+    }
+}
+
+public struct SpecialFeaturesRow: View {
+    let streamingService: any StreamingServiceProtocol
+    let rowData: [any SpecialFeatureProtocol]
+    let title: String
+    let media: any MediaProtocol
+    
+    @Binding var navigation: NavigationPath
+    
+    init(
+        streamingService: any StreamingServiceProtocol,
+        rowData: [any SpecialFeatureProtocol],
+        media: any MediaProtocol,
+        navigation: Binding<NavigationPath>
+    ) {
+        self.streamingService = streamingService
+        self.rowData = rowData
+        self.media = media
+        self.title = rowData[0].featureType
+        self._navigation = navigation
+    }
+    
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(self.title)
+                .font(.title3.bold())
+                .padding(.top)
+            ScrollView(.horizontal) {
+                LazyHStack {
+                    ForEach(rowData, id: \.id) { specialFeature in
+                        if let mediaSource = specialFeature.mediaSources.first {
+                            Button {
+                                navigation.append(
+                                    PlayerViewModel(
+                                        media: media,
+                                        mediaSource: mediaSource,
+                                        startTime: .zero,
+                                        streamingService: streamingService,
+                                        seasons: nil
+                                    )
+                                )
+                            } label: {
+                                VStack(spacing: 0) {
+                                    ArtView(media: specialFeature, streamingService: self.streamingService)
+                                        .frame(maxHeight: 250)
+                                    Spacer(minLength: 0)
+                                    Text(mediaSource.name)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 10)
+                                    Spacer(minLength: 0)
+                                }
+                                .frame(width: 400, height: 325)
+                            }
+                            .buttonStyle(.card)
+                        }
+                    }
+                }
+            }
+            .scrollClipDisabled()
+        }
+    }
 }

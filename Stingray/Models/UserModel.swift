@@ -91,30 +91,45 @@ public enum ServiceType: Codable {
         case type, jellyfinData
     }
     
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws(JSONError) {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
         case .Jellyfin(let data):
-            try container.encode("Jellyfin", forKey: .type)
-            try container.encode(data, forKey: .jellyfinData)
+            do {
+                try container.encode("Jellyfin", forKey: .type)
+                try container.encode(data, forKey: .jellyfinData)
+            } catch {
+                throw JSONError.failedJSONEncode("Service Type")
+            }
         }
     }
     
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let type = try container.decode(String.self, forKey: .type)
-        
-        switch type {
-        case "Jellyfin":
-            let data = try container.decode(UserJellyfin.self, forKey: .jellyfinData)
-            self = .Jellyfin(data)
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: .type,
-                in: container,
-                debugDescription: "Unknown service type: \(type)"
-            )
+    /// Create a service type from JSON.
+    /// - Parameter decoder: JSON decoder.
+    /// - Throws `JSONErrors` if the type is unknown.
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let type = try container.decode(String.self, forKey: .type)
+            
+            switch type {
+            case "Jellyfin":
+                let data = try container.decode(UserJellyfin.self, forKey: .jellyfinData)
+                self = .Jellyfin(data)
+            default:
+                throw DecodingError.dataCorruptedError(
+                    forKey: .type,
+                    in: container,
+                    debugDescription: "Unknown service type: \(type)"
+                )
+            }
         }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "ServiceType") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "ServiceType") }
+            else { throw JSONError.failedJSONDecode("ServiceType", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch { throw JSONError.failedJSONDecode("ServiceType", error) }
     }
 }
 
@@ -144,18 +159,26 @@ public struct User: Codable, Identifiable {
         self.usesSubtitles = usesSubtitles
     }
     
-    // Custom decoder to provide default value for usesSubtitles
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        // Required for all users
-        serviceURL = try container.decode(URL.self, forKey: .serviceURL)
-        serviceType = try container.decode(ServiceType.self, forKey: .serviceType)
-        serviceID = try container.decode(String.self, forKey: .serviceID)
-        id = try container.decode(String.self, forKey: .id)
-        displayName = try container.decode(String.self, forKey: .displayName)
-        
-        // User settings that may not have been configured yet
-        usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
-        bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
+    /// Create a user from encoded JSON.
+    /// - Parameter decoder: JSON Decoder
+    public init(from decoder: Decoder) throws(JSONError) {
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            
+            serviceURL = try container.decode(URL.self, forKey: .serviceURL)
+            serviceType = try container.decode(ServiceType.self, forKey: .serviceType)
+            serviceID = try container.decode(String.self, forKey: .serviceID)
+            id = try container.decode(String.self, forKey: .id)
+            displayName = try container.decode(String.self, forKey: .displayName)
+            
+            usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
+            bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "User") }
+            else { throw JSONError.failedJSONDecode("User", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch { throw JSONError.failedJSONDecode("User", error) }
     }
 }

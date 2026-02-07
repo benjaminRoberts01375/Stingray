@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol AdvancedNetworkProtocol {
+public protocol TopShelfNetworkProtocol {
     /// Retrieve recently added media of some type
     /// - Parameters:
     ///   - contentType: Type of media to retrieve
@@ -30,7 +30,7 @@ public protocol AdvancedNetworkProtocol {
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL?
 }
 
-public struct APINetwork: AdvancedNetworkProtocol {
+public struct APINetwork: TopShelfNetworkProtocol {
     var network: BasicNetworkProtocol
     
     public func getRecentlyAdded(accessToken: String) async throws -> [SlimMedia] {

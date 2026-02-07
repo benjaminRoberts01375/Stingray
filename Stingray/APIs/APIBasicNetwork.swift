@@ -23,7 +23,7 @@ public protocol BasicNetworkProtocol {
         headers: [String : String]?,
         urlParams: [URLQueryItem]?,
         body: (any Encodable)?
-    ) async throws -> T
+    ) async throws(NetworkError) -> T
     
     /// Allows simple URL building using the URL type.
     /// - Parameters:
@@ -45,66 +45,6 @@ public enum NetworkRequestType: String {
     case delete = "DELETE"
 }
 
-/// An advanced error type for networking
-public enum NetworkError: Error, LocalizedError {
-    /// The request URL was invalid
-    case invalidURL
-    /// Could not encode JSON
-    case encodeJSONFailed(Error)
-    /// Could not send the payload
-    case requestFailedToSend(Error)
-    /// Response was bad in some way
-    case badResponse(responseCode: Int, response: String?)
-    /// Could not decode the returned JSON
-    case decodeJSONFailed(Error, url: URL?)
-    /// An access token is needed
-    case missingAccessToken
-    
-    /// Describes errors in a human readable format
-    public var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return "Invalid URL"
-        case .encodeJSONFailed(let error):
-            return "Unable to encode JSON: \(error.localizedDescription)"
-        case .requestFailedToSend(let error):
-            return "The request failed to send: \(error.localizedDescription)"
-        case .badResponse(let responseCode, let response):
-            return "Got a bad response from the server. Error: \(responseCode), \(response ?? "Unknown error")"
-        case .decodeJSONFailed(let error, let url):
-            let urlString = url?.absoluteString ?? "unknown URL"
-            // Provide detailed information about decoding errors
-            if let decodingError = error as? DecodingError {
-                switch decodingError {
-                case .keyNotFound(let key, let context):
-                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-                    return "Unable to decode JSON from \(urlString): Missing key '\(key.stringValue)' at \(path)"
-                case .valueNotFound(let type, let context):
-                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-                    return "Unable to decode JSON from \(urlString): Missing value of type '\(type)' at \(path)"
-                case .typeMismatch(let type, let context):
-                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-                    return """
-                        Unable to decode JSON from \(urlString): Type mismatch for '\(type)' at \(path). \
-                        \(context.debugDescription)
-                        """
-                case .dataCorrupted(let context):
-                    let path = context.codingPath.map { $0.stringValue }.joined(separator: " -> ")
-                    return """
-                        Unable to decode JSON from \(urlString): Data corrupted at \(path). \
-                        \(context.debugDescription)
-                        """
-                @unknown default:
-                    return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
-                }
-            }
-            return "Unable to decode JSON from \(urlString): \(error.localizedDescription)"
-        case .missingAccessToken:
-            return "Missing access token"
-        }
-    }
-}
-
 /// A Jellyfin specific basic network struct for making network requests
 public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     var address: URL
@@ -117,10 +57,10 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         headers: [String : String]? = nil,
         urlParams: [URLQueryItem]? = nil,
         body: (any Encodable)? = nil
-    ) async throws -> T {
+    ) async throws(NetworkError) -> T {
         // Setup URL with path
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
-            throw NetworkError.invalidURL
+            throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
         }
         
         print("Reaching out to \(url.absoluteString)")
@@ -179,20 +119,17 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
             )
         }
         
-        // Decode the JSON response with more helpful errors
+        // Decode the JSON response
         do {
             let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
             return decodedResponse
-        } catch let DecodingError.dataCorrupted(context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.dataCorrupted(context), url: url)
-        } catch let DecodingError.keyNotFound(key, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.keyNotFound(key, context), url: url)
-        } catch let DecodingError.valueNotFound(value, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.valueNotFound(value, context), url: url)
-        } catch let DecodingError.typeMismatch(type, context) {
-            throw NetworkError.decodeJSONFailed(DecodingError.typeMismatch(type, context), url: url)
-        } catch {
+        } catch let jsonError as JSONError {
+            throw NetworkError.decodeJSONFailed(jsonError, url: url)
+        } catch let error as RError {
+            // Fallback for any non-JSONError decode failures
             throw NetworkError.decodeJSONFailed(error, url: url)
+        } catch {
+            throw NetworkError.decodeJSONFailed(nil, url: nil)
         }
     }
     

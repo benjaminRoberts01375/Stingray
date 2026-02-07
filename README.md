@@ -41,15 +41,15 @@ Supports last episode, picking episodes, next episode, subtitles, audio streams,
 
 ### Media Preview
 
-![Media details 1](https://github.com/user-attachments/assets/12886513-f69a-43fd-a4e9-15fdd714b04c)
+![Media Details 1](https://github.com/user-attachments/assets/fce61426-a6e3-4388-8060-52c20c1ea315)
 A clean view of the content art with quick access to content metadata.
 
 ### Media Details
 
-![Media details 2](https://github.com/user-attachments/assets/46a7a63e-8c8c-4087-8ade-4c0580a6d1f5)
+![Media Details 2](https://github.com/user-attachments/assets/cf0954fb-7d0d-4a03-a412-3b0050f2d8a4)
 Extensive content metadata.
 
-## TODO List
+## Long-Term TODO List
 
 ### Login
 
@@ -57,7 +57,6 @@ Extensive content metadata.
 
 ### Profiles
 
-- [ ] Show Jellyfin server name.
 - [ ] Show all available profiles on Jellyfin server.
 - [ ] Allow "locking" some profiles with a pin.
 - [ ] Move profiles to home screen.
@@ -71,7 +70,6 @@ Extensive content metadata.
 
 ### Media Picker
 
-- [ ] Media with errors gets a red background.
 - [ ] Unwatched media gets a blue background.
 
 ### Detail Media View
@@ -83,7 +81,6 @@ Extensive content metadata.
 
 ### Playback
 
-- [ ] HDR support.
 - [ ] Live TV.
 - [ ] Add a "Streaming Stats" page in the player to show current playback status.
   - [ ] Is Transcoding & Reason.
