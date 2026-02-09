@@ -15,46 +15,45 @@ public struct UserView: View {
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
             ForEach(users.getUsers()) { user in
-                Button {
-                    switchUser(user: user)
-                } label: {
+                Button { switchUser(user: user) }
+                label: {
                     VStack(alignment: .center) {
-                            switch user.serviceType {
-                            case .Jellyfin:
-                                AsyncImage(
-                                    url: JellyfinModel.getProfileImageURL(
-                                        userID: user.id,
-                                        serviceURL: user.serviceURL
-                                    )
-                                ) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        Spacer()
-                                        ProgressView()
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                    default:
-                                        // Handle the error here
-                                        Image(systemName: "person.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .foregroundStyle(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color(red: 0, green: 0.729, blue: 1),
-                                                        Color(red: 0, green: 0.09, blue: 0.945)
-                                                    ],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
+                        switch user.serviceType {
+                        case .Jellyfin:
+                            AsyncImage(
+                                url: JellyfinModel.getProfileImageURL(
+                                    userID: user.id,
+                                    serviceURL: user.serviceURL
+                                )
+                            ) { phase in
+                                switch phase {
+                                case .empty:
+                                    Spacer()
+                                    ProgressView()
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                default:
+                                    // Handle the error here
+                                    Image(systemName: "person.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(red: 0, green: 0.729, blue: 1),
+                                                    Color(red: 0, green: 0.09, blue: 0.945)
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
                                             )
-                                            .accessibilityLabel("Person icon")
-                                            .padding(50)
-                                    }
+                                        )
+                                        .accessibilityLabel("Person icon")
+                                        .padding(50)
                                 }
                             }
+                        }
                         Spacer()
                         Text(user.displayName)
                             .font(.callout.bold())
@@ -80,9 +79,8 @@ public struct UserView: View {
                     }
                 }
             }
-            NavigationLink {
-                LoginView(loggedIn: $loggedIn)
-            } label: {
+            NavigationLink { LoginView(loggedIn: $loggedIn) }
+            label: {
                 VStack(alignment: .center) {
                     Image(systemName: "person.crop.circle.fill.badge.plus")
                         .resizable()
