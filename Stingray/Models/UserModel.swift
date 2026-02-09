@@ -8,6 +8,7 @@
 import Foundation
 
 /// Basic data to store about the user
+@Observable
 final class UserModel {
     /// Shared instance to avoid repeated instantiation
     static let shared = UserModel()
@@ -15,16 +16,19 @@ final class UserModel {
     /// Storage device to permanently store user data
     var storage: UserStorageProtocol
     
+    /// Array of user IDs that SwiftUI will observe for changes
+    private(set) var userIDs: [String] = []
+    
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
     init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
         self.storage = storage
+        self.userIDs = storage.getUserIDs()
     }
     
     /// Adds a user to storage based on a `User` type
     /// - Parameter user: User to add
     func addUser(_ user: User) {
-        var userIDs = storage.getUserIDs()
         userIDs.append(user.id)
         storage.setUser(user: user)
         storage.setUserIDs(userIDs)
@@ -45,13 +49,12 @@ final class UserModel {
     
     /// Gets all users
     func getUsers() -> [User] {
-        return self.storage.getUserIDs().compactMap { self.storage.getUser(userID: $0) }
+        return self.userIDs.compactMap { self.storage.getUser(userID: $0) }
     }
     
     /// Updates a user's stored data
     /// - Parameter user: Updated `User`
     func updateUser(_ user: User) {
-        let userIDs = storage.getUserIDs()
         if !userIDs.contains(user.id) {
             self.addUser(user)
         } else {
@@ -62,8 +65,8 @@ final class UserModel {
     /// Deletes a user based on their ID
     /// - Parameter userID: ID of the user to delete
     func deleteUser(_ userID: String) {
-        let remainingUserIDs = self.storage.getUserIDs().filter { $0 != userID }
-        storage.setUserIDs(remainingUserIDs)
+        userIDs.removeAll { $0 == userID }
+        storage.setUserIDs(userIDs)
         storage.deleteUser(userID: userID)
     }
 }
