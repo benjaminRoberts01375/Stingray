@@ -99,6 +99,9 @@ public struct UserView: View {
     }
     
     func switchUser(user: User) {
+        // Check if the user we're switching to is the current user
+        if user.id == self.streamingService.userID { return }
+        
         switch user.serviceType {
         case .Jellyfin(let jellyfinData):
             self.loggedIn = .loggedIn(
