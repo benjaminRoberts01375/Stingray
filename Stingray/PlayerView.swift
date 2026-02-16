@@ -22,7 +22,8 @@ struct PlayerView: View {
                     transportBarCustomMenuItems: makeTransportBarItems(),
                     streamingService: self.vm.streamingService,
                     media: self.vm.media,
-                    mediaSource: self.vm.mediaSource
+                    mediaSource: self.vm.mediaSource,
+                    playerProgress: self.vm.playerProgress
                 ) {
                     self.vm.navigationPath = self.navigation
                     dismiss()
@@ -293,6 +294,20 @@ fileprivate struct PlayerPeopleView: View {
     }
 }
 
+fileprivate struct PlayerStreamingStats: View {
+    /// All data regarding current playback
+    public var playerProgress: (any PlayerProtocol)?
+    
+    var body: some View {
+        Text("Not yet playing")
+            .font(.headline)
+            .bold()
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .modifier(MaterialEffectModifier())
+    }
+}
+
 fileprivate struct MaterialEffectModifier: ViewModifier {
     let padding = 20.0
     let radius = 24.0
@@ -321,6 +336,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     let streamingService: any StreamingServiceProtocol
     let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
+    let playerProgress: (any PlayerProtocol)?
     
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
     let onStartPiP: () -> Void
@@ -375,6 +391,11 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
             playerTabs.append(peopleTab)
         }
+        
+        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(playerProgress: playerProgress))
+        streamingStatsTab.title = "Stats"
+        playerTabs.append(streamingStatsTab)
+        
         controller.customInfoViewControllers = playerTabs
         return controller
     }
