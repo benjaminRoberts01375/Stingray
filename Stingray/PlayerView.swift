@@ -316,6 +316,8 @@ fileprivate struct PlayerStreamingStats: View {
     @State private var resolution: CGSize = .zero
     /// Current frame rate
     @State private var frameRate: Float = 0
+    /// The amount of content loaded in the playback buffer in seconds
+    @State private var bufferDuration: Int = 0
     /// ID of the media source given by the server
     private let mediaSourceID: String
     /// Name of the current media source
@@ -365,6 +367,7 @@ fileprivate struct PlayerStreamingStats: View {
                         .padding(.bottom)
                     Text("Network Throughput: \(self.networkThroughput) bits per second")
                     Text("Video Bitrate: \(self.bitrate) bits per second")
+                    Text("Buffer Duration: \(bufferDuration) seconds")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
@@ -406,6 +409,18 @@ fileprivate struct PlayerStreamingStats: View {
         // Get real frame rate and playback resolution
         self.resolution = currentItem.presentationSize
         self.frameRate = track.currentVideoFrameRate
+        
+        // Calculate buffer duration in seconds
+        if let timeRange = currentItem.loadedTimeRanges.first?.timeRangeValue {
+            let bufferedStart = CMTimeGetSeconds(timeRange.start)
+            let bufferedDuration = CMTimeGetSeconds(timeRange.duration)
+            let currentTime = CMTimeGetSeconds(currentItem.currentTime())
+            
+            // Calculate how many seconds ahead are buffered from current position
+            let bufferEnd = bufferedStart + bufferedDuration
+            self.bufferDuration = max(0, Int(bufferEnd - currentTime))
+        }
+        else { self.bufferDuration = 0 }
     }
 }
 
