@@ -308,8 +308,12 @@ fileprivate struct PlayerStreamingStats: View {
         self.subtitleStreamID = playerProgress?.subtitleID
     }
     
-    /// Actual number of bits per second
-    @State private var observedBitsPerSecond: Int = 0
+    /// Network usage
+    @State private var networkThroughput: Int = 0
+    /// Video bitrate of the playing content
+    @State private var videoBitrate: Int = 0
+    /// Audio bitrate of the playing content
+    @State private var audioBitRate: Int = 0
     /// ID of the media source given by the server
     private let mediaSourceID: String
     /// Name of the current media source
@@ -326,8 +330,9 @@ fileprivate struct PlayerStreamingStats: View {
             HStack(spacing: 20) {
                 VStack(alignment: .leading) {
                     Text("Metadata")
-                        .font(.title)
+                        .font(.title3)
                         .bold()
+                        .padding(.bottom)
                     Text("Media Source Name: \(self.mediaSourceTitle)")
                     Text("Media Source ID: \(self.mediaSourceID)")
                     Text("Video Stream: \(self.videoStreamID)")
@@ -337,6 +342,25 @@ fileprivate struct PlayerStreamingStats: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
                 .modifier(MaterialEffectModifier())
+                
+                VStack(alignment: .leading) {
+                    Text("Live Data")
+                        .font(.title3)
+                        .bold()
+                        .padding(.bottom)
+                    Text("Network Throughput: \(self.networkThroughput) bits per second")
+                    Text("Video Bitrate: \(self.videoBitrate) bits per second")
+                    Text("Audio Bitrate: \(self.audioBitRate) bits per second")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
+                .modifier(MaterialEffectModifier())
+            }
+            .task { // Update stats periodically
+                while !Task.isCancelled {
+                    updateStats()
+                    try? await Task.sleep(for: .seconds(1))
+                }
             }
         }
         else {
@@ -347,6 +371,18 @@ fileprivate struct PlayerStreamingStats: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .modifier(MaterialEffectModifier())
         }
+    }
+    
+    /// Updates the real-time stats
+    private func updateStats() {
+        guard let currentItem = playerProgress?.player.currentItem,
+              let accessLog = currentItem.accessLog(),
+              let lastEvent = accessLog.events.last else {
+            return
+        }
+        
+        self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
+        self.videoBitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
     }
 }
 
