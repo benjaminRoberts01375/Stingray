@@ -83,6 +83,7 @@ Extensive content metadata.
   - [ ] Show all profiles on every Apple TV account, but remember last used profile
   - [ ] Set PINs for certain profiles
 - [x] Extend playback buffer
+- [x] Lower priority of downloading media
 
 ### Long Shots
 

@@ -225,7 +225,11 @@ public final class JellyfinModel: StreamingServiceProtocol {
             // Fill up to maxConcurrentLibraries initially
             while runningTasks < maxConcurrentLibraries {
                 if let library = libraryIterator.next() {
-                    group.addTask { await self.retrieveLibraryContent(library: library) }
+                    group.addTask {
+                        await Task(priority: .utility) {
+                            await self.retrieveLibraryContent(library: library)
+                        }.value
+                    }
                     runningTasks += 1
                 }
                 else { break }
@@ -236,7 +240,11 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 runningTasks -= 1
                 
                 if let library = libraryIterator.next() {
-                    group.addTask { await self.retrieveLibraryContent(library: library) }
+                    group.addTask {
+                        await Task(priority: .utility) {
+                            await self.retrieveLibraryContent(library: library)
+                        }.value
+                    }
                     runningTasks += 1
                 }
             }
