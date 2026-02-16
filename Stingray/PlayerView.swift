@@ -318,6 +318,8 @@ fileprivate struct PlayerStreamingStats: View {
     @State private var frameRate: Float = 0
     /// The amount of content loaded in the playback buffer in seconds
     @State private var bufferDuration: Int = 0
+    /// Video codec and profile
+    @State private var videoCodec = "Unknown"
     /// ID of the media source given by the server
     private let mediaSourceID: String
     /// Name of the current media source
@@ -355,6 +357,7 @@ fileprivate struct PlayerStreamingStats: View {
                         Text("Screen Resolution: \(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
                         Text("Playback Resolution: \(Int(resolution.width)) × \(Int(resolution.height))px")
                         Text("Framerate: \(String(format: "%.2f", frameRate)) fps")
+                        Text("Video Codec: \(videoCodec)")
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding()
@@ -375,7 +378,7 @@ fileprivate struct PlayerStreamingStats: View {
             }
             .task { // Update stats periodically
                 while !Task.isCancelled {
-                    updateStats()
+                    await updateStats()
                     try? await Task.sleep(for: .seconds(1))
                 }
             }
@@ -391,13 +394,12 @@ fileprivate struct PlayerStreamingStats: View {
     }
     
     /// Updates the real-time stats
-    private func updateStats() {
+    private func updateStats() async {
         guard let currentItem = playerProgress?.player.currentItem,
               let track = playerProgress?.player.currentItem?.tracks.first,
               let accessLog = currentItem.accessLog(),
-              let lastEvent = accessLog.events.last else {
-            return
-        }
+              let lastEvent = accessLog.events.last
+        else { return }
         
         // Bits per second
         self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
@@ -410,6 +412,17 @@ fileprivate struct PlayerStreamingStats: View {
         self.resolution = currentItem.presentationSize
         self.frameRate = track.currentVideoFrameRate
         
+        // Get codec and profile
+        guard let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
+              let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
+              let formatDescription = formatDescriptions.first
+        else { return }
+        let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
+        let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
+        if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
+        else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264" }
+        else { self.videoCodec = fourCC }
+        
         // Calculate buffer duration in seconds
         if let timeRange = currentItem.loadedTimeRanges.first?.timeRangeValue {
             let bufferedStart = CMTimeGetSeconds(timeRange.start)
@@ -421,6 +434,31 @@ fileprivate struct PlayerStreamingStats: View {
             self.bufferDuration = max(0, Int(bufferEnd - currentTime))
         }
         else { self.bufferDuration = 0 }
+    }
+    
+    func getH264Profile(from formatDescription: CMFormatDescription) -> String? {
+        guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
+              let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
+              let avcC = atoms["avcC"] as? Data,
+              avcC.count > 1
+        else { return nil }
+        
+        switch avcC[1] {
+        case 66:  return "H.264 Baseline"
+        case 77:  return "H.264 Main"
+        case 100: return "H.264 High"
+        default:  return "H.264"
+        }
+    }
+
+    func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
+        guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
+              let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
+              let hvcC = atoms["hvcC"] as? Data,
+              hvcC.count > 1
+        else { return nil }
+        
+        return hvcC[1] == 2 ? "HEVC Main10" : "HEVC Main"
     }
 }
 
