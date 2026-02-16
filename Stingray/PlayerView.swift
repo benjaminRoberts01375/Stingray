@@ -311,9 +311,11 @@ fileprivate struct PlayerStreamingStats: View {
     /// Network usage
     @State private var networkThroughput: Int = 0
     /// Video bitrate of the playing content
-    @State private var videoBitrate: Int = 0
-    /// Audio bitrate of the playing content
-    @State private var audioBitRate: Int = 0
+    @State private var bitrate: Int = 0
+    /// Current playback resolution
+    @State private var resolution: CGSize = .zero
+    /// Current frame rate
+    @State private var frameRate: Float = 0
     /// ID of the media source given by the server
     private let mediaSourceID: String
     /// Name of the current media source
@@ -324,33 +326,45 @@ fileprivate struct PlayerStreamingStats: View {
     private let audioStreamID: String
     /// ID of the subtitle source given by the server. `nil` means no subtitles are being used
     private let subtitleStreamID: String?
+    /// Screen resolution
+    private let screenResolution: CGSize = UIScreen.main.nativeBounds.size
     
     var body: some View {
         if playerProgress != nil {
             HStack(spacing: 20) {
-                VStack(alignment: .leading) {
-                    Text("Metadata")
-                        .font(.title3)
-                        .bold()
-                        .padding(.bottom)
-                    Text("Media Source Name: \(self.mediaSourceTitle)")
-                    Text("Media Source ID: \(self.mediaSourceID)")
-                    Text("Video Stream: \(self.videoStreamID)")
-                    Text("Audio Stream: \(self.audioStreamID)")
-                    Text("Subtitle Stream: \(self.subtitleStreamID ?? "None")")
+                VStack {
+                    VStack(alignment: .leading) {
+                        Text("Metadata")
+                            .font(.title3.bold())
+                            .padding(.bottom)
+                        Text("Media Source Name: \(self.mediaSourceTitle)")
+                        Text("Media Source ID: \(self.mediaSourceID)")
+                        Text("Video Stream: \(self.videoStreamID)")
+                        Text("Audio Stream: \(self.audioStreamID)")
+                        Text("Subtitle Stream: \(self.subtitleStreamID ?? "None")")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding()
+                    .modifier(MaterialEffectModifier())
+                    VStack(alignment: .leading) {
+                        Text("Playback Metadata")
+                            .font(.title3.bold())
+                            .padding(.bottom)
+                        Text("Screen Resolution: \(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
+                        Text("Playback Resolution: \(Int(resolution.width)) × \(Int(resolution.height))px")
+                        Text("Framerate: \(String(format: "%.2f", frameRate)) fps")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding()
+                    .modifier(MaterialEffectModifier())
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
-                .modifier(MaterialEffectModifier())
                 
                 VStack(alignment: .leading) {
                     Text("Live Data")
-                        .font(.title3)
-                        .bold()
+                        .font(.title3.bold())
                         .padding(.bottom)
                     Text("Network Throughput: \(self.networkThroughput) bits per second")
-                    Text("Video Bitrate: \(self.videoBitrate) bits per second")
-                    Text("Audio Bitrate: \(self.audioBitRate) bits per second")
+                    Text("Video Bitrate: \(self.bitrate) bits per second")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
@@ -376,13 +390,22 @@ fileprivate struct PlayerStreamingStats: View {
     /// Updates the real-time stats
     private func updateStats() {
         guard let currentItem = playerProgress?.player.currentItem,
+              let track = playerProgress?.player.currentItem?.tracks.first,
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last else {
             return
         }
         
+        // Bits per second
         self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
-        self.videoBitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
+        self.bitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
+        
+        // Get presentation size (actual displayed resolution)
+        self.resolution = currentItem.presentationSize
+        
+        // Get real frame rate and playback resolution
+        self.resolution = currentItem.presentationSize
+        self.frameRate = track.currentVideoFrameRate
     }
 }
 
