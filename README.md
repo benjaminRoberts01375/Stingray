@@ -72,13 +72,19 @@ Extensive content metadata.
   - [ ] Screen resolution
   - [ ] Framerate
   - [ ] Codecs
-  - [ ] Buffered amount
+  - [ ] Buffer's duration
+  - [ ] Playback session ID
+  - [ ] Media ID
+  - [ ] Media Source ID
+  - [ ] Video stream ID
+  - [ ] Audio stream ID
 - [ ] Profiles
   - [ ] Integrate into Apple TV profiles
   - [ ] Show all profiles on every Apple TV account, but remember last used profile
   - [ ] Set PINs for certain profiles
+- [ ] Extend playback buffer
 
-### Long shots
+### Long Shots
 
 - [ ] Trickplay support
 - [ ] Optionally blur unwatched TV episodes.
