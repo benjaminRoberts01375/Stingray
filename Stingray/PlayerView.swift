@@ -294,17 +294,59 @@ fileprivate struct PlayerPeopleView: View {
     }
 }
 
+/// Displays the streaming statistics of the currently playing media.
 fileprivate struct PlayerStreamingStats: View {
     /// All data regarding current playback
     public var playerProgress: (any PlayerProtocol)?
     
+    init(playerProgress: (any PlayerProtocol)?) {
+        self.playerProgress = playerProgress
+        self.mediaSourceID = playerProgress?.mediaSource.id ?? "Unknown"
+        self.mediaSourceTitle = playerProgress?.mediaSource.name ?? "Untitled"
+        self.videoStreamID = playerProgress?.videoID ?? "Unknown"
+        self.audioStreamID = playerProgress?.audioID ?? "Unknown"
+        self.subtitleStreamID = playerProgress?.subtitleID
+    }
+    
+    /// Actual number of bits per second
+    @State private var observedBitsPerSecond: Int = 0
+    /// ID of the media source given by the server
+    private let mediaSourceID: String
+    /// Name of the current media source
+    private let mediaSourceTitle: String
+    /// ID of the video source given by the server
+    private let videoStreamID: String
+    /// ID of the audio source given by the server
+    private let audioStreamID: String
+    /// ID of the subtitle source given by the server. `nil` means no subtitles are being used
+    private let subtitleStreamID: String?
+    
     var body: some View {
-        Text("Not yet playing")
-            .font(.headline)
-            .bold()
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .modifier(MaterialEffectModifier())
+        if playerProgress != nil {
+            HStack(spacing: 20) {
+                VStack(alignment: .leading) {
+                    Text("Metadata")
+                        .font(.title)
+                        .bold()
+                    Text("Media Source Name: \(self.mediaSourceTitle)")
+                    Text("Media Source ID: \(self.mediaSourceID)")
+                    Text("Video Stream: \(self.videoStreamID)")
+                    Text("Audio Stream: \(self.audioStreamID)")
+                    Text("Subtitle Stream: \(self.subtitleStreamID ?? "None")")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
+                .modifier(MaterialEffectModifier())
+            }
+        }
+        else {
+            Text("Not playing yet")
+                .font(.headline)
+                .bold()
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .modifier(MaterialEffectModifier())
+        }
     }
 }
 
