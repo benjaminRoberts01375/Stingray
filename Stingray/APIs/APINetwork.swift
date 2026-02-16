@@ -487,10 +487,14 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         // Set the subtitle/description metadata
         let subtitleMetadata = AVMutableMetadataItem()
         subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
-        subtitleMetadata.value = (subtitle ?? "") as NSString
+        subtitleMetadata.value = (subtitle ?? "") as NSString // Empty string for no subtitle
         subtitleMetadata.extendedLanguageTag = "und"
         
         item.externalMetadata = [titleMetadata, subtitleMetadata]
+        
+        // Setup streaming buffering
+        item.preferredForwardBufferDuration = TimeInterval(600) // 10 minutes
+        item.canUseNetworkResourcesForLiveStreamingWhilePaused = true // Allow buffering while paused
         
         return item
     }
