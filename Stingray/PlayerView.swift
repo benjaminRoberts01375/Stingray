@@ -416,15 +416,15 @@ fileprivate struct PlayerStreamingStats: View {
         self.frameRate = track.currentVideoFrameRate
         
         // Get codec and profile
-        guard let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
-              let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
-              let formatDescription = formatDescriptions.first
-        else { return }
-        let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
-        let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
-        if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
-        else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264" }
-        else { self.videoCodec = fourCC }
+        if let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
+           let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
+           let formatDescription = formatDescriptions.first {
+            let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
+            let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
+            if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
+            else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264" }
+            else { self.videoCodec = fourCC }
+        }
         
         // Calculate buffer duration in seconds
         if let timeRange = currentItem.loadedTimeRanges.first?.timeRangeValue {
