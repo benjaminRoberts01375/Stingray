@@ -365,7 +365,7 @@ fileprivate struct PlayerStreamingStats: View {
                     Text("Live Data")
                         .font(.title3.bold())
                         .padding(.bottom)
-                    Text("Network Throughput: \(self.networkThroughput) bits per second")
+                    Text("Typical Network Usage: \(self.networkThroughput) bits per second")
                     Text("Video Bitrate: \(self.bitrate) bits per second")
                     Text("Buffer Duration: \(bufferDuration) seconds")
                 }
