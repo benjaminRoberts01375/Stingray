@@ -49,24 +49,45 @@ A clean view of the content art with quick access to content metadata.
 ![Media Details 2](https://github.com/user-attachments/assets/cf0954fb-7d0d-4a03-a412-3b0050f2d8a4)
 Extensive content metadata.
 
+## v1.2.0 TODO
+
+- [ ] Settings Page
+  - [ ] Smaller profile icons
+  - [ ] Max bitrate
+  - [ ] Auto play toggle
+  - [ ] Themes
+  - [ ] Connection Info
+    - [ ] User's name
+    - [ ] Server address
+    - [ ] Session ID
+    - [ ] User's ID
+    - [ ] Server's name
+    - [ ] Server's version
+    - [ ] Stingray's version
+    - [ ] Total number of movies
+    - [ ] Total number of shows
+- [ ] Streaming Stats in the player
+  - [ ] Observed bitrate
+  - [ ] Playback resolution
+  - [ ] Screen resolution
+  - [ ] Framerate
+  - [ ] Codecs
+  - [ ] Buffered amount
+- [ ] Profiles
+  - [ ] Integrate into Apple TV profiles
+  - [ ] Show all profiles on every Apple TV account, but remember last used profile
+  - [ ] Set PINs for certain profiles
+
+### Long shots
+
+- [ ] Trickplay support
+- [ ] Optionally blur unwatched TV episodes.
+
 ## Long-Term TODO List
 
 ### Login
 
 - [ ] Support Jellyfin's Quick Connect feature.
-
-### Profiles
-
-- [ ] Show all available profiles on Jellyfin server.
-- [ ] Allow "locking" some profiles with a pin.
-- [ ] Move profiles to home screen.
-  - [ ] Repurpose existing profile screen for settings, continue to show profiles there.
-
-### Settings
-
-- [ ] Expose existing bitrate option.
-- [ ] Custom background colors and gradients.
-- [ ] Store preferred language per user based on last used audio track.
 
 ### Media Picker
 
@@ -75,22 +96,14 @@ Extensive content metadata.
 ### Detail Media View
 
 - [ ] Episode thumbnails where the thumbnail cannot fill the container should use the loaded thumbnail to blur background, instead of the unreliable blur hash.
-- [ ] Continue watching can suggest wrong episode.
-- [ ] Optionally blur unwatched TV episodes.
 - [ ] Replace options for continuing and restarting episodes with an alert to be shared with movies for consistency.
 
 ### Playback
 
 - [ ] Live TV.
-- [ ] Add a "Streaming Stats" page in the player to show current playback status.
-  - [ ] Is Transcoding & Reason.
-  - [ ] HDR standard, tone mapping to SDR, or native SDR.
-  - [ ] Current bitrate (could be variable).
-  - [ ] Playback resolution.
-- [ ] Restart (episode) button.
+- [ ] Restart episode button in episode picker.
 
 ### Code Quality
 
-- [ ] Move all JSON parsing to inside class declarations.
 - [ ] Break up the Detail Media View into smaller pieces.
 - [ ] Comment all class/struct/enum variables and functions.
