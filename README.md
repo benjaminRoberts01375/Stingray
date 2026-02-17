@@ -66,18 +66,20 @@ Extensive content metadata.
     - [ ] Stingray's version
     - [ ] Total number of movies
     - [ ] Total number of shows
-- [ ] Streaming Stats in the player
-  - [ ] Observed bitrate
-  - [ ] Playback resolution
-  - [ ] Screen resolution
-  - [ ] Framerate
-  - [ ] Codecs
-  - [ ] Buffer's duration
-  - [ ] Playback session ID
-  - [ ] Media ID
-  - [ ] Media Source ID
-  - [ ] Video stream ID
-  - [ ] Audio stream ID
+- [x] Streaming Stats in the player
+  - [x] Observed bitrate
+  - [x] Playback resolution
+  - [x] Screen resolution
+  - [x] Framerate
+  - [x] Codecs
+  - [x] Buffer's duration
+  - [x] Playback session ID
+  - [x] Media ID
+  - [x] Media Title
+  - [x] Media Source ID
+  - [x] Media Source Title
+  - [x] Video stream ID
+  - [x] Audio stream ID
 - [ ] Profiles
   - [ ] Integrate into Apple TV profiles
   - [ ] Show all profiles on every Apple TV account, but remember last used profile
