@@ -157,7 +157,7 @@ fileprivate struct PlayerStreamingStats: View {
                     .padding()
                     .modifier(MaterialEffectModifier())
                     VStack(alignment: .leading) {
-                        Text("Live Data")
+                        Text("Streaming Data")
                             .font(.title3.bold())
                             .padding(.bottom)
                         Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
