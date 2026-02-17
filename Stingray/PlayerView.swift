@@ -182,6 +182,8 @@ fileprivate struct PlayerStreamingStats: View {
                 .modifier(MaterialEffectModifier())
             }
             .task { // Update stats periodically
+                // Give the player a moment to initialize before first stats update
+                try? await Task.sleep(for: .milliseconds(500))
                 while !Task.isCancelled {
                     await updateStats()
                     try? await Task.sleep(for: .seconds(1))
@@ -201,7 +203,6 @@ fileprivate struct PlayerStreamingStats: View {
     /// Updates the real-time stats
     private func updateStats() async {
         guard let currentItem = self.vm.player?.currentItem,
-              let track = currentItem.tracks.first,
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last
         else { return }
@@ -213,20 +214,33 @@ fileprivate struct PlayerStreamingStats: View {
         // Get presentation size (actual displayed resolution)
         self.resolution = currentItem.presentationSize
         
-        // Get real frame rate and playback resolution
-        self.resolution = currentItem.presentationSize
-        self.frameRate = track.currentVideoFrameRate
-        
-        // Get codec and profile
-        if let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
-           let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
-           let formatDescription = formatDescriptions.first {
-            let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
-            let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
-            if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
-            else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264" }
-            else { self.videoCodec = fourCC }
+        // Get frame rate from player item tracks
+        if let track = currentItem.tracks.first(where: { $0.assetTrack?.mediaType == .video }) {
+            self.frameRate = track.currentVideoFrameRate
         }
+        
+        // Get codec and profile - use the AVPlayerItemTrack's assetTrack
+        if let videoPlayerTrack = currentItem.tracks.first(where: { $0.assetTrack?.mediaType == .video }),
+           let assetTrack = videoPlayerTrack.assetTrack {
+            do {
+                let formatDescriptions = try await assetTrack.load(.formatDescriptions)
+                if let formatDescription = formatDescriptions.first {
+                    let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
+                    let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
+                    
+                    if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") {
+                        self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC"
+                    }
+                    else if fourCC.hasPrefix("avc") {
+                        self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264"
+                    }
+                    else { self.videoCodec = fourCC }
+                }
+                else { print("No format description available") }
+            }
+            catch { print("Error loading codec info: \(error)") }
+        }
+        else { print("No video track found in player item tracks") }
         
         // Calculate buffer duration in seconds
         if let timeRange = currentItem.loadedTimeRanges.first?.timeRangeValue {
