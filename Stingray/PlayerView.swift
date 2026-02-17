@@ -202,14 +202,14 @@ fileprivate struct PlayerStreamingStats: View {
     
     /// Updates the real-time stats
     private func updateStats() async {
-        guard let currentItem = self.vm.player?.currentItem,
-              let accessLog = currentItem.accessLog(),
-              let lastEvent = accessLog.events.last
+        guard let currentItem = self.vm.player?.currentItem
         else { return }
         
         // Bits per second
-        self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
-        self.bitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
+        if let accessLog = currentItem.accessLog(), let lastEvent = accessLog.events.last {
+            self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
+            self.bitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
+        }
         
         // Get presentation size (actual displayed resolution)
         self.resolution = currentItem.presentationSize
