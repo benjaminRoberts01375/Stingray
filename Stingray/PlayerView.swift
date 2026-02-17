@@ -206,7 +206,8 @@ fileprivate struct PlayerStreamingStats: View {
         else { return }
         
         // Bits per second
-        if let accessLog = currentItem.accessLog(), let lastEvent = accessLog.events.last {
+        if self.vm.player?.timeControlStatus != .playing { self.bitrate = .zero } // Short circuit to zero if paused
+        else if let accessLog = currentItem.accessLog(), let lastEvent = accessLog.events.last {
             self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
             self.bitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
         }
