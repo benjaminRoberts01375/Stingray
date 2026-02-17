@@ -161,7 +161,6 @@ fileprivate struct PlayerStreamingStats: View {
                             .font(.title3.bold())
                             .padding(.bottom)
                         Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
-                        Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
                         Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -174,6 +173,7 @@ fileprivate struct PlayerStreamingStats: View {
                         .padding(.bottom)
                     Text("Screen Resolution: ").bold() + Text("\(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
                     Text("Playback Resolution: ").bold() + Text("\(Int(resolution.width)) × \(Int(resolution.height))px")
+                    Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
                     Text("Framerate: ").bold() + Text("\(String(format: "%.2f", frameRate)) fps")
                     Text("Video Codec: ").bold() + Text("\(videoCodec)")
                 }
