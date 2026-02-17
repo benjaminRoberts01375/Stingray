@@ -84,6 +84,7 @@ Extensive content metadata.
   - [ ] Set PINs for certain profiles
 - [x] Extend playback buffer
 - [x] Lower priority of downloading media
+- [x] Use the same view model across all player views
 
 ### Long Shots
 

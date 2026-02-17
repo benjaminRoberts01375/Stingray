@@ -15,15 +15,8 @@ struct PlayerView: View {
     
     var body: some View {
         VStack {
-            if let player = self.vm.player {
-                AVPlayerViewControllerRepresentable(
-                    id: self.vm.mediaSourceID,
-                    player: player,
-                    transportBarCustomMenuItems: makeTransportBarItems(),
-                    streamingService: self.vm.streamingService,
-                    media: self.vm.media,
-                    mediaSource: self.vm.mediaSource
-                ) {
+            if self.vm.player != nil {
+                AVPlayerViewControllerRepresentable(vm: self.vm) {
                     self.vm.navigationPath = self.navigation
                     dismiss()
                 } onRestoreFromPiP: {
@@ -42,6 +35,163 @@ struct PlayerView: View {
             }
         }
         .ignoresSafeArea(.all)
+    }
+}
+
+fileprivate struct PlayerDescriptionView: View {
+    let media: any MediaProtocol
+    let mediaSource: any MediaSourceProtocol
+    
+    var body: some View {
+        VStack {
+            MediaMetadataView(media: media)
+                .padding(.bottom)
+                .shadow(color: .black.opacity(1), radius: 10)
+            
+            HStack(alignment: .top) {
+                VStack(alignment: .leading) {
+                    let isTVSeries = {
+                        if case .tv = self.media.mediaType {
+                            return true
+                        }
+                        return false
+                    }()
+                    Text("\(isTVSeries ? "Series " : "")Description")
+                        .font(.title3.bold())
+                        .multilineTextAlignment(.leading)
+                        .padding(.bottom)
+                    Text(self.media.description)
+                        .font(.body)
+                        .multilineTextAlignment(.leading)
+                        .padding(.bottom)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
+                .modifier(MaterialEffectModifier())
+                
+                switch media.mediaType {
+                case .movies, .unknown:
+                    EmptyView()
+                case .tv(let seasons):
+                    if let seasons = seasons,
+                       let episode = (seasons.flatMap(\.episodes).first { $0.mediaSources.first?.id == self.mediaSource.id }),
+                       let episodeDescription = episode.overview {
+                        VStack(alignment: .leading) {
+                            Text("Episode Description")
+                                .font(.title3.bold())
+                                .multilineTextAlignment(.leading)
+                            Text(episodeDescription)
+                                .font(.body)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding()
+                        .modifier(MaterialEffectModifier())
+                    }
+                }
+            }
+        }
+    }
+}
+
+fileprivate struct PlayerPeopleView: View {
+    let media: any MediaProtocol
+    let streamingService: any StreamingServiceProtocol
+    
+    var body: some View {
+        PeopleBrowserView(media: self.media, streamingService: self.streamingService)
+            .padding()
+            .padding(.horizontal, 24)
+            .modifier(MaterialEffectModifier())
+    }
+}
+
+fileprivate struct MaterialEffectModifier: ViewModifier {
+    let padding = 20.0
+    let radius = 24.0
+    
+    func body(content: Content) -> some View {
+        if #available(tvOS 26.0, *) {
+            content
+                .padding(padding)
+                .glassEffect(.regular, in: .rect(cornerRadius: radius))
+                .padding(-padding)
+                .clipShape(RoundedRectangle(cornerRadius: radius))
+        } else {
+            content
+                .padding(padding)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: radius))
+                .padding(-padding)
+                .clipShape(RoundedRectangle(cornerRadius: radius))
+        }
+    }
+}
+
+struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    let vm: PlayerViewModel
+    
+    // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
+    let onStartPiP: () -> Void
+    let onRestoreFromPiP: () -> Void
+    let onStopFromPiP: () -> Void
+    
+    func makeCoordinator() -> Coordinator {
+        let coordinator = Coordinator(
+            id: self.vm.mediaSourceID,
+            onStartPiP: self.onStartPiP,
+            onRestoreFromPiP: self.onRestoreFromPiP,
+            onStopFromPiP: self.onStopFromPiP,
+        )
+        
+        // Should we kill the current PiP stream because the user is now watching something new?
+        if Self.Coordinator.activePiPCoordinator?.id != nil && self.vm.mediaSource.id != Self.Coordinator.activePiPCoordinator?.id {
+            print("Killing PiP Coordinator")
+            // Stop the previous player to kill PiP
+            Self.Coordinator.activePiPCoordinator?.stopPlayer()
+            Self.Coordinator.activePiPCoordinator = nil
+        }
+        return coordinator
+    }
+    
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        if let player = self.vm.player { controller.player = player }
+        controller.showsPlaybackControls = true
+        controller.transportBarCustomMenuItems = makeTransportBarItems()
+        controller.appliesPreferredDisplayCriteriaAutomatically = true
+        controller.allowsPictureInPicturePlayback = true
+        controller.allowedSubtitleOptionLanguages = .init(["nerd"])
+        controller.delegate = context.coordinator
+        
+        context.coordinator.playerViewController = controller
+        
+        var playerTabs: [UIViewController] = []
+        
+        if !self.vm.media.description.isEmpty {
+            // Series & episode description
+            let descTab = UIHostingController(
+                rootView: PlayerDescriptionView(media: self.vm.media, mediaSource: self.vm.mediaSource)
+            )
+            descTab.title = "Description"
+            descTab.preferredContentSize = CGSize(width: 0, height: 350)
+            playerTabs.append(descTab)
+        }
+        
+        if !self.vm.media.people.isEmpty {
+            let peopleTab = UIHostingController(
+                rootView: PlayerPeopleView(media: self.vm.media, streamingService: self.vm.streamingService)
+            )
+            peopleTab.title = "People"
+            peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+            playerTabs.append(peopleTab)
+        }
+        controller.customInfoViewControllers = playerTabs
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+        if let player = self.vm.player { uiViewController.player = player }
+        uiViewController.transportBarCustomMenuItems = makeTransportBarItems()
     }
     
     private func makeTransportBarItems() -> [UIMenuElement] {
@@ -124,8 +274,8 @@ struct PlayerView: View {
             // Helper function to create a bitrate action
             func makeBitrateAction(bitrate: Int) -> UIAction {
                 let mbps = Double(bitrate) / 1_000_000
-                let title = mbps.truncatingRemainder(dividingBy: 1) == 0 
-                    ? "\(Int(mbps)) Mbps" 
+                let title = mbps.truncatingRemainder(dividingBy: 1) == 0
+                    ? "\(Int(mbps)) Mbps"
                     : "\(mbps) Mbps"
                 
                 let action = UIAction(title: title) { _ in
@@ -223,171 +373,12 @@ struct PlayerView: View {
         }
         return items
     }
-}
-
-fileprivate struct PlayerDescriptionView: View {
-    let media: any MediaProtocol
-    let mediaSource: any MediaSourceProtocol
-    
-    var body: some View {
-        VStack {
-            MediaMetadataView(media: media)
-                .padding(.bottom)
-                .shadow(color: .black.opacity(1), radius: 10)
-            
-            HStack(alignment: .top) {
-                VStack(alignment: .leading) {
-                    let isTVSeries = {
-                        if case .tv = self.media.mediaType {
-                            return true
-                        }
-                        return false
-                    }()
-                    Text("\(isTVSeries ? "Series " : "")Description")
-                        .font(.title3.bold())
-                        .multilineTextAlignment(.leading)
-                        .padding(.bottom)
-                    Text(self.media.description)
-                        .font(.body)
-                        .multilineTextAlignment(.leading)
-                        .padding(.bottom)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
-                .modifier(MaterialEffectModifier())
-                
-                switch media.mediaType {
-                case .movies, .unknown:
-                    EmptyView()
-                case .tv(let seasons):
-                    if let seasons = seasons,
-                       let episode = (seasons.flatMap(\.episodes).first { $0.mediaSources.first?.id == self.mediaSource.id }),
-                       let episodeDescription = episode.overview {
-                        VStack(alignment: .leading) {
-                            Text("Episode Description")
-                                .font(.title3.bold())
-                                .multilineTextAlignment(.leading)
-                            Text(episodeDescription)
-                                .font(.body)
-                                .multilineTextAlignment(.leading)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding()
-                        .modifier(MaterialEffectModifier())
-                    }
-                }
-            }
-        }
-    }
-}
-
-fileprivate struct PlayerPeopleView: View {
-    let media: any MediaProtocol
-    let streamingService: any StreamingServiceProtocol
-    
-    var body: some View {
-        PeopleBrowserView(media: self.media, streamingService: self.streamingService)
-            .padding()
-            .padding(.horizontal, 24)
-            .modifier(MaterialEffectModifier())
-    }
-}
-
-fileprivate struct MaterialEffectModifier: ViewModifier {
-    let padding = 20.0
-    let radius = 24.0
-    
-    func body(content: Content) -> some View {
-        if #available(tvOS 26.0, *) {
-            content
-                .padding(padding)
-                .glassEffect(.regular, in: .rect(cornerRadius: radius))
-                .padding(-padding)
-                .clipShape(RoundedRectangle(cornerRadius: radius))
-        } else {
-            content
-                .padding(padding)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: radius))
-                .padding(-padding)
-                .clipShape(RoundedRectangle(cornerRadius: radius))
-        }
-    }
-}
-
-struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
-    let id: String
-    let player: AVPlayer
-    let transportBarCustomMenuItems: [UIMenuElement]
-    let streamingService: any StreamingServiceProtocol
-    let media: any MediaProtocol
-    let mediaSource: any MediaSourceProtocol
-    
-    // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
-    let onStartPiP: () -> Void
-    let onRestoreFromPiP: () -> Void
-    let onStopFromPiP: () -> Void
-    
-    func makeCoordinator() -> Coordinator {
-        let coordinator = Coordinator(
-            id: id,
-            onStartPiP: self.onStartPiP,
-            onRestoreFromPiP: self.onRestoreFromPiP,
-            onStopFromPiP: self.onStopFromPiP,
-        )
-        
-        // Should we kill the current PiP stream because the user is now watching something new?
-        if Self.Coordinator.activePiPCoordinator?.id != nil && self.mediaSource.id != Self.Coordinator.activePiPCoordinator?.id {
-            print("Killing PiP Coordinator")
-            // Stop the previous player to kill PiP
-            Self.Coordinator.activePiPCoordinator?.stopPlayer()
-            Self.Coordinator.activePiPCoordinator = nil
-        }
-        return coordinator
-    }
-    
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let controller = AVPlayerViewController()
-        controller.player = player
-        controller.showsPlaybackControls = true
-        controller.transportBarCustomMenuItems = transportBarCustomMenuItems
-        controller.appliesPreferredDisplayCriteriaAutomatically = true
-        controller.allowsPictureInPicturePlayback = true
-        controller.allowedSubtitleOptionLanguages = .init(["nerd"])
-        controller.delegate = context.coordinator
-        
-        context.coordinator.playerViewController = controller
-        
-        var playerTabs: [UIViewController] = []
-        
-        if !self.media.description.isEmpty {
-            // Series & episode description
-            let descTab = UIHostingController(
-                rootView: PlayerDescriptionView(media: media, mediaSource: mediaSource)
-            )
-            descTab.title = "Description"
-            descTab.preferredContentSize = CGSize(width: 0, height: 350)
-            playerTabs.append(descTab)
-        }
-        
-        if !self.media.people.isEmpty {
-            let peopleTab = UIHostingController(rootView: PlayerPeopleView(media: media, streamingService: streamingService))
-            peopleTab.title = "People"
-            peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
-            playerTabs.append(peopleTab)
-        }
-        controller.customInfoViewControllers = playerTabs
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-        uiViewController.player = player
-        uiViewController.transportBarCustomMenuItems = transportBarCustomMenuItems
-    }
     
     class Coordinator: NSObject, AVPlayerViewControllerDelegate {
         let onStartPiP: () -> Void
         let onRestoreFromPiP: () -> Void
         let onStopFromPiP: () -> Void
+        /// Used for PiP identification
         let id: String
         
         // Maintain a reference to a PiP instance
