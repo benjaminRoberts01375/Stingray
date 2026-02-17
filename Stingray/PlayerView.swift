@@ -107,60 +107,51 @@ fileprivate struct PlayerPeopleView: View {
 }
 
 fileprivate struct PlayerStreamingStats: View {
-    /// All data regarding current playback
-    public var playerProgress: (any PlayerProtocol)?
-    
-    init(playerProgress: (any PlayerProtocol)?) {
-        self.playerProgress = playerProgress
-        self.mediaSourceID = playerProgress?.mediaSource.id ?? "Unknown"
-        self.mediaSourceTitle = playerProgress?.mediaSource.name ?? "Untitled"
-        self.videoStreamID = playerProgress?.videoID ?? "Unknown"
-        self.audioStreamID = playerProgress?.audioID ?? "Unknown"
-        self.subtitleStreamID = playerProgress?.subtitleID
+    init(_ vm: PlayerViewModel) {
+        self.vm = vm
+        self.screenResolution = UIScreen.main.nativeBounds.size
+        self.frameRate = 0
+        self.bitrate = 0
+        self.networkThroughput = 0
+        self.bufferDuration = 0
+        self.videoCodec = "Unknown"
+        self.resolution = .zero
     }
     
+    /// Holds the player data for the view
+    @State private var vm: PlayerViewModel
     /// Network usage
-    @State private var networkThroughput: Int = 0
+    @State private var networkThroughput: Int
     /// Video bitrate of the playing content
-    @State private var bitrate: Int = 0
+    @State private var bitrate: Int
     /// Current playback resolution
-    @State private var resolution: CGSize = .zero
+    @State private var resolution: CGSize
     /// Current frame rate
-    @State private var frameRate: Float = 0
+    @State private var frameRate: Float
     /// The amount of content loaded in the playback buffer in seconds
-    @State private var bufferDuration: Int = 0
+    @State private var bufferDuration: Int
     /// Video codec and profile
-    @State private var videoCodec = "Unknown"
-    /// ID of the media source given by the server
-    private let mediaSourceID: String
-    /// Name of the current media source
-    private let mediaSourceTitle: String
-    /// ID of the video source given by the server
-    private let videoStreamID: String
-    /// ID of the audio source given by the server
-    private let audioStreamID: String
-    /// ID of the subtitle source given by the server. `nil` means no subtitles are being used
-    private let subtitleStreamID: String?
+    @State private var videoCodec: String
     /// Screen resolution
-    private let screenResolution: CGSize = UIScreen.main.nativeBounds.size
+    private let screenResolution: CGSize
     
     var body: some View {
-        if playerProgress != nil {
+        if self.vm.playerProgress != nil {
             HStack(spacing: 20) {
                 VStack {
                     VStack(alignment: .leading) {
                         Text("Metadata")
                             .font(.title3.bold())
                             .padding(.bottom)
-                        (Text("Media Source Name: ").bold() + Text("\(self.mediaSourceTitle)"))
+                        (Text("Media Source Name: ").bold() + Text("\(self.vm.mediaSource.name)"))
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-                        (Text("Media Source ID: ").bold() + Text("\(self.mediaSourceID)"))
+                        (Text("Media Source ID: ").bold() + Text("\(self.vm.mediaSourceID)"))
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("Video Stream: ").bold() + Text("\(self.videoStreamID)")
-                        Text("Audio Stream: ").bold() + Text("\(self.audioStreamID)")
-                        Text("Subtitle Stream: ").bold() + Text("\(self.subtitleStreamID ?? "None")")
+                        Text("Video Stream: ").bold() + Text("\(self.vm.playerProgress?.videoID ?? "Not yet playing...")")
+                        Text("Audio Stream: ").bold() + Text("\(self.vm.playerProgress?.audioID ?? "Not yet playing...")")
+                        Text("Subtitle Stream: ").bold() + Text("\(self.vm.playerProgress?.subtitleID ?? "None")")
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding()
@@ -209,8 +200,8 @@ fileprivate struct PlayerStreamingStats: View {
     
     /// Updates the real-time stats
     private func updateStats() async {
-        guard let currentItem = playerProgress?.player.currentItem,
-              let track = playerProgress?.player.currentItem?.tracks.first,
+        guard let currentItem = self.vm.player?.currentItem,
+              let track = currentItem.tracks.first,
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last
         else { return }
@@ -264,7 +255,7 @@ fileprivate struct PlayerStreamingStats: View {
         default:  return "H.264"
         }
     }
-
+    
     func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
@@ -356,7 +347,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             playerTabs.append(peopleTab)
         }
         
-        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(playerProgress: self.vm.playerProgress))
+        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(self.vm))
         streamingStatsTab.title = "Stats"
         playerTabs.append(streamingStatsTab)
         
@@ -433,7 +424,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             numberFormatter.numberStyle = .decimal
             
             let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
-                ?? "\(videoStream.bitrate)"
+            ?? "\(videoStream.bitrate)"
             let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
                 self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, bitrate: .full)
             }
@@ -450,8 +441,8 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             func makeBitrateAction(bitrate: Int) -> UIAction {
                 let mbps = Double(bitrate) / 1_000_000
                 let title = mbps.truncatingRemainder(dividingBy: 1) == 0
-                    ? "\(Int(mbps)) Mbps"
-                    : "\(mbps) Mbps"
+                ? "\(Int(mbps)) Mbps"
+                : "\(mbps) Mbps"
                 
                 let action = UIAction(title: title) { _ in
                     self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, bitrate: .limited(bitrate))
