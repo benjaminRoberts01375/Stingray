@@ -21,7 +21,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     /// Base path of the service.
     var serviceURL: URL { get }
     /// Track the current playback progress.
-    var playerProgress: PlayerProtocol? { get }
+    var playerProgress: (any PlayerProtocol)? { get }
     
     /// Download library data.
     func retrieveLibraries() async
@@ -109,7 +109,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     var serverID: String
     var serverVersion: String?
     var serviceURL: URL
-    var playerProgress: PlayerProtocol?
+    var playerProgress: (any PlayerProtocol)?
     
     /// Create a `JellyfinModel` based on known data.
     /// - Parameters:
@@ -443,7 +443,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
 }
 
 /// Describes a data structure for storing player data. Note that you must call `start()` and `stop()` manually.
-protocol PlayerProtocol {
+protocol PlayerProtocol: Identifiable {
     /// Player actively being used to watch content.
     var player: AVPlayer { get }
     /// ID for the subtitles based on the server
@@ -456,6 +456,8 @@ protocol PlayerProtocol {
     var bitrate: Bitrate { get }
     /// Encompasing media source that contains the actual data
     var mediaSource: any MediaSourceProtocol { get }
+    /// Identifiable conformance
+    var id: String { get }
     
     /// Streaming is beginning
     func start()
@@ -477,10 +479,12 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     let subtitleID: String?
     /// Unique ID for playback. If settings are changed, a new ID is needed.
     private let playbackSessionID: String
-    /// Server provided identifier for the session.
+    /// Server provided identifier for the streaming session.
     private let userSessionID: String
     /// API access token.
     private let accessToken: String
+    
+    var id: String { self.userSessionID }
     
     init(
         player: AVPlayer,

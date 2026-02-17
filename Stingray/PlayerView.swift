@@ -162,6 +162,7 @@ fileprivate struct PlayerStreamingStats: View {
                             .padding(.bottom)
                         Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
                         Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
+                        Text("Player Session ID: ").bold() + Text("\(self.vm.playerProgress?.id ?? "Not yet playing...")")
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding()

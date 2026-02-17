@@ -42,7 +42,7 @@ final class PlayerViewModel: Hashable {
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
-    public var playerProgress: PlayerProtocol?
+    public var playerProgress: (any PlayerProtocol)?
     
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
