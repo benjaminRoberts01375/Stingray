@@ -135,6 +135,26 @@ fileprivate struct PlayerStreamingStats: View {
     /// Screen resolution
     private let screenResolution: CGSize
     
+    private var playbackStatusText: String {
+        guard let player = self.vm.player else { return "Not yet playing..." }
+        
+        switch player.timeControlStatus {
+        case .playing:  return "Playing"
+        case .paused: return "Paused"
+        case .waitingToPlayAtSpecifiedRate:
+            // Check the reason for waiting
+            switch player.reasonForWaitingToPlay {
+            case .toMinimizeStalls: return "Buffering..."
+            case .evaluatingBufferingRate: return "Evaluating connection..."
+            case .noItemToPlay: return "No item to play"
+            case .waitingForCoordinatedPlayback: return "Waiting for coordinated playback"
+            case .none: return "Waiting to play"
+            default: return "Waiting to play"
+            }
+        @unknown default:  return "Unknown"
+        }
+    }
+    
     var body: some View {
         if self.vm.playerProgress != nil {
             HStack(spacing: 20) {
@@ -163,6 +183,7 @@ fileprivate struct PlayerStreamingStats: View {
                         Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
                         Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
                         Text("Player Session ID: ").bold() + Text("\(self.vm.playerProgress?.id ?? "Not yet playing...")")
+                        Text("Playback status: ").bold() + Text(playbackStatusText)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding()
