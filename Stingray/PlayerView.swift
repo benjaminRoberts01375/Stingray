@@ -158,26 +158,39 @@ fileprivate struct PlayerStreamingStats: View {
     var body: some View {
         if self.vm.playerProgress != nil {
             HStack(spacing: 20) {
+                VStack(alignment: .leading) {
+                    Text("Media Metadata")
+                        .font(.title3.bold())
+                        .padding(.bottom)
+                    (Text("Media Title: ").bold() + Text("\(self.vm.playerProgress?.media.title ?? "Not yet playing...")"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    (Text("Media ID: ").bold() + Text("\(self.vm.playerProgress?.media.id ?? "Not yet playing...")"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    (Text("Media Source Name: ").bold() + Text("\(self.vm.mediaSource.name)"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    (Text("Media Source ID: ").bold() + Text("\(self.vm.mediaSourceID)"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Video Stream: ").bold() + Text("\(self.vm.playerProgress?.videoID ?? "Not yet playing...")")
+                    Text("Audio Stream: ").bold() + Text("\(self.vm.playerProgress?.audioID ?? "Not yet playing...")")
+                    Text("Subtitle Stream: ").bold() + Text("\(self.vm.playerProgress?.subtitleID ?? "None")")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
+                .modifier(MaterialEffectModifier())
                 VStack {
                     VStack(alignment: .leading) {
-                        Text("Media Metadata")
+                        Text("Playback Metadata")
                             .font(.title3.bold())
                             .padding(.bottom)
-                        (Text("Media Title: ").bold() + Text("\(self.vm.playerProgress?.media.title ?? "Not yet playing...")"))
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        (Text("Media ID: ").bold() + Text("\(self.vm.playerProgress?.media.id ?? "Not yet playing...")"))
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        (Text("Media Source Name: ").bold() + Text("\(self.vm.mediaSource.name)"))
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        (Text("Media Source ID: ").bold() + Text("\(self.vm.mediaSourceID)"))
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("Video Stream: ").bold() + Text("\(self.vm.playerProgress?.videoID ?? "Not yet playing...")")
-                        Text("Audio Stream: ").bold() + Text("\(self.vm.playerProgress?.audioID ?? "Not yet playing...")")
-                        Text("Subtitle Stream: ").bold() + Text("\(self.vm.playerProgress?.subtitleID ?? "None")")
+                        Text("Screen Resolution: ").bold() + Text("\(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
+                        Text("Playback Resolution: ").bold() + Text("\(Int(resolution.width)) × \(Int(resolution.height))px")
+                        Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
+                        Text("Framerate: ").bold() + Text("\(String(format: "%.2f", frameRate)) fps")
+                        Text("Video Codec: ").bold() + Text("\(videoCodec)")
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding()
@@ -195,19 +208,6 @@ fileprivate struct PlayerStreamingStats: View {
                     .padding()
                     .modifier(MaterialEffectModifier())
                 }
-                VStack(alignment: .leading) {
-                    Text("Playback Metadata")
-                        .font(.title3.bold())
-                        .padding(.bottom)
-                    Text("Screen Resolution: ").bold() + Text("\(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
-                    Text("Playback Resolution: ").bold() + Text("\(Int(resolution.width)) × \(Int(resolution.height))px")
-                    Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
-                    Text("Framerate: ").bold() + Text("\(String(format: "%.2f", frameRate)) fps")
-                    Text("Video Codec: ").bold() + Text("\(videoCodec)")
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
-                .modifier(MaterialEffectModifier())
             }
             .task { // Update stats periodically
                 // Give the player a moment to initialize before first stats update
