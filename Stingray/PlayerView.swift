@@ -106,6 +106,176 @@ fileprivate struct PlayerPeopleView: View {
     }
 }
 
+fileprivate struct PlayerStreamingStats: View {
+    /// All data regarding current playback
+    public var playerProgress: (any PlayerProtocol)?
+    
+    init(playerProgress: (any PlayerProtocol)?) {
+        self.playerProgress = playerProgress
+        self.mediaSourceID = playerProgress?.mediaSource.id ?? "Unknown"
+        self.mediaSourceTitle = playerProgress?.mediaSource.name ?? "Untitled"
+        self.videoStreamID = playerProgress?.videoID ?? "Unknown"
+        self.audioStreamID = playerProgress?.audioID ?? "Unknown"
+        self.subtitleStreamID = playerProgress?.subtitleID
+    }
+    
+    /// Network usage
+    @State private var networkThroughput: Int = 0
+    /// Video bitrate of the playing content
+    @State private var bitrate: Int = 0
+    /// Current playback resolution
+    @State private var resolution: CGSize = .zero
+    /// Current frame rate
+    @State private var frameRate: Float = 0
+    /// The amount of content loaded in the playback buffer in seconds
+    @State private var bufferDuration: Int = 0
+    /// Video codec and profile
+    @State private var videoCodec = "Unknown"
+    /// ID of the media source given by the server
+    private let mediaSourceID: String
+    /// Name of the current media source
+    private let mediaSourceTitle: String
+    /// ID of the video source given by the server
+    private let videoStreamID: String
+    /// ID of the audio source given by the server
+    private let audioStreamID: String
+    /// ID of the subtitle source given by the server. `nil` means no subtitles are being used
+    private let subtitleStreamID: String?
+    /// Screen resolution
+    private let screenResolution: CGSize = UIScreen.main.nativeBounds.size
+    
+    var body: some View {
+        if playerProgress != nil {
+            HStack(spacing: 20) {
+                VStack {
+                    VStack(alignment: .leading) {
+                        Text("Metadata")
+                            .font(.title3.bold())
+                            .padding(.bottom)
+                        (Text("Media Source Name: ").bold() + Text("\(self.mediaSourceTitle)"))
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        (Text("Media Source ID: ").bold() + Text("\(self.mediaSourceID)"))
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Video Stream: ").bold() + Text("\(self.videoStreamID)")
+                        Text("Audio Stream: ").bold() + Text("\(self.audioStreamID)")
+                        Text("Subtitle Stream: ").bold() + Text("\(self.subtitleStreamID ?? "None")")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding()
+                    .modifier(MaterialEffectModifier())
+                    VStack(alignment: .leading) {
+                        Text("Live Data")
+                            .font(.title3.bold())
+                            .padding(.bottom)
+                        Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
+                        Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
+                        Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding()
+                    .modifier(MaterialEffectModifier())
+                }
+                VStack(alignment: .leading) {
+                    Text("Playback Metadata")
+                        .font(.title3.bold())
+                        .padding(.bottom)
+                    Text("Screen Resolution: ").bold() + Text("\(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
+                    Text("Playback Resolution: ").bold() + Text("\(Int(resolution.width)) × \(Int(resolution.height))px")
+                    Text("Framerate: ").bold() + Text("\(String(format: "%.2f", frameRate)) fps")
+                    Text("Video Codec: ").bold() + Text("\(videoCodec)")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
+                .modifier(MaterialEffectModifier())
+            }
+            .task { // Update stats periodically
+                while !Task.isCancelled {
+                    await updateStats()
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            }
+        }
+        else {
+            Text("Not playing yet")
+                .font(.headline)
+                .bold()
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .modifier(MaterialEffectModifier())
+        }
+    }
+    
+    /// Updates the real-time stats
+    private func updateStats() async {
+        guard let currentItem = playerProgress?.player.currentItem,
+              let track = playerProgress?.player.currentItem?.tracks.first,
+              let accessLog = currentItem.accessLog(),
+              let lastEvent = accessLog.events.last
+        else { return }
+        
+        // Bits per second
+        self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
+        self.bitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
+        
+        // Get presentation size (actual displayed resolution)
+        self.resolution = currentItem.presentationSize
+        
+        // Get real frame rate and playback resolution
+        self.resolution = currentItem.presentationSize
+        self.frameRate = track.currentVideoFrameRate
+        
+        // Get codec and profile
+        if let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
+           let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
+           let formatDescription = formatDescriptions.first {
+            let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
+            let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
+            if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
+            else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264" }
+            else { self.videoCodec = fourCC }
+        }
+        
+        // Calculate buffer duration in seconds
+        if let timeRange = currentItem.loadedTimeRanges.first?.timeRangeValue {
+            let bufferedStart = CMTimeGetSeconds(timeRange.start)
+            let bufferedDuration = CMTimeGetSeconds(timeRange.duration)
+            let currentTime = CMTimeGetSeconds(currentItem.currentTime())
+            
+            // Calculate how many seconds ahead are buffered from current position
+            let bufferEnd = bufferedStart + bufferedDuration
+            self.bufferDuration = max(0, Int(bufferEnd - currentTime))
+        }
+        else { self.bufferDuration = 0 }
+    }
+    
+    func getH264Profile(from formatDescription: CMFormatDescription) -> String? {
+        guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
+              let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
+              let avcC = atoms["avcC"] as? Data,
+              avcC.count > 1
+        else { return nil }
+        
+        switch avcC[1] {
+        case 66:  return "H.264 Baseline"
+        case 77:  return "H.264 Main"
+        case 100: return "H.264 High"
+        default:  return "H.264"
+        }
+    }
+
+    func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
+        guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
+              let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
+              let hvcC = atoms["hvcC"] as? Data,
+              hvcC.count > 1
+        else { return nil }
+        
+        return hvcC[1] == 2 ? "HEVC Main10" : "HEVC Main"
+    }
+}
+
 fileprivate struct MaterialEffectModifier: ViewModifier {
     let padding = 20.0
     let radius = 24.0
@@ -185,6 +355,11 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
             playerTabs.append(peopleTab)
         }
+        
+        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(playerProgress: self.vm.playerProgress))
+        streamingStatsTab.title = "Stats"
+        playerTabs.append(streamingStatsTab)
+        
         controller.customInfoViewControllers = playerTabs
         return controller
     }
