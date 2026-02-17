@@ -140,7 +140,7 @@ fileprivate struct PlayerStreamingStats: View {
             HStack(spacing: 20) {
                 VStack {
                     VStack(alignment: .leading) {
-                        Text("Metadata")
+                        Text("Media Metadata")
                             .font(.title3.bold())
                             .padding(.bottom)
                         (Text("Media Source Name: ").bold() + Text("\(self.vm.mediaSource.name)"))
@@ -157,7 +157,7 @@ fileprivate struct PlayerStreamingStats: View {
                     .padding()
                     .modifier(MaterialEffectModifier())
                     VStack(alignment: .leading) {
-                        Text("Streaming Data")
+                        Text("Streaming Metadata")
                             .font(.title3.bold())
                             .padding(.bottom)
                         Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
