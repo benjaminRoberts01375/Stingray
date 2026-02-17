@@ -152,6 +152,7 @@ final class PlayerViewModel: Hashable {
         }
         
         guard let player = streamingService.playbackStart(
+            media: self.media,
             mediaSource: self.mediaSource,
             videoID: videoID ?? self.playerProgress?.videoID ?? "0",
             audioID: audioID ?? self.playerProgress?.audioID ?? "1",

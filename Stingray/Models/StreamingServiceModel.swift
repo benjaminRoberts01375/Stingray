@@ -28,6 +28,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     
     /// Inform the server that playback has begun.
     /// - Parameters:
+    ///   - media: Media being watched.
     ///   - mediaSource: Media source being watched.
     ///   - videoID: Video stream ID.
     ///   - audioID: Audio stream ID.
@@ -37,6 +38,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     ///   - subtitle: Subtitle, if available, to put on the player.
     /// - Returns: Playback device.
     func playbackStart(
+        media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         videoID: String,
         audioID: String,
@@ -381,6 +383,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     }
     
     func playbackStart(
+        media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         videoID: String,
         audioID: String,
@@ -415,6 +418,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.playerProgress = JellyfinPlayerProgress(
             player: player,
             network: networkAPI,
+            media: media,
             mediaSource: mediaSource,
             videoID: videoID,
             audioID: audioID,
@@ -456,6 +460,8 @@ protocol PlayerProtocol: Identifiable {
     var bitrate: Bitrate { get }
     /// Encompasing media source that contains the actual data
     var mediaSource: any MediaSourceProtocol { get }
+    /// Media being streamed from
+    var media: any MediaProtocol { get }
     /// Identifiable conformance
     var id: String { get }
     
@@ -472,6 +478,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     private let network: any AdvancedNetworkProtocol
     /// Track how often to page Jellyfin.
     private var timer: Timer?
+    let media: any MediaProtocol
     var mediaSource: any MediaSourceProtocol
     let videoID: String
     let bitrate: Bitrate
@@ -489,6 +496,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     init(
         player: AVPlayer,
         network: any AdvancedNetworkProtocol,
+        media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         videoID: String,
         audioID: String,
@@ -500,6 +508,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     ) {
         self.player = player
         self.network = network
+        self.media = media
         self.mediaSource = mediaSource
         self.videoID = videoID
         self.bitrate = bitrate
