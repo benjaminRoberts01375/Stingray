@@ -123,6 +123,8 @@ public protocol MediaStreamProtocol: Identifiable {
     var codec: String { get }
     /// Is considered the default stream by the server.
     var isDefault: Bool { get }
+    /// Tracks if the media source has high dynamic range available
+    var isHDR: Bool { get }
 }
 
 /// Describes how to hold information about a TV Season
@@ -443,6 +445,7 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var bitrate: Int
     public var codec: String
     public var isDefault: Bool
+    public var isHDR: Bool
     
     enum CodingKeys: String, CodingKey {
         case id = "Index"
@@ -451,6 +454,7 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         case bitrate = "BitRate"
         case codec = "Codec"
         case isDefault = "IsDefault"
+        case videoRange = "VideoRange"
     }
     
     public init(from decoder: Decoder) throws(JSONError) {
@@ -465,6 +469,7 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
             title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
             codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
             isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
+            isHDR = try container.decodeIfPresent(String.self, forKey: .videoRange) == "HDR"
             bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate) ?? 10000
             if codec == "av1" {
                 bitrate = Int(Double(bitrate) * 1.75) // AV1 isn't supported, but it's so good that we need way more bits

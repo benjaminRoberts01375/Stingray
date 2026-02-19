@@ -116,6 +116,7 @@ fileprivate struct PlayerStreamingStats: View {
         self.bufferDuration = 0
         self.videoCodec = "Unknown"
         self.resolution = .zero
+        self.toneMappingStatus = PlayerStreamingStats.getTranscodingStatus(vm: vm)
     }
     
     /// Holds the player data for the view
@@ -134,6 +135,8 @@ fileprivate struct PlayerStreamingStats: View {
     @State private var videoCodec: String
     /// Screen resolution
     private let screenResolution: CGSize
+    /// Holds reason for tonemapping
+    @State private var toneMappingStatus: String
     
     private var playbackStatusText: String {
         guard let player = self.vm.player else { return "Not yet playing..." }
@@ -203,6 +206,9 @@ fileprivate struct PlayerStreamingStats: View {
                         Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
                         Text("Player Session ID: ").bold() + Text("\(self.vm.playerProgress?.id ?? "Not yet playing...")")
                         Text("Playback status: ").bold() + Text(playbackStatusText)
+                        (Text("Tonemapping: ").bold() + Text(self.toneMappingStatus))
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding()
@@ -282,6 +288,9 @@ fileprivate struct PlayerStreamingStats: View {
             self.bufferDuration = max(0, Int(bufferEnd - currentTime))
         }
         else { self.bufferDuration = 0 }
+        
+        // Tonemapping
+        self.toneMappingStatus = PlayerStreamingStats.getTranscodingStatus(vm: self.vm)
     }
     
     func getH264Profile(from formatDescription: CMFormatDescription) -> String? {
@@ -307,6 +316,18 @@ fileprivate struct PlayerStreamingStats: View {
         else { return nil }
         
         return hvcC[1] == 2 ? "HEVC Main10" : "HEVC Main"
+    }
+    
+    static func getTranscodingStatus(vm: PlayerViewModel) -> String {
+        let isHDR = vm.mediaSource.videoStreams.first { $0.id == vm.playerProgress?.videoID }?.isHDR ?? false
+        if isHDR {
+            if case .limited = vm.playerProgress?.bitrate {
+                return "Disabled. Jellyfin does not support tonemapping while transcoding to lower bitrates."
+            }
+            else if vm.playerProgress?.subtitleID != nil { return "Disabled. Jellyfin does not support HDR with subtitles." }
+            else { return "Enabled. Jellyfin does not support HDR." }
+        }
+        else { return "Content is already SDR." }
     }
 }
 
