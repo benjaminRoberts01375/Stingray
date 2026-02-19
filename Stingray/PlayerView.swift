@@ -327,10 +327,10 @@ fileprivate struct PlayerStreamingStats: View {
         let isHDR = vm.mediaSource.videoStreams.first { $0.id == vm.playerProgress?.videoID }?.isHDR ?? false
         if isHDR {
             if case .limited = vm.playerProgress?.bitrate {
-                return "Disabled. Jellyfin does not support tonemapping while transcoding to lower bitrates."
+                return "Disabled. Jellyfin does not support tonemapping while transcoding to lower bitrates"
             }
-            else if vm.playerProgress?.subtitleID != nil { return "Disabled. Jellyfin does not support tonemapping with subtitles." }
-            else { return "Enabled. Jellyfin does not support HDR." }
+            else if vm.playerProgress?.subtitleID != nil { return "Disabled. Jellyfin does not support tonemapping with subtitles" }
+            else { return "Enabled. Jellyfin does not support HDR" }
         }
         else { return "Content is already SDR." }
     }
