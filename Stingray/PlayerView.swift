@@ -116,7 +116,7 @@ fileprivate struct PlayerStreamingStats: View {
         self.bufferDuration = 0
         self.videoCodec = "Unknown"
         self.resolution = .zero
-        self.toneMappingStatus = PlayerStreamingStats.getTranscodingStatus(vm: vm)
+        self.toneMappingStatus = PlayerStreamingStats.getTonemappingStatus(vm: vm)
     }
     
     /// Holds the player data for the view
@@ -254,7 +254,7 @@ fileprivate struct PlayerStreamingStats: View {
             self.frameRate = track.currentVideoFrameRate
         }
         
-        // Get codec and profile - use the AVPlayerItemTrack's assetTrack
+        // Get codec and profile - use the AVPlayerItemTrack's assetTrack. AI Assisted
         if let videoPlayerTrack = currentItem.tracks.first(where: { $0.assetTrack?.mediaType == .video }),
            let assetTrack = videoPlayerTrack.assetTrack {
             do {
@@ -263,12 +263,8 @@ fileprivate struct PlayerStreamingStats: View {
                     let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
                     let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
                     
-                    if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") {
-                        self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC"
-                    }
-                    else if fourCC.hasPrefix("avc") {
-                        self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264"
-                    }
+                    if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) }
+                    else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) }
                     else { self.videoCodec = fourCC }
                 }
                 else { print("No format description available") }
@@ -290,15 +286,18 @@ fileprivate struct PlayerStreamingStats: View {
         else { self.bufferDuration = 0 }
         
         // Tonemapping
-        self.toneMappingStatus = PlayerStreamingStats.getTranscodingStatus(vm: self.vm)
+        self.toneMappingStatus = PlayerStreamingStats.getTonemappingStatus(vm: self.vm)
     }
     
-    func getH264Profile(from formatDescription: CMFormatDescription) -> String? {
+    /// Determines the H.264 profile from a known H.264 stream. AI Generated, human cleaned up.
+    /// - Parameter formatDescription: The format descriptions of the media samples that a track references.
+    /// - Returns: Formatted label for H.264
+    func getH264Profile(from formatDescription: CMFormatDescription) -> String {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
               let avcC = atoms["avcC"] as? Data,
               avcC.count > 1
-        else { return nil }
+        else { return "H.264" }
         
         switch avcC[1] {
         case 66:  return "H.264 Baseline"
@@ -308,17 +307,23 @@ fileprivate struct PlayerStreamingStats: View {
         }
     }
     
-    func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
+    /// Determines the HEVC (H.265) profile from a known HEVC stream. AI Generated, human cleaned up.
+    /// - Parameter formatDescription: The format descriptions of the media samples that a track references.
+    /// - Returns: Formatted label for H.264
+    func getHEVCProfile(from formatDescription: CMFormatDescription) -> String {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
               let hvcC = atoms["hvcC"] as? Data,
               hvcC.count > 1
-        else { return nil }
+        else { return "HEVC" }
         
         return hvcC[1] == 2 ? "HEVC Main10" : "HEVC Main"
     }
     
-    static func getTranscodingStatus(vm: PlayerViewModel) -> String {
+    /// Determine if the video stream is being transcoded, which may affect tonemapping.
+    /// - Parameter vm: `PlayerViewModel` to reference.
+    /// - Returns: Reason for tonemapping
+    static func getTonemappingStatus(vm: PlayerViewModel) -> String {
         let isHDR = vm.mediaSource.videoStreams.first { $0.id == vm.playerProgress?.videoID }?.isHDR ?? false
         if isHDR {
             if case .limited = vm.playerProgress?.bitrate {
