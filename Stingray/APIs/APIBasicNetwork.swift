@@ -102,9 +102,8 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         let response: URLResponse
         do {
             (responseData, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw NetworkError.requestFailedToSend(error)
         }
+        catch { throw NetworkError.requestFailedToSend(error) }
         
         // Verify not invalid status code
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -123,14 +122,8 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         do {
             let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
             return decodedResponse
-        } catch let jsonError as JSONError {
-            throw NetworkError.decodeJSONFailed(jsonError, url: url)
-        } catch let error as RError {
-            // Fallback for any non-JSONError decode failures
-            throw NetworkError.decodeJSONFailed(error, url: url)
-        } catch {
-            throw NetworkError.decodeJSONFailed(nil, url: nil)
         }
+        catch { throw NetworkError.decodeJSONFailed(error, url: url) } // Can decode errors
     }
     
     public func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {

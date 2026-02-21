@@ -65,13 +65,15 @@ public enum NetworkError: RError {
     /// Response was bad in some way
     case badResponse(responseCode: Int, response: String?)
     /// Could not decode the returned JSON
-    case decodeJSONFailed((any RError)?, url: URL?)
+    case decodeJSONFailed((any Error)?, url: URL?)
     /// An access token is needed
     case missingAccessToken
     
     public var next: (any RError)? {
         switch self {
-        case .decodeJSONFailed(let error, _): return error
+        case .decodeJSONFailed(let error, _):
+            if let rErr = error as? RError { return rErr }
+            return nil
         default: return nil
         }
     }
@@ -86,8 +88,11 @@ public enum NetworkError: RError {
             return "Request failed to send: \(err.localizedDescription)"
         case .badResponse(let code, let text):
             return "Received a bad response from the server - \(code) \(text ?? "")"
-        case .decodeJSONFailed(_, let url):
-            return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL")"
+        case .decodeJSONFailed(let error, let url):
+            if error as? RError == nil {
+                return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL")"
+            }
+            return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL"). \(error?.localizedDescription ?? "")"
         case .missingAccessToken:
             return "An access token is needed"
         }
