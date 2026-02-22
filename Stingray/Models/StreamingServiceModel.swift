@@ -411,6 +411,57 @@ public final class JellyfinModel: StreamingServiceProtocol {
         title: String,
         subtitle: String?
     ) -> AVPlayer? {
+        let player = AVPlayer()
+        guard let playerItem = prepareStreamingSession(
+            player: player,
+            mediaSource: mediaSource,
+            videoID: videoID,
+            audioID: audioID,
+            subtitleID: subtitleID,
+            bitrate: bitrate,
+            title: title,
+            subtitle: subtitle
+        ) else { return nil }
+        player.replaceCurrentItem(with: playerItem)
+        return player
+    }
+
+    func playbackSwitchTrack(
+        existingPlayer: AVPlayer,
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Bitrate,
+        title: String,
+        subtitle: String?
+    ) -> AVPlayerItem? {
+        self.playerProgress?.stop()
+        self.playerProgress = nil
+        return prepareStreamingSession(
+            player: existingPlayer,
+            mediaSource: mediaSource,
+            videoID: videoID,
+            audioID: audioID,
+            subtitleID: subtitleID,
+            bitrate: bitrate,
+            title: title,
+            subtitle: subtitle
+        )
+    }
+
+    /// Build a streaming player item and configure progress tracking.
+    /// Shared by `playbackStart` (new player) and `playbackSwitchTrack` (reuse player).
+    private func prepareStreamingSession(
+        player: AVPlayer,
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Bitrate,
+        title: String,
+        subtitle: String?
+    ) -> AVPlayerItem? {
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
         let bitrateBits = switch bitrate {
@@ -420,7 +471,6 @@ public final class JellyfinModel: StreamingServiceProtocol {
             setBitrate
         }
 
-        // Look up the subtitle codec so we can choose the optimal delivery method
         let subtitleCodec = subtitleID.flatMap { id in
             mediaSource.subtitleStreams.first(where: { $0.id == id })?.codec
         }
@@ -438,8 +488,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 subtitle: subtitle
               )
         else { return nil }
-        let player = AVPlayer(playerItem: playerItem)
-        
+
         self.playerProgress = JellyfinPlayerProgress(
             player: player,
             network: networkAPI,
@@ -453,67 +502,6 @@ public final class JellyfinModel: StreamingServiceProtocol {
             accessToken: self.accessToken
         )
         self.playerProgress?.start()
-        
-        return player
-    }
-    
-    func playbackSwitchTrack(
-        existingPlayer: AVPlayer,
-        mediaSource: any MediaSourceProtocol,
-        videoID: String,
-        audioID: String,
-        subtitleID: String?,
-        bitrate: Bitrate,
-        title: String,
-        subtitle: String?
-    ) -> AVPlayerItem? {
-        // End old progress tracking
-        self.playerProgress?.stop()
-        self.playerProgress = nil
-
-        let sessionID = UUID().uuidString
-        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
-        let bitrateBits = switch bitrate {
-        case .full:
-            videoStream.bitrate
-        case .limited(let setBitrate):
-            setBitrate
-        }
-
-        // Look up the subtitle codec so we can choose the optimal delivery method
-        let subtitleCodec = subtitleID.flatMap { id in
-            mediaSource.subtitleStreams.first(where: { $0.id == id })?.codec
-        }
-
-        guard let playerItem = networkAPI.getStreamingContent(
-                accessToken: accessToken,
-                contentID: mediaSource.id,
-                bitrate: bitrateBits,
-                subtitleID: subtitleID,
-                subtitleCodec: subtitleCodec,
-                audioID: audioID,
-                videoID: videoID,
-                sessionID: sessionID,
-                title: title,
-                subtitle: subtitle
-              )
-        else { return nil }
-
-        // Reuse existing player — preserves HDR/DV pipeline
-        self.playerProgress = JellyfinPlayerProgress(
-            player: existingPlayer,
-            network: networkAPI,
-            mediaSource: mediaSource,
-            videoID: videoID,
-            audioID: audioID,
-            subtitleID: subtitleID,
-            bitrate: bitrate,
-            playbackSessionID: sessionID,
-            userSessionID: self.sessionID,
-            accessToken: self.accessToken
-        )
-        self.playerProgress?.start()
-
         return playerItem
     }
 

@@ -476,8 +476,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             // to avoid HLS subtitle sync issues and unnecessary transcoding.
             let needsBurnIn: Bool
             if let codec = subtitleCodec?.lowercased() {
-                let imageBasedCodecs = ["pgssub", "pgs", "dvdsub", "vobsub", "sub", "dvbsub", "dvb_subtitle", "xsub"]
-                needsBurnIn = imageBasedCodecs.contains(codec)
+                needsBurnIn = SubtitleCue.imageBasedCodecs.contains(codec)
             } else {
                 needsBurnIn = true // Unknown codec — use burn-in as fallback
             }

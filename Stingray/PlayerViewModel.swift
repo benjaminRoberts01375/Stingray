@@ -11,9 +11,16 @@ import SwiftUI
 
 /// Parsed subtitle cue from a VTT file
 struct SubtitleCue {
+    /// Start time of the cue in seconds
     let startTime: TimeInterval
+    /// End time of the cue in seconds
     let endTime: TimeInterval
+    /// Text content to display
     let text: String
+
+    /// Image-based subtitle codecs that require server-side burn-in (SubtitleMethod=Encode).
+    /// Text-based codecs not in this set are rendered client-side via VTT overlay.
+    static let imageBasedCodecs: Set<String> = ["pgssub", "pgs", "dvdsub", "vobsub", "sub", "dvbsub", "dvb_subtitle", "xsub"]
 }
 
 @Observable
@@ -66,6 +73,8 @@ final class PlayerViewModel: Hashable {
     @ObservationIgnored private var subtitleCues: [SubtitleCue] = []
     /// Periodic time observer for updating subtitle display
     @ObservationIgnored private var subtitleTimeObserver: Any?
+    /// In-flight subtitle fetch task, cancelled on track switch to prevent stale updates
+    @ObservationIgnored private var subtitleLoadTask: Task<Void, Never>?
 
     // Hashable Conformance
     static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
@@ -282,20 +291,23 @@ final class PlayerViewModel: Hashable {
     }
 
     // MARK: - External Subtitle (VTT Overlay)
+    // Client-side VTT rendering is used because tvOS AVPlayer doesn't properly handle
+    // HLS subtitle delivery — X-TIMESTAMP-MAP=MPEGTS:900000 causes ~9s desync.
+    // This limitation was also observed in Reefy's native tvOS player.
 
     /// Check if a subtitle stream is text-based (can be rendered client-side)
     private func isTextBasedSubtitle(_ subtitleID: String?) -> Bool {
         guard let subtitleID = subtitleID else { return false }
         guard let stream = self.mediaSource.subtitleStreams.first(where: { $0.id == subtitleID }) else { return false }
-        let imageBasedCodecs = ["pgssub", "pgs", "dvdsub", "vobsub", "sub", "dvbsub", "dvb_subtitle", "xsub"]
-        return !imageBasedCodecs.contains(stream.codec.lowercased())
+        return !SubtitleCue.imageBasedCodecs.contains(stream.codec.lowercased())
     }
 
     /// Fetch VTT subtitle content from Jellyfin and set up the time observer for overlay display.
     private func loadExternalSubtitles(subtitleIndex: String) {
+        subtitleLoadTask?.cancel()
         let mediaSourceID = self.mediaSource.id
         let service = self.streamingService
-        Task {
+        subtitleLoadTask = Task {
             guard let vttContent = await service.fetchSubtitleContent(
                 mediaSourceID: mediaSourceID,
                 subtitleIndex: subtitleIndex
@@ -304,10 +316,12 @@ final class PlayerViewModel: Hashable {
                 return
             }
 
+            guard !Task.isCancelled else { return }
             let cues = Self.parseVTT(vttContent)
             print("Loaded \(cues.count) subtitle cues")
 
             await MainActor.run {
+                guard !Task.isCancelled else { return }
                 self.subtitleCues = cues
                 self.startSubtitleTimeObserver()
             }
@@ -316,6 +330,8 @@ final class PlayerViewModel: Hashable {
 
     /// Remove subtitle overlay and stop the time observer.
     private func clearSubtitles() {
+        subtitleLoadTask?.cancel()
+        subtitleLoadTask = nil
         if let observer = subtitleTimeObserver, let player = self.player {
             player.removeTimeObserver(observer)
         }
@@ -347,6 +363,7 @@ final class PlayerViewModel: Hashable {
     }
 
     /// Parse a WebVTT string into an array of subtitle cues.
+    /// Static for testability and because it has no dependency on instance state.
     static func parseVTT(_ content: String) -> [SubtitleCue] {
         var cues: [SubtitleCue] = []
         let lines = content.components(separatedBy: .newlines)
@@ -450,6 +467,7 @@ final class PlayerViewModel: Hashable {
     }
 
     deinit {
+        subtitleLoadTask?.cancel()
         if let observer = subtitleTimeObserver, let player = self.player {
             player.removeTimeObserver(observer)
         }
