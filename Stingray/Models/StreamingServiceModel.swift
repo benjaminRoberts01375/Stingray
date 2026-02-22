@@ -69,6 +69,13 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
         subtitle: String?
     ) -> AVPlayerItem?
 
+    /// Fetch subtitle content as VTT text for client-side rendering.
+    /// - Parameters:
+    ///   - mediaSourceID: The media source ID.
+    ///   - subtitleIndex: The subtitle stream index.
+    /// - Returns: VTT content string, or nil on failure.
+    func fetchSubtitleContent(mediaSourceID: String, subtitleIndex: String) async -> String?
+
     /// Inform the server that playback has ended
     func playbackEnd()
     
@@ -412,12 +419,18 @@ public final class JellyfinModel: StreamingServiceProtocol {
         case .limited(let setBitrate):
             setBitrate
         }
-        
+
+        // Look up the subtitle codec so we can choose the optimal delivery method
+        let subtitleCodec = subtitleID.flatMap { id in
+            mediaSource.subtitleStreams.first(where: { $0.id == id })?.codec
+        }
+
         guard let playerItem = networkAPI.getStreamingContent(
                 accessToken: accessToken,
                 contentID: mediaSource.id,
                 bitrate: bitrateBits,
                 subtitleID: subtitleID,
+                subtitleCodec: subtitleCodec,
                 audioID: audioID,
                 videoID: videoID,
                 sessionID: sessionID,
@@ -467,11 +480,17 @@ public final class JellyfinModel: StreamingServiceProtocol {
             setBitrate
         }
 
+        // Look up the subtitle codec so we can choose the optimal delivery method
+        let subtitleCodec = subtitleID.flatMap { id in
+            mediaSource.subtitleStreams.first(where: { $0.id == id })?.codec
+        }
+
         guard let playerItem = networkAPI.getStreamingContent(
                 accessToken: accessToken,
                 contentID: mediaSource.id,
                 bitrate: bitrateBits,
                 subtitleID: subtitleID,
+                subtitleCodec: subtitleCodec,
                 audioID: audioID,
                 videoID: videoID,
                 sessionID: sessionID,
@@ -496,6 +515,23 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.playerProgress?.start()
 
         return playerItem
+    }
+
+    func fetchSubtitleContent(mediaSourceID: String, subtitleIndex: String) async -> String? {
+        guard var components = URLComponents(url: serviceURL, resolvingAgainstBaseURL: false) else { return nil }
+        components.path += "/Videos/\(mediaSourceID)/\(mediaSourceID)/Subtitles/\(subtitleIndex)/0/Stream.vtt"
+        guard let url = components.url else { return nil }
+
+        var request = URLRequest(url: url)
+        request.addValue(accessToken, forHTTPHeaderField: "X-MediaBrowser-Token")
+
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            return String(data: data, encoding: .utf8)
+        } catch {
+            print("Failed to fetch subtitle VTT: \(error)")
+            return nil
+        }
     }
 
     func playbackEnd() {

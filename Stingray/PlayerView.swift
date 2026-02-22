@@ -14,25 +14,41 @@ struct PlayerView: View {
     @Binding var navigation: NavigationPath
     
     var body: some View {
-        VStack {
-            if let player = self.vm.player {
-                AVPlayerViewControllerRepresentable(
-                    id: self.vm.mediaSourceID,
-                    player: player,
-                    transportBarCustomMenuItems: makeTransportBarItems(),
-                    streamingService: self.vm.streamingService,
-                    media: self.vm.media,
-                    mediaSource: self.vm.mediaSource
-                ) {
-                    self.vm.navigationPath = self.navigation
-                    dismiss()
-                } onRestoreFromPiP: {
-                    if let restoredPath = self.vm.navigationPath {
-                        self.navigation = restoredPath
+        ZStack(alignment: .bottom) {
+            VStack {
+                if let player = self.vm.player {
+                    AVPlayerViewControllerRepresentable(
+                        id: self.vm.mediaSourceID,
+                        player: player,
+                        transportBarCustomMenuItems: makeTransportBarItems(),
+                        streamingService: self.vm.streamingService,
+                        media: self.vm.media,
+                        mediaSource: self.vm.mediaSource
+                    ) {
+                        self.vm.navigationPath = self.navigation
+                        dismiss()
+                    } onRestoreFromPiP: {
+                        if let restoredPath = self.vm.navigationPath {
+                            self.navigation = restoredPath
+                        }
+                    } onStopFromPiP: {
+                        self.vm.stopPlayer()
                     }
-                } onStopFromPiP: {
-                    self.vm.stopPlayer()
                 }
+            }
+
+            // Subtitle overlay for text-based subtitles rendered client-side
+            if let text = self.vm.currentSubtitleText {
+                Text(text)
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .shadow(color: .black, radius: 1, x: 1, y: 1)
+                    .shadow(color: .black, radius: 1, x: -1, y: -1)
+                    .shadow(color: .black, radius: 4, x: 0, y: 0)
+                    .padding(.horizontal, 80)
+                    .padding(.bottom, 80)
+                    .allowsHitTesting(false)
             }
         }
         .onDisappear { // Only stop the player if PiP is not active

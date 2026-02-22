@@ -54,6 +54,7 @@ public protocol AdvancedNetworkProtocol {
     ///   - contentID: The media source ID
     ///   - bitrate: Target video bitrate in bits per second
     ///   - subtitleID: Subtitles to be used (nil for none)
+    ///   - subtitleCodec: Codec of the selected subtitle stream (e.g. "srt", "ass", "pgssub")
     ///   - audioID: Audio ID to be used
     ///   - videoID: Video ID to be used
     ///   - sessionID: A one-off token to not be reused when changing settings
@@ -65,6 +66,7 @@ public protocol AdvancedNetworkProtocol {
         contentID: String,
         bitrate: Int,
         subtitleID: String?,
+        subtitleCodec: String?,
         audioID: String,
         videoID: String,
         sessionID: String,
@@ -427,6 +429,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         contentID: String,
         bitrate: Int,
         subtitleID: String?,
+        subtitleCodec: String? = nil,
         audioID: String,
         videoID: String,
         sessionID: String,
@@ -439,7 +442,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "mediaSourceID", value: contentID),
             URLQueryItem(name: "audioStreamIndex", value: String(audioID)),
             URLQueryItem(name: "videoStreamIndex", value: String(videoID)),
-            
+
             // Video config
             URLQueryItem(name: "videoBitRate", value: String(bitrate)),
             URLQueryItem(name: "videoCodec", value: "hevc,h264"),
@@ -453,12 +456,12 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "hevc-codectag", value: "hvc1,dvh1"),
             URLQueryItem(name: "deInterlace", value: "true"),
             URLQueryItem(name: "h265-codectag", value: "hvc1,dvh1,dvhe"),
-            
+
             // Audio config
             URLQueryItem(name: "audioCodec", value: "aac,ac3,eac3,alac,mp3"),
             URLQueryItem(name: "allowAudioStreamCopy", value: "true"),
             URLQueryItem(name: "enableAudioVbrEncoding", value: "true"),
-            
+
             // Streaming config
             URLQueryItem(name: "breakOnNonKeyFrames", value: "true"),
             URLQueryItem(name: "requireAVC", value: "false"),
@@ -466,12 +469,26 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "copyTimestamps", value: "true"),
             URLQueryItem(name: "enableAutoStreamCopy", value: "true")
         ]
-        
+
         if let subtitleID = subtitleID {
-            params.append(URLQueryItem(name: "SubtitleMethod", value: "Encode"))
-            params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
+            // Only include subtitle params for image-based subtitles that require burn-in.
+            // Text-based subtitles (SRT, ASS, VTT) are handled client-side via VTT overlay
+            // to avoid HLS subtitle sync issues and unnecessary transcoding.
+            let needsBurnIn: Bool
+            if let codec = subtitleCodec?.lowercased() {
+                let imageBasedCodecs = ["pgssub", "pgs", "dvdsub", "vobsub", "sub", "dvbsub", "dvb_subtitle", "xsub"]
+                needsBurnIn = imageBasedCodecs.contains(codec)
+            } else {
+                needsBurnIn = true // Unknown codec — use burn-in as fallback
+            }
+
+            if needsBurnIn {
+                params.append(URLQueryItem(name: "SubtitleMethod", value: "Encode"))
+                params.append(URLQueryItem(name: "subtitleStreamIndex", value: String(subtitleID)))
+            }
+            // Text subtitles: no params in URL — rendered by client VTT overlay
         }
-        
+
         guard let item = self.buildAVPlayerItem(
             path: "/Videos/\(contentID)/main.m3u8",
             urlParams: params,

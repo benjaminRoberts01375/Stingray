@@ -6,7 +6,15 @@
 //
 
 import AVKit
+import Combine
 import SwiftUI
+
+/// Parsed subtitle cue from a VTT file
+struct SubtitleCue {
+    let startTime: TimeInterval
+    let endTime: TimeInterval
+    let text: String
+}
 
 @Observable
 final class PlayerViewModel: Hashable {
@@ -38,30 +46,38 @@ final class PlayerViewModel: Hashable {
     }
     /// Quickly get the media source from the media source ID
     public private(set) var mediaSource: any MediaSourceProtocol
-    
+
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
-    
+    /// Current subtitle text to display as overlay (nil = no subtitle visible)
+    public var currentSubtitleText: String?
+
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
     /// Seasons of a TV show if available (may be a movie)
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
     /// Store and restore the current navigation path
     @ObservationIgnored public var navigationPath: NavigationPath?
-    
+    /// Subscription for observing AVPlayerItem status during track switches
+    @ObservationIgnored private var itemStatusCancellable: AnyCancellable?
+    /// Parsed subtitle cues for the current text subtitle
+    @ObservationIgnored private var subtitleCues: [SubtitleCue] = []
+    /// Periodic time observer for updating subtitle display
+    @ObservationIgnored private var subtitleTimeObserver: Any?
+
     // Hashable Conformance
     static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
         lhs.mediaSourceID == rhs.mediaSourceID &&
         lhs.startTime == rhs.startTime
     }
-    
+
     func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
         hasher.combine(startTime.seconds)
     }
-    
+
     /// Normal init for setting up a player
     public init(
         media: any MediaProtocol,
@@ -78,10 +94,10 @@ final class PlayerViewModel: Hashable {
         self.mediaSourceID = mediaSource.id
         self.mediaSource = mediaSource
         self.media = media
-        
+
         var subtitleID: String?
         var bitrate: Bitrate = .full
-        
+
         if let defaultUser = UserModel.shared.getDefaultUser() {
             // Setup subtitles
             if defaultUser.usesSubtitles {
@@ -94,7 +110,7 @@ final class PlayerViewModel: Hashable {
                 bitrate = .limited(bitrateBits)
             }
         }
-        
+
         self.savePlaybackDate()
         self.newPlayer(
             startTime: self.startTime,
@@ -103,9 +119,9 @@ final class PlayerViewModel: Hashable {
             subtitleID: subtitleID,
             bitrate: bitrate
         )
-        
+
     }
-    
+
     /// Creates a new player based on current state
     /// - Parameters:
     ///   - startTime: Where the video should start from
@@ -129,6 +145,9 @@ final class PlayerViewModel: Hashable {
                 print("Failed to configure audio session: \(error)")
             }
         }
+
+        // Clear any existing subtitle overlay
+        clearSubtitles()
 
         var title = ""
         var subtitle = ""
@@ -173,10 +192,44 @@ final class PlayerViewModel: Hashable {
                 subtitle: subtitle
             ) else { return }
 
+            // Cancel any previous item status observation
+            self.itemStatusCancellable?.cancel()
+
             existingPlayer.replaceCurrentItem(with: newItem)
             self.playerProgress = streamingService.playerProgress
             existingPlayer.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
             existingPlayer.play()
+
+            // Observe the new item's status to handle load failures gracefully.
+            // If the new stream fails (e.g. transcoding timeout for image-based subtitles),
+            // fall back to playback without subtitles.
+            self.itemStatusCancellable = newItem.publisher(for: \.status)
+                .sink { [weak self] status in
+                    guard let self = self else { return }
+                    switch status {
+                    case .failed:
+                        let errorDescription = newItem.error?.localizedDescription ?? "Unknown error"
+                        print("AVPlayerItem failed to load: \(errorDescription)")
+
+                        // If we were switching subtitles on, retry without subtitles
+                        if resolvedSubtitleID != nil {
+                            print("Retrying playback without subtitles...")
+                            self.itemStatusCancellable?.cancel()
+                            self.newPlayer(
+                                startTime: startTime,
+                                videoID: resolvedVideoID,
+                                audioID: resolvedAudioID,
+                                subtitleID: nil,
+                                bitrate: resolvedBitrate
+                            )
+                        }
+                    case .readyToPlay:
+                        self.itemStatusCancellable?.cancel()
+                        self.itemStatusCancellable = nil
+                    default:
+                        break
+                    }
+                }
         } else {
             // Initial playback: create a new player from scratch
             guard let player = streamingService.playbackStart(
@@ -196,6 +249,11 @@ final class PlayerViewModel: Hashable {
             self.player?.play()
         }
 
+        // Load text-based subtitles as VTT overlay
+        if let subID = resolvedSubtitleID, isTextBasedSubtitle(subID) {
+            loadExternalSubtitles(subtitleIndex: subID)
+        }
+
         // Update user settings
         guard var currentUser = UserModel.shared.getDefaultUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
@@ -207,7 +265,7 @@ final class PlayerViewModel: Hashable {
         }
         UserModel.shared.updateUser(currentUser)
     }
-    
+
     /// Creates a new player based on current state and new episode
     /// - Parameter episode: Episode to transition into
     public func newPlayer(episode: any TVEpisodeProtocol) {
@@ -222,14 +280,152 @@ final class PlayerViewModel: Hashable {
         }
         self.newPlayer(startTime: .zero, videoID: newVideoStream.id, audioID: newAudioStream.id, subtitleID: newSubtitleStream?.id)
     }
-    
+
+    // MARK: - External Subtitle (VTT Overlay)
+
+    /// Check if a subtitle stream is text-based (can be rendered client-side)
+    private func isTextBasedSubtitle(_ subtitleID: String?) -> Bool {
+        guard let subtitleID = subtitleID else { return false }
+        guard let stream = self.mediaSource.subtitleStreams.first(where: { $0.id == subtitleID }) else { return false }
+        let imageBasedCodecs = ["pgssub", "pgs", "dvdsub", "vobsub", "sub", "dvbsub", "dvb_subtitle", "xsub"]
+        return !imageBasedCodecs.contains(stream.codec.lowercased())
+    }
+
+    /// Fetch VTT subtitle content from Jellyfin and set up the time observer for overlay display.
+    private func loadExternalSubtitles(subtitleIndex: String) {
+        let mediaSourceID = self.mediaSource.id
+        let service = self.streamingService
+        Task {
+            guard let vttContent = await service.fetchSubtitleContent(
+                mediaSourceID: mediaSourceID,
+                subtitleIndex: subtitleIndex
+            ) else {
+                print("Failed to fetch VTT subtitle content")
+                return
+            }
+
+            let cues = Self.parseVTT(vttContent)
+            print("Loaded \(cues.count) subtitle cues")
+
+            await MainActor.run {
+                self.subtitleCues = cues
+                self.startSubtitleTimeObserver()
+            }
+        }
+    }
+
+    /// Remove subtitle overlay and stop the time observer.
+    private func clearSubtitles() {
+        if let observer = subtitleTimeObserver, let player = self.player {
+            player.removeTimeObserver(observer)
+        }
+        subtitleTimeObserver = nil
+        subtitleCues = []
+        currentSubtitleText = nil
+    }
+
+    /// Start a periodic time observer that updates the displayed subtitle text.
+    private func startSubtitleTimeObserver() {
+        guard let player = self.player else { return }
+        // Remove any existing observer
+        if let observer = subtitleTimeObserver {
+            player.removeTimeObserver(observer)
+        }
+
+        // Update subtitles 4 times per second
+        let interval = CMTime(seconds: 0.25, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+        subtitleTimeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self = self else { return }
+            let seconds = time.seconds
+            // Binary search would be optimal, but linear search is fine for typical subtitle counts
+            let activeCue = self.subtitleCues.first { seconds >= $0.startTime && seconds < $0.endTime }
+            let newText = activeCue?.text
+            if self.currentSubtitleText != newText {
+                self.currentSubtitleText = newText
+            }
+        }
+    }
+
+    /// Parse a WebVTT string into an array of subtitle cues.
+    static func parseVTT(_ content: String) -> [SubtitleCue] {
+        var cues: [SubtitleCue] = []
+        let lines = content.components(separatedBy: .newlines)
+        var i = 0
+
+        while i < lines.count {
+            let line = lines[i]
+
+            // Look for timestamp lines: "00:01:49.509 --> 00:01:50.575"
+            if line.contains("-->") {
+                let parts = line.components(separatedBy: "-->")
+                guard parts.count == 2 else {
+                    i += 1
+                    continue
+                }
+
+                // Remove positioning metadata after timestamp (e.g. "region:subtitle line:90%")
+                let startStr = parts[0].trimmingCharacters(in: .whitespaces)
+                let endPart = parts[1].trimmingCharacters(in: .whitespaces)
+                let endStr = endPart.components(separatedBy: " ").first ?? endPart
+
+                guard let startTime = parseVTTTimestamp(startStr),
+                      let endTime = parseVTTTimestamp(endStr) else {
+                    i += 1
+                    continue
+                }
+
+                // Collect text lines until empty line or end
+                var textLines: [String] = []
+                i += 1
+                while i < lines.count && !lines[i].trimmingCharacters(in: .whitespaces).isEmpty {
+                    // Strip basic HTML tags
+                    let cleanLine = lines[i]
+                        .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                    textLines.append(cleanLine)
+                    i += 1
+                }
+
+                let text = textLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    cues.append(SubtitleCue(startTime: startTime, endTime: endTime, text: text))
+                }
+            } else {
+                i += 1
+            }
+        }
+
+        return cues
+    }
+
+    /// Parse a VTT timestamp string (HH:MM:SS.mmm or MM:SS.mmm) into seconds.
+    private static func parseVTTTimestamp(_ str: String) -> TimeInterval? {
+        let parts = str.components(separatedBy: ":")
+        guard parts.count >= 2 else { return nil }
+
+        if parts.count == 3 {
+            // HH:MM:SS.mmm
+            guard let hours = Double(parts[0]),
+                  let minutes = Double(parts[1]),
+                  let seconds = Double(parts[2]) else { return nil }
+            return hours * 3600 + minutes * 60 + seconds
+        } else {
+            // MM:SS.mmm
+            guard let minutes = Double(parts[0]),
+                  let seconds = Double(parts[1]) else { return nil }
+            return minutes * 60 + seconds
+        }
+    }
+
     func stopPlayer() {
+        clearSubtitles()
+        itemStatusCancellable?.cancel()
+        itemStatusCancellable = nil
         player?.pause()
         player = nil
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
-    
+
     func savePlaybackDate() {
         switch self.media.mediaType {
         case .tv(let seasons):
@@ -243,7 +439,7 @@ final class PlayerViewModel: Hashable {
                                 self.mediaSource.startPoint < self.mediaSource.duration * 0.1 {
                                 self.mediaSource.startPoint = 0
                             }
-                            
+
                             print(self.mediaSource.startPoint, self.mediaSource.duration * 0.1, self.mediaSource.duration * 0.9, )
                         }
                     }
@@ -252,8 +448,12 @@ final class PlayerViewModel: Hashable {
         default: break
         }
     }
-    
+
     deinit {
+        if let observer = subtitleTimeObserver, let player = self.player {
+            player.removeTimeObserver(observer)
+        }
+        itemStatusCancellable?.cancel()
         player?.pause()
         streamingService.playbackEnd()
     }
