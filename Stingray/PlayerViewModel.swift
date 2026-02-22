@@ -293,7 +293,6 @@ final class PlayerViewModel: Hashable {
     // MARK: - External Subtitle (VTT Overlay)
     // Client-side VTT rendering is used because tvOS AVPlayer doesn't properly handle
     // HLS subtitle delivery — X-TIMESTAMP-MAP=MPEGTS:900000 causes ~9s desync.
-    // This limitation was also observed in Reefy's native tvOS player.
 
     /// Check if a subtitle stream is text-based (can be rendered client-side)
     private func isTextBasedSubtitle(_ subtitleID: String?) -> Bool {
