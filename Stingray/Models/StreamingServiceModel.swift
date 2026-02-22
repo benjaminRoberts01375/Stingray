@@ -46,6 +46,29 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
         subtitle: String?
     ) -> AVPlayer?
     
+    /// Switch audio/subtitle/bitrate track without recreating the player.
+    /// Preserves the AVPlayer instance and its HDR pipeline.
+    /// - Parameters:
+    ///   - existingPlayer: The current AVPlayer to reuse.
+    ///   - mediaSource: Media source being watched.
+    ///   - videoID: Video stream ID.
+    ///   - audioID: Audio stream ID.
+    ///   - subtitleID: Subtitle stream ID. Nil = no subtitles.
+    ///   - bitrate: Video bitrate of the stream.
+    ///   - title: Title of the media to put on the player.
+    ///   - subtitle: Subtitle, if available, to put on the player.
+    /// - Returns: The new AVPlayerItem, or nil on failure.
+    func playbackSwitchTrack(
+        existingPlayer: AVPlayer,
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Bitrate,
+        title: String,
+        subtitle: String?
+    ) -> AVPlayerItem?
+
     /// Inform the server that playback has ended
     func playbackEnd()
     
@@ -421,6 +444,60 @@ public final class JellyfinModel: StreamingServiceProtocol {
         return player
     }
     
+    func playbackSwitchTrack(
+        existingPlayer: AVPlayer,
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Bitrate,
+        title: String,
+        subtitle: String?
+    ) -> AVPlayerItem? {
+        // End old progress tracking
+        self.playerProgress?.stop()
+        self.playerProgress = nil
+
+        let sessionID = UUID().uuidString
+        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
+        let bitrateBits = switch bitrate {
+        case .full:
+            videoStream.bitrate
+        case .limited(let setBitrate):
+            setBitrate
+        }
+
+        guard let playerItem = networkAPI.getStreamingContent(
+                accessToken: accessToken,
+                contentID: mediaSource.id,
+                bitrate: bitrateBits,
+                subtitleID: subtitleID,
+                audioID: audioID,
+                videoID: videoID,
+                sessionID: sessionID,
+                title: title,
+                subtitle: subtitle
+              )
+        else { return nil }
+
+        // Reuse existing player — preserves HDR/DV pipeline
+        self.playerProgress = JellyfinPlayerProgress(
+            player: existingPlayer,
+            network: networkAPI,
+            mediaSource: mediaSource,
+            videoID: videoID,
+            audioID: audioID,
+            subtitleID: subtitleID,
+            bitrate: bitrate,
+            playbackSessionID: sessionID,
+            userSessionID: self.sessionID,
+            accessToken: self.accessToken
+        )
+        self.playerProgress?.start()
+
+        return playerItem
+    }
+
     func playbackEnd() {
         self.playerProgress?.stop()
         self.playerProgress = nil

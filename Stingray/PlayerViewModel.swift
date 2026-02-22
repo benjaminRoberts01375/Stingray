@@ -120,17 +120,19 @@ final class PlayerViewModel: Hashable {
         subtitleID: String? = nil,
         bitrate: Bitrate? = nil
     ) {
-        self.stopPlayer()
-        
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-        } catch {
-            print("Failed to configure audio session: \(error)")
+        let isTrackSwitch = self.player != nil
+
+        if !isTrackSwitch {
+            do {
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+            } catch {
+                print("Failed to configure audio session: \(error)")
+            }
         }
-        
+
         var title = ""
         var subtitle = ""
-        
+
         switch self.media.mediaType {
         case .tv(let seasons):
             if let seasons = seasons { // TV Shows
@@ -150,23 +152,50 @@ final class PlayerViewModel: Hashable {
             if sources.count > 1 { subtitle = self.mediaSource.name }
         default: title = self.media.title
         }
-        
-        guard let player = streamingService.playbackStart(
-            mediaSource: self.mediaSource,
-            videoID: videoID ?? self.playerProgress?.videoID ?? "0",
-            audioID: audioID ?? self.playerProgress?.audioID ?? "1",
-            subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
-            bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full,
-            title: title,
-            subtitle: subtitle
-        )
-        else { return }
-        
-        self.player = player
-        self.playerProgress = streamingService.playerProgress // Sync to view model
-        self.player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        self.player?.play()
-        
+
+        let resolvedVideoID = videoID ?? self.playerProgress?.videoID ?? "0"
+        let resolvedAudioID = audioID ?? self.playerProgress?.audioID ?? "1"
+        let resolvedSubtitleID = subtitleID ?? self.playerProgress?.subtitleID
+        let resolvedBitrate = bitrate ?? self.playerProgress?.bitrate ?? .full
+
+        if isTrackSwitch, let existingPlayer = self.player {
+            // Track switch: reuse existing AVPlayer to preserve the HDR/DV pipeline.
+            // Recreating the player destroys the color space and tone mapping state,
+            // which causes a blue screen on HDR content.
+            guard let newItem = streamingService.playbackSwitchTrack(
+                existingPlayer: existingPlayer,
+                mediaSource: self.mediaSource,
+                videoID: resolvedVideoID,
+                audioID: resolvedAudioID,
+                subtitleID: resolvedSubtitleID,
+                bitrate: resolvedBitrate,
+                title: title,
+                subtitle: subtitle
+            ) else { return }
+
+            existingPlayer.replaceCurrentItem(with: newItem)
+            self.playerProgress = streamingService.playerProgress
+            existingPlayer.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
+            existingPlayer.play()
+        } else {
+            // Initial playback: create a new player from scratch
+            guard let player = streamingService.playbackStart(
+                mediaSource: self.mediaSource,
+                videoID: resolvedVideoID,
+                audioID: resolvedAudioID,
+                subtitleID: resolvedSubtitleID,
+                bitrate: resolvedBitrate,
+                title: title,
+                subtitle: subtitle
+            )
+            else { return }
+
+            self.player = player
+            self.playerProgress = streamingService.playerProgress
+            self.player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
+            self.player?.play()
+        }
+
         // Update user settings
         guard var currentUser = UserModel.shared.getDefaultUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
