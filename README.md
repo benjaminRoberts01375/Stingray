@@ -85,6 +85,7 @@ Extensive content metadata.
 - [x] Extend playback buffer
 - [x] Lower priority of downloading media
 - [x] Use the same view model across all player views
+- [x] Fix labels appearing black.
 
 ### Long Shots
 
