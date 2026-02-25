@@ -66,18 +66,18 @@ Extensive content metadata.
     - [ ] Stingray's version
     - [ ] Total number of movies
     - [ ] Total number of shows
-- [ ] Streaming Stats in the player
-  - [ ] Observed bitrate
-  - [ ] Playback resolution
-  - [ ] Screen resolution
-  - [ ] Framerate
-  - [ ] Codecs
-  - [ ] Buffer's duration
-  - [ ] Playback session ID
-  - [ ] Media ID
-  - [ ] Media Source ID
-  - [ ] Video stream ID
-  - [ ] Audio stream ID
+- [x] Streaming Stats in the player
+  - [x] Observed bitrate
+  - [x] Playback resolution
+  - [x] Screen resolution
+  - [x] Framerate
+  - [x] Codecs
+  - [x] Buffer's duration
+  - [x] Playback session ID
+  - [x] Media ID
+  - [x] Media Source ID
+  - [x] Video stream ID
+  - [x] Audio stream ID
 - [ ] Profiles
   - [ ] Integrate into Apple TV profiles
   - [ ] Show all profiles on every Apple TV account, but remember last used profile
@@ -85,6 +85,8 @@ Extensive content metadata.
 - [x] Extend playback buffer
 - [x] Lower priority of downloading media
 - [x] Use the same view model across all player views
+- [x] Improve trailing slashes on URLs.
+- [x] Improve JSON decoding verbosity.
 - [x] Fix labels appearing black.
 
 ### Long Shots
