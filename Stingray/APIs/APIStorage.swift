@@ -73,12 +73,18 @@ public protocol BasicStorageProtocol {
 final class DefaultsBasicStorage: BasicStorageProtocol {
     private let defaults: UserDefaults
     
-    init() throws(UserDefaultsErrors) {
+    init() {
         // Use the shared container instead of standard defaults
-        guard let appGroupDefaults = UserDefaults(suiteName: "group.com.benlab.stingray")
-        else { throw UserDefaultsErrors.FailedSetup }
+        let appGroupDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") ?? UserDefaults.standard
+        
         print("Setting up user defaults with suite name")
         self.defaults = appGroupDefaults
+        
+        // Update the active user ID
+        let tvOSUserIDKey = "tvOS-userID" // This'll probably have to move out of here and somewhere more "global"
+        let sharedDefaults = UserDefaults.standard
+        let tvOSUserID = sharedDefaults.string(forKey: tvOSUserIDKey) ?? ""
+        self.setString(.defaultStreamingUserID, id: tvOSUserID, value: "")
     }
     
     func getString(_ key: StorageKeys, id: String) -> String? {
