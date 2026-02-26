@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct UserView: View {
+public struct SettingsView: View {
     var users = UserModel.shared
     var streamingService: any StreamingServiceProtocol
     @Binding var loggedIn: LoginState
