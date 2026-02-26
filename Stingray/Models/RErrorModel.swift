@@ -306,3 +306,13 @@ enum JellyfinNetworkErrors: RError {
         }
     }
 }
+
+/// `UserDefaults` errors
+public enum UserDefaultsErrors: RError {
+    /// Failed to create a UserDefaults object
+    case FailedSetup
+    
+    public var next: (any RError)? { nil }
+    
+    public var errorDescription: String { "Failed to setup user defaults with suiteName" }
+}
