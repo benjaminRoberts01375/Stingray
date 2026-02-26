@@ -63,7 +63,7 @@ struct AddServerView: View {
         }
         .onAppear {
             print("Attempting to set up from storage")
-            guard let defaultUser = UserModel.shared.getDefaultUser() else {
+            guard let defaultUser = UserModel.shared.getDefaultStreamingUser() else {
                 print("Failed to setup from storage, showing login screen")
                 return
             }
