@@ -14,12 +14,12 @@ public protocol UserStorageProtocol {
     /// Set all user IDs to an array of IDs
     /// - Parameter userIDs: User IDs to set
     func setUserIDs(_ userIDs: [String])
-    /// Get the default user to use on startup
-    /// - Returns: The default user ID
-    func getDefaultUserID() -> String?
+    /// Get the most recently used streaming user ID
+    /// - Returns: The user ID
+    func getDefaultStreamingUserID() -> String?
     /// Set the default user to use on startup
     /// - Parameter id: The default user ID
-    func setDefaultUserID(id: String)
+    func setDefaultStreamingUserID(id: String)
     /// Save a `User` into storage
     /// - Parameters:
     ///   - user: User to save
@@ -46,12 +46,12 @@ public final class UserStorage: UserStorageProtocol {
         self.basicStorage.setStringArray(.userIDs, id: "", value: userIDs)
     }
     
-    public func getDefaultUserID() -> String? {
-        self.basicStorage.getString(.defaultUserID, id: "")
+    public func getDefaultStreamingUserID() -> String? {
+        self.basicStorage.getString(.defaultStreamingUserID, id: "")
     }
     
-    public func setDefaultUserID(id: String) {
-        self.basicStorage.setString(.defaultUserID, id: "", value: id)
+    public func setDefaultStreamingUserID(id: String) {
+        self.basicStorage.setString(.defaultStreamingUserID, id: "", value: id)
     }
     
     public func setUser(user: User) {

@@ -12,7 +12,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var accessToken: String
     
     init() throws {
-        guard let defaultUser = UserModel().getDefaultUser() else {
+        guard let defaultUser = UserModel().getDefaultStreamingUser() else {
             throw InitError.noDefaultUser
         }
         switch defaultUser.serviceType {

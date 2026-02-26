@@ -34,17 +34,17 @@ final class UserModel {
         storage.setUserIDs(userIDs)
     }
     
-    /// Gets a user based on a default userID
-    /// - Returns: The default user
-    func getDefaultUser() -> User? {
-        guard let defaultID = self.storage.getDefaultUserID() else { return nil }
+    /// Gets the most recent Jellyfin user's ID
+    /// - Returns: The most recent user
+    func getDefaultStreamingUser() -> User? {
+        guard let defaultID = self.storage.getDefaultStreamingUserID() else { return nil }
         return self.storage.getUser(userID: defaultID)
     }
     
     /// Overwrites the existing default user
     /// - Parameter userID: UserID of the new default user
     func setDefaultUser(userID: String) {
-        self.storage.setDefaultUserID(id: userID)
+        self.storage.setDefaultStreamingUserID(id: userID)
     }
     
     /// Gets all users

@@ -8,7 +8,8 @@
 import Foundation
 
 public enum StorageKeys: String {
-    case defaultUserID = "defaultUserID"
+    /// Active user
+    case defaultStreamingUserID = "defaultStreamingUserID"
     case userIDs = "userIDs"
     case user = "user"
 }
