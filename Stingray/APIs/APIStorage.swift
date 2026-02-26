@@ -86,7 +86,9 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     }
     
     func getString(_ key: StorageKeys, id: String) -> String? {
-        return defaults.string(forKey: key.rawValue + id)
+        let key = defaults.string(forKey: key.rawValue + id)
+        if key == "" { return nil } // Little extra safety
+        return key
     }
     
     func setString(_ key: StorageKeys, id: String, value: String) {
