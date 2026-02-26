@@ -211,7 +211,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
             try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
                 .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
         } catch {
-            self.libraryStatus = .error(StreamingServiceErrors.LibrarySetupFailed(error))
+            self.libraryStatus = .error(StreamingServiceErrors.librarySetupFailed(error))
             return
         }
         

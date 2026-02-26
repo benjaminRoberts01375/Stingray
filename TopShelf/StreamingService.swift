@@ -17,7 +17,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
             if let maybeUser = UserModel().getDefaultStreamingUser() { defaultUser = maybeUser }
             else { throw StreamingServiceErrors.noDefaultUser }
         }
-        catch { throw StreamingServiceErrors.InitFailed(error) }
+        catch { throw StreamingServiceErrors.initFailed(error) }
         
         switch defaultUser.serviceType {
         case .Jellyfin(let userJellyfin):
