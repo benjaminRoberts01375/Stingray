@@ -90,7 +90,7 @@ public struct ProfilePickerView: View {
                     }
                 }
             }
-            NavigationLink { LoginView(loggedIn: $loginState) }
+            NavigationLink { AddServerView(loggedIn: $loginState) }
             label: {
                 VStack(alignment: .center) {
                     Image(systemName: "person.crop.circle.fill.badge.plus")

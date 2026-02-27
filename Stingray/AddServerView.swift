@@ -107,11 +107,11 @@ struct AddServerView: View {
             case .http:
                 netError = NetworkError.invalidURL("http://\(httpHostname):\(httpPort)")
                 self.error = netError
-                self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
+                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
             case .https:
                 netError = NetworkError.invalidURL("https://\(httpHostname)")
                 self.error = netError
-                self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
+                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
             }
             return
         }
@@ -125,7 +125,7 @@ struct AddServerView: View {
             } catch let error as RError {
                 self.error = AccountErrors.loginFailed(error)
                 if let netErr = error.last() as? NetworkError {
-                    self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
+                    self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
                     print("Error signing in: \(error.rDescription())")
                 } else {
                     self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
