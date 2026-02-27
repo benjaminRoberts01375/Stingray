@@ -13,6 +13,8 @@ enum LoginState {
     case loggedOut
     /// There is at least one user signed in
     case loggedIn(any StreamingServiceProtocol)
+    /// There are accounts signed in, but the current user needs to be picked
+    case pickingUser
 }
 
 struct ContentView: View {
@@ -24,6 +26,15 @@ struct ContentView: View {
         case .loggedOut:
             AddServerView(loggedIn: $loginState)
                 .padding(128)
+        case .pickingUser:
+            VStack {
+                Text("Welcome back to Jellyfin")
+                    .font(.title.bold())
+                Spacer()
+                Spacer()
+            }
+            .padding(128)
+            
         case .loggedIn(let streamingService):
             DashboardView(streamingService: streamingService, deepLinkRequest: $deepLinkRequest, loggedIn: $loginState)
                 .onOpenURL { url in

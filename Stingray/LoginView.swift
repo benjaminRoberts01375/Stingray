@@ -75,6 +75,9 @@ struct LoginView: View {
         case .loggedOut:
             self.errorSummary = "There's no streaming service is configured, so we aren't sure how you got here."
             self.error = AccountErrors.loginFailed(nil)
+        case .pickingUser:
+            self.errorSummary = "You're supposed to be at the profile picker, so we aren't sure how you got here"
+            self.error = AccountErrors.loginFailed(nil)
         }
     }
     
