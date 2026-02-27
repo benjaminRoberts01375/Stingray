@@ -21,7 +21,7 @@ final class UserModel {
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
-    init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
+    private init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
         self.storage = storage
         self.userIDs = self.storage.getUserIDs()
     }
