@@ -11,6 +11,6 @@ public struct SettingsView: View {
     @Binding var loginState: LoginState
     
     public var body: some View {
-        ProfilePickerView(users: UserModel.shared.getUsers(), loginState: $loginState)
+        ProfilePickerView(loginState: $loginState)
     }
 }

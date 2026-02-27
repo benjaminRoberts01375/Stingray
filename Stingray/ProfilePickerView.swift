@@ -22,6 +22,11 @@ public struct ProfilePickerView: View {
         }
     }
     
+    init(loginState: Binding<LoginState>) {
+        self.users = UserModel.shared.getUsers()
+        self._loginState = loginState
+    }
+    
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
             ForEach(users) { user in
