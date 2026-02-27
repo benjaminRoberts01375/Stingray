@@ -67,6 +67,7 @@ struct LoginView: View {
                     } else {
                         self.error = AccountErrors.loginFailed(nil)
                         self.errorSummary = "Failed to login. Please try again."
+                        print(error.errorDescription)
                     }
                     
                     awaitingLogin = false
