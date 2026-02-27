@@ -63,8 +63,17 @@ struct AddServerView: View {
         }
         .onAppear {
             print("Attempting to set up from storage")
-            guard let defaultUser = UserModel.shared.getDefaultStreamingUser() else {
-                print("Failed to setup from storage, showing login screen")
+            // Check if any users exist
+            if UserModel.shared.getUsers().isEmpty {
+                print("No users have been signed up, showing login screen")
+                return
+            }
+            
+            // Check if the current Apple TV user has an associated account
+            guard let defaultUser = UserModel.shared.getDefaultStreamingUser()
+            else {
+                print("Users exist, but there's no active user. Showing profile picker")
+                self.loggedIn = .pickingUser
                 return
             }
             switch defaultUser.serviceType {
