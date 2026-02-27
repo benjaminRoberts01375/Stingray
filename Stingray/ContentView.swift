@@ -31,6 +31,7 @@ struct ContentView: View {
                 Text("Welcome back to Jellyfin")
                     .font(.title.bold())
                 Spacer()
+                ProfilePickerView(users: UserModel.shared.getUsers(), loginState: $loginState)
                 Spacer()
             }
             .padding(128)

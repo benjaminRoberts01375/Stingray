@@ -27,7 +27,7 @@ struct DashboardView: View {
                 case .available(let libraries), .complete(let libraries):
                     TabView(selection: $selectedTab) {
                         Tab(value: "users") {
-                            SettingsView(streamingService: streamingService, loggedIn: $loggedIn)
+                            SettingsView(loginState: $loggedIn)
                         } label: {
                             Text(streamingService.usersName)
                         }
