@@ -18,6 +18,15 @@ struct AddServerView: View {
     @State private var errorSummary: String = ""
     @State private var awaitingLogin: Bool = false
     
+    init(loginState: Binding<LoginState>) {
+        self._loggedIn = loginState
+        guard let serviceURL = UserModel.shared.getDefaultStreamingUser()?.serviceURL
+        else { return }
+        if serviceURL.scheme == "https" { self.httpProcol = .https }
+        httpPort = String(serviceURL.port ?? 8096)
+        self.httpHostname = serviceURL.host ?? ""
+    }
+    
     var body: some View {
         VStack {
             Text("Sign into Jellyfin")
@@ -139,5 +148,5 @@ struct AddServerView: View {
 
 #Preview {
     @Previewable @State var loginState: LoginState = .loggedOut
-    AddServerView(loggedIn: $loginState)
+    AddServerView(loginState: $loginState)
 }

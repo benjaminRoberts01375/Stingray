@@ -26,7 +26,7 @@ struct ContentView: View {
         NavigationStack(path: $navigationPath) {
             switch loginState {
             case .loggedOut:
-                AddServerView(loggedIn: $loginState)
+                AddServerView(loginState: $loginState)
                     .padding(128)
             case .pickingUser:
                 VStack {
