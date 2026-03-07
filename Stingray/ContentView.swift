@@ -13,22 +13,40 @@ enum LoginState {
     case loggedOut
     /// There is at least one user signed in
     case loggedIn(any StreamingServiceProtocol)
+    /// There are accounts signed in, but the current user needs to be picked
+    case pickingUser
 }
 
 struct ContentView: View {
     @State var loginState: LoginState = .loggedOut
     @State var deepLinkRequest: DeepLinkRequest?
+    @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        switch loginState {
-        case .loggedOut:
-            AddServerView(loggedIn: $loginState)
-                .padding(128)
-        case .loggedIn(let streamingService):
-            DashboardView(streamingService: streamingService, deepLinkRequest: $deepLinkRequest, loggedIn: $loginState)
-                .onOpenURL { url in
-                    handleDeepLink(url: url)
+        NavigationStack(path: $navigationPath) {
+            switch loginState {
+            case .loggedOut:
+                AddServerView(loginState: $loginState)
+                    .padding(128)
+            case .pickingUser:
+                VStack {
+                    Text("Welcome back to Jellyfin")
+                        .font(.title.bold())
+                    Spacer()
+                    ProfilePickerView(loginState: $loginState)
+                    Spacer()
                 }
+                .padding(128)
+                
+            case .loggedIn(let streamingService):
+                DashboardView(
+                    streamingService: streamingService,
+                    navigationPath: $navigationPath,
+                    deepLinkRequest: $deepLinkRequest,
+                    loggedIn: $loginState
+                )
+                .onOpenURL { handleDeepLink(url: $0) }
+            }
         }
     }
     

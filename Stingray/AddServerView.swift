@@ -18,6 +18,15 @@ struct AddServerView: View {
     @State private var errorSummary: String = ""
     @State private var awaitingLogin: Bool = false
     
+    init(loginState: Binding<LoginState>) {
+        self._loggedIn = loginState
+        guard let serviceURL = UserModel.shared.getDefaultStreamingUser()?.serviceURL
+        else { return }
+        if serviceURL.scheme == "https" { self.httpProcol = .https }
+        httpPort = String(serviceURL.port ?? 8096)
+        self.httpHostname = serviceURL.host ?? ""
+    }
+    
     var body: some View {
         VStack {
             Text("Sign into Jellyfin")
@@ -63,8 +72,17 @@ struct AddServerView: View {
         }
         .onAppear {
             print("Attempting to set up from storage")
-            guard let defaultUser = UserModel.shared.getDefaultUser() else {
-                print("Failed to setup from storage, showing login screen")
+            // Check if any users exist
+            if UserModel.shared.getUsers().isEmpty {
+                print("No users have been signed up, showing login screen")
+                return
+            }
+            
+            // Check if the current Apple TV user has an associated account
+            guard let defaultUser = UserModel.shared.getDefaultStreamingUser()
+            else {
+                print("Users exist, but there's no active user. Showing profile picker")
+                self.loggedIn = .pickingUser
                 return
             }
             switch defaultUser.serviceType {
@@ -98,11 +116,11 @@ struct AddServerView: View {
             case .http:
                 netError = NetworkError.invalidURL("http://\(httpHostname):\(httpPort)")
                 self.error = netError
-                self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
+                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
             case .https:
                 netError = NetworkError.invalidURL("https://\(httpHostname)")
                 self.error = netError
-                self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
+                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
             }
             return
         }
@@ -116,7 +134,7 @@ struct AddServerView: View {
             } catch let error as RError {
                 self.error = AccountErrors.loginFailed(error)
                 if let netErr = error.last() as? NetworkError {
-                    self.errorSummary = LoginView.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
+                    self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
                     print("Error signing in: \(error.rDescription())")
                 } else {
                     self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
@@ -130,5 +148,5 @@ struct AddServerView: View {
 
 #Preview {
     @Previewable @State var loginState: LoginState = .loggedOut
-    AddServerView(loggedIn: $loginState)
+    AddServerView(loginState: $loginState)
 }

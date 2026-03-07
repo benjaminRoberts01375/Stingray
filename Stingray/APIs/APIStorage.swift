@@ -8,7 +8,8 @@
 import Foundation
 
 public enum StorageKeys: String {
-    case defaultUserID = "defaultUserID"
+    /// Active user
+    case defaultStreamingUserID = "defaultStreamingUserID"
     case userIDs = "userIDs"
     case user = "user"
 }
@@ -74,18 +75,22 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     
     init() {
         // Use the shared container instead of standard defaults
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") {
-            print("Setting up user defaults with suite name")
-            self.defaults = sharedDefaults
-        } else {
-            // Fallback to standard defaults if app group isn't configured
-            print("Setting up generic user defaults")
-            self.defaults = UserDefaults.standard
-        }
+        let appGroupDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") ?? UserDefaults.standard
+        
+        print("Setting up user defaults with suite name")
+        self.defaults = appGroupDefaults
+        
+        // Update the active user ID
+        let tvOSUserIDKey = "tvOS-userID" // This'll probably have to move out of here and somewhere more "global"
+        let sharedDefaults = UserDefaults.standard
+        let tvOSUserID = sharedDefaults.string(forKey: tvOSUserIDKey) ?? ""
+        self.setString(.defaultStreamingUserID, id: tvOSUserID, value: "")
     }
     
     func getString(_ key: StorageKeys, id: String) -> String? {
-        return defaults.string(forKey: key.rawValue + id)
+        let key = defaults.string(forKey: key.rawValue + id)
+        if key == "" { return nil } // Little extra safety
+        return key
     }
     
     func setString(_ key: StorageKeys, id: String, value: String) {

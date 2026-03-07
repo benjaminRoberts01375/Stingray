@@ -97,6 +97,43 @@ public enum NetworkError: RError {
             return "An access token is needed"
         }
     }
+    
+    /// A function to override `NetworkError` messages with a more human readable option
+    /// - Parameters:
+    ///   - netErr: NetworkError that was thrown
+    ///   - httpProtocol: HTTP protocol used
+    /// - Returns: Formatted error
+    static func overrideNetErrorMessage(netErr: NetworkError, httpProtocol: HttpProtocol) -> String {
+        switch netErr {
+        case .invalidURL:
+            switch httpProtocol {
+            case .http: return "Invalid HTTP URL. Check your hostname and port."
+            case .https: return "Invalid HTTPS URL. Check your URL."
+            }
+        case .encodeJSONFailed: return "Failed to send request to server. " +
+                "This may be because of some tricky characters in your username and password."
+        case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
+            switch httpProtocol {
+            case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
+            case .https: return "Could not find your Jellyfin server. Please check your URL."
+            }
+        case .badResponse(let responseCode, _):
+            switch responseCode {
+            case 401: return "Invalid username or password."
+            case 404:
+                switch httpProtocol {
+                case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
+                case .https: return "Could not find your Jellyfin server. Please check your URL."
+                }
+            default: return "An unexpected error occurred. Please make sure your login details are correct."
+            }
+        }
+    }
+}
+
+enum HttpProtocol: String, CaseIterable {
+    case http = "http"
+    case https = "https"
 }
 
 /// Different ways JSON can have an error.
@@ -179,21 +216,39 @@ public enum MediaError: RError {
 }
 
 /// Different ways a `StreamingServiceProtocol` can error out.
-enum StreamingServiceErrors: RError {
+public enum StreamingServiceErrors: RError {
     /// Failed to get initial library data.
-    case LibrarySetupFailed(RError?)
+    case librarySetupFailed(RError?)
+    /// Failed to create a streaming service object
+    case initFailed(any Error)
+    /// Address to the server was bad
+    case badAddress
+    /// No server API token
+    case noToken
+    /// User failed to be made
+    case badDefaultUser(RError)
+    /// No user is available
+    case noDefaultUser
     
-    var errorDescription: String {
+    public var errorDescription: String {
         switch self {
-        case .LibrarySetupFailed:
-            "Failed to create library"
+        case .librarySetupFailed: return "Failed to get library data"
+        case .initFailed: return "Failed to create a library"
+        case .badAddress: return "Bad address to server"
+        case .noToken: return "No API token available"
+        case .badDefaultUser: return "Creation of a default user failed"
+        case .noDefaultUser: return "No default user is available"
         }
     }
     
-    var next: (any RError)? {
+    public var next: (any RError)? {
         switch self {
-        case .LibrarySetupFailed(let err):
-            return err
+        case .librarySetupFailed(let err): return err
+        case .initFailed(let err):
+            if let rError = err as? StreamingServiceErrors { return rError }
+            return nil
+        case .badAddress, .noDefaultUser, .noToken: return nil
+        case .badDefaultUser(let err): return err
         }
     }
 }
@@ -305,4 +360,14 @@ enum JellyfinNetworkErrors: RError {
         case .playbackUpdateFailed: return "Failed to update playback status"
         }
     }
+}
+
+/// `UserDefaults` errors
+public enum UserDefaultsErrors: RError {
+    /// Failed to create a UserDefaults object
+    case FailedSetup
+    
+    public var next: (any RError)? { nil }
+    
+    public var errorDescription: String { "Failed to setup user defaults with suiteName" }
 }

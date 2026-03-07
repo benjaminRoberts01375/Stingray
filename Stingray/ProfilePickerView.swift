@@ -1,21 +1,36 @@
 //
-//  UserView.swift
+//  ProfilePickerView.swift
 //  Stingray
 //
-//  Created by Ben Roberts on 12/17/25.
+//  Created by Ben Roberts on 2/26/26.
 //
 
 import SwiftUI
 
-public struct UserView: View {
-    var users = UserModel.shared
-    var streamingService: any StreamingServiceProtocol
-    @Binding var loggedIn: LoginState
+public struct ProfilePickerView: View {
+    /// List of all users who have at some point signed into Stingray
+    let users: [User]
+    /// Login state for the entire app
+    @Binding var loginState: LoginState
+    
+    // A simple way to derrive the streaming service from the login state
+    var streamingService: (any StreamingServiceProtocol)? {
+        switch loginState {
+        case .loggedIn(let streamingServiceProtocol):
+            return streamingServiceProtocol
+        default: return nil
+        }
+    }
+    
+    init(loginState: Binding<LoginState>) {
+        self.users = UserModel.shared.getUsers()
+        self._loginState = loginState
+    }
     
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
-            ForEach(users.getUsers()) { user in
-                Button { switchUser(user: user) }
+            ForEach(users) { user in
+                Button { loginState = Self.switchUser(user: user, userModel: UserModel.shared) }
                 label: {
                     VStack(alignment: .center) {
                         switch user.serviceType {
@@ -60,7 +75,9 @@ public struct UserView: View {
                     }
                     .padding(16)
                     .padding(.horizontal, 16)
-                    .background(user.id == streamingService.userID ? .white.opacity(0.25) : .clear)
+                    .background { // Only show white background if the current user is this user
+                        streamingService?.userID == user.id ? Color.white.opacity(0.25) : .clear
+                    }
                     .clipShape(RoundedRectangle(cornerRadius: 40))
                     .padding(.horizontal, -16)
                     .padding(-16)
@@ -69,17 +86,16 @@ public struct UserView: View {
                 .contextMenu {
                     Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
                         UserModel.shared.deleteUser(user.id)
-                        if self.streamingService.userID == user.id {
+                        if self.streamingService?.userID == user.id {
                             if let nextUser = UserModel.shared.getUsers().first {
-                                self.switchUser(user: nextUser)
-                            } else {
-                                self.loggedIn = .loggedOut
+                                self.loginState = Self.switchUser(user: nextUser, userModel: UserModel.shared)
                             }
+                            else { self.loginState = .loggedOut }
                         }
                     }
                 }
             }
-            NavigationLink { LoginView(loggedIn: $loggedIn) }
+            NavigationLink { AddServerView(loginState: $loginState) }
             label: {
                 VStack(alignment: .center) {
                     Image(systemName: "person.crop.circle.fill.badge.plus")
@@ -96,13 +112,12 @@ public struct UserView: View {
         }
     }
     
-    func switchUser(user: User) {
-        // Check if the user we're switching to is the current user
-        if user.id == self.streamingService.userID { return }
+    static func switchUser(user: User, userModel: UserModel) -> LoginState {
+        userModel.setDefaultUser(userID: user.id)
         
         switch user.serviceType {
         case .Jellyfin(let jellyfinData):
-            self.loggedIn = .loggedIn(
+            return .loggedIn(
                 JellyfinModel(
                     userDisplayName: user.displayName,
                     userID: user.id,
@@ -112,7 +127,6 @@ public struct UserView: View {
                     serviceURL: user.serviceURL
                 )
             )
-            self.users.setDefaultUser(userID: user.id)
         }
     }
 }
