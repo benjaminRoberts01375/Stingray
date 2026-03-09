@@ -80,7 +80,6 @@ public struct ProfilePickerView: View {
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 40))
                     .padding(.horizontal, -16)
-                    .padding(-16)
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
