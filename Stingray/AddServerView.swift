@@ -10,8 +10,8 @@ import SwiftUI
 struct AddServerView: View {
     @Binding var loggedIn: LoginState
     @State private var httpProcol: HttpProtocol = .http
-    @State private var httpHostname: String = ""
-    @State private var httpPort: String = "8096"
+    @State private var httpHostname: String
+    @State private var httpPort: String
     @State private var username: String = ""
     @State private var password: String = ""
     @State private var error: RError?
@@ -20,10 +20,21 @@ struct AddServerView: View {
     
     init(loginState: Binding<LoginState>) {
         self._loggedIn = loginState
+        if SettingsModel.shared.profileSwitchingMethod == .askOnLaunch {
+            self.httpHostname = ""
+            self.httpPort = "8096"
+            self.httpProcol = .http
+            return
+        }
         guard let serviceURL = UserModel.shared.getActiveUser()?.serviceURL
-        else { return }
+        else {
+            self.httpHostname = ""
+            self.httpPort = "8096"
+            self.httpProcol = .http
+            return
+        }
         if serviceURL.scheme == "https" { self.httpProcol = .https }
-        httpPort = String(serviceURL.port ?? 8096)
+        self.httpPort = String(serviceURL.port ?? 8096)
         self.httpHostname = serviceURL.host ?? ""
     }
     
