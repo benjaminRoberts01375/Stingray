@@ -193,7 +193,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
                     displayName: response.userName
                 )
             )
-            UserModel.shared.setDefaultUser(userID: response.userId)
+            UserModel.shared.setActiveUser(userID: response.userId)
             return JellyfinModel(response: response, serviceURL: url)
         } catch {
             throw AccountErrors.loginFailed(error)

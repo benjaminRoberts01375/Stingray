@@ -20,7 +20,7 @@ struct AddServerView: View {
     
     init(loginState: Binding<LoginState>) {
         self._loggedIn = loginState
-        guard let serviceURL = UserModel.shared.getDefaultStreamingUser()?.serviceURL
+        guard let serviceURL = UserModel.shared.getActiveUser()?.serviceURL
         else { return }
         if serviceURL.scheme == "https" { self.httpProcol = .https }
         httpPort = String(serviceURL.port ?? 8096)
@@ -79,7 +79,7 @@ struct AddServerView: View {
             }
             
             // Check if the current Apple TV user has an associated account
-            guard let defaultUser = UserModel.shared.getDefaultStreamingUser()
+            guard let defaultUser = UserModel.shared.getActiveUser()
             else {
                 print("Users exist, but there's no active user. Showing profile picker")
                 self.loggedIn = .pickingUser
