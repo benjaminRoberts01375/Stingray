@@ -34,7 +34,7 @@ final class UserModel {
         storage.setUserIDs(userIDs)
     }
     
-    /// Gets the most recent Jellyfin user's ID
+    /// Gets the most recent Jellyfin user's ID. `nil` implies no most recently user, but there may be available users.
     /// - Returns: The most recent user
     func getActiveUser() -> User? {
         guard let userID = self.storage.getActiveUserID() else { return nil }

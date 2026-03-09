@@ -14,7 +14,7 @@ public protocol UserStorageProtocol {
     /// Set all user IDs to an array of IDs
     /// - Parameter userIDs: User IDs to set
     func setUserIDs(_ userIDs: [String])
-    /// Get the most recently used streaming user ID
+    /// Gets the most recent Jellyfin user's ID. `nil` implies no most recently user, but there may be available users.
     /// - Returns: The user ID
     func getActiveUserID() -> String?
     /// Set the current user to use on startup
@@ -47,11 +47,18 @@ public final class UserStorage: UserStorageProtocol {
     }
     
     public func getActiveUserID() -> String? {
-        self.basicStorage.getString(.defaultStreamingUserID)
+        let method: SettingsModel.ProfileSwitching = (try? self.basicStorage.getSecureData(.userSwitchingMethod)) ?? .askOnLaunch
+        switch method {
+        case .askOnLaunch: return nil
+        case .manual:
+            let userID: String? = try? self.basicStorage.getSecureData(.defaultStreamingUserID) ?? nil // Fallback to ask
+            self.basicStorage.setString(.defaultStreamingUserID, value: userID ?? "")
+            return userID
+        case .syncWithTVOS: return self.basicStorage.getString(.defaultStreamingUserID)
+        }
     }
     
     public func setActiveUserID(id: String) {
-        // TODO: Stores in both locations, emulating behavior found through v1.1.0
         self.basicStorage.setString(.defaultStreamingUserID, value: id)
         try? self.basicStorage.setSecureData(.defaultStreamingUserID, data: id) // TODO: Silently fails
     }
