@@ -50,7 +50,10 @@ public final class UserStorage: UserStorageProtocol {
         let method: SettingsModel.ProfileSwitching = (try? self.basicStorage.getSecureData(.userSwitchingMethod)) ?? .askOnLaunch
         switch method {
         case .askOnLaunch: return nil
-        case .manual: return try? self.basicStorage.getSecureData(.defaultStreamingUserID) ?? nil // Fallback to ask
+        case .manual:
+            let userID: String? = try? self.basicStorage.getSecureData(.defaultStreamingUserID) ?? nil // Fallback to ask
+            self.basicStorage.setString(.defaultStreamingUserID, value: userID ?? "")
+            return userID
         case .syncWithTVOS: return self.basicStorage.getString(.defaultStreamingUserID)
         }
     }
