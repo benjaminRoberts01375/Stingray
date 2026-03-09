@@ -39,11 +39,11 @@ public final class UserStorage: UserStorageProtocol {
     init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
     
     public func getUserIDs() -> [String] {
-        return self.basicStorage.getStringArray(.userIDs, id: "")
+        return (try? self.basicStorage.getSecureData(.userIDs)) ?? [] // TODO: Silently fails
     }
     
     public func setUserIDs(_ userIDs: [String]) {
-        self.basicStorage.setStringArray(.userIDs, id: "", value: userIDs)
+        try? self.basicStorage.setSecureData(.userIDs, data: userIDs) // TODO: Silently fails
     }
     
     public func getDefaultStreamingUserID() -> String? {

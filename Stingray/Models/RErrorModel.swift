@@ -417,7 +417,25 @@ public enum BasicStorageErrors: RError {
             return "Secure data could not find the value at key '\(key)'"
         case .deleteFailed(let osStatus, let key):
             let message = SecCopyErrorMessageString(osStatus, nil) as String? ?? "of an unknown reason"
-            return "Failed to delete secure data at key '\(key)' because \(message)."
+            return "Failed to delete secure data at key '\(key)' because \(message)"
+        }
+    }
+}
+
+public enum UserStorageErrors: RError {
+    /// Could not find the specified user. The `String` value is the user's ID.
+    case userNotFound(RError, String)
+    
+    public var next: (any RError)? {
+        switch self {
+        case .userNotFound(let err, _): return err
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .userNotFound(_, let userID):
+            return "The user with ID '\(userID)' was not found"
         }
     }
 }
