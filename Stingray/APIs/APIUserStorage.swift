@@ -57,16 +57,11 @@ public final class UserStorage: UserStorageProtocol {
     }
     
     public func upsertUser(user: User) {
-        if let encoded = try? JSONEncoder().encode(user),
-           let jsonString = String(data: encoded, encoding: .utf8) {
-            self.basicStorage.setString(.user(user.id), value: jsonString)
-        }
+        try? self.basicStorage.setSecureData(.user(user.id), data: user)
     }
     
     public func getUser(userID: String) -> User? {
-        guard let jsonString = self.basicStorage.getString(.user(userID)),
-              let data = jsonString.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(User.self, from: data)
+        return try? self.basicStorage.getSecureData(.user(userID))
     }
     
     public func deleteUser(userID: String) {
