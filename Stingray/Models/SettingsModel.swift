@@ -14,7 +14,7 @@ public final class SettingsModel {
     static let shared = SettingsModel()
     
     /// Type for when Stingray will ask the user about switching profiles.
-    public enum ProfileSwitching: Codable {
+    public enum ProfileSwitching: Codable, CaseIterable {
         /// When Stingray launches, ask the user - typical of most streaming services
         case askOnLaunch
         /// When Stingray launches, assume the last used profile - Stingray's behavior through v1.1.0
@@ -26,8 +26,11 @@ public final class SettingsModel {
     
     /// Storage device to permanently store user data
     @ObservationIgnored var storage: SettingsStorageProtocol
-    /// Describes how and when the current user will be switched
-    var profileSwitchingMethod: ProfileSwitching
+    
+    /// Describes how and when the current user will be switched. Updating this value updates permanent storage.
+    var profileSwitchingMethod: ProfileSwitching {
+        didSet { self.storage.setProfileSwitchingMethod(to: self.profileSwitchingMethod) }
+    }
     
     /// Create a SettingsModel from some kind of storage
     /// - Parameter storage: Permanent storage method to use
