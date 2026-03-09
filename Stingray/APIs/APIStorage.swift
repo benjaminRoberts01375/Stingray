@@ -6,12 +6,14 @@
 //
 
 import Foundation
+import Security
 
 public enum StorageKeys: String {
     /// Active user
     case defaultStreamingUserID = "defaultStreamingUserID"
     case userIDs = "userIDs"
     case user = "user"
+    case testing = "testing"
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
@@ -68,6 +70,21 @@ public protocol BasicStorageProtocol {
     /// - Returns: The found `Boolean`.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     func getBool(_ key: StorageKeys, id: String) -> Bool
+    /// Sets or updates secured data via key/value pairs
+    /// - Parameters:
+    ///   - key: The key where the data is to be stored.
+    ///   - data: Data to store at the given key.
+    /// - Throws: Throws `BasicStorageErrors` if the data cannot be formatted, or the secure storage also throws an error.
+    func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors)
+    /// Reads secure data from storage. Data is automatically formatted via the generic.
+    /// - Parameter key: Data to lookup
+    /// - Returns: Formatted data
+    /// - Throws: Throws `BasicStorageErrors` if the data is not formatted correct, cannot be found, or other reasons.
+    func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D
+    /// Deletes a key/value pair from secure storage.
+    /// - Parameter key: Key to delete.
+    /// - Throws: Throws a `BasicStorageErrors` if the secure data method also throws an error.
+    func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors)
 }
 
 final class DefaultsBasicStorage: BasicStorageProtocol {
@@ -123,5 +140,71 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     
     func deleteString(_ key: StorageKeys, id: String) {
         defaults.removeObject(forKey: key.rawValue + id)
+    }
+    
+    func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors) {
+        let encodedData: Data
+        do { encodedData = try JSONEncoder().encode(data) }
+        catch { throw BasicStorageErrors.encodingFailed(JSONError.failedJSONEncode(key.rawValue), key.rawValue) }
+        
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrAccount: key.rawValue,
+            kSecValueData: encodedData,
+            kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
+            kSecUseUserIndependentKeychain: true // For sharing data across tvOS users
+        ]
+        
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status == errSecDuplicateItem { // Entry already exists at key, update it instead
+            let lookupQuery: [CFString: Any] = [
+                kSecClass: kSecClassGenericPassword,
+                kSecAttrAccount: key.rawValue,
+                kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
+                kSecUseUserIndependentKeychain: true
+            ]
+            let updatedData: [CFString: Any] = [kSecValueData: encodedData]
+            let updateStatus = SecItemUpdate(lookupQuery as CFDictionary, updatedData as CFDictionary)
+            if updateStatus != errSecSuccess { throw BasicStorageErrors.updateFailed(updateStatus, key.rawValue) } // Failed to save
+        }
+        else if status != errSecSuccess { throw BasicStorageErrors.saveFailed(status, key.rawValue) } // Entry failed to succeed
+    }
+    
+    func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D {
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
+            kSecAttrAccount: key.rawValue,
+            kSecReturnData: true,
+            kSecMatchLimit: kSecMatchLimitOne,
+            kSecUseUserIndependentKeychain: true
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        if status == errSecItemNotFound { throw BasicStorageErrors.notFound(key.rawValue) }
+        else if status != errSecSuccess { throw BasicStorageErrors.readError(status, key.rawValue) }
+        
+        // Convert to Data type if possible
+        guard let data = result as? Data
+        else { throw BasicStorageErrors.unexpectedData(key.rawValue) }
+        // Decode Data into JSON
+        do { return try JSONDecoder().decode(D.self, from: data) }
+        catch { throw BasicStorageErrors.decodingFailed(JSONError.failedJSONDecode(key.rawValue, error), key.rawValue) }
+    }
+    
+    func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors) {
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrAccount: key.rawValue,
+            kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
+            kSecUseUserIndependentKeychain: true // For sharing data across tvOS users
+        ]
+        
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            throw BasicStorageErrors.deleteFailed(status, key.rawValue)
+        }
     }
 }
