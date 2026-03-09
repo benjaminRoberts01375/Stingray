@@ -401,18 +401,18 @@ public enum BasicStorageErrors: RError {
     public var errorDescription: String {
         switch self {
         case .updateFailed(let osStatus, let key):
-            return "Failed to update secure data: \(SecCopyErrorMessageString(osStatus, nil) as String? ?? "Unknown") at '\(key)'."
+            return "Failed to update secure data: \(SecCopyErrorMessageString(osStatus, nil) as String? ?? "Unknown") at '\(key)'"
         case .saveFailed(let osStatus, let key):
-            return "Failed to save to secure data: \(SecCopyErrorMessageString(osStatus, nil) as String? ?? "Unknown") at '\(key)'."
+            return "Failed to save to secure data: \(SecCopyErrorMessageString(osStatus, nil) as String? ?? "Unknown") at '\(key)'"
         case .encodingFailed(_, let key):
-            return "Failed to encode value for key '\(key)'."
+            return "Failed to encode value for key '\(key)'"
         case .decodingFailed(_, let key):
-            return "Failed decode value for key '\(key)'."
+            return "Failed decode value for key '\(key)'"
         case .unexpectedData(let key):
             return "Secure data returned something that was not of type Data at key '\(key)'"
         case .readError(let osStatus, let key):
             let message = SecCopyErrorMessageString(osStatus, nil) as String? ?? "of an unknown reason"
-            return "Failed to read secure data at key '\(key)' because \(message)."
+            return "Failed to read secure data at key '\(key)' because \(message)"
         case .notFound(let key):
             return "Secure data could not find the value at key '\(key)'"
         case .deleteFailed(let osStatus, let key):
