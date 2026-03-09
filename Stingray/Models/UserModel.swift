@@ -30,21 +30,21 @@ final class UserModel {
     /// - Parameter user: User to add
     func addUser(_ user: User) {
         userIDs.append(user.id)
-        storage.setUser(user: user)
+        storage.upsertUser(user: user)
         storage.setUserIDs(userIDs)
     }
     
     /// Gets the most recent Jellyfin user's ID
     /// - Returns: The most recent user
-    func getDefaultStreamingUser() -> User? {
-        guard let defaultID = self.storage.getDefaultStreamingUserID() else { return nil }
-        return self.storage.getUser(userID: defaultID)
+    func getActiveUser() -> User? {
+        guard let userID = self.storage.getActiveUserID() else { return nil }
+        return self.storage.getUser(userID: userID)
     }
     
-    /// Overwrites the existing default user
-    /// - Parameter userID: UserID of the new default user
-    func setDefaultUser(userID: String) {
-        self.storage.setDefaultStreamingUserID(id: userID)
+    /// Overwrites the existing active user
+    /// - Parameter userID: UserID of the new active user
+    func setActiveUser(userID: String) {
+        self.storage.setActiveUserID(id: userID)
     }
     
     /// Gets all users
@@ -58,7 +58,7 @@ final class UserModel {
         if !userIDs.contains(user.id) {
             self.addUser(user)
         } else {
-            self.storage.setUser(user: user)
+            self.storage.upsertUser(user: user)
         }
     }
     

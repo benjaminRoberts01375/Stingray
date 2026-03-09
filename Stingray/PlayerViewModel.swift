@@ -82,7 +82,7 @@ final class PlayerViewModel: Hashable {
         var subtitleID: String?
         var bitrate: Bitrate = .full
         
-        if let defaultUser = UserModel.shared.getDefaultStreamingUser() {
+        if let defaultUser = UserModel.shared.getActiveUser() {
             // Setup subtitles
             if defaultUser.usesSubtitles {
                 subtitleID = self.mediaSource.subtitleStreams.first {
@@ -168,7 +168,7 @@ final class PlayerViewModel: Hashable {
         self.player?.play()
         
         // Update user settings
-        guard var currentUser = UserModel.shared.getDefaultStreamingUser() else { return }
+        guard var currentUser = UserModel.shared.getActiveUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
         switch bitrate {
         case .full, .none:

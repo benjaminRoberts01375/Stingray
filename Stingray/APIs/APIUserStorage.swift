@@ -16,14 +16,14 @@ public protocol UserStorageProtocol {
     func setUserIDs(_ userIDs: [String])
     /// Get the most recently used streaming user ID
     /// - Returns: The user ID
-    func getDefaultStreamingUserID() -> String?
-    /// Set the default user to use on startup
-    /// - Parameter id: The default user ID
-    func setDefaultStreamingUserID(id: String)
+    func getActiveUserID() -> String?
+    /// Set the current user to use on startup
+    /// - Parameter id: The current user ID
+    func setActiveUserID(id: String)
     /// Save a `User` into storage
     /// - Parameters:
     ///   - user: User to save
-    func setUser(user: User)
+    func upsertUser(user: User)
     /// Get a `User` from storage
     /// - Parameter userID: ID of the user to find
     /// - Returns: The formatted `User`
@@ -46,15 +46,15 @@ public final class UserStorage: UserStorageProtocol {
         try? self.basicStorage.setSecureData(.userIDs, data: userIDs) // TODO: Silently fails
     }
     
-    public func getDefaultStreamingUserID() -> String? {
+    public func getActiveUserID() -> String? {
         self.basicStorage.getString(.defaultStreamingUserID, id: "")
     }
     
-    public func setDefaultStreamingUserID(id: String) {
+    public func setActiveUserID(id: String) {
         self.basicStorage.setString(.defaultStreamingUserID, id: "", value: id)
     }
     
-    public func setUser(user: User) {
+    public func upsertUser(user: User) {
         if let encoded = try? JSONEncoder().encode(user),
            let jsonString = String(data: encoded, encoding: .utf8) {
             self.basicStorage.setString(.user, id: user.id, value: jsonString)

@@ -113,7 +113,7 @@ public struct ProfilePickerView: View {
     }
     
     static func switchUser(user: User, userModel: UserModel) -> LoginState {
-        userModel.setDefaultUser(userID: user.id)
+        userModel.setActiveUser(userID: user.id)
         
         switch user.serviceType {
         case .Jellyfin(let jellyfinData):
