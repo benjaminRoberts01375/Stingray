@@ -8,12 +8,23 @@
 import Foundation
 import Security
 
-public enum StorageKeys: String {
+/// Available keys for interacting with the permanent storage.
+public enum StorageKeys {
     /// Active user
-    case defaultStreamingUserID = "defaultStreamingUserID"
-    case userIDs = "userIDs"
-    case user = "user"
-    case testing = "testing"
+    case defaultStreamingUserID
+    /// Key for all available userIDs
+    case userIDs
+    /// The user and userID to modify
+    case user(String)
+    
+    /// A string representation of the enum
+    public var rawValue: String {
+        switch self {
+        case .defaultStreamingUserID: return "defaultStreamingUserID"
+        case .userIDs: return "userIDs"
+        case .user(let id): return "user\(id)"
+        }
+    }
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
@@ -23,53 +34,53 @@ public protocol BasicStorageProtocol {
     ///   - key: The key where the data might be stored.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     /// - Returns: The found string
-    func getString(_ key: StorageKeys, id: String) -> String?
+    func getString(_ key: StorageKeys) -> String?
     /// Set a `String` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     ///   - value: Text to set
-    func setString(_ key: StorageKeys, id: String, value: String)
+    func setString(_ key: StorageKeys, value: String)
     /// Deletes a `String` from storage
     /// - Parameters:
     ///   - key: Key the string resides at.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func deleteString(_ key: StorageKeys, id: String)
+    func deleteString(_ key: StorageKeys)
     /// Get a `[String]` from local storage
     /// - Parameters:
     ///   - key: The key where the data might be stored.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     /// - Returns: The found `[String]`
-    func getStringArray(_ key: StorageKeys, id: String) -> [String]
+    func getStringArray(_ key: StorageKeys) -> [String]
     /// Set a `[String]` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored.
     ///   - value: Array to set.
     ///   - id: Unique ID for saving multiple versions of this value at this key
-    func setStringArray(_ key: StorageKeys, id: String, value: [String])
+    func setStringArray(_ key: StorageKeys, value: [String])
     /// Get a URL from local storage
     /// - Parameters:
     ///   - key: The key where the data might be stored.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     /// - Returns: The found `URL`.
-    func getURL(_ key: StorageKeys, id: String) -> URL?
+    func getURL(_ key: StorageKeys) -> URL?
     /// Set a `URL` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored.
     ///   - value: `URL` to set.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func setURL(_ key: StorageKeys, id: String, value: URL?)
+    func setURL(_ key: StorageKeys, value: URL?)
     /// Set a `Boolean` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored.
     ///   - value: `Boolean` to set.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func setBool(_ key: StorageKeys, id: String, value: Bool)
+    func setBool(_ key: StorageKeys, value: Bool)
     /// Get a `Boolean` from local storage
     /// - Parameter key: The key where the data might be stored.
     /// - Returns: The found `Boolean`.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func getBool(_ key: StorageKeys, id: String) -> Bool
+    func getBool(_ key: StorageKeys) -> Bool
     /// Sets or updates secured data via key/value pairs
     /// - Parameters:
     ///   - key: The key where the data is to be stored.
@@ -93,53 +104,46 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     init() {
         // Use the shared container instead of standard defaults
         let appGroupDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") ?? UserDefaults.standard
-        
         print("Setting up user defaults with suite name")
         self.defaults = appGroupDefaults
-        
-        // Update the active user ID
-        let tvOSUserIDKey = "tvOS-userID" // This'll probably have to move out of here and somewhere more "global"
-        let sharedDefaults = UserDefaults.standard
-        let tvOSUserID = sharedDefaults.string(forKey: tvOSUserIDKey) ?? ""
-        self.setString(.defaultStreamingUserID, id: tvOSUserID, value: "")
     }
     
-    func getString(_ key: StorageKeys, id: String) -> String? {
-        let key = defaults.string(forKey: key.rawValue + id)
+    func getString(_ key: StorageKeys) -> String? {
+        let key = defaults.string(forKey: key.rawValue)
         if key == "" { return nil } // Little extra safety
         return key
     }
     
-    func setString(_ key: StorageKeys, id: String, value: String) {
-        defaults.set(value, forKey: key.rawValue + id)
+    func setString(_ key: StorageKeys, value: String) {
+        defaults.set(value, forKey: key.rawValue)
     }
     
-    func getURL(_ key: StorageKeys, id: String) -> URL? {
-        return URL(string: defaults.string(forKey: key.rawValue + id) ?? "")
+    func getURL(_ key: StorageKeys) -> URL? {
+        return URL(string: defaults.string(forKey: key.rawValue) ?? "")
     }
     
-    func setURL(_ key: StorageKeys, id: String, value: URL?) {
-        defaults.set(value?.absoluteString ?? "", forKey: key.rawValue + id)
+    func setURL(_ key: StorageKeys, value: URL?) {
+        defaults.set(value?.absoluteString ?? "", forKey: key.rawValue)
     }
     
-    func getBool(_ key: StorageKeys, id: String) -> Bool {
-        return defaults.bool(forKey: key.rawValue + id)
+    func getBool(_ key: StorageKeys) -> Bool {
+        return defaults.bool(forKey: key.rawValue)
     }
     
-    func setBool(_ key: StorageKeys, id: String, value: Bool) {
-        defaults.set(value, forKey: key.rawValue + id)
+    func setBool(_ key: StorageKeys, value: Bool) {
+        defaults.set(value, forKey: key.rawValue)
     }
     
-    func getStringArray(_ key: StorageKeys, id: String) -> [String] {
-        return defaults.stringArray(forKey: key.rawValue + id) ?? []
+    func getStringArray(_ key: StorageKeys) -> [String] {
+        return defaults.stringArray(forKey: key.rawValue) ?? []
     }
     
-    func setStringArray(_ key: StorageKeys, id: String, value: [String]) {
-        defaults.set(value, forKey: key.rawValue + id)
+    func setStringArray(_ key: StorageKeys, value: [String]) {
+        defaults.set(value, forKey: key.rawValue)
     }
     
-    func deleteString(_ key: StorageKeys, id: String) {
-        defaults.removeObject(forKey: key.rawValue + id)
+    func deleteString(_ key: StorageKeys) {
+        defaults.removeObject(forKey: key.rawValue)
     }
     
     func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors) {
