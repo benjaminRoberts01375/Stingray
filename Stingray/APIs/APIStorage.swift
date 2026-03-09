@@ -16,6 +16,8 @@ public enum StorageKeys {
     case userIDs
     /// The user and userID to modify
     case user(String)
+    /// A setting for how/when users should be switched
+    case userSwitchingMethod
     
     /// A string representation of the enum
     public var rawValue: String {
@@ -23,6 +25,7 @@ public enum StorageKeys {
         case .defaultStreamingUserID: return "defaultStreamingUserID"
         case .userIDs: return "userIDs"
         case .user(let id): return "user\(id)"
+        case .userSwitchingMethod: return "userSwitchingMethod"
         }
     }
 }

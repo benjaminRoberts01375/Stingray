@@ -54,12 +54,14 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				APIs/APIBasicNetwork.swift,
+				APIs/APISettingsStorage.swift,
 				APIs/APIStorage.swift,
 				APIs/APIUserStorage.swift,
 				Extensions/DecoderExtension.swift,
 				Extensions/TimeIntervalExtension.swift,
 				Extensions/URLExtension.swift,
 				Models/RErrorModel.swift,
+				Models/SettingsModel.swift,
 				Models/SlimMediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
 				Models/UserModel.swift,
