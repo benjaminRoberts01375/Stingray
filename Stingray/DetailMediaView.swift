@@ -596,11 +596,13 @@ fileprivate struct EpisodeView: View {
                     // Season and episode number
                     HStack(spacing: 0) {
                         if let season = (seasons.first { $0.episodes.contains { $0.id == episode.id } }) {
-                            Text("\(season.title), ")
+                            Text("\(season.title), Episode \(episode.episodeNumber)")
                         }
-                        Text("Episode \(episode.episodeNumber)")
+                        else { Text("Episode \(episode.episodeNumber)") }
                         Spacer()
                     }
+                    .lineLimit(2)
+                    .truncationMode(.middle)
                     .opacity(episode.overview != nil ? 0.5 : 1)
                     
                     if let overview = episode.overview {
