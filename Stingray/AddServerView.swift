@@ -20,17 +20,18 @@ struct AddServerView: View {
     
     init(loginState: Binding<LoginState>) {
         self._loggedIn = loginState
-        if SettingsModel.shared.profileSwitchingMethod == .askOnLaunch {
-            self.httpHostname = ""
-            self.httpPort = "8096"
-            self.httpProcol = .http
-            return
-        }
         guard let serviceURL = UserModel.shared.getActiveUser()?.serviceURL
         else {
-            self.httpHostname = ""
-            self.httpPort = "8096"
-            self.httpProcol = .http
+            guard let serviceURL = UserModel.shared.getUsers().first?.serviceURL
+            else {
+                self.httpHostname = ""
+                self.httpPort = "8096"
+                self.httpProcol = .http
+                return
+            }
+            if serviceURL.scheme == "https" { self.httpProcol = .https }
+            self.httpPort = String(serviceURL.port ?? 8096)
+            self.httpHostname = serviceURL.host ?? ""
             return
         }
         if serviceURL.scheme == "https" { self.httpProcol = .https }
