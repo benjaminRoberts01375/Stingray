@@ -83,6 +83,7 @@ struct AddServerView: View {
             .buttonStyle(.borderedProminent)
         }
         .onAppear {
+            nukeKeychain()
             print("Attempting to set up from storage")
             // Check if any users exist
             if UserModel.shared.getUsers().isEmpty {
@@ -161,6 +162,28 @@ struct AddServerView: View {
             }
             awaitingLogin = false
         }
+    }
+    
+    func nukeKeychain() {
+        guard ProcessInfo.processInfo.arguments.contains("-ResetKeychain")
+        else {
+            print("Leaving Keychain alone.")
+            return
+        }
+        print("Nuking Keychain...")
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.benlab.Stingray",
+            kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
+            kSecUseUserIndependentKeychain as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            print("Keychain reset failed for class kSecClassGenericPassword: \(status)")
+        }
+        
+        print("Keychain nuked.")
     }
 }
 
