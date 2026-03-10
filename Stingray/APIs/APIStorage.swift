@@ -159,7 +159,8 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
             kSecAttrAccount: key.rawValue,
             kSecValueData: encodedData,
             kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: keychainAccessGroup()
+            kSecAttrAccessGroup: Self.keychainAccessGroup(),
+            kSecUseUserIndependentKeychain: true
         ]
         
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -168,7 +169,8 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
                 kSecClass: kSecClassGenericPassword,
                 kSecAttrAccount: key.rawValue,
                 kSecAttrService: "com.benlab.Stingray",
-                kSecAttrAccessGroup: keychainAccessGroup()
+                kSecAttrAccessGroup: Self.keychainAccessGroup(),
+                kSecUseUserIndependentKeychain: true
             ]
             let updatedData: [CFString: Any] = [kSecValueData: encodedData]
             let updateStatus = SecItemUpdate(lookupQuery as CFDictionary, updatedData as CFDictionary)
@@ -181,10 +183,11 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: keychainAccessGroup(),
+            kSecAttrAccessGroup: Self.keychainAccessGroup(),
             kSecAttrAccount: key.rawValue,
             kSecReturnData: true,
-            kSecMatchLimit: kSecMatchLimitOne
+            kSecMatchLimit: kSecMatchLimitOne,
+            kSecUseUserIndependentKeychain: true
         ]
 
         var result: CFTypeRef?
@@ -206,7 +209,8 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
             kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: keychainAccessGroup()
+            kSecAttrAccessGroup: Self.keychainAccessGroup(),
+            kSecUseUserIndependentKeychain: true
         ]
         
         let status = SecItemDelete(query as CFDictionary)
@@ -215,7 +219,7 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         }
     }
     
-    private func keychainAccessGroup() -> String {
+    static func keychainAccessGroup() -> String {
         guard let teamID = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String else {
             fatalError("Could not read AppIdentifierPrefix from bundle")
         }
