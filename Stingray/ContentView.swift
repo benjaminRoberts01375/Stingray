@@ -48,6 +48,42 @@ struct ContentView: View {
                 .onOpenURL { handleDeepLink(url: $0) }
             }
         }
+        .onAppear {
+            nukeKeychain()
+            print("Attempting to set up from storage")
+            // Check if any users exist
+            if UserModel.shared.getUsers().isEmpty {
+                print("No users have been signed up, showing login screen")
+                return
+            }
+            
+            // Asking user for prefered profile
+            if SettingsModel.shared.profileSwitchingMethod == .askOnLaunch {
+                self.loginState = .pickingUser
+                return
+            }
+            
+            // Check if the current Apple TV user has an associated account
+            guard let defaultUser = UserModel.shared.getActiveUser()
+            else {
+                print("Users exist, but there's no active user. Showing profile picker")
+                self.loginState = .pickingUser
+                return
+            }
+            switch defaultUser.serviceType {
+            case .Jellyfin(let userJellyfin):
+                self.loginState = .loggedIn(
+                    JellyfinModel(
+                        userDisplayName: defaultUser.displayName,
+                        userID: defaultUser.id,
+                        serviceID: defaultUser.serviceID,
+                        accessToken: userJellyfin.accessToken,
+                        sessionID: userJellyfin.sessionID,
+                        serviceURL: defaultUser.serviceURL
+                    )
+                )
+            }
+        }
     }
     
     private func handleDeepLink(url: URL) {
@@ -79,6 +115,29 @@ struct ContentView: View {
         
         // Create deep link request
         deepLinkRequest = DeepLinkRequest(mediaID: mediaID, parentID: parentID)
+    }
+    
+    /// Deletes all entries within the global keychain.
+    func nukeKeychain() {
+        // Check for ResetKeychain argument
+        if !ProcessInfo.processInfo.arguments.contains("-ResetKeychain") {
+            print("Leaving Keychain alone.")
+            return
+        }
+        print("Nuking Keychain...")
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.benlab.Stingray",
+            kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
+            kSecUseUserIndependentKeychain as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            print("Keychain reset failed for class kSecClassGenericPassword: \(status)")
+        }
+        
+        print("Keychain nuked.")
     }
 }
 
