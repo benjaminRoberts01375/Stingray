@@ -158,8 +158,8 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
             kSecValueData: encodedData,
-            kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
-            kSecUseUserIndependentKeychain: true // For sharing data across tvOS users
+            kSecAttrService: "com.benlab.Stingray",
+            kSecAttrAccessGroup: keychainAccessGroup()
         ]
         
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -167,8 +167,8 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
             let lookupQuery: [CFString: Any] = [
                 kSecClass: kSecClassGenericPassword,
                 kSecAttrAccount: key.rawValue,
-                kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
-                kSecUseUserIndependentKeychain: true
+                kSecAttrService: "com.benlab.Stingray",
+                kSecAttrAccessGroup: keychainAccessGroup()
             ]
             let updatedData: [CFString: Any] = [kSecValueData: encodedData]
             let updateStatus = SecItemUpdate(lookupQuery as CFDictionary, updatedData as CFDictionary)
@@ -180,11 +180,11 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
-            kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
+            kSecAttrService: "com.benlab.Stingray",
+            kSecAttrAccessGroup: keychainAccessGroup(),
             kSecAttrAccount: key.rawValue,
             kSecReturnData: true,
-            kSecMatchLimit: kSecMatchLimitOne,
-            kSecUseUserIndependentKeychain: true
+            kSecMatchLimit: kSecMatchLimitOne
         ]
 
         var result: CFTypeRef?
@@ -205,13 +205,21 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
-            kSecAttrService: Bundle.main.bundleIdentifier ?? "app",
-            kSecUseUserIndependentKeychain: true // For sharing data across tvOS users
+            kSecAttrService: "com.benlab.Stingray",
+            kSecAttrAccessGroup: keychainAccessGroup()
         ]
         
         let status = SecItemDelete(query as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
             throw BasicStorageErrors.deleteFailed(status, key.rawValue)
         }
+    }
+    
+    private func keychainAccessGroup() -> String {
+        guard let teamID = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String else {
+            fatalError("Could not read AppIdentifierPrefix from bundle")
+        }
+        // teamID already includes the trailing dot e.g. "XXXXXXXXXX."
+        return "\(teamID)com.benlab.stingray"
     }
 }
