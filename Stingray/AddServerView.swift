@@ -90,6 +90,12 @@ struct AddServerView: View {
                 return
             }
             
+            // Asking user for prefered profile
+            if SettingsModel.shared.profileSwitchingMethod == .askOnLaunch {
+                self.loggedIn = .pickingUser
+                return
+            }
+            
             // Check if the current Apple TV user has an associated account
             guard let defaultUser = UserModel.shared.getActiveUser()
             else {
