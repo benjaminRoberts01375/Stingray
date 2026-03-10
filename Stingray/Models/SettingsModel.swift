@@ -29,7 +29,14 @@ public final class SettingsModel {
     
     /// Describes how and when the current user will be switched. Updating this value updates permanent storage.
     var profileSwitchingMethod: ProfileSwitching {
-        didSet { self.storage.setProfileSwitchingMethod(to: self.profileSwitchingMethod) }
+        willSet(newValue) {
+            self.storage.setProfileSwitchingMethod(to: newValue)
+            if self.profileSwitchingMethod == .manual {
+                guard let newUserID = UserModel.shared.getActiveUser()?.id
+                else { return }
+                UserModel.shared.setActiveUser(userID: newUserID)
+            }
+        }
     }
     
     /// Create a SettingsModel from some kind of storage
