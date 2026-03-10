@@ -43,7 +43,6 @@ public final class SettingsModel {
     /// - Parameter storage: Permanent storage method to use
     private init(storage: SettingsStorageProtocol = SettingStorage(basicStorage: DefaultsBasicStorage())) {
         self.storage = storage
-        self.profileSwitchingMethod = .manual
-        self.profileSwitchingMethod = self.storage.getProfileSwitchingMethod()
+        self.profileSwitchingMethod = storage.getProfileSwitchingMethod()
     }
 }
