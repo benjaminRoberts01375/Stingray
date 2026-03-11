@@ -756,7 +756,7 @@ public struct PeopleBrowserView: View {
     public var body: some View {
         ScrollView(.horizontal) {
             HStack {
-                ForEach(media.people, id: \.id) { person in
+                ForEach(Array(media.people.enumerated()), id: \.offset) { _, person in
                     Button { /* Temp Workaround */ } label: {
                         VStack {
                             ActorImage(media: media, streamingService: streamingService, person: person)
