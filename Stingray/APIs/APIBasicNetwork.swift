@@ -76,7 +76,11 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
             return (id, name)
         }
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        let authHeader = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
+        var authHeader = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
+
+        if headers?["X-MediaBrowser-Token"] != nil {
+            authHeader += ", Token=\(headers?["X-MediaBrowser-Token"]! ?? "")"
+        }
         request.setValue(authHeader, forHTTPHeaderField: "Authorization")
         // Only add custom headers if they are provided
         if let headers = headers {
