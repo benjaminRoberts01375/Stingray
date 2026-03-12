@@ -31,6 +31,11 @@ public protocol BasicNetworkProtocol {
     ///   - urlParams: URL params to add to URL
     /// - Returns: Formatted URL
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
+    
+    /// Builds an Authorization header value for the streaming service.
+    /// - Parameter accessToken: The access token to include.
+    /// - Returns: The formatted Authorization header value.
+    func buildAuthHeader(accessToken: String) -> String
 }
 
 /// Basic descriptor for REST API verbs
@@ -46,10 +51,22 @@ public enum NetworkRequestType: String {
 }
 
 /// A Jellyfin specific basic network struct for making network requests
-public final class JellyfinBasicNetwork: BasicNetworkProtocol {
+public final class JellyfinBasicNetwork: BasicNetworkProtocol, @unchecked Sendable {
     var address: URL
+    private let deviceId: String
+    private let deviceName: String
+    private let appVersion: String
     
-    init(address: URL) { self.address = address }
+    init(address: URL) {
+        self.address = address
+        self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        self.deviceName = UIDevice.current.name
+    }
+    
+    public func buildAuthHeader(accessToken: String) -> String {
+        "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\", Token=\"\(accessToken)\""
+    }
     
     public func request<T: Decodable>(
         verb: NetworkRequestType,
@@ -70,18 +87,9 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         request.httpMethod = verb.rawValue
         
         // Jellyfin headers
-        let (deviceId, deviceName) = await MainActor.run {
-            let id = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
-            let name = UIDevice.current.name
-            return (id, name)
+        if let accessToken = headers?["X-MediaBrowser-Token"], !accessToken.isEmpty {
+            request.setValue(buildAuthHeader(accessToken: accessToken), forHTTPHeaderField: "Authorization")
         }
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        var authHeader = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
-
-        if headers?["X-MediaBrowser-Token"] != nil {
-            authHeader += ", Token=\(headers?["X-MediaBrowser-Token"] ?? "")"
-        }
-        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
         // Only add custom headers if they are provided
         if let headers = headers {
             for header in headers {
