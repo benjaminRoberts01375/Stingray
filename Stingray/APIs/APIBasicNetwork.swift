@@ -35,7 +35,7 @@ public protocol BasicNetworkProtocol {
     /// Builds an Authorization header value for the streaming service.
     /// - Parameter accessToken: The access token to include.
     /// - Returns: The formatted Authorization header value.
-    func buildAuthHeader(accessToken: String) -> String
+    func buildAuthHeader(accessToken: String?) -> String
 }
 
 /// Basic descriptor for REST API verbs
@@ -51,7 +51,7 @@ public enum NetworkRequestType: String {
 }
 
 /// A Jellyfin specific basic network struct for making network requests
-public final class JellyfinBasicNetwork: BasicNetworkProtocol, @unchecked Sendable {
+public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     var address: URL
     private let deviceId: String
     private let deviceName: String
@@ -64,8 +64,14 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol, @unchecked Sendab
         self.deviceName = UIDevice.current.name
     }
     
-    public func buildAuthHeader(accessToken: String) -> String {
-        "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\", Token=\"\(accessToken)\""
+    public func buildAuthHeader(accessToken: String?) -> String {
+        var value = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
+
+        if let token = accessToken {
+            value += ", Token=\"\(token)\""
+        }
+
+        return value
     }
     
     public func request<T: Decodable>(
@@ -87,9 +93,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol, @unchecked Sendab
         request.httpMethod = verb.rawValue
         
         // Jellyfin headers
-        if let accessToken = headers?["X-MediaBrowser-Token"], !accessToken.isEmpty {
-            request.setValue(buildAuthHeader(accessToken: accessToken), forHTTPHeaderField: "Authorization")
-        }
+        request.setValue(buildAuthHeader(accessToken: headers?["X-MediaBrowser-Token"]), forHTTPHeaderField: "Authorization")
         // Only add custom headers if they are provided
         if let headers = headers {
             for header in headers {
