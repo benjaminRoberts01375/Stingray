@@ -125,7 +125,7 @@ final class PlayerViewModel: Hashable {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
         } catch {
-            print("Failed to configure audio session: \(error)")
+            Log.warning("Failed to configure audio session: \(error)")
         }
         
         var title = ""

@@ -799,7 +799,7 @@ public struct SpecialFeaturesView: View {
             case .unloaded:
                 Color.clear
                     .task {
-                        print("Attempting to get special features...")
+                        Log.info("Attempting to get special features for \(media.title)...")
                         do { try await self.streamingService.getSpecialFeatures(for: self.media) }
                         catch {}
                     }

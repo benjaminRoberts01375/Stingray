@@ -63,7 +63,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
             throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
         }
         
-        print("Reaching out to \(url.absoluteString)")
+        Log.debug("Reaching out to \(url.absoluteString)")
         
         // Setup request
         var request = URLRequest(url: url)

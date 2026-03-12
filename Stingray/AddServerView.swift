@@ -118,10 +118,10 @@ struct AddServerView: View {
                 self.error = AccountErrors.loginFailed(error)
                 if let netErr = error.last() as? NetworkError {
                     self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
-                    print("Error signing in: \(error.rDescription())")
+                    Log.error("Error signing in: \(error.rDescription())")
                 } else {
                     self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
-                    print("Other error: \(error)")
+                    Log.error("Unknown error while signing in: \(error)")
                 }
             }
             awaitingLogin = false

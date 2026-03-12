@@ -51,15 +51,16 @@ struct ContentView: View {
         .onAppear {
             listKeychainEntries()
             nukeKeychain()
-            print("Attempting to set up from storage")
+            Log.info("Attempting to set up from storage")
             // Check if any users exist
             if UserModel.shared.getUsers().isEmpty {
-                print("No users have been signed up, showing login screen")
+                Log.info("No users have been signed up, showing login screen")
                 return
             }
             
             // Asking user for prefered profile
             if SettingsModel.shared.profileSwitchingMethod == .askOnLaunch {
+                Log.info("Showing profile picker")
                 self.loginState = .pickingUser
                 return
             }
@@ -67,12 +68,13 @@ struct ContentView: View {
             // Check if the current Apple TV user has an associated account
             guard let defaultUser = UserModel.shared.getActiveUser()
             else {
-                print("Users exist, but there's no active user. Showing profile picker")
+                Log.info("Users exist, but there's no active user. Showing profile picker")
                 self.loginState = .pickingUser
                 return
             }
             switch defaultUser.serviceType {
             case .Jellyfin(let userJellyfin):
+                Log.info("Signing in as user \(defaultUser.displayName) - \(defaultUser.id)")
                 self.loginState = .loggedIn(
                     JellyfinModel(
                         userDisplayName: defaultUser.displayName,
@@ -93,14 +95,14 @@ struct ContentView: View {
         // Make sure URL scheme is good
         guard url.scheme == "stingray",
               url.host == "media" else {
-            print("Invalid deep link scheme or host")
+            Log.warning("Invalid deep link scheme or host")
             return
         }
         
         // Parse query parameters
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
-            print("Failed to parse URL components")
+            Log.warning("Failed to parse URL components")
             return
         }
         
@@ -108,11 +110,11 @@ struct ContentView: View {
         let mediaID = queryItems.first(where: { $0.name == "id" })?.value
         let parentID = queryItems.first(where: { $0.name == "parentID" })?.value
         guard let mediaID = mediaID, let parentID = parentID else {
-            print("Missing required parameters: mediaID or parentID")
+            Log.warning("Missing required parameters: mediaID or parentID")
             return
         }
         
-        print("Parsed deep link - mediaID: \(mediaID), parentID: \(parentID)")
+        Log.info("Parsed deep link - mediaID: \(mediaID), parentID: \(parentID)")
         
         // Create deep link request
         deepLinkRequest = DeepLinkRequest(mediaID: mediaID, parentID: parentID)
@@ -125,7 +127,7 @@ struct ContentView: View {
             print("Leaving Keychain alone.")
             return
         }
-        print("Nuking Keychain...")
+        Log.info("Nuking Keychain...")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "com.benlab.Stingray",
@@ -134,54 +136,53 @@ struct ContentView: View {
         ]
         let status = SecItemDelete(query as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
-            print("Keychain reset failed for class kSecClassGenericPassword: \(status)")
+            Log.debug("Keychain reset failed for class kSecClassGenericPassword: \(status)")
         }
         
-        print("Keychain nuked.")
+        Log.info("Keychain nuked.")
         listKeychainEntries()
     }
     
     func listKeychainEntries() {
-            let query: [String: Any] = [
-                kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: "com.benlab.Stingray",
-                kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
-                kSecUseUserIndependentKeychain as String: true,
-                kSecMatchLimit as String: kSecMatchLimitAll,
-                kSecReturnAttributes as String: true,
-                kSecReturnData as String: true
-            ]
-
-            var result: CFTypeRef?
-            let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-            if status == errSecItemNotFound {
-                print("Keychain is empty.")
-                return
-            } else if status != errSecSuccess {
-                print("Keychain list failed: \(status)")
-                return
-            }
-
-            guard let items = result as? [[String: Any]] else {
-                print("Keychain list: unexpected result format")
-                return
-            }
-
-            print("--- Keychain (\(items.count) entries) ---")
-            for item in items {
-                let key = item[kSecAttrAccount as String] as? String ?? "unknown"
-                let value: String
-                if let data = item[kSecValueData as String] as? Data {
-                    value = String(data: data, encoding: .utf8) ?? "<non-utf8 data>"
-                } else {
-                    value = "<no data>"
-                }
-                print("  \(key): \(value)")
-                print("")
-            }
-            print("---")
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "com.benlab.Stingray",
+            kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
+            kSecUseUserIndependentKeychain as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnAttributes as String: true,
+            kSecReturnData as String: true
+        ]
+        
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        if status == errSecItemNotFound {
+            Log.debug("Keychain is empty.")
+            return
+        } else if status != errSecSuccess {
+            Log.debug("Keychain list failed: \(status)")
+            return
         }
+        
+        guard let items = result as? [[String: Any]] else {
+            Log.debug("Keychain list: unexpected result format")
+            return
+        }
+        
+        Log.debug("--- Keychain (\(items.count) entries) ---")
+        for item in items {
+            let key = item[kSecAttrAccount as String] as? String ?? "unknown"
+            let value: String
+            if let data = item[kSecValueData as String] as? Data {
+                value = String(data: data, encoding: .utf8) ?? "<non-utf8 data>"
+            } else {
+                value = "<no data>"
+            }
+            Log.debug("\(key) : \(value)")
+        }
+        Log.debug("---")
+    }
 }
 
 struct DeepLinkRequest: Equatable, Hashable {

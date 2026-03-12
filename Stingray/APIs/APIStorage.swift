@@ -107,7 +107,7 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     init() {
         // Use the shared container instead of standard defaults
         let appGroupDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") ?? UserDefaults.standard
-        print("Setting up user defaults with suite name")
+        Log.info("Setting up user defaults with suite name")
         self.defaults = appGroupDefaults
     }
     

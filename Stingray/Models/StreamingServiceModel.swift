@@ -372,10 +372,9 @@ public final class JellyfinModel: StreamingServiceProtocol {
             media.loadSpecialFeatures(
                 specialFeatures: try await self.networkAPI.loadSpecialFeatures(mediaID: media.id, accessToken: self.accessToken)
             )
-            print("Loaded special features")
         }
         catch {
-            print("Failed to load special features")
+            Log.warning("Failed to load special features")
             throw LibraryErrors.specialFeaturesFailed(error, media.title)
         }
     }

@@ -60,6 +60,7 @@
 				Extensions/DecoderExtension.swift,
 				Extensions/TimeIntervalExtension.swift,
 				Extensions/URLExtension.swift,
+				Models/LoggerModel.swift,
 				Models/RErrorModel.swift,
 				Models/SettingsModel.swift,
 				Models/SlimMediaModel.swift,

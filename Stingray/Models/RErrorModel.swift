@@ -15,9 +15,9 @@ public protocol RError: LocalizedError {
     var errorDescription: String { get }
 }
 
-/// Extend RError to print recursive descriptions.
+/// Extend RError to log recursive descriptions.
 extension RError {
-    /// Recursive description. Prints this error's description and all subsequent ones.
+    /// Recursive description. Logs this error's description and all subsequent ones.
     /// - Returns: Formatted description.
     public func rDescription() -> String {
         var parts: [String] = [errorDescription]
@@ -28,7 +28,9 @@ extension RError {
             current = err.next
         }
         
-        return "\n\t→ \(parts.joined(separator: "\n\t→ "))"
+        let total = "\n\t→ \(parts.joined(separator: "\n\t→ "))"
+        Log.warning(total)
+        return total
     }
     
     /// Gets the last error in the chain of errors. Useful for writing summary error messages
@@ -44,12 +46,14 @@ extension RError {
 
 /// Extend arrays of `RError` to provide recursive descriptions formatted in a reasonable manner.
 extension [RError] {
-    /// Recursive description. Prints this error's description and all subsequent ones.
+    /// Recursive description. Logs this error's description and all subsequent ones.
     /// - Returns: Formatted description.
     public func rDescription() -> String {
-        return self.reduce("") { (result, error) -> String in
+        let total = self.reduce("") { (result, error) -> String in
             return result + "\n\t→ \(error.errorDescription)"
         }
+        Log.warning(total)
+        return total
     }
 }
 
