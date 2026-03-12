@@ -49,6 +49,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            listKeychainEntries()
             nukeKeychain()
             print("Attempting to set up from storage")
             // Check if any users exist
@@ -129,8 +130,7 @@ struct ContentView: View {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "com.benlab.Stingray",
             kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain as String: true,
-            kSecMatchLimit as String: kSecMatchLimitAll
+            kSecUseUserIndependentKeychain as String: true
         ]
         let status = SecItemDelete(query as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
@@ -138,7 +138,50 @@ struct ContentView: View {
         }
         
         print("Keychain nuked.")
+        listKeychainEntries()
     }
+    
+    func listKeychainEntries() {
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: "com.benlab.Stingray",
+                kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
+                kSecUseUserIndependentKeychain as String: true,
+                kSecMatchLimit as String: kSecMatchLimitAll,
+                kSecReturnAttributes as String: true,
+                kSecReturnData as String: true
+            ]
+
+            var result: CFTypeRef?
+            let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+            if status == errSecItemNotFound {
+                print("Keychain is empty.")
+                return
+            } else if status != errSecSuccess {
+                print("Keychain list failed: \(status)")
+                return
+            }
+
+            guard let items = result as? [[String: Any]] else {
+                print("Keychain list: unexpected result format")
+                return
+            }
+
+            print("--- Keychain (\(items.count) entries) ---")
+            for item in items {
+                let key = item[kSecAttrAccount as String] as? String ?? "unknown"
+                let value: String
+                if let data = item[kSecValueData as String] as? Data {
+                    value = String(data: data, encoding: .utf8) ?? "<non-utf8 data>"
+                } else {
+                    value = "<no data>"
+                }
+                print("  \(key): \(value)")
+                print("")
+            }
+            print("---")
+        }
 }
 
 struct DeepLinkRequest: Equatable, Hashable {
