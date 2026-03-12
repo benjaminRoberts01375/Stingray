@@ -52,12 +52,11 @@ Extensive content metadata.
 ## v1.2.0 TODO
 
 - [ ] Settings Page
-  - [ ] Smaller profile icons
   - [ ] Max bitrate
   - [ ] Auto play toggle
   - [ ] Themes
   - [ ] Connection Info
-    - [ ] User's name
+    - [x] User's name
     - [ ] Server address
     - [ ] Session ID
     - [ ] User's ID
@@ -79,8 +78,8 @@ Extensive content metadata.
   - [x] Video stream ID
   - [x] Audio stream ID
 - [ ] Profiles
-  - [ ] Integrate into Apple TV profiles
-  - [ ] Show all profiles on every Apple TV account, but remember last used profile
+  - [x] Sync between Apple TV users and Jellyfin users.
+  - [x] Show all profiles on every Apple TV account, but remember last used profile
   - [ ] Set PINs for certain profiles
 - [x] Extend playback buffer
 - [x] Lower priority of downloading media
@@ -88,11 +87,7 @@ Extensive content metadata.
 - [x] Improve trailing slashes on URLs.
 - [x] Improve JSON decoding verbosity.
 - [x] Fix labels appearing black.
-
-### Long Shots
-
-- [ ] Trickplay support
-- [ ] Optionally blur unwatched TV episodes.
+- [x] Modernize Jellyfin token format [@darkweak](https://github.com/benjaminRoberts01375/Stingray/pull/75)
 
 ## Long-Term TODO List
 
@@ -102,17 +97,19 @@ Extensive content metadata.
 
 ### Media Picker
 
-- [ ] Unwatched media gets a blue background.
+- [ ] Unwatched media gets a lighter blue background.
 
 ### Detail Media View
 
 - [ ] Episode thumbnails where the thumbnail cannot fill the container should use the loaded thumbnail to blur background, instead of the unreliable blur hash.
 - [ ] Replace options for continuing and restarting episodes with an alert to be shared with movies for consistency.
+- [ ] Optionally blur unwatched TV episode thumbnails.
 
 ### Playback
 
 - [ ] Live TV.
 - [ ] Restart episode button in episode picker.
+- [ ] Trickplay.
 
 ### Code Quality
 
