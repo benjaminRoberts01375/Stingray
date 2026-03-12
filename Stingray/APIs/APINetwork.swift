@@ -475,7 +475,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         guard let item = self.buildAVPlayerItem(
             path: "/Videos/\(contentID)/main.m3u8",
             urlParams: params,
-            headers: ["X-MediaBrowser-Token": accessToken]
+            // TODO: remove X-MediaBrowser-Token when the backward compatibility is no longer required
+            headers: ["X-MediaBrowser-Token": accessToken, "Authorization": network.buildAuthHeader(accessToken: accessToken)]
         ) else { return nil }
         
         // Set the title metadata
