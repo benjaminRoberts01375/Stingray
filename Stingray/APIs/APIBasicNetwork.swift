@@ -52,9 +52,13 @@ public enum NetworkRequestType: String {
 
 /// A Jellyfin specific basic network struct for making network requests
 public final class JellyfinBasicNetwork: BasicNetworkProtocol {
+    /// Address of the Jellyfin server
     var address: URL
+    /// Unique identifier based on the device
     private let deviceId: String
+    /// Human readable device name
     private let deviceName: String
+    /// Current stingray version
     private let appVersion: String
     
     init(address: URL) {
@@ -65,13 +69,11 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     }
     
     public func buildAuthHeader(accessToken: String?) -> String {
-        var value = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
-
+        var headerValue = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
         if let token = accessToken {
-            value += ", Token=\"\(token)\""
+            headerValue += ", Token=\"\(token)\""
         }
-
-        return value
+        return headerValue
     }
     
     public func request<T: Decodable>(
