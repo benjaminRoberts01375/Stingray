@@ -84,6 +84,15 @@ public protocol BasicStorageProtocol {
     /// - Returns: The found `Boolean`.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     func getBool(_ key: StorageKeys) -> Bool
+    /// Store data in a place compatible with the Top Shelf.
+    /// - Parameters:
+    ///   - key: The key where data is to be stored.
+    ///   - value: Data to store.
+    func setTopShelfString(_ key: StorageKeys, value: String)
+    /// Retrieve data from a location compatible with the Top Shelf
+    /// - Parameter key: Where the value may be stored.
+    /// - Returns: Found data if available
+    func getTopShelfString(_ key: StorageKeys) -> String?
     /// Sets or updates secured data via key/value pairs
     /// - Parameters:
     ///   - key: The key where the data is to be stored.
@@ -103,12 +112,11 @@ public protocol BasicStorageProtocol {
 
 final class DefaultsBasicStorage: BasicStorageProtocol {
     private let defaults: UserDefaults
+    private let topShelf: UserDefaults?
     
     init() {
-        // Use the shared container instead of standard defaults
-        let appGroupDefaults = UserDefaults(suiteName: "group.com.benlab.stingray") ?? UserDefaults.standard
-        Log.info("Setting up user defaults with suite name")
-        self.defaults = appGroupDefaults
+        self.defaults = UserDefaults.standard
+        self.topShelf = UserDefaults(suiteName: "group.com.benlab.stingray")
     }
     
     func getString(_ key: StorageKeys) -> String? {
@@ -147,6 +155,16 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     
     func deleteString(_ key: StorageKeys) {
         defaults.removeObject(forKey: key.rawValue)
+    }
+    
+    func setTopShelfString(_ key: StorageKeys, value: String) {
+        self.topShelf?.set(value, forKey: key.rawValue)
+    }
+    
+    func getTopShelfString(_ key: StorageKeys) -> String? {
+        let foundData = self.topShelf?.string(forKey: key.rawValue)
+        if foundData == "" { return nil } // Little extra safety
+        return foundData
     }
     
     func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors) {

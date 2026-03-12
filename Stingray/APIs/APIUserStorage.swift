@@ -52,13 +52,19 @@ public final class UserStorage: UserStorageProtocol {
         case .manual:
             let userID: String? = try? self.basicStorage.getSecureData(.defaultStreamingUserID) ?? nil // Fallback to ask
             self.basicStorage.setString(.defaultStreamingUserID, value: userID ?? "")
+            self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: userID ?? "")
             return userID
-        case .syncWithTVOS, .askOnLaunch: return self.basicStorage.getString(.defaultStreamingUserID)
+        case .syncWithTVOS, .askOnLaunch:
+            if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? false { // Top shelf reads from a different storage
+                return self.basicStorage.getTopShelfString(.defaultStreamingUserID)
+            }
+            return self.basicStorage.getString(.defaultStreamingUserID)
         }
     }
     
     public func setActiveUserID(id: String) {
-        self.basicStorage.setString(.defaultStreamingUserID, value: id)
+        self.basicStorage.setString(.defaultStreamingUserID, value: id) // Set per-user active ID
+        self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: id) // Set Top Shelf user ID
         try? self.basicStorage.setSecureData(.defaultStreamingUserID, data: id) // TODO: Silently fails
     }
     
