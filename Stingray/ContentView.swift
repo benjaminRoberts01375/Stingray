@@ -20,7 +20,13 @@ enum LoginState {
 struct ContentView: View {
     @State var loginState: LoginState = .loggedOut
     @State var deepLinkRequest: DeepLinkRequest?
-    @State private var navigationPath = NavigationPath()
+    @State private var navigationPath: NavigationPath
+    @State private var settings: SettingsModel
+    
+    init() {
+        self.navigationPath = NavigationPath()
+        self.settings = SettingsModel()
+    }
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -48,6 +54,7 @@ struct ContentView: View {
                 .onOpenURL { handleDeepLink(url: $0) }
             }
         }
+        .environment(settings)
         .onAppear {
             listKeychainEntries()
             nukeKeychain()
@@ -59,7 +66,7 @@ struct ContentView: View {
             }
             
             // Asking user for prefered profile
-            if SettingsModel.shared.profileSwitchingMethod == .askOnLaunch {
+            if self.settings.profileSwitchingMethod == .askOnLaunch {
                 Log.info("Showing profile picker")
                 self.loginState = .pickingUser
                 return

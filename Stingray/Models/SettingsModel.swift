@@ -10,9 +10,6 @@ import Foundation
 /// Settings both for the user and globally
 @Observable
 public final class SettingsModel {
-    /// Shared instance to avoid repeated instantiation
-    static let shared = SettingsModel()
-    
     /// Type for when Stingray will ask the user about switching profiles.
     public enum ProfileSwitching: Codable, CaseIterable {
         /// When Stingray launches, ask the user - typical of most streaming services
@@ -41,7 +38,7 @@ public final class SettingsModel {
     
     /// Create a SettingsModel from some kind of storage
     /// - Parameter storage: Permanent storage method to use
-    private init(storage: SettingsStorageProtocol = SettingStorage(basicStorage: DefaultsBasicStorage())) {
+    init(storage: SettingsStorageProtocol = SettingStorage(basicStorage: DefaultsBasicStorage())) {
         self.storage = storage
         self.profileSwitchingMethod = storage.getProfileSwitchingMethod()
     }

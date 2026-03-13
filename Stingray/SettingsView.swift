@@ -10,10 +10,11 @@ import SwiftUI
 public struct SettingsView: View {
     /// Tracks if the user has logged in, is about to login, or needs to login.
     @Binding var loginState: LoginState
-    /// Bindable wrapper for the settings model to enable two-way binding
-    @Bindable var settingsModel = SettingsModel.shared
+    /// System-wide settings
+    @Environment(SettingsModel.self) var settings: SettingsModel
     
     public var body: some View {
+        @Bindable var settings = settings
         Form {
             Section(header: Text("Account").bold()) {
                 ProfilePickerView(loginState: $loginState)
@@ -22,9 +23,9 @@ public struct SettingsView: View {
             
             Section(
                 header: Text("Profile Switching").bold(),
-                footer: Text(SettingsModel.shared.profileSwitchingMethod.description)
+                footer: Text(self.settings.profileSwitchingMethod.description)
             ) {
-                Picker("Profile Switching", selection: $settingsModel.profileSwitchingMethod) {
+                Picker("Profile Switching", selection: $settings.profileSwitchingMethod) {
                     ForEach(SettingsModel.ProfileSwitching.allCases, id: \.self) { option in
                         Text(option.displayName).tag(option)
                     }
