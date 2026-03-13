@@ -14,21 +14,21 @@ final class UserModel {
     var storage: UserStorageProtocol
     
     /// Array of user IDs that SwiftUI will observe for changes
-    private(set) var userIDs: [String] = []
+    private(set) var userIDs: Set<String> = []
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
     init(storage: UserStorageProtocol) {
         self.storage = storage
-        self.userIDs = self.storage.getUserIDs()
+        self.userIDs = Set(self.storage.getUserIDs())
     }
     
     /// Adds a user to storage based on a `User` type
     /// - Parameter user: User to add
     func addUser(_ user: User) {
-        userIDs.append(user.id)
+        userIDs.insert(user.id)
         storage.upsertUser(user: user)
-        storage.setUserIDs(userIDs)
+        storage.setUserIDs(Array(userIDs))
     }
     
     /// Gets the most recent Jellyfin user's ID. `nil` implies no most recently user, but there may be available users.
@@ -62,8 +62,8 @@ final class UserModel {
     /// Deletes a user based on their ID
     /// - Parameter userID: ID of the user to delete
     func deleteUser(_ userID: String) {
-        userIDs.removeAll { $0 == userID }
-        storage.setUserIDs(userIDs)
+        userIDs.remove(userID)
+        storage.setUserIDs(Array(userIDs))
         storage.deleteUser(userID: userID)
     }
 }
