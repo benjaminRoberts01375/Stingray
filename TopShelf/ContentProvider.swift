@@ -11,11 +11,20 @@ class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
         let streamingModel: StreamingServiceBasicProtocol
-        let userModel = UserModel()
+        let userModel: UserModel
+        do {
+            let defaults = try DefaultsBasicStorage()
+            let userStorage = UserStorage(basicStorage: defaults)
+            userModel = UserModel(storage: userStorage)
+        }
+        catch {
+            Log.error("Failed to initalize UserModel: \(error)")
+            return nil
+        }
         do {
             streamingModel = try StreamingServiceBasicModel(userModel: userModel)
         } catch {
-            Log.error("TopShelf: Failed to initialize StreamingServiceBasicModel: \(error)")
+            Log.error("Failed to initialize StreamingServiceBasicModel: \(error)")
             return nil
         }
         

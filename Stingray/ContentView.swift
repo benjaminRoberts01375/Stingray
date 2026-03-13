@@ -24,11 +24,17 @@ struct ContentView: View {
     @State private var settings: SettingsModel
     @State private var userModel: UserModel
     
-    init() {
-        let userModel = UserModel()
+    init() throws(SetupErrors) {
+        let defaultsStorage: DefaultsBasicStorage
+        do { defaultsStorage = try DefaultsBasicStorage() }
+        catch { throw SetupErrors.databaseError(error) }
+        let userStorage = UserStorage(basicStorage: defaultsStorage)
+        let settingStorage = SettingStorage(basicStorage: defaultsStorage)
+        
+        let userModel = UserModel(storage: userStorage)
         self.userModel = userModel
         self.navigationPath = NavigationPath()
-        self.settings = SettingsModel(userModel: userModel)
+        self.settings = SettingsModel(userModel: userModel, storage: settingStorage)
     }
     
     var body: some View {
@@ -203,5 +209,6 @@ struct DeepLinkRequest: Equatable, Hashable {
 }
 
 #Preview {
-    ContentView()
+    if let view = try? ContentView() { view }
+    else { Text("Preview failed to initialize") }
 }

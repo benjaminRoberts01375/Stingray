@@ -18,16 +18,30 @@ struct StingrayApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            loadApp()
                 .preferredColorScheme(.dark)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background {
-                     LinearGradient(
+                    LinearGradient(
                         colors: [Color(red: 0, green: 0.145, blue: 0.223), Color(red: 0, green: 0.063, blue: 0.153)],
-                         startPoint: .top,
-                         endPoint: .bottom
-                     )
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 }
                 .ignoresSafeArea()
         }
+    }
+    
+    @ViewBuilder
+    func loadApp() -> some View {
+        switch makeContentView() { // We can't use do/catch directly in the ViewBuilder function
+        case .success(let view): view
+        case .failure(let error): ErrorView(error: error, summary: "Failed to setup Stingray")
+        }
+    }
+    
+    func makeContentView() -> Result<ContentView, SetupErrors> { // Cheating the type system a bit
+        do { return .success(try ContentView()) }
+        catch { return .failure(error) }
     }
 }

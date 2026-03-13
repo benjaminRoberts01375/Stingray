@@ -394,11 +394,20 @@ public enum BasicStorageErrors: RError {
     case readError(OSStatus, String)
     /// Failed to delete data at the provided key
     case deleteFailed(OSStatus, String)
+    /// Could not find the database's version
+    case unknownDBVersion(Error)
+    /// Could not set the version for the database
+    case unableToSetDBVersion(String, Error)
+    /// Unable to migrate the database from some version to another
+    case unableToMigrateDB(String?, String, RError?)
     
     public var next: (any RError)? {
         switch self {
         case .updateFailed, .saveFailed, .deleteFailed, .unexpectedData, .readError, .notFound: return nil
         case .encodingFailed(let err, _), .decodingFailed(let err, _): return err
+        case .unknownDBVersion: return nil
+        case .unableToSetDBVersion: return nil
+        case .unableToMigrateDB(_, _, let err): return err
         }
     }
     
@@ -422,24 +431,29 @@ public enum BasicStorageErrors: RError {
         case .deleteFailed(let osStatus, let key):
             let message = SecCopyErrorMessageString(osStatus, nil) as String? ?? "of an unknown reason"
             return "Failed to delete secure data at key '\(key)' because \(message)"
+        case .unknownDBVersion(let err):
+            return "Unable to get the version of the database: \(err.localizedDescription)"
+        case .unableToSetDBVersion(let newVersion, let err):
+            return "Unable to set the version of the database to v\(newVersion): \(err.localizedDescription)"
+        case .unableToMigrateDB(let vStart, let vEnd, _):
+            return "Unable to migrate the database from v\(vStart ?? "Unknown"), to v\(vEnd)"
         }
     }
 }
 
-public enum UserStorageErrors: RError {
-    /// Could not find the specified user. The `String` value is the user's ID.
-    case userNotFound(RError, String)
+/// Errors during app setup
+public enum SetupErrors: RError {
+    case databaseError(RError)
     
     public var next: (any RError)? {
         switch self {
-        case .userNotFound(let err, _): return err
+        case .databaseError(let error): return error
         }
     }
     
     public var errorDescription: String {
         switch self {
-        case .userNotFound(_, let userID):
-            return "The user with ID '\(userID)' was not found"
+        case .databaseError: return "Failed to setup databases. Stingray may be able to continue, but this protects your data"
         }
     }
 }

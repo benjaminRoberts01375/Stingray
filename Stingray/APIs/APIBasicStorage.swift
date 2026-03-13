@@ -18,6 +18,8 @@ public enum StorageKeys {
     case user(String)
     /// A setting for how/when users should be switched
     case userSwitchingMethod
+    /// Internal: Database version tracking
+    case version
     
     /// A string representation of the enum
     public var rawValue: String {
@@ -26,8 +28,18 @@ public enum StorageKeys {
         case .userIDs: return "userIDs"
         case .user(let id): return "user\(id)"
         case .userSwitchingMethod: return "userSwitchingMethod"
+        case .version: return "db-version"
         }
     }
+}
+
+public enum DBType: String {
+    /// The global keychain
+    case keychain
+    /// The database meant to share data to the top shelf
+    case topShelf
+    /// The database that changes with the tvOS user
+    case perTVOSUserDefaults
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
@@ -113,10 +125,27 @@ public protocol BasicStorageProtocol {
 final class DefaultsBasicStorage: BasicStorageProtocol {
     private let defaults: UserDefaults
     private let topShelf: UserDefaults?
+    static let dbVersion = "3"
     
-    init() {
+    init() throws(BasicStorageErrors) {
         self.defaults = UserDefaults.standard
         self.topShelf = UserDefaults(suiteName: "group.com.benlab.stingray")
+        
+        // Migration from v1 data
+        if (try? getDBVersion(.keychain) ?? "") != Self.dbVersion {
+            Log.warning("Migrating DB to v\(Self.dbVersion)")
+            do {
+                let userIDs = self.topShelf?.stringArray(forKey: StorageKeys.userIDs.rawValue)
+                try self.setSecureData(.userIDs, data: userIDs)
+                try self.setDBVersion(to: Self.dbVersion)
+            }
+            catch let error as RError {
+                Log.critical("Failed to migrate DB to v\(Self.dbVersion): \(error.errorDescription)")
+                throw BasicStorageErrors.unableToMigrateDB(
+                    try? getDBVersion(.perTVOSUserDefaults), Self.dbVersion, error
+                )
+            }
+        }
     }
     
     func getString(_ key: StorageKeys) -> String? {
@@ -243,5 +272,27 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         }
         // teamID already includes the trailing dot e.g. "XXXXXXXXXX."
         return "\(teamID)com.benlab.stingray"
+    }
+    
+    private func getDBVersion(_ dbType: DBType) throws(BasicStorageErrors) -> String? {
+        switch dbType {
+        case .keychain:
+            do { return try self.getSecureData(.version) }
+            catch { throw BasicStorageErrors.unableToSetDBVersion(Self.dbVersion, error) }
+        case .perTVOSUserDefaults: return self.getString(.version)
+        case .topShelf: return self.getString(.version)
+        }
+    }
+    
+    private func setDBVersion(to version: String) throws(BasicStorageErrors) {
+        Log.info("Setting DB version...")
+        do { try self.setSecureData(.version, data: version) }
+        catch {
+            Log.critical("Failed set the DB version for the keychain")
+            throw BasicStorageErrors.unableToSetDBVersion(Self.dbVersion, error)
+        }
+        
+        self.setString(.version, value: version)
+        self.setTopShelfString(.version, value: version)
     }
 }

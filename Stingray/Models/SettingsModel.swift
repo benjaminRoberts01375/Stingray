@@ -43,7 +43,7 @@ public final class SettingsModel {
     /// - Parameters:
     ///   - userModel: Storage location of users
     ///   - storage: Settings storage location
-    init(userModel: UserModel, storage: SettingsStorageProtocol = SettingStorage(basicStorage: DefaultsBasicStorage())) {
+    init(userModel: UserModel, storage: SettingsStorageProtocol) {
         self.storage = storage
         self.userModel = userModel
         self.profileSwitchingMethod = storage.getProfileSwitchingMethod()
