@@ -33,7 +33,7 @@ public struct ProfilePickerView: View {
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
             ForEach(users) { user in
-                Button { loginState = Self.switchUser(user: user, userModel: self.userModel) }
+                Button { loginState = Self.switchUser(user: user, userModel: self.userModel, currentLoginState: loginState) }
                 label: {
                     VStack(alignment: .center) {
                         switch user.serviceType {
@@ -90,7 +90,9 @@ public struct ProfilePickerView: View {
                         self.userModel.deleteUser(user.id)
                         if self.streamingService?.userID == user.id {
                             if let nextUser = self.userModel.getUsers().first {
-                                self.loginState = Self.switchUser(user: nextUser, userModel: self.userModel)
+                                self.loginState = Self.switchUser(
+                                    user: nextUser, userModel: self.userModel, currentLoginState: self.loginState
+                                )
                             }
                             else { self.loginState = .loggedOut }
                         }
@@ -114,9 +116,16 @@ public struct ProfilePickerView: View {
         }
     }
     
-    static func switchUser(user: User, userModel: UserModel) -> LoginState {
+    static func switchUser(user: User, userModel: UserModel, currentLoginState: LoginState) -> LoginState {
         userModel.setActiveUser(userID: user.id)
         
+        // If we're already logged in as this user, reuse the existing streaming service instance
+        if case .loggedIn(let existingService) = currentLoginState,
+           existingService.userID == user.id {
+            return currentLoginState // Return the same state to avoid recreating the service which causes an infinte loop
+        }
+        
+        // Otherwise, create a new streaming service instance
         switch user.serviceType {
         case .Jellyfin(let jellyfinData):
             return .loggedIn(
