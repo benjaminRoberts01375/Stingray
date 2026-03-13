@@ -11,10 +11,10 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var networkAPI: TopShelfNetworkProtocol
     private var accessToken: String
     
-    init() throws(StreamingServiceErrors) {
+    init(userModel: UserModel) throws(StreamingServiceErrors) {
         let defaultUser: User
         do {
-            if let maybeUser = UserModel.shared.getActiveUser() { defaultUser = maybeUser }
+            if let maybeUser = userModel.getActiveUser() { defaultUser = maybeUser }
             else { throw StreamingServiceErrors.noDefaultUser }
         }
         catch { throw StreamingServiceErrors.initFailed(error) }

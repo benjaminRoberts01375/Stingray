@@ -11,15 +11,16 @@ class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
         let streamingModel: StreamingServiceBasicProtocol
+        let userModel = UserModel()
         do {
-            streamingModel = try StreamingServiceBasicModel()
+            streamingModel = try StreamingServiceBasicModel(userModel: userModel)
         } catch {
             Log.error("TopShelf: Failed to initialize StreamingServiceBasicModel: \(error)")
             return nil
         }
         
         // Fetch content concurrently
-        let activeUser = UserModel.shared.getActiveUser()
+        let activeUser = userModel.getActiveUser()
         Log.info("TopShelf: Loading content for \(activeUser?.displayName ?? "Unknown") - \(activeUser?.id ?? "Unknown ID")")
         async let upNextMedia = streamingModel.retrieveUpNext()
         async let recentlyAddedMedia = streamingModel.retrieveRecentlyAdded(.all)

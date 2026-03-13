@@ -10,33 +10,17 @@ import SwiftUI
 struct AddServerView: View {
     @Binding var loggedIn: LoginState
     @State private var httpProcol: HttpProtocol = .http
-    @State private var httpHostname: String
-    @State private var httpPort: String
+    @State private var httpHostname: String = ""
+    @State private var httpPort: String = "8096"
     @State private var username: String = ""
     @State private var password: String = ""
     @State private var error: RError?
     @State private var errorSummary: String = ""
     @State private var awaitingLogin: Bool = false
+    @Environment(UserModel.self) var userModel: UserModel
     
     init(loginState: Binding<LoginState>) {
         self._loggedIn = loginState
-        guard let serviceURL = UserModel.shared.getActiveUser()?.serviceURL
-        else {
-            guard let serviceURL = UserModel.shared.getUsers().first?.serviceURL
-            else {
-                self.httpHostname = ""
-                self.httpPort = "8096"
-                self.httpProcol = .http
-                return
-            }
-            if serviceURL.scheme == "https" { self.httpProcol = .https }
-            self.httpPort = String(serviceURL.port ?? 8096)
-            self.httpHostname = serviceURL.host ?? ""
-            return
-        }
-        if serviceURL.scheme == "https" { self.httpProcol = .https }
-        self.httpPort = String(serviceURL.port ?? 8096)
-        self.httpHostname = serviceURL.host ?? ""
     }
     
     var body: some View {
@@ -82,6 +66,21 @@ struct AddServerView: View {
             }
             .buttonStyle(.borderedProminent)
         }
+        .onAppear { // Done separately so we can ue the @Environment, also helps against reloads
+            loadExistingServerInfo()
+        }
+    }
+    
+    func loadExistingServerInfo() {
+        guard let serviceURL = userModel.getActiveUser()?.serviceURL ?? userModel.getUsers().first?.serviceURL else {
+            return
+        }
+        
+        if serviceURL.scheme == "https" {
+            httpProcol = .https
+        }
+        httpPort = String(serviceURL.port ?? 8096)
+        httpHostname = serviceURL.host ?? ""
     }
     
     func setupConnection() {
@@ -112,7 +111,9 @@ struct AddServerView: View {
         Task {
             awaitingLogin = true
             do {
-                let streamingService = try await JellyfinModel.login(url: url, username: username, password: password)
+                let streamingService = try await JellyfinModel.login(
+                    url: url, username: username, password: password, userModel: self.userModel
+                )
                 self.loggedIn = .loggedIn(streamingService)
             } catch let error as RError {
                 self.error = AccountErrors.loginFailed(error)

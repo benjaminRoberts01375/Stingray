@@ -10,9 +10,6 @@ import Foundation
 /// Basic data to store about the user
 @Observable
 final class UserModel {
-    /// Shared instance to avoid repeated instantiation
-    static let shared = UserModel()
-    
     /// Storage device to permanently store user data
     var storage: UserStorageProtocol
     
@@ -21,7 +18,7 @@ final class UserModel {
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
-    private init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
+    init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
         self.storage = storage
         self.userIDs = self.storage.getUserIDs()
     }

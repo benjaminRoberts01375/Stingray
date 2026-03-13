@@ -22,10 +22,13 @@ struct ContentView: View {
     @State var deepLinkRequest: DeepLinkRequest?
     @State private var navigationPath: NavigationPath
     @State private var settings: SettingsModel
+    @State private var userModel: UserModel
     
     init() {
+        let userModel = UserModel()
+        self.userModel = userModel
         self.navigationPath = NavigationPath()
-        self.settings = SettingsModel()
+        self.settings = SettingsModel(userModel: userModel)
     }
     
     var body: some View {
@@ -55,12 +58,13 @@ struct ContentView: View {
             }
         }
         .environment(settings)
+        .environment(userModel)
         .onAppear {
             listKeychainEntries()
             nukeKeychain()
             Log.info("Attempting to set up from storage")
             // Check if any users exist
-            if UserModel.shared.getUsers().isEmpty {
+            if self.userModel.getUsers().isEmpty {
                 Log.info("No users have been signed up, showing login screen")
                 return
             }
@@ -73,7 +77,7 @@ struct ContentView: View {
             }
             
             // Check if the current Apple TV user has an associated account
-            guard let defaultUser = UserModel.shared.getActiveUser()
+            guard let defaultUser = self.userModel.getActiveUser()
             else {
                 Log.info("Users exist, but there's no active user. Showing profile picker")
                 self.loginState = .pickingUser

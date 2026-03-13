@@ -9,9 +9,13 @@ import SwiftUI
 
 public struct ProfilePickerView: View {
     /// List of all users who have at some point signed into Stingray
-    let users: [User]
+    var users: [User] {
+        return userModel.getUsers()
+    }
     /// Login state for the entire app
     @Binding var loginState: LoginState
+    /// Functions and values regarding the users
+    @Environment(UserModel.self) var userModel: UserModel
     
     // A simple way to derrive the streaming service from the login state
     var streamingService: (any StreamingServiceProtocol)? {
@@ -23,14 +27,13 @@ public struct ProfilePickerView: View {
     }
     
     init(loginState: Binding<LoginState>) {
-        self.users = UserModel.shared.getUsers()
         self._loginState = loginState
     }
     
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
             ForEach(users) { user in
-                Button { loginState = Self.switchUser(user: user, userModel: UserModel.shared) }
+                Button { loginState = Self.switchUser(user: user, userModel: self.userModel) }
                 label: {
                     VStack(alignment: .center) {
                         switch user.serviceType {
@@ -84,10 +87,10 @@ public struct ProfilePickerView: View {
                 .buttonStyle(.plain)
                 .contextMenu {
                     Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
-                        UserModel.shared.deleteUser(user.id)
+                        self.userModel.deleteUser(user.id)
                         if self.streamingService?.userID == user.id {
-                            if let nextUser = UserModel.shared.getUsers().first {
-                                self.loginState = Self.switchUser(user: nextUser, userModel: UserModel.shared)
+                            if let nextUser = self.userModel.getUsers().first {
+                                self.loginState = Self.switchUser(user: nextUser, userModel: self.userModel)
                             }
                             else { self.loginState = .loggedOut }
                         }

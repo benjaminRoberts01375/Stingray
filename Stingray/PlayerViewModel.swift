@@ -39,6 +39,8 @@ final class PlayerViewModel: Hashable {
     /// Quickly get the media source from the media source ID
     public private(set) var mediaSource: any MediaSourceProtocol
     
+    public private(set) var userModel: UserModel
+    
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
@@ -64,12 +66,14 @@ final class PlayerViewModel: Hashable {
     
     /// Normal init for setting up a player
     public init(
+        userModel: UserModel,
         media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
         streamingService: StreamingServiceProtocol,
         seasons: [any TVSeasonProtocol]?
     ) {
+        self.userModel = userModel
         self.player = nil
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
@@ -82,7 +86,7 @@ final class PlayerViewModel: Hashable {
         var subtitleID: String?
         var bitrate: Bitrate = .full
         
-        if let defaultUser = UserModel.shared.getActiveUser() {
+        if let defaultUser = userModel.getActiveUser() {
             // Setup subtitles
             if defaultUser.usesSubtitles {
                 subtitleID = self.mediaSource.subtitleStreams.first {
@@ -168,7 +172,7 @@ final class PlayerViewModel: Hashable {
         self.player?.play()
         
         // Update user settings
-        guard var currentUser = UserModel.shared.getActiveUser() else { return }
+        guard var currentUser = self.userModel.getActiveUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
         switch bitrate {
         case .full, .none:
@@ -176,7 +180,7 @@ final class PlayerViewModel: Hashable {
         case .limited(let newBitrate):
             currentUser.bitrate = newBitrate
         }
-        UserModel.shared.updateUser(currentUser)
+        self.userModel.updateUser(currentUser)
     }
     
     /// Creates a new player based on current state and new episode

@@ -330,6 +330,8 @@ fileprivate struct PlayNavigationView: View {
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
     
+    @Environment(UserModel.self) var userModel: UserModel
+    
     init(
         focus: FocusState<ButtonType?>.Binding,
         navigation: Binding<NavigationPath>,
@@ -376,6 +378,7 @@ fileprivate struct PlayNavigationView: View {
                     Button {
                         self.navigation.append(
                             PlayerViewModel(
+                                userModel: self.userModel,
                                 media: media,
                                 mediaSource: mediaSource,
                                 startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
@@ -449,6 +452,7 @@ fileprivate struct PlayNavigationView: View {
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
             PlayerViewModel(
+                userModel: self.userModel,
                 media: media,
                 mediaSource: mediaSource,
                 startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1),
@@ -658,10 +662,13 @@ fileprivate struct EpisodeNavigationView: View {
     
     @Binding var navigation: NavigationPath
     
+    @Environment(UserModel.self) var userModel: UserModel
+    
     var body: some View {
         Button {
             navigation.append(
                 PlayerViewModel(
+                    userModel: self.userModel,
                     media: media,
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
@@ -823,6 +830,8 @@ public struct SpecialFeaturesRow: View {
     
     @Binding var navigation: NavigationPath
     
+    @Environment(UserModel.self) var userModel: UserModel
+    
     init(
         streamingService: any StreamingServiceProtocol,
         rowData: [any SpecialFeatureProtocol],
@@ -848,6 +857,7 @@ public struct SpecialFeaturesRow: View {
                             Button {
                                 navigation.append(
                                     PlayerViewModel(
+                                        userModel: self.userModel,
                                         media: media,
                                         mediaSource: mediaSource,
                                         startTime: .zero,
