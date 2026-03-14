@@ -48,7 +48,7 @@ extension SettingsModel.ProfileSwitching {
         case .manual:
             return "Manual"
         case .syncWithTVOS:
-            return "Sync with tvOS"
+            return "Sync with tvOS (WIP)"
         }
     }
     
