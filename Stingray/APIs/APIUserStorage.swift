@@ -35,8 +35,22 @@ public protocol UserStorageProtocol {
 
 public final class UserStorage: UserStorageProtocol {
     let basicStorage: BasicStorageProtocol
+    var localUserID: String
     
-    init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
+    init(basicStorage: BasicStorageProtocol) {
+        Log.info("Setting up Basic Storage")
+        self.basicStorage = basicStorage
+        // Ensure there's a UUID for each tvOS user
+        if let localUserID = self.basicStorage.getString(.localUserID) { // Local user ID is already configured
+            self.localUserID = localUserID
+        }
+        else { // New tvOS user. Generate a local uesr ID
+            self.localUserID = UUID().uuidString
+            self.basicStorage.setString(.localUserID, value: localUserID)
+            self.basicStorage.setTopShelfString(.localUserID, value: localUserID)
+        }
+        Log.info("Local User ID: \(localUserID)")
+    }
     
     public func getUserIDs() -> [String] {
         return (try? self.basicStorage.getSecureData(.userIDs)) ?? [] // TODO: Silently fails
@@ -47,25 +61,29 @@ public final class UserStorage: UserStorageProtocol {
     }
     
     public func getActiveUserID() -> String? {
+        if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? false {
+            return self.basicStorage.getTopShelfString(.defaultStreamingUserID)
+        }
         let method: SettingsModel.ProfileSwitching = (try? self.basicStorage.getSecureData(.userSwitchingMethod)) ?? .askOnLaunch
         switch method {
         case .manual:
             let userID: String? = try? self.basicStorage.getSecureData(.defaultStreamingUserID) ?? nil // Fallback to ask
-            self.basicStorage.setString(.defaultStreamingUserID, value: userID ?? "")
+            self.basicStorage.setString(.linkUser(localUserID), value: userID ?? "")
             self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: userID ?? "")
             return userID
         case .syncWithTVOS, .askOnLaunch:
             if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? false { // Top shelf reads from a different storage
                 return self.basicStorage.getTopShelfString(.defaultStreamingUserID)
             }
-            return self.basicStorage.getString(.defaultStreamingUserID)
+            return try? self.basicStorage.getSecureData(.linkUser(localUserID))
         }
     }
     
-    public func setActiveUserID(id: String) {
-        self.basicStorage.setString(.defaultStreamingUserID, value: id) // Set per-user active ID
-        self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: id) // Set Top Shelf user ID
-        try? self.basicStorage.setSecureData(.defaultStreamingUserID, data: id) // TODO: Silently fails
+    public func setActiveUserID(id serverUserID: String) {
+        self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: serverUserID) // Set Top Shelf user ID
+        try? self.basicStorage.setSecureData(.defaultStreamingUserID, data: serverUserID) // TODO: Silently fails
+        try? self.basicStorage.setSecureData(.linkUser(localUserID), data: serverUserID) // TODO: Silently fails
+        Log.info("Linking tvOS \(localUserID) -> Jellyfin \(serverUserID)")
     }
     
     public func upsertUser(user: User) {

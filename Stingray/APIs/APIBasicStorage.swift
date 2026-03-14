@@ -20,6 +20,10 @@ public enum StorageKeys {
     case userSwitchingMethod
     /// Internal: Database version tracking
     case version
+    /// Link a tvOS user to a Jellyfin user
+    case linkUser(String)
+    /// A unique identifier for a tvOS user
+    case localUserID
     
     /// A string representation of the enum
     public var rawValue: String {
@@ -29,6 +33,8 @@ public enum StorageKeys {
         case .user(let id): return "user\(id)"
         case .userSwitchingMethod: return "userSwitchingMethod"
         case .version: return "db-version"
+        case .linkUser(let id): return "linkUser-\(id)"
+        case .localUserID: return "localUserID"
         }
     }
 }
