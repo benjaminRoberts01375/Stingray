@@ -159,7 +159,7 @@ final class PlayerViewModel: Hashable {
             mediaSource: self.mediaSource,
             videoID: videoID ?? self.playerProgress?.videoID ?? "0",
             audioID: audioID ?? self.playerProgress?.audioID ?? "1",
-            subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
+            subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // no subtitles when self.playerProgress?.subtitleID is nil
             bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full,
             title: title,
             subtitle: subtitle

@@ -8,6 +8,7 @@
 import AVKit
 import SwiftUI
 
+// MARK: Parent view
 struct PlayerView: View {
     @Environment(\.dismiss) var dismiss
     @State var vm: PlayerViewModel
@@ -38,6 +39,7 @@ struct PlayerView: View {
     }
 }
 
+// MARK: Description Tab
 fileprivate struct PlayerDescriptionView: View {
     let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
@@ -94,6 +96,7 @@ fileprivate struct PlayerDescriptionView: View {
     }
 }
 
+// MARK: People Tab
 fileprivate struct PlayerPeopleView: View {
     let media: any MediaProtocol
     let streamingService: any StreamingServiceProtocol
@@ -106,6 +109,7 @@ fileprivate struct PlayerPeopleView: View {
     }
 }
 
+// MARK: Stats Tab
 fileprivate struct PlayerStreamingStats: View {
     /// All data regarding current playback
     public var playerProgress: (any PlayerProtocol)?
@@ -297,6 +301,7 @@ fileprivate struct MaterialEffectModifier: ViewModifier {
     }
 }
 
+// MARK: UIKit Player
 struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     let vm: PlayerViewModel
     
@@ -373,6 +378,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         // Typical buttons
         var items: [UIMenuElement] = []
         
+        // MARK: Subtitle stream choices
         // Add Subtitles menu only if there are subtitle tracks available
         if !self.vm.mediaSource.subtitleStreams.isEmpty {
             items.append(UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
@@ -392,6 +398,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             })))
         }
         
+        // MARK: Audio stream choices
         // Add Audio menu only if there's more than one option
         if self.vm.mediaSource.audioStreams.count > 1 {
             items.append(
@@ -409,6 +416,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             )
         }
         
+        // MARK: Video stream choices
         // Add Video menu only if there's more than one option
         if self.vm.mediaSource.videoStreams.count > 1 {
             items.append(
@@ -426,7 +434,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             )
         }
         
-        // Bitrate choices
+        // MARK: Bitrate choices
         if let videoStream = (self.vm.mediaSource.videoStreams.first { self.vm.playerProgress?.videoID == $0.id }),
            videoStream.bitrate > 1_500_000 {
             let numberFormatter = NumberFormatter()
@@ -490,6 +498,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             )
         }
         
+        // MARK: Episode picker
         // TV Season-related buttons
         if let seasons = self.vm.seasons {
             let allEpisodes = seasons.flatMap(\.episodes)
