@@ -309,7 +309,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         do {
             return try await networkAPI.getUpNext(accessToken: accessToken)
         } catch {
-            print("Up next failed: \(error.rDescription())")
+            Log.warning("Up next failed: \(error.rDescription())")
             return []
         }
     }
@@ -436,7 +436,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     static func getProfileImageURL(userID: String, serviceURL: URL) -> URL? {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         let url = networkAPI.getUserImageURL(userID: userID)
-        print("Profile URL: \(url?.absoluteString ?? "No URL")")
+        Log.debug("Profile URL: \(url?.absoluteString ?? "No URL")")
         return url
     }
 }

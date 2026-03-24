@@ -77,3 +77,13 @@ disabled_rules:
   - redundant_string_enum_value
   - type_body_length
   - cyclomatic_complexity
+
+# Custom Rules:
+custom_rules:
+  only_log:
+    name: "Only Log"
+    message: "Use Log.[debug|info|warning|error|critical](_:) over print(_:)."
+    severity: warning # Warning so we can use print for debugging
+    regex: '\bprint\s*\(\s*' # Matches `print(`
+    match_kinds: # Help against comments and such
+      - identifier

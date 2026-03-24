@@ -107,7 +107,7 @@ struct ContentView: View {
     }
     
     private func handleDeepLink(url: URL) {
-        print("Deep link received: \(url.absoluteString)")
+        Log.info("Deep link received: \(url.absoluteString)")
         
         // Make sure URL scheme is good
         guard url.scheme == "stingray",
@@ -141,7 +141,7 @@ struct ContentView: View {
     func nukeKeychain() {
         // Check for ResetKeychain argument
         if !ProcessInfo.processInfo.arguments.contains("-ResetKeychain") {
-            print("Leaving Keychain alone.")
+            Log.debug("Leaving Keychain alone.")
             return
         }
         Log.info("Nuking Keychain...")
