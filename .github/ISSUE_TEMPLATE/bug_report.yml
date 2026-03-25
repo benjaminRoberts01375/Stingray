@@ -65,7 +65,7 @@ body:
   - type: input
     attributes:
       label: Apple TV and tvOS version. Check the bottom of the Stingray Home tab.
-      placeholder: Apple TV A2343 on tvOS 26.2
+      placeholder: AppleTV14,1 on tvOS 26.4
     validations:
       required: true
 

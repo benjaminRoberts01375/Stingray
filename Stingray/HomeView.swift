@@ -210,8 +210,23 @@ struct SystemInfoView: View {
             // tvOS version
             let osVersion = ProcessInfo.processInfo.operatingSystemVersion
             Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
+            // Apple TV model
+            if let model = getAppleTVModel() {
+                Text(" • \(model)")
+            }
         }
         .foregroundStyle(.gray.opacity(0.5))
         .frame(maxWidth: .infinity)
+    }
+    
+    private func getAppleTVModel() -> String? {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        return identifier.isEmpty ? nil : identifier
     }
 }
