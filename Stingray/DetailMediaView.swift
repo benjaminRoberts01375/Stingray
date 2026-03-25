@@ -331,6 +331,7 @@ fileprivate struct PlayNavigationView: View {
     @Binding var navigation: NavigationPath
     
     @Environment(UserModel.self) var userModel: UserModel
+    @Environment(SettingsModel.self) var settings: SettingsModel
     
     init(
         focus: FocusState<ButtonType?>.Binding,
@@ -383,7 +384,8 @@ fileprivate struct PlayNavigationView: View {
                                 mediaSource: mediaSource,
                                 startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
                                 streamingService: self.streamingService,
-                                seasons: self.seasons
+                                seasons: self.seasons,
+                                settingsModel: self.settings,
                             )
                         )
                     } label: { Label(self.title, systemImage: "play.fill") }
@@ -457,7 +459,8 @@ fileprivate struct PlayNavigationView: View {
                 mediaSource: mediaSource,
                 startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1),
                 streamingService: self.streamingService,
-                seasons: self.seasons
+                seasons: self.seasons,
+                settingsModel: self.settings
             )
         )
     }
@@ -663,6 +666,7 @@ fileprivate struct EpisodeNavigationView: View {
     @Binding var navigation: NavigationPath
     
     @Environment(UserModel.self) var userModel: UserModel
+    @Environment(SettingsModel.self) var settings: SettingsModel
     
     var body: some View {
         Button {
@@ -673,7 +677,8 @@ fileprivate struct EpisodeNavigationView: View {
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
                     streamingService: streamingService,
-                    seasons: seasons
+                    seasons: seasons,
+                    settingsModel: self.settings
                 )
             )
         } label: {
@@ -831,6 +836,7 @@ public struct SpecialFeaturesRow: View {
     @Binding var navigation: NavigationPath
     
     @Environment(UserModel.self) var userModel: UserModel
+    @Environment(SettingsModel.self) var settings: SettingsModel
     
     init(
         streamingService: any StreamingServiceProtocol,
@@ -862,7 +868,8 @@ public struct SpecialFeaturesRow: View {
                                         mediaSource: mediaSource,
                                         startTime: .zero,
                                         streamingService: streamingService,
-                                        seasons: nil
+                                        seasons: nil,
+                                        settingsModel: self.settings
                                     )
                                 )
                             } label: {

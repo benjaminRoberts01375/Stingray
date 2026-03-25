@@ -141,7 +141,6 @@ public struct User: Codable, Identifiable {
     public let id: String
     let displayName: String
     var usesSubtitles: Bool // Set default as false
-    var bitrate: Int?
     
     init(
         serviceURL: URL,
@@ -172,7 +171,6 @@ public struct User: Codable, Identifiable {
             displayName = try container.decode(String.self, forKey: .displayName)
             
             usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
-            bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {

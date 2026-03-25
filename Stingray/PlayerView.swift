@@ -438,14 +438,13 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
             ?? "\(videoStream.bitrate)"
             let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
-                self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: .full)
+                self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: nil)
             }
             fullBitrate.state = {
-                if case .full = self.vm.playerProgress?.bitrate {
-                    return .on
-                } else {
+                if SettingsModel.bitrateOptions.contains(self.vm.playerProgress?.bitrate ?? -1) {
                     return .off
                 }
+                return .on
             }()
             var bitrateOptions: [UIAction] = [fullBitrate]
             
@@ -457,10 +456,10 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
                 : "\(mbps) Mbps"
                 
                 let action = UIAction(title: title) { _ in
-                    self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: .limited(bitrate))
+                    self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: bitrate)
                 }
                 action.state = {
-                    if case .limited(let limit) = self.vm.playerProgress?.bitrate, limit == bitrate {
+                    if self.vm.playerProgress?.bitrate == bitrate {
                         return .on
                     } else {
                         return .off
@@ -469,19 +468,16 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
                 return action
             }
             
-            // Add common bitrate options if applicable
-            let commonBitrates = stride(from: 20_000_000, to: videoStream.bitrate, by: 10_000_000).reversed() +
-            [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000]
-            for bitrate in commonBitrates where videoStream.bitrate > bitrate {
+            // Add bitrate options if applicable
+            for bitrate in SettingsModel.bitrateOptions where videoStream.bitrate > bitrate {
                 bitrateOptions.append(makeBitrateAction(bitrate: bitrate))
             }
             
             let bitrateIcon: String = {
-                if case .full = self.vm.playerProgress?.bitrate {
-                    return "wifi"
-                } else {
+                if SettingsModel.bitrateOptions.contains(self.vm.playerProgress?.bitrate ?? -1) {
                     return "wifi.badge.lock"
                 }
+                return "wifi"
             }()
             
             items.append(

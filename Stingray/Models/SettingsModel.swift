@@ -12,6 +12,9 @@ import Foundation
 public final class SettingsModel {
     /// Storage location for user details
     private let userModel: UserModel
+    /// All user setable bitrate options
+    static let bitrateOptions = stride(from: 20_000_000, to: 150_000, by: 10_000_000).reversed() +
+    [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000, 100_000]
     
     /// Type for when Stingray will ask the user about switching profiles.
     public enum ProfileSwitching: Codable, CaseIterable {
@@ -39,6 +42,13 @@ public final class SettingsModel {
         }
     }
     
+    /// Video bitrate option
+    var bitrate: Int? {
+        willSet(newValue) {
+            self.storage.setBitrateCap(newValue)
+        }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users
@@ -47,5 +57,6 @@ public final class SettingsModel {
         self.storage = storage
         self.userModel = userModel
         self.profileSwitchingMethod = storage.getProfileSwitchingMethod()
+        self.bitrate = storage.getBitrateCap()
     }
 }

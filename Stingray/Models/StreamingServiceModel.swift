@@ -32,7 +32,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     ///   - videoID: Video stream ID.
     ///   - audioID: Audio stream ID.
     ///   - subtitleID: Subtitle stream ID. Nil = no subtitles.
-    ///   - bitrate: Video bitrate of the stream.
+    ///   - bitrate: Target video bitrate of the stream. Nil = unlimited bitrate
     ///   - title: Title of the media to put on the player.
     ///   - subtitle: Subtitle, if available, to put on the player.
     ///   - player: An AVPlayer instance to update and use.
@@ -42,7 +42,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
         videoID: String,
         audioID: String,
         subtitleID: String?,
-        bitrate: Bitrate,
+        bitrate: Int?,
         title: String,
         subtitle: String?,
         player: AVPlayer
@@ -85,14 +85,6 @@ public enum MediaLookupStatus {
     case temporarilyNotFound
     /// The requested media was not found despite all libraries being downloaded
     case notFound
-}
-
-/// Types of used bitrates
-public enum Bitrate {
-    /// The maximum allowed bitrate
-    case full
-    /// An artifical limit on the bitrate
-    case limited(Int)
 }
 
 /// A harness for connecting to Jellyfin.
@@ -386,19 +378,14 @@ public final class JellyfinModel: StreamingServiceProtocol {
         videoID: String,
         audioID: String,
         subtitleID: String?,
-        bitrate: Bitrate,
+        bitrate: Int?,
         title: String,
         subtitle: String?,
         player: AVPlayer
     ) {
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return }
-        let bitrateBits = switch bitrate {
-        case .full:
-            videoStream.bitrate
-        case .limited(let setBitrate):
-            setBitrate
-        }
+        let bitrateBits = bitrate ?? videoStream.bitrate
         
         guard let playerItem = networkAPI.getStreamingContent(
                 accessToken: accessToken,
@@ -421,7 +408,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
             videoID: videoID,
             audioID: audioID,
             subtitleID: subtitleID,
-            bitrate: bitrate,
+            bitrate: bitrateBits,
             playbackSessionID: sessionID,
             userSessionID: self.sessionID,
             accessToken: self.accessToken
@@ -453,7 +440,7 @@ protocol PlayerProtocol {
     /// ID for the video stream based on the server
     var videoID: String { get }
     /// Video bitrate
-    var bitrate: Bitrate { get }
+    var bitrate: Int { get }
     /// Encompasing media source that contains the actual data
     var mediaSource: any MediaSourceProtocol { get }
     
@@ -472,7 +459,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     private var timer: Timer?
     var mediaSource: any MediaSourceProtocol
     let videoID: String
-    let bitrate: Bitrate
+    let bitrate: Int
     let audioID: String
     let subtitleID: String?
     /// Unique ID for playback. If settings are changed, a new ID is needed.
@@ -489,7 +476,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         videoID: String,
         audioID: String,
         subtitleID: String?,
-        bitrate: Bitrate,
+        bitrate: Int,
         playbackSessionID: String,
         userSessionID: String,
         accessToken: String

@@ -24,6 +24,8 @@ public enum StorageKeys {
     case linkUser(String)
     /// A unique identifier for a tvOS user
     case localUserID
+    /// A unique ID for the maximum bitrate option
+    case maxBitrate
     
     /// A string representation of the enum
     public var rawValue: String {
@@ -35,6 +37,7 @@ public enum StorageKeys {
         case .version: return "db-version"
         case .linkUser(let id): return "linkUser-\(id)"
         case .localUserID: return "localUserID"
+        case .maxBitrate: return "maxBitrate"
         }
     }
 }
@@ -59,9 +62,17 @@ public protocol BasicStorageProtocol {
     /// Set a `String` into local storage
     /// - Parameters:
     ///   - key: The key where data is to be stored.
-    ///   - id: Unique ID for saving multiple versions of this value at this key.
     ///   - value: Text to set
     func setString(_ key: StorageKeys, value: String)
+    /// Set an `Int` into local storage. Returns 0 if the value does not exist in storage.
+    /// - Parameter key: The key where data is to be stored
+    /// - Returns: The found `Int`
+    func getInt(_ key: StorageKeys) -> Int
+    /// Set an `Int` into local storage
+    /// - Parameters:
+    ///   - key: The key where data is to be stored.
+    ///   - value: Text to set
+    func setInt(_ key: StorageKeys, value: Int?)
     /// Deletes a `String` from storage
     /// - Parameters:
     ///   - key: Key the string resides at.
@@ -161,6 +172,14 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
     }
     
     func setString(_ key: StorageKeys, value: String) {
+        defaults.set(value, forKey: key.rawValue)
+    }
+    
+    func getInt(_ key: StorageKeys) -> Int {
+        return defaults.integer(forKey: key.rawValue)
+    }
+    
+    func setInt(_ key: StorageKeys, value: Int?) {
         defaults.set(value, forKey: key.rawValue)
     }
     

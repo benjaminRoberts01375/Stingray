@@ -46,6 +46,8 @@ final class PlayerViewModel: Hashable {
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
     
+    public var settingsModel: SettingsModel
+    
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
     /// Seasons of a TV show if available (may be a movie)
@@ -71,7 +73,8 @@ final class PlayerViewModel: Hashable {
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
         streamingService: StreamingServiceProtocol,
-        seasons: [any TVSeasonProtocol]?
+        seasons: [any TVSeasonProtocol]?,
+        settingsModel: SettingsModel
     ) {
         self.userModel = userModel
         self.player = AVPlayer()
@@ -82,9 +85,9 @@ final class PlayerViewModel: Hashable {
         self.mediaSourceID = mediaSource.id
         self.mediaSource = mediaSource
         self.media = media
+        self.settingsModel = settingsModel
         
         var subtitleID: String?
-        var bitrate: Bitrate = .full
         
         if let defaultUser = userModel.getActiveUser() {
             // Setup subtitles
@@ -92,10 +95,6 @@ final class PlayerViewModel: Hashable {
                 subtitleID = self.mediaSource.subtitleStreams.first {
                     $0.isDefault
                 }?.id ?? self.mediaSource.subtitleStreams.first?.id
-            }
-            // Setup bitrate
-            if let bitrateBits = defaultUser.bitrate {
-                bitrate = .limited(bitrateBits)
             }
         }
         
@@ -105,7 +104,7 @@ final class PlayerViewModel: Hashable {
             videoID: .newID(self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0")),
             audioID: .newID(self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1")),
             subtitleID: .newID(subtitleID),
-            bitrate: bitrate
+            bitrate: settingsModel.bitrate
         )
         
     }
@@ -130,7 +129,7 @@ final class PlayerViewModel: Hashable {
         videoID: StreamTransitionType = .keep,
         audioID: StreamTransitionType = .keep,
         subtitleID: StreamTransitionType = .keep,
-        bitrate: Bitrate? = nil
+        bitrate: Int? = nil
     ) {
         do { try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback) }
         catch { Log.warning("Failed to configure audio session: \(error)") }
@@ -184,7 +183,7 @@ final class PlayerViewModel: Hashable {
             videoID: finalVideoID,
             audioID: finalAudioID,
             subtitleID: finalSubtitleID,
-            bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full,
+            bitrate: bitrate ?? self.playerProgress?.bitrate,
             title: title,
             subtitle: subtitle,
             player: self.player
@@ -197,13 +196,6 @@ final class PlayerViewModel: Hashable {
         // Update user settings
         guard var currentUser = self.userModel.getActiveUser() else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
-        switch bitrate {
-        case .full, .none:
-            currentUser.bitrate = nil
-        case .limited(let newBitrate):
-            currentUser.bitrate = newBitrate
-        }
-        self.userModel.updateUser(currentUser)
     }
     
     /// Creates a new player based on current state and new episode
