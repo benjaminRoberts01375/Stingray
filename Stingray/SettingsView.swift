@@ -59,6 +59,11 @@ public struct SettingsView: View {
             }
             .listRowBackground(Color.clear)
         }
+        
+        switch loginState {
+        case .loggedIn(let streamingService): SystemInfoView(streamingService: streamingService)
+        default: EmptyView()
+        }
     }
 }
 

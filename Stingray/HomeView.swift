@@ -56,6 +56,7 @@ struct HomeView: View {
             .focusSection()
             
             SystemInfoView(streamingService: streamingService)
+                .padding(.top)
         }
     }
 }
@@ -212,6 +213,5 @@ struct SystemInfoView: View {
         }
         .foregroundStyle(.gray.opacity(0.5))
         .frame(maxWidth: .infinity)
-        .padding(.top)
     }
 }
