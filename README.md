@@ -94,6 +94,7 @@ Extensive content metadata.
   - [x] Fix subtitle, audio, and video tracks randomly changing when changing a different track type
   - [x] Prevent old AVPlayers getting stuck on async threads
 - [x] Extend the maximum configurable bitrate to 100 Mbps
+- [x] Add the number of items in each library at the bottom of a library
 
 ## Long-Term TODO List
 

@@ -34,6 +34,8 @@ public struct LibraryView: View {
                     }
                 }
             }
+            LibraryInfoView(library: self.library)
+                .padding(.top)
         }
     }
 }
@@ -54,5 +56,26 @@ public struct MediaGridView: View {
                 MediaCard(media: media, streamingService: streamingService) { navigation.append(AnyMedia(media: media)) }
             }
         }
+    }
+}
+
+/// Displays some high-level info about libraries.
+public struct LibraryInfoView: View {
+    /// Library to display info for.
+    public let library: any LibraryProtocol
+    
+    public var body: some View {
+        HStack(spacing: 0) {
+            switch self.library.media { // Only display a ProgressView while downloading content.
+            case .waiting, .unloaded, .available: ProgressView()
+            default: EmptyView()
+            }
+            
+            switch self.library.media {
+            case .available(let media), .complete(let media): Text("\(media.count) Items")
+            default: Text("0 Items")
+            }
+        }
+        .foregroundStyle(.tertiary)
     }
 }
