@@ -33,7 +33,30 @@ public struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .focusSection()
             }
-            .padding()
+            
+            Section(
+                header: Text("Playback Settings").bold(),
+                footer: Text("")
+            ) {
+                Menu {
+                    ForEach([nil] + SettingsModel.bitrateOptions, id: \.self) { bitrateOption in
+                        Button { settings.bitrate = bitrateOption }
+                        label: {
+                            if settings.bitrate == bitrateOption {
+                                Label(Int.formatMegabitsPerSec(bitrateOption), systemImage: "checkmark")
+                            }
+                            else { Text(Int.formatMegabitsPerSec(bitrateOption)) }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text("Target Video Bitrate")
+                        Spacer()
+                        Text(settings.bitrate == nil ? "Maximum" : "Limited to \(Int.formatMegabitsPerSec(settings.bitrate))")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
     }
 }

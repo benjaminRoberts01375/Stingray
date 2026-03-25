@@ -52,9 +52,8 @@ Extensive content metadata.
 ## v1.2.0 TODO
 
 - [ ] Settings Page
-  - [ ] Max bitrate
+  - [x] Max bitrate
   - [ ] Auto play toggle
-  - [ ] Themes
   - [ ] Connection Info
     - [x] User's name
     - [ ] Server address

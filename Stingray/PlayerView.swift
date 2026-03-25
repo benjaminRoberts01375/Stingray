@@ -450,12 +450,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             
             // Helper function to create a bitrate action
             func makeBitrateAction(bitrate: Int) -> UIAction {
-                let mbps = Double(bitrate) / 1_000_000
-                let title = mbps.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(mbps)) Mbps"
-                : "\(mbps) Mbps"
-                
-                let action = UIAction(title: title) { _ in
+                let action = UIAction(title: Int.formatMegabitsPerSec(bitrate)) { _ in
                     self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: bitrate)
                 }
                 action.state = {
