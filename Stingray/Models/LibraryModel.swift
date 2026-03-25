@@ -37,7 +37,9 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         self.title = title
         self.media = .unloaded
         self.id = id
-        self.libraryType = libraryType
+        
+        if libraryType.contains("tv") { self.libraryType = "TV Shows" }
+        else { self.libraryType = libraryType.prefix(1).uppercased() + libraryType.dropFirst() }
     }
     
     enum CodingKeys: String, CodingKey {
@@ -53,7 +55,10 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             
             title = try container.decode(String.self, forKey: .title)
             id = try container.decode(String.self, forKey: .id)
-            libraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
+            let rawLibraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
+            if rawLibraryType.contains("tv") { self.libraryType = "TV Shows" }
+            else if rawLibraryType.lowercased() == "boxsets" { self.libraryType = "Collections" }
+            else { libraryType = rawLibraryType.prefix(1).uppercased() + rawLibraryType.dropFirst() }
             media = .unloaded
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }

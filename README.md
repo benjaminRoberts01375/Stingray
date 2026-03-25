@@ -59,11 +59,12 @@ Extensive content metadata.
     - [ ] Server address
     - [ ] Session ID
     - [ ] User's ID
-    - [ ] Server's name
-    - [ ] Server's version
-    - [ ] Stingray's version
-    - [ ] Total number of movies
-    - [ ] Total number of shows
+    - [x] Server's name
+    - [x] Server's version
+    - [x] Stingray's version
+    - [x] Total number of movies
+    - [x] Total number of shows
+    - [x] Total number of libraries
 - [x] Streaming Stats in the player
   - [x] Observed bitrate
   - [x] Playback resolution

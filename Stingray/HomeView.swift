@@ -276,8 +276,7 @@ public struct LibrariesInfoView: View {
             case .unloaded, .waiting, .error:
                 break
             case .available(let media), .complete(let media):
-                let capitalizedType = library.libraryType.prefix(1).uppercased() + library.libraryType.dropFirst()
-                counters[capitalizedType, default: 0] += media.count
+                counters[library.libraryType, default: 0] += media.count
             }
         }
         return counters
