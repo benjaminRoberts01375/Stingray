@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 final class PlayerViewModel: Hashable {
     /// Player with formatted URL already set
-    public var player: AVPlayer?
+    public var player: AVPlayer
     /// Media that contains the source to play
     public var media: any MediaProtocol
     /// Media source in play
@@ -74,7 +74,7 @@ final class PlayerViewModel: Hashable {
         seasons: [any TVSeasonProtocol]?
     ) {
         self.userModel = userModel
-        self.player = nil
+        self.player = AVPlayer()
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
         self.seasons = seasons
@@ -102,14 +102,22 @@ final class PlayerViewModel: Hashable {
         self.savePlaybackDate()
         self.newPlayer(
             startTime: self.startTime,
-            videoID: self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0"),
-            audioID: self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1"),
-            subtitleID: subtitleID,
+            videoID: .newID(self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0")),
+            audioID: .newID(self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1")),
+            subtitleID: .newID(subtitleID),
             bitrate: bitrate
         )
         
     }
     
+    /// Dictates how the player should transition a particular stream
+    public enum StreamTransitionType {
+        /// Do not transition to a new stream
+        case keep
+        /// Update the current stream to a new ID. Nil for no stream.
+        case newID(String?)
+    }
+
     /// Creates a new player based on current state
     /// - Parameters:
     ///   - startTime: Where the video should start from
@@ -119,22 +127,17 @@ final class PlayerViewModel: Hashable {
     ///   - bitrate: The video's bitrate in bits per second
     public func newPlayer(
         startTime: CMTime,
-        videoID: String? = nil,
-        audioID: String? = nil,
-        subtitleID: String? = nil,
+        videoID: StreamTransitionType = .keep,
+        audioID: StreamTransitionType = .keep,
+        subtitleID: StreamTransitionType = .keep,
         bitrate: Bitrate? = nil
     ) {
-        self.stopPlayer()
+        do { try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback) }
+        catch { Log.warning("Failed to configure audio session: \(error)") }
         
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-        } catch {
-            Log.warning("Failed to configure audio session: \(error)")
-        }
-        
+        // Setup title and possibly a subtitle (ex. "Season 1, Episode 1" or "The Super Duper Cut")
         var title = ""
         var subtitle = ""
-        
         switch self.media.mediaType {
         case .tv(let seasons):
             if let seasons = seasons { // TV Shows
@@ -155,21 +158,41 @@ final class PlayerViewModel: Hashable {
         default: title = self.media.title
         }
         
-        guard let player = streamingService.playbackStart(
+        // Setup stream IDs
+        let finalVideoID: String
+        let finalAudioID: String
+        let finalSubtitleID: String?
+        switch videoID {
+        case .keep: finalVideoID = self.playerProgress?.videoID ?? "0"
+        case .newID(let id): finalVideoID = id ?? "0"
+        }
+        switch audioID {
+        case .keep: finalAudioID = self.playerProgress?.audioID ?? "1"
+        case .newID(let id): finalAudioID = id ?? "1"
+        }
+        switch subtitleID { // No subtitles when self.playerProgress?.subtitleID is nil
+        case .keep: finalSubtitleID = self.playerProgress?.subtitleID
+        case .newID(let id): finalSubtitleID = id
+        }
+        
+        // We're done reading from the running player
+        self.stopPlayer()
+        
+        // Create/update the player
+        self.streamingService.playbackStart(
             mediaSource: self.mediaSource,
-            videoID: videoID ?? self.playerProgress?.videoID ?? "0",
-            audioID: audioID ?? self.playerProgress?.audioID ?? "1",
-            subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // no subtitles when self.playerProgress?.subtitleID is nil
+            videoID: finalVideoID,
+            audioID: finalAudioID,
+            subtitleID: finalSubtitleID,
             bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full,
             title: title,
-            subtitle: subtitle
+            subtitle: subtitle,
+            player: self.player
         )
-        else { return }
         
-        self.player = player
         self.playerProgress = streamingService.playerProgress // Sync to view model
-        self.player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        self.player?.play()
+        self.player.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
+        self.player.play()
         
         // Update user settings
         guard var currentUser = self.userModel.getActiveUser() else { return }
@@ -195,12 +218,16 @@ final class PlayerViewModel: Hashable {
         if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { self.playerProgress?.subtitleID == $0.id }) {
             newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle)
         }
-        self.newPlayer(startTime: .zero, videoID: newVideoStream.id, audioID: newAudioStream.id, subtitleID: newSubtitleStream?.id)
+        self.newPlayer(
+            startTime: .zero,
+            videoID: .newID(newVideoStream.id),
+            audioID: .newID(newAudioStream.id),
+            subtitleID: .newID(newSubtitleStream?.id)
+        )
     }
     
     func stopPlayer() {
-        player?.pause()
-        player = nil
+        player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
@@ -227,7 +254,7 @@ final class PlayerViewModel: Hashable {
     }
     
     deinit {
-        player?.pause()
+        player.pause()
         streamingService.playbackEnd()
     }
 }

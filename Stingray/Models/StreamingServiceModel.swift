@@ -26,7 +26,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     /// Download library data.
     func retrieveLibraries() async
     
-    /// Inform the server that playback has begun.
+    /// Setup playback, informs the server about playback status
     /// - Parameters:
     ///   - mediaSource: Media source being watched.
     ///   - videoID: Video stream ID.
@@ -35,6 +35,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     ///   - bitrate: Video bitrate of the stream.
     ///   - title: Title of the media to put on the player.
     ///   - subtitle: Subtitle, if available, to put on the player.
+    ///   - player: An AVPlayer instance to update and use.
     /// - Returns: Playback device.
     func playbackStart(
         mediaSource: any MediaSourceProtocol,
@@ -43,8 +44,9 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
         subtitleID: String?,
         bitrate: Bitrate,
         title: String,
-        subtitle: String?
-    ) -> AVPlayer?
+        subtitle: String?,
+        player: AVPlayer
+    )
     
     /// Inform the server that playback has ended
     func playbackEnd()
@@ -386,10 +388,11 @@ public final class JellyfinModel: StreamingServiceProtocol {
         subtitleID: String?,
         bitrate: Bitrate,
         title: String,
-        subtitle: String?
-    ) -> AVPlayer? {
+        subtitle: String?,
+        player: AVPlayer
+    ) {
         let sessionID = UUID().uuidString
-        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return nil }
+        guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID }) else { return }
         let bitrateBits = switch bitrate {
         case .full:
             videoStream.bitrate
@@ -408,8 +411,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
                 title: title,
                 subtitle: subtitle
               )
-        else { return nil }
-        let player = AVPlayer(playerItem: playerItem)
+        else { return }
+        player.replaceCurrentItem(with: playerItem)
         
         self.playerProgress = JellyfinPlayerProgress(
             player: player,
@@ -424,8 +427,6 @@ public final class JellyfinModel: StreamingServiceProtocol {
             accessToken: self.accessToken
         )
         self.playerProgress?.start()
-        
-        return player
     }
     
     func playbackEnd() {
@@ -464,7 +465,7 @@ protocol PlayerProtocol {
 
 /// Tracks the playback status of Jellyfin content.
 final class JellyfinPlayerProgress: PlayerProtocol {
-    let player: AVPlayer
+    var player: AVPlayer
     /// Network to use for communicating to Jellyfin.
     private let network: any AdvancedNetworkProtocol
     /// Track how often to page Jellyfin.
@@ -504,14 +505,14 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         self.playbackSessionID = playbackSessionID
         self.userSessionID = userSessionID
         self.accessToken = accessToken
-        
+        let playbackPos = TimeInterval(self.player.currentTime().seconds).ticks
         Task {
             do {
                 try await self.network.updatePlaybackStatus(
                     mediaSourceID: self.mediaSource.id,
                     audioStreamIndex: self.audioID,
                     subtitleStreamIndex: self.subtitleID,
-                    playbackPosition: TimeInterval(self.player.currentTime().seconds).ticks,
+                    playbackPosition: playbackPos,
                     playSessionID: self.playbackSessionID,
                     userSessionID: self.userSessionID,
                     playbackStatus: .play,
@@ -529,26 +530,25 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     func start() {
         self.timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
+            
+            let playbackStatus: PlaybackStatus
+            switch self.player.timeControlStatus {
+            case .playing: playbackStatus = .progressed
+            default: playbackStatus = .paused
+            }
+            
+            let playbackPos = TimeInterval(self.player.currentTime().seconds).ticks
             Task {
-                do {
-                    let playbackStatus: PlaybackStatus
-                    switch self.player.timeControlStatus {
-                    case .playing:
-                        playbackStatus = .progressed
-                    default:
-                        playbackStatus = .paused
-                    }
-                    try await self.network.updatePlaybackStatus(
-                        mediaSourceID: self.mediaSource.id,
-                        audioStreamIndex: self.audioID,
-                        subtitleStreamIndex: self.subtitleID,
-                        playbackPosition: TimeInterval(self.player.currentTime().seconds).ticks,
-                        playSessionID: self.playbackSessionID,
-                        userSessionID: self.userSessionID,
-                        playbackStatus: playbackStatus,
-                        accessToken: self.accessToken
-                    )
-                } catch { }
+                try? await self.network.updatePlaybackStatus(
+                    mediaSourceID: self.mediaSource.id,
+                    audioStreamIndex: self.audioID,
+                    subtitleStreamIndex: self.subtitleID,
+                    playbackPosition: playbackPos,
+                    playSessionID: self.playbackSessionID,
+                    userSessionID: self.userSessionID,
+                    playbackStatus: playbackStatus,
+                    accessToken: self.accessToken
+                )
             }
         }
     }
@@ -558,18 +558,16 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         self.timer?.invalidate()
         self.mediaSource.startPoint = TimeInterval(ticks: playbackTicks)
         Task {
-            do {
-                try await self.network.updatePlaybackStatus(
-                    mediaSourceID: self.mediaSource.id,
-                    audioStreamIndex: self.audioID,
-                    subtitleStreamIndex: self.subtitleID,
-                    playbackPosition: playbackTicks,
-                    playSessionID: self.playbackSessionID,
-                    userSessionID: self.userSessionID,
-                    playbackStatus: .stop,
-                    accessToken: self.accessToken
-                )
-            } catch { }
+            try? await self.network.updatePlaybackStatus(
+                mediaSourceID: self.mediaSource.id,
+                audioStreamIndex: self.audioID,
+                subtitleStreamIndex: self.subtitleID,
+                playbackPosition: playbackTicks,
+                playSessionID: self.playbackSessionID,
+                userSessionID: self.userSessionID,
+                playbackStatus: .stop,
+                accessToken: self.accessToken
+            )
         }
     }
 }

@@ -16,18 +16,22 @@ struct PlayerView: View {
     
     var body: some View {
         VStack {
-            if self.vm.player != nil {
-                AVPlayerViewControllerRepresentable(vm: self.vm) {
-                    self.vm.navigationPath = self.navigation
-                    dismiss()
-                } onRestoreFromPiP: {
-                    if let restoredPath = self.vm.navigationPath {
-                        self.navigation = restoredPath
-                    }
-                } onStopFromPiP: {
-                    self.vm.stopPlayer()
+            AVPlayerViewControllerRepresentable(vm: self.vm) {
+                self.vm.navigationPath = self.navigation
+                dismiss()
+            } onRestoreFromPiP: {
+                if let restoredPath = self.vm.navigationPath {
+                    self.navigation = restoredPath
                 }
+            } onStopFromPiP: {
+                self.vm.stopPlayer()
             }
+            .id( // Force reload the AVPlayerViewControllerRepresentable when the underlying content changes
+                self.vm.mediaSourceID +
+                (self.vm.playerProgress?.subtitleID ?? "") +
+                (self.vm.playerProgress?.videoID ?? "") +
+                (self.vm.playerProgress?.audioID ?? "")
+            )
         }
         .onDisappear { // Only stop the player if PiP is not active
             if AVPlayerViewControllerRepresentable.Coordinator.activePiPCoordinator == nil {
@@ -112,15 +116,15 @@ fileprivate struct PlayerPeopleView: View {
 // MARK: Stats Tab
 fileprivate struct PlayerStreamingStats: View {
     /// All data regarding current playback
-    public var playerProgress: (any PlayerProtocol)?
+    public var vm: PlayerViewModel
     
-    init(playerProgress: (any PlayerProtocol)?) {
-        self.playerProgress = playerProgress
-        self.mediaSourceID = playerProgress?.mediaSource.id ?? "Unknown"
-        self.mediaSourceTitle = playerProgress?.mediaSource.name ?? "Untitled"
-        self.videoStreamID = playerProgress?.videoID ?? "Unknown"
-        self.audioStreamID = playerProgress?.audioID ?? "Unknown"
-        self.subtitleStreamID = playerProgress?.subtitleID
+    init(vm: PlayerViewModel) {
+        self.mediaSourceID = vm.playerProgress?.mediaSource.id ?? "Unknown"
+        self.mediaSourceTitle = vm.playerProgress?.mediaSource.name ?? "Untitled"
+        self.videoStreamID = vm.playerProgress?.videoID ?? "Unknown"
+        self.audioStreamID = vm.playerProgress?.audioID ?? "Unknown"
+        self.subtitleStreamID = vm.playerProgress?.subtitleID
+        self.vm = vm
     }
     
     /// Network usage
@@ -149,72 +153,62 @@ fileprivate struct PlayerStreamingStats: View {
     private let screenResolution: CGSize = UIScreen.main.nativeBounds.size
     
     var body: some View {
-        if playerProgress != nil {
-            HStack(spacing: 20) {
-                VStack {
-                    VStack(alignment: .leading) {
-                        Text("Metadata")
-                            .font(.title3.bold())
-                            .padding(.bottom)
-                        (Text("Media Source Name: ").bold() + Text("\(self.mediaSourceTitle)"))
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        (Text("Media Source ID: ").bold() + Text("\(self.mediaSourceID)"))
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("Video Stream: ").bold() + Text("\(self.videoStreamID)")
-                        Text("Audio Stream: ").bold() + Text("\(self.audioStreamID)")
-                        Text("Subtitle Stream: ").bold() + Text("\(self.subtitleStreamID ?? "None")")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .padding()
-                    .modifier(MaterialEffectModifier())
-                    VStack(alignment: .leading) {
-                        Text("Live Data")
-                            .font(.title3.bold())
-                            .padding(.bottom)
-                        Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
-                        Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
-                        Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .padding()
-                    .modifier(MaterialEffectModifier())
-                }
+        HStack(spacing: 20) {
+            VStack {
                 VStack(alignment: .leading) {
-                    Text("Playback Metadata")
+                    Text("Metadata")
                         .font(.title3.bold())
                         .padding(.bottom)
-                    Text("Screen Resolution: ").bold() + Text("\(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
-                    Text("Playback Resolution: ").bold() + Text("\(Int(resolution.width)) × \(Int(resolution.height))px")
-                    Text("Framerate: ").bold() + Text("\(String(format: "%.2f", frameRate)) fps")
-                    Text("Video Codec: ").bold() + Text("\(videoCodec)")
+                    (Text("Media Source Name: ").bold() + Text("\(self.mediaSourceTitle)"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    (Text("Media Source ID: ").bold() + Text("\(self.mediaSourceID)"))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Video Stream: ").bold() + Text("\(self.videoStreamID)")
+                    Text("Audio Stream: ").bold() + Text("\(self.audioStreamID)")
+                    Text("Subtitle Stream: ").bold() + Text("\(self.subtitleStreamID ?? "None")")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
+                .modifier(MaterialEffectModifier())
+                VStack(alignment: .leading) {
+                    Text("Live Data")
+                        .font(.title3.bold())
+                        .padding(.bottom)
+                    Text("Typical Network Usage: ").bold() + Text("\(self.networkThroughput) bits per second")
+                    Text("Video Bitrate: ").bold() + Text("\(self.bitrate) bits per second")
+                    Text("Buffer Duration: ").bold() + Text("\(bufferDuration) seconds")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
                 .modifier(MaterialEffectModifier())
             }
-            .task { // Update stats periodically
-                while !Task.isCancelled {
-                    await updateStats()
-                    try? await Task.sleep(for: .seconds(1))
-                }
+            VStack(alignment: .leading) {
+                Text("Playback Metadata")
+                    .font(.title3.bold())
+                    .padding(.bottom)
+                Text("Screen Resolution: ").bold() + Text("\(Int(screenResolution.width)) × \(Int(screenResolution.height))px")
+                Text("Playback Resolution: ").bold() + Text("\(Int(resolution.width)) × \(Int(resolution.height))px")
+                Text("Framerate: ").bold() + Text("\(String(format: "%.2f", frameRate)) fps")
+                Text("Video Codec: ").bold() + Text("\(videoCodec)")
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding()
+            .modifier(MaterialEffectModifier())
         }
-        else {
-            Text("Not playing yet")
-                .font(.headline)
-                .bold()
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .modifier(MaterialEffectModifier())
+        .task { // Update stats periodically
+            while !Task.isCancelled {
+                await updateStats()
+                try? await Task.sleep(for: .seconds(1))
+            }
         }
     }
     
     /// Updates the real-time stats
     private func updateStats() async {
-        guard let currentItem = playerProgress?.player.currentItem,
-              let track = playerProgress?.player.currentItem?.tracks.first,
+        guard let currentItem = self.vm.player.currentItem,
+              let track = self.vm.player.currentItem?.tracks.first,
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last
         else { return }
@@ -268,7 +262,7 @@ fileprivate struct PlayerStreamingStats: View {
         default:  return "H.264"
         }
     }
-
+    
     func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
@@ -329,8 +323,9 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     }
     
     func makeUIViewController(context: Context) -> AVPlayerViewController {
+        Log.info("Loading player...")
         let controller = AVPlayerViewController()
-        if let player = self.vm.player { controller.player = player }
+        controller.player = self.vm.player
         controller.showsPlaybackControls = true
         controller.transportBarCustomMenuItems = makeTransportBarItems()
         controller.appliesPreferredDisplayCriteriaAutomatically = true
@@ -361,7 +356,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             playerTabs.append(peopleTab)
         }
         
-        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(playerProgress: self.vm.playerProgress))
+        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(vm: self.vm))
         streamingStatsTab.title = "Stats"
         playerTabs.append(streamingStatsTab)
         
@@ -370,7 +365,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-        if let player = self.vm.player { uiViewController.player = player }
+        uiViewController.player = self.vm.player
         uiViewController.transportBarCustomMenuItems = makeTransportBarItems()
     }
     
@@ -384,14 +379,14 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             items.append(UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
                 {
                     let action = UIAction(title: "None") { _ in
-                        self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero)
+                        self.vm.newPlayer(startTime: self.vm.player.currentTime(), subtitleID: .newID(nil))
                     }
                     action.state = self.vm.playerProgress?.subtitleID == nil ? .on : .off
                     return action
                 }()
             ] + self.vm.mediaSource.subtitleStreams.map({ subtitleStream in
                 let action = UIAction(title: subtitleStream.title) { _ in
-                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, subtitleID: subtitleStream.id)
+                    self.vm.newPlayer(startTime: self.vm.player.currentTime(), subtitleID: .newID(subtitleStream.id))
                 }
                 action.state = self.vm.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
                 return action
@@ -407,7 +402,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
                     image: UIImage(systemName: "speaker.wave.2"),
                     children: self.vm.mediaSource.audioStreams.map({ audioStream in
                         let action = UIAction(title: audioStream.title) { _ in
-                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, audioID: audioStream.id)
+                            self.vm.newPlayer(startTime: self.vm.player.currentTime(), audioID: .newID(audioStream.id))
                         }
                         action.state = self.vm.playerProgress?.audioID == audioStream.id ? .on : .off
                         return action
@@ -425,7 +420,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
                     image: UIImage(systemName: "display"),
                     children: self.vm.mediaSource.videoStreams.map({ videoStream in
                         let action = UIAction(title: videoStream.title) { _ in
-                            self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, videoID: videoStream.id)
+                            self.vm.newPlayer(startTime: self.vm.player.currentTime(), videoID: .newID(videoStream.id))
                         }
                         action.state = self.vm.playerProgress?.videoID == videoStream.id ? .on : .off
                         return action
@@ -441,9 +436,9 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             numberFormatter.numberStyle = .decimal
             
             let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
-                ?? "\(videoStream.bitrate)"
+            ?? "\(videoStream.bitrate)"
             let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
-                self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, bitrate: .full)
+                self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: .full)
             }
             fullBitrate.state = {
                 if case .full = self.vm.playerProgress?.bitrate {
@@ -458,11 +453,11 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             func makeBitrateAction(bitrate: Int) -> UIAction {
                 let mbps = Double(bitrate) / 1_000_000
                 let title = mbps.truncatingRemainder(dividingBy: 1) == 0
-                    ? "\(Int(mbps)) Mbps"
-                    : "\(mbps) Mbps"
+                ? "\(Int(mbps)) Mbps"
+                : "\(mbps) Mbps"
                 
                 let action = UIAction(title: title) { _ in
-                    self.vm.newPlayer(startTime: self.vm.player?.currentTime() ?? .zero, bitrate: .limited(bitrate))
+                    self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: .limited(bitrate))
                 }
                 action.state = {
                     if case .limited(let limit) = self.vm.playerProgress?.bitrate, limit == bitrate {

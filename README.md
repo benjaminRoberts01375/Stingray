@@ -88,6 +88,11 @@ Extensive content metadata.
 - [x] Improve JSON decoding verbosity.
 - [x] Fix labels appearing black.
 - [x] Modernize Jellyfin token format [@darkweak](https://github.com/benjaminRoberts01375/Stingray/pull/75)
+- [x] Improve usage of the `AVPlayer` type, allowing `PlayerViewModel.player` to no longer be optional.
+  - [x] Slightly improve player loading speeds and massively improves reliability.
+  - [x] Fix audio continuing to play after tracks have been switched
+  - [x] Fix subtitle, audio, and video tracks randomly changing when changing a different track type
+  - [x] Prevent old AVPlayers getting stuck on async threads
 
 ## Long-Term TODO List
 
