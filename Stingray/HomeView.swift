@@ -55,8 +55,12 @@ struct HomeView: View {
             }
             .focusSection()
             
-            SystemInfoView(streamingService: streamingService)
-                .padding(.top)
+            VStack {
+                SystemInfoView(streamingService: streamingService)
+                LibrariesInfoView(streamingService: streamingService)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top)
         }
     }
 }
@@ -215,8 +219,7 @@ struct SystemInfoView: View {
                 Text(" • \(model)")
             }
         }
-        .foregroundStyle(.gray.opacity(0.5))
-        .frame(maxWidth: .infinity)
+        .foregroundStyle(.secondary)
     }
     
     private func getAppleTVModel() -> String? {
@@ -228,5 +231,55 @@ struct SystemInfoView: View {
             return identifier + String(UnicodeScalar(UInt8(value)))
         }
         return identifier.isEmpty ? nil : identifier
+    }
+}
+
+public struct LibrariesInfoView: View {
+    /// Streaming service containing libraries
+    let streamingService: any StreamingServiceProtocol
+    
+    @State private var movieCount: Int = 0
+    
+    public var body: some View {
+        switch self.streamingService.libraryStatus {
+        case .waiting: Text("Waiting to get libraries...")
+        case .retrieving: Text("Getting libraries...")
+        case .available(let libraries), .complete(let libraries):
+            let mediaCounts = countMedia(libraries: libraries)
+            HStack(spacing: 0) {
+                if case .complete = self.streamingService.libraryStatus {
+                    Text("Libraries: \(libraries.count)")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ProgressView()
+                    Text(" Libraries: \(libraries.count)")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
+                    Text(" • \(key): \(mediaCounts[key] ?? 0)")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(height: 30)
+        case .error(let rError): ErrorView(error: rError, summary: "Failed to load libraries")
+        }
+    }
+    
+    /// Counts all the media for each type.
+    /// - Parameter libraries: Libraries to count with
+    /// - Returns: Found media types and their associated counts
+    public func countMedia(libraries: [LibraryModel]) -> [String : Int] {
+        var counters: [String : Int] = [:]
+        
+        for library in libraries {
+            switch library.media {
+            case .unloaded, .waiting, .error:
+                break
+            case .available(let media), .complete(let media):
+                let capitalizedType = library.libraryType.prefix(1).uppercased() + library.libraryType.dropFirst()
+                counters[capitalizedType, default: 0] += media.count
+            }
+        }
+        return counters
     }
 }

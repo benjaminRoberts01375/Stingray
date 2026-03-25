@@ -61,7 +61,9 @@ public struct SettingsView: View {
         }
         
         switch loginState {
-        case .loggedIn(let streamingService): SystemInfoView(streamingService: streamingService)
+        case .loggedIn(let streamingService):
+            SystemInfoView(streamingService: streamingService)
+            LibrariesInfoView(streamingService: streamingService)
         default: EmptyView()
         }
     }
