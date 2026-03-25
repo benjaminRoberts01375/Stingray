@@ -118,7 +118,7 @@ public struct DetailMediaView: View {
                             }
                             else {
                                 Text("No description available")
-                                    .opacity(0.5)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -156,7 +156,7 @@ public struct DetailMediaView: View {
                             }
                             else {
                                 Text("No metadata available")
-                                    .opacity(0.5)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -636,7 +636,7 @@ fileprivate struct EpisodeView: View {
                         }
                     } else {
                         Text("No Description Available")
-                            .opacity(0.5)
+                            .foregroundStyle(.tertiary)
                     }
                     Spacer(minLength: 0)
                 }

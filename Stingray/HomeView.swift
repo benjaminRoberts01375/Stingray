@@ -150,7 +150,7 @@ struct MediaDetailLoader: View {
         case .notFound:
             Text("Media Not Found")
             Text("It may not have been compatible with Stingray")
-                .opacity(0.5)
+                .foregroundStyle(.tertiary)
         }
     }
 }
@@ -219,7 +219,7 @@ struct SystemInfoView: View {
                 Text(" • \(model)")
             }
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(.tertiary)
     }
     
     private func getAppleTVModel() -> String? {
@@ -249,15 +249,15 @@ public struct LibrariesInfoView: View {
             HStack(spacing: 0) {
                 if case .complete = self.streamingService.libraryStatus {
                     Text("Libraries: \(libraries.count)")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 } else {
                     ProgressView()
                     Text(" Libraries: \(libraries.count)")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 }
                 ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
                     Text(" • \(key): \(mediaCounts[key] ?? 0)")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 }
             }
             .frame(height: 30)

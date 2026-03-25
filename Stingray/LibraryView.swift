@@ -29,8 +29,8 @@ public struct LibraryView: View {
                 } else {
                     VStack(alignment: .center) {
                         Text("This library appears to be empty.")
-                        Text("Media type like collections, playlists, and music aren't yet supported.")
-                            .opacity(0.5)
+                        Text("Media types like collections, playlists, and music aren't yet supported.")
+                            .foregroundStyle(.tertiary)
                     }
                 }
             }
