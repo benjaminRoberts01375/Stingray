@@ -16,6 +16,7 @@ public struct SettingsView: View {
     public var body: some View {
         @Bindable var settings = settings
         Form {
+            // Profile picker
             Section(header: Text("Account").bold()) {
                 ProfilePickerView(loginState: $loginState)
                     .focusSection()
@@ -33,11 +34,10 @@ public struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .focusSection()
             }
+            .listRowBackground(Color.clear)
             
-            Section(
-                header: Text("Playback Settings").bold(),
-                footer: Text("")
-            ) {
+            // Playback settings
+            Section( header: Text("Playback Settings").bold() ) {
                 Menu {
                     ForEach([nil] + SettingsModel.bitrateOptions, id: \.self) { bitrateOption in
                         Button { settings.bitrate = bitrateOption }
@@ -58,13 +58,20 @@ public struct SettingsView: View {
                 }
             }
             .listRowBackground(Color.clear)
-        }
-        
-        switch loginState {
-        case .loggedIn(let streamingService):
-            SystemInfoView(streamingService: streamingService)
-            LibrariesInfoView(streamingService: streamingService)
-        default: EmptyView()
+            
+            // Connection info
+            Section {
+                switch loginState {
+                case .loggedIn(let streamingService):
+                    VStack {
+                        SystemInfoView(streamingService: streamingService)
+                        LibrariesInfoView(streamingService: streamingService)
+                    }
+                    .frame(maxWidth: .infinity)
+                default: EmptyView()
+                }
+            }
+            .listRowBackground(Color.clear)
         }
     }
 }
