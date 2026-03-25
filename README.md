@@ -92,6 +92,7 @@ Extensive content metadata.
   - [x] Fix audio continuing to play after tracks have been switched
   - [x] Fix subtitle, audio, and video tracks randomly changing when changing a different track type
   - [x] Prevent old AVPlayers getting stuck on async threads
+- [x] Extend the maximum configurable bitrate to 100 Mbps
 
 ## Long-Term TODO List
 

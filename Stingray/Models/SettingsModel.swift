@@ -13,7 +13,7 @@ public final class SettingsModel {
     /// Storage location for user details
     private let userModel: UserModel
     /// All user setable bitrate options
-    static let bitrateOptions = stride(from: 20_000_000, to: 150_000, by: 10_000_000).reversed() +
+    static let bitrateOptions = stride(from: 20_000_000, to: 110_000_000, by: 10_000_000).reversed() +
     [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000, 100_000]
     
     /// Type for when Stingray will ask the user about switching profiles.
