@@ -57,6 +57,7 @@ public struct SettingsView: View {
                     }
                 }
             }
+            .listRowBackground(Color.clear)
         }
     }
 }
