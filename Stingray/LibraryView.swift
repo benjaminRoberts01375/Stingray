@@ -26,6 +26,8 @@ public struct LibraryView: View {
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
                     MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
+                    LibraryInfoView(library: self.library)
+                        .padding(.top)
                 } else {
                     VStack(alignment: .center) {
                         Text("This library appears to be empty.")
@@ -34,8 +36,6 @@ public struct LibraryView: View {
                     }
                 }
             }
-            LibraryInfoView(library: self.library)
-                .padding(.top)
         }
     }
 }
