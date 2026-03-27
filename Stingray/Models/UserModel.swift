@@ -48,16 +48,6 @@ final class UserModel {
         return self.userIDs.compactMap { self.storage.getUser(userID: $0) }
     }
     
-    /// Updates a user's stored data
-    /// - Parameter user: Updated `User`
-    func updateUser(_ user: User) {
-        if !userIDs.contains(user.id) {
-            self.addUser(user)
-        } else {
-            self.storage.upsertUser(user: user)
-        }
-    }
-    
     /// Deletes a user based on their ID
     /// - Parameter userID: ID of the user to delete
     func deleteUser(_ userID: String) {
