@@ -48,6 +48,12 @@ public final class SettingsModel {
             self.storage.setBitrateCap(newValue)
         }
     }
+
+    /// Track if the user uses subtitles
+    var usesSubtitles: Bool {
+        get { self.userModel.activeUser?.usesSubtitles ?? false }
+        set(newValue) { self.userModel.activeUser?.usesSubtitles = newValue }
+    }
     
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:

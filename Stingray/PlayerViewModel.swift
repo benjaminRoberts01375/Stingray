@@ -39,14 +39,12 @@ final class PlayerViewModel: Hashable {
     /// Quickly get the media source from the media source ID
     public private(set) var mediaSource: any MediaSourceProtocol
     
-    public private(set) var userModel: UserModel
+    public private(set) var settingsModel: SettingsModel
     
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
-    
-    public var settingsModel: SettingsModel
     
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
@@ -68,7 +66,6 @@ final class PlayerViewModel: Hashable {
     
     /// Normal init for setting up a player
     public init(
-        userModel: UserModel,
         media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
@@ -76,7 +73,6 @@ final class PlayerViewModel: Hashable {
         seasons: [any TVSeasonProtocol]?,
         settingsModel: SettingsModel
     ) {
-        self.userModel = userModel
         self.player = AVPlayer()
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
@@ -89,13 +85,11 @@ final class PlayerViewModel: Hashable {
         
         var subtitleID: String?
         
-        if let defaultUser = userModel.activeUser {
-            // Setup subtitles
-            if defaultUser.usesSubtitles {
-                subtitleID = self.mediaSource.subtitleStreams.first {
-                    $0.isDefault
-                }?.id ?? self.mediaSource.subtitleStreams.first?.id
-            }
+        // Setup subtitles
+        if settingsModel.usesSubtitles {
+            subtitleID = self.mediaSource.subtitleStreams.first {
+                $0.isDefault
+            }?.id ?? self.mediaSource.subtitleStreams.first?.id
         }
         
         self.savePlaybackDate()
@@ -194,8 +188,7 @@ final class PlayerViewModel: Hashable {
         self.player.play()
         
         // Update user settings
-        guard var currentUser = self.userModel.activeUser else { return }
-        currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
+        self.settingsModel.usesSubtitles = self.playerProgress?.subtitleID != nil
     }
     
     /// Creates a new player based on current state and new episode
