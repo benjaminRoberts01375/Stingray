@@ -89,7 +89,7 @@ final class PlayerViewModel: Hashable {
         
         var subtitleID: String?
         
-        if let defaultUser = userModel.getActiveUser() {
+        if let defaultUser = userModel.activeUser {
             // Setup subtitles
             if defaultUser.usesSubtitles {
                 subtitleID = self.mediaSource.subtitleStreams.first {
@@ -194,7 +194,7 @@ final class PlayerViewModel: Hashable {
         self.player.play()
         
         // Update user settings
-        guard var currentUser = self.userModel.getActiveUser() else { return }
+        guard var currentUser = self.userModel.activeUser else { return }
         currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
     }
     

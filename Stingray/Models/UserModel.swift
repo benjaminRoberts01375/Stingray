@@ -13,14 +13,18 @@ final class UserModel {
     /// Storage device to permanently store user data
     var storage: UserStorageProtocol
     
+    /// The signed in user
+    public private(set) var activeUser: User?
+    
     /// Array of user IDs that SwiftUI will observe for changes
-    private(set) var userIDs: Set<String> = []
+    public private(set) var userIDs: Set<String> = []
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
     init(storage: UserStorageProtocol) {
         self.storage = storage
         self.userIDs = Set(self.storage.getUserIDs())
+        self.activeUser = self.getActiveUser()
     }
     
     /// Adds a user to storage based on a `User` type
@@ -33,7 +37,7 @@ final class UserModel {
     
     /// Gets the most recent Jellyfin user's ID. `nil` implies no most recently user, but there may be available users.
     /// - Returns: The most recent user
-    func getActiveUser() -> User? {
+    private func getActiveUser() -> User? {
         guard let userID = self.storage.getActiveUserID() else { return nil }
         return self.storage.getUser(userID: userID)
     }

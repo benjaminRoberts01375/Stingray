@@ -35,7 +35,7 @@ public final class SettingsModel {
         willSet(newValue) {
             self.storage.setProfileSwitchingMethod(to: newValue)
             if self.profileSwitchingMethod == .manual {
-                guard let newUserID = self.userModel.getActiveUser()?.id
+                guard let newUserID = self.userModel.activeUser?.id
                 else { return }
                 self.userModel.setActiveUser(userID: newUserID)
             }

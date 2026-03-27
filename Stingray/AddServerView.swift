@@ -72,7 +72,7 @@ struct AddServerView: View {
     }
     
     func loadExistingServerInfo() {
-        guard let serviceURL = userModel.getActiveUser()?.serviceURL ?? userModel.getUsers().first?.serviceURL else {
+        guard let serviceURL = userModel.activeUser?.serviceURL ?? userModel.getUsers().first?.serviceURL else {
             return
         }
         

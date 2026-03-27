@@ -14,7 +14,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     init(userModel: UserModel) throws(StreamingServiceErrors) {
         let defaultUser: User
         do {
-            if let maybeUser = userModel.getActiveUser() { defaultUser = maybeUser }
+            if let maybeUser = userModel.activeUser { defaultUser = maybeUser }
             else { throw StreamingServiceErrors.noDefaultUser }
         }
         catch { throw StreamingServiceErrors.initFailed(error) }

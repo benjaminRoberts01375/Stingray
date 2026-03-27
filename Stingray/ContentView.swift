@@ -83,7 +83,7 @@ struct ContentView: View {
             }
             
             // Check if the current Apple TV user has an associated account
-            guard let defaultUser = self.userModel.getActiveUser()
+            guard let defaultUser = self.userModel.activeUser
             else {
                 Log.info("Users exist, but there's no active user. Showing profile picker")
                 self.loginState = .pickingUser
