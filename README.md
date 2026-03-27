@@ -95,6 +95,7 @@ Extensive content metadata.
   - [x] Prevent old AVPlayers getting stuck on async threads
 - [x] Extend the maximum configurable bitrate to 100 Mbps
 - [x] Add the number of items in each library at the bottom of a library
+- [x] Store the active user as an object in `UserModel.activeUser`.
 
 ## Long-Term TODO List
 

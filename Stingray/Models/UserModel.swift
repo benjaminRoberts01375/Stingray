@@ -29,7 +29,10 @@ final class UserModel {
     init(storage: UserStorageProtocol) {
         self.storage = storage
         self.userIDs = Set(self.storage.getUserIDs())
-        self.activeUser = self.getActiveUser()
+        self.activeUser = nil
+        
+        guard let userID = self.storage.getActiveUserID() else { return }
+        self.activeUser = self.storage.getUser(userID: userID)
     }
     
     /// Adds a user to storage based on a `User` type
@@ -38,13 +41,6 @@ final class UserModel {
         userIDs.insert(user.id)
         storage.upsertUser(user: user)
         storage.setUserIDs(Array(userIDs))
-    }
-    
-    /// Gets the most recent Jellyfin user's ID. `nil` implies no most recently user, but there may be available users.
-    /// - Returns: The most recent user
-    private func getActiveUser() -> User? {
-        guard let userID = self.storage.getActiveUserID() else { return nil }
-        return self.storage.getUser(userID: userID)
     }
     
     /// Gets all users
