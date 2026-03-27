@@ -117,7 +117,7 @@ public struct ProfilePickerView: View {
     }
     
     static func switchUser(user: User, userModel: UserModel, currentLoginState: LoginState) -> LoginState {
-        userModel.setActiveUser(userID: user.id)
+        userModel.activeUser = user
         
         // If we're already logged in as this user, reuse the existing streaming service instance
         if case .loggedIn(let existingService) = currentLoginState,

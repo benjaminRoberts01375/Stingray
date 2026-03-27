@@ -176,18 +176,17 @@ public final class JellyfinModel: StreamingServiceProtocol {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
         do {
             let response = try await networkAPI.login(username: username, password: password)
-            userModel.addUser(
-                User(
-                    serviceURL: url,
-                    serviceType: .Jellyfin(
-                        UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-                    ),
-                    serviceID: response.serverId,
-                    id: response.userId,
-                    displayName: response.userName
-                )
+            let newUser = User(
+                serviceURL: url,
+                serviceType: .Jellyfin(
+                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+                ),
+                serviceID: response.serverId,
+                id: response.userId,
+                displayName: response.userName
             )
-            userModel.setActiveUser(userID: response.userId)
+            userModel.addUser(newUser)
+            userModel.activeUser = newUser
             return JellyfinModel(response: response, serviceURL: url)
         } catch {
             throw AccountErrors.loginFailed(error)

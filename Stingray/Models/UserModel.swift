@@ -14,7 +14,12 @@ final class UserModel {
     var storage: UserStorageProtocol
     
     /// The signed in user
-    public private(set) var activeUser: User?
+    public var activeUser: User? {
+        willSet(newUser) {
+            guard let userID = newUser?.id else { return }
+            self.storage.setActiveUserID(id: userID)
+        }
+    }
     
     /// Array of user IDs that SwiftUI will observe for changes
     public private(set) var userIDs: Set<String> = []
@@ -40,12 +45,6 @@ final class UserModel {
     private func getActiveUser() -> User? {
         guard let userID = self.storage.getActiveUserID() else { return nil }
         return self.storage.getUser(userID: userID)
-    }
-    
-    /// Overwrites the existing active user
-    /// - Parameter userID: UserID of the new active user
-    func setActiveUser(userID: String) {
-        self.storage.setActiveUserID(id: userID)
     }
     
     /// Gets all users
