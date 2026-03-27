@@ -54,6 +54,7 @@ final class UserModel {
         userIDs.remove(userID)
         storage.setUserIDs(Array(userIDs))
         storage.deleteUser(userID: userID)
+        if userID == self.activeUser?.id { self.activeUser = nil }
     }
 }
 
