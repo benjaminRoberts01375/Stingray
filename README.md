@@ -79,7 +79,9 @@ Extensive content metadata.
   - [x] Audio stream ID
 - [x] Profiles
   - [x] Sync between Apple TV users and Jellyfin users.
-  - [x] Show all profiles on every Apple TV account, but remember last used profile
+  - [x] Show all profiles on every Apple TV account, but remember last used profile.
+  - [x] Ask for profile choice on launch (like most streaming services).
+  - [x] Ask for profile whenever coming from background.
   - [x] Set PINs for certain profiles
 - [x] Extend playback buffer
 - [x] Lower priority of downloading media

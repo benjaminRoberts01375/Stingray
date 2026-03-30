@@ -26,6 +26,8 @@ struct ContentView: View {
     @State private var settings: SettingsModel
     @State private var userModel: UserModel
     
+    @Environment(\.scenePhase) var scenePhase
+    
     init() throws(SetupErrors) {
         let defaultsStorage: DefaultsBasicStorage
         do { defaultsStorage = try DefaultsBasicStorage() }
@@ -68,6 +70,11 @@ struct ContentView: View {
                 .onOpenURL { handleDeepLink(url: $0) }
             }
         }
+        .onChange(of: self.scenePhase) { _, newPhase in
+            if newPhase == .active && self.settings.profileSwitchingMethod == .askOnResume {
+                self.loginState = .pickingUser
+            }
+        }
         .environment(settings)
         .environment(userModel)
         .onAppear {
@@ -81,10 +88,12 @@ struct ContentView: View {
             }
             
             // Asking user for prefered profile
-            if self.settings.profileSwitchingMethod == .askOnLaunch {
+            switch self.settings.profileSwitchingMethod {
+            case .askOnLaunch, .askOnResume:
                 Log.info("Showing profile picker")
                 self.loginState = .pickingUser
                 return
+            default: break
             }
             
             // Check if the current Apple TV user has an associated account

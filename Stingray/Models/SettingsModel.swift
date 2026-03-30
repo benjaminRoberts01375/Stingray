@@ -18,7 +18,9 @@ public final class SettingsModel {
     
     /// Type for when Stingray will ask the user about switching profiles.
     public enum ProfileSwitching: Codable, CaseIterable {
-        /// When Stingray launches, ask the user - typical of most streaming services
+        /// When Stingray becomes active, ask the user
+        case askOnResume
+        /// When Stingray first launches, ask the user - typical of most streaming services
         case askOnLaunch
         /// When Stingray launches, assume the last used profile - Stingray's behavior through v1.1.0
         case manual

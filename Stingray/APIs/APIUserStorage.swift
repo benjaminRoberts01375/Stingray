@@ -71,7 +71,7 @@ public final class UserStorage: UserStorageProtocol {
             self.basicStorage.setString(.linkUser(localUserID), value: userID ?? "")
             self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: userID ?? "")
             return userID
-        case .syncWithTVOS, .askOnLaunch:
+        case .syncWithTVOS, .askOnLaunch, .askOnResume:
             if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? false { // Top shelf reads from a different storage
                 return self.basicStorage.getTopShelfString(.defaultStreamingUserID)
             }

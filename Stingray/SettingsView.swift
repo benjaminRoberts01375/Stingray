@@ -109,13 +109,20 @@ extension SettingsModel.ProfileSwitching {
             return "Manual"
         case .syncWithTVOS:
             return "Sync with tvOS (WIP)"
+        case .askOnResume:
+            return "Ask on Resume"
         }
     }
     
     /// More thorough description of the selected values.
     var description: String {
         switch self {
-        case .askOnLaunch: return "You'll be prompted for your choice in Jellyfin account on each launch."
+        case .askOnResume:
+            return """
+You'll be prompted for your choice of account when Jellyfin launches or opens from the background. 
+This can be annoying to some and triggers on things like Control Center.
+"""
+        case .askOnLaunch: return "You'll be prompted for your choice of account on each launch. Typical of most streaming services."
         case .manual: return "Whoever was last signed in will remain signed in."
         case .syncWithTVOS: return "Jellyfin accounts will be mapped to users on this Apple TV."
         }
