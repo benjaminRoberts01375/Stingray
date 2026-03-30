@@ -72,16 +72,22 @@ struct ContentView: View {
         }
         .onChange(of: self.scenePhase) { _, newPhase in
             if newPhase != .active { return } // Did we become active
+            if self.settings.profileSwitchingMethod != .askOnResume { return }  // Should we ask
             if case .loggedIn(let streamingService) = self.loginState, streamingService.playerProgress != nil { // Streaming something
                 return
             }
-            if self.settings.profileSwitchingMethod == .askOnResume { self.loginState = .pickingUser } // Should we ask
+            self.loginState = .pickingUser
         }
         .environment(settings)
         .environment(userModel)
         .onAppear {
-            listKeychainEntries()
-            nukeKeychain()
+            switch self.loginState {
+            case .loggedIn: return
+            default: break
+            }
+            
+            self.listKeychainEntries()
+            self.nukeKeychain()
             Log.info("Attempting to set up from storage")
             // Check if any users exist
             if self.userModel.getUsers().isEmpty {
@@ -93,10 +99,7 @@ struct ContentView: View {
             switch self.settings.profileSwitchingMethod {
             case .askOnLaunch, .askOnResume:
                 Log.info("Showing profile picker")
-                if case .loggedIn(let streamingService) = self.loginState, streamingService.playerProgress != nil { // Streaming something
-                    self.loginState = .pickingUser
-                    return
-                }
+                self.loginState = .pickingUser
             default: break
             }
             
