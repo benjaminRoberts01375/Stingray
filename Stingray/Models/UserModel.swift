@@ -135,6 +135,8 @@ public struct User: Codable, Identifiable, Hashable {
     var usesSubtitles: Bool // Set default as false
     /// Nil means no pin
     var pin: String?
+    /// Play the next piece of content if available
+    var autoplay: Bool
     
     init(
         serviceURL: URL,
@@ -143,7 +145,8 @@ public struct User: Codable, Identifiable, Hashable {
         id: String,
         displayName: String,
         usesSubtitles: Bool = false,
-        pin: String? = nil
+        pin: String? = nil,
+        autplay: Bool = false
     ) {
         self.id = id
         self.displayName = displayName
@@ -152,6 +155,7 @@ public struct User: Codable, Identifiable, Hashable {
         self.serviceID = serviceID
         self.usesSubtitles = usesSubtitles
         self.pin = pin
+        self.autoplay = autplay
     }
     
     /// Create a user from encoded JSON.
@@ -166,6 +170,7 @@ public struct User: Codable, Identifiable, Hashable {
             id = try container.decode(String.self, forKey: .id)
             displayName = try container.decode(String.self, forKey: .displayName)
             pin = try container.decodeIfPresent(String.self, forKey: .pin)
+            autoplay = try container.decodeIfPresent(Bool.self, forKey: .autoplay) ?? false
             
             usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
         }

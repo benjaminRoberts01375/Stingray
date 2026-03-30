@@ -189,6 +189,53 @@ final class PlayerViewModel: Hashable {
         
         // Update user settings
         self.settingsModel.usesSubtitles = self.playerProgress?.subtitleID != nil
+        
+        // Set up observer for when the current item finishes playing
+        if self.settingsModel.autoplay {
+            self.setupPlaybackEndObserver()
+        }
+    }
+    
+    /// Sets up an observer to detect when playback finishes and auto-advance to next episode
+    private func setupPlaybackEndObserver() {
+        // Remove any existing observers first
+        NotificationCenter.default.removeObserver(
+            self,
+            name: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem
+        )
+        
+        // Add observer for the current item
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handlePlaybackEnded()
+        }
+    }
+    
+    /// Called when the current video finishes playing
+    private func handlePlaybackEnded() {
+        guard let seasons = self.seasons else { return }
+        
+        let allEpisodes = seasons.flatMap(\.episodes)
+        guard let currentIndex = allEpisodes.firstIndex(where: { episode in
+            episode.mediaSources.first?.id == self.mediaSource.id
+        }),
+        currentIndex + 1 < allEpisodes.count else {
+            // No next episode, playback complete
+            return
+        }
+        
+        let nextEpisode = allEpisodes[currentIndex + 1]
+        
+        // Save the current episode's progress
+        self.savePlaybackDate()
+        
+        // Update to the next episode
+        self.mediaSourceID = nextEpisode.mediaSources.first?.id ?? self.mediaSourceID
+        self.newPlayer(episode: nextEpisode)
     }
     
     /// Creates a new player based on current state and new episode
@@ -239,6 +286,7 @@ final class PlayerViewModel: Hashable {
     }
     
     deinit {
+        NotificationCenter.default.removeObserver(self)
         player.pause()
         streamingService.playbackEnd()
     }

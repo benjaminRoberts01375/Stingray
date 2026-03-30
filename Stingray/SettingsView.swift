@@ -60,6 +60,16 @@ public struct SettingsView: View {
             
             // Playback settings
             Section( header: Text("Playback Settings").bold() ) {
+                Button { self.settings.autoplay.toggle() }
+                label: {
+                    HStack {
+                        Text("Autoplay Next Episode")
+                        Spacer()
+                        Text(self.settings.autoplay ? "Enabled" : "Disabled")
+                    }
+                }
+                .padding(.horizontal)
+                
                 Menu {
                     ForEach([nil] + SettingsModel.bitrateOptions, id: \.self) { bitrateOption in
                         Button { settings.bitrate = bitrateOption }

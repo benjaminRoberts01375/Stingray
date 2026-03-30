@@ -53,7 +53,7 @@ Extensive content metadata.
 
 - [ ] Settings Page
   - [x] Max bitrate
-  - [ ] Auto play toggle
+  - [x] Auto play toggle
   - [ ] Connection Info
     - [x] User's name
     - [ ] Server address

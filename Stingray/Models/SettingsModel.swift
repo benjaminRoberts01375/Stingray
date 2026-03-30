@@ -57,6 +57,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.usesSubtitles = newValue }
     }
     
+    /// Should the next piece of content load (if available)
+    var autoplay: Bool {
+        get { self.userModel.activeUser?.autoplay ?? false }
+        set(newValue) { self.userModel.activeUser?.autoplay = newValue }
+    }
+    
     /// A short password required to show the users's content
     var pin: String? {
         get { self.userModel.activeUser?.pin }
