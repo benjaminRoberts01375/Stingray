@@ -28,9 +28,9 @@ public struct SettingsView: View {
                         Text("PIN")
                         Spacer()
                         Text(self.settings.pin == nil ? "Configure..." : "Configured")
-                            .padding(.horizontal)
                     }
                 }
+                .padding(.horizontal)
                 .fullScreenCover(isPresented: $showPinSetup) {
                     if self.settings.pin == nil {
                         PINSetup()
@@ -78,8 +78,10 @@ public struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                .padding(.horizontal, -20)
+                .padding(.vertical, -10)
+                .listRowBackground(Color.clear)
             }
-            .listRowBackground(Color.clear)
             
             // Connection info
             Section {
