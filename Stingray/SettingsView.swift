@@ -12,6 +12,8 @@ public struct SettingsView: View {
     @Binding var loginState: LoginState
     /// System-wide settings
     @Environment(SettingsModel.self) var settings: SettingsModel
+    /// Controlls the pin configuration screen showing and hiding
+    @State private var showPinSetup: Bool = false
     
     public var body: some View {
         @Bindable var settings = settings
@@ -20,6 +22,26 @@ public struct SettingsView: View {
             Section(header: Text("Account").bold()) {
                 ProfilePickerView(loginState: $loginState)
                     .focusSection()
+                Button { self.showPinSetup = true }
+                label: {
+                    HStack {
+                        Text("PIN")
+                        Spacer()
+                        Text(self.settings.pin == nil ? "Configure..." : "Configured")
+                            .padding(.horizontal)
+                    }
+                }
+                .fullScreenCover(isPresented: $showPinSetup) {
+                    if self.settings.pin == nil {
+                        PINSetup()
+                            .padding(128)
+                            .stingrayBackground()
+                    } else {
+                        PINDelete()
+                            .padding(128)
+                            .stingrayBackground()
+                    }
+                }
             }
             
             Section(

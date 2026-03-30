@@ -13,14 +13,28 @@ final class UserModel {
     /// Storage device to permanently store user data
     var storage: UserStorageProtocol
     
+    /// The signed in user
+    public var activeUser: User? {
+        didSet {
+            guard let userID = self.activeUser?.id else { return }
+            self.storage.setActiveUserID(id: userID)
+            guard let user = self.activeUser else { return }
+            self.storage.upsertUser(user: user)
+        }
+    }
+    
     /// Array of user IDs that SwiftUI will observe for changes
-    private(set) var userIDs: Set<String> = []
+    public private(set) var userIDs: Set<String> = []
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
     init(storage: UserStorageProtocol) {
         self.storage = storage
         self.userIDs = Set(self.storage.getUserIDs())
+        self.activeUser = nil
+        
+        guard let userID = self.storage.getActiveUserID() else { return }
+        self.activeUser = self.storage.getUser(userID: userID)
     }
     
     /// Adds a user to storage based on a `User` type
@@ -31,32 +45,9 @@ final class UserModel {
         storage.setUserIDs(Array(userIDs))
     }
     
-    /// Gets the most recent Jellyfin user's ID. `nil` implies no most recently user, but there may be available users.
-    /// - Returns: The most recent user
-    func getActiveUser() -> User? {
-        guard let userID = self.storage.getActiveUserID() else { return nil }
-        return self.storage.getUser(userID: userID)
-    }
-    
-    /// Overwrites the existing active user
-    /// - Parameter userID: UserID of the new active user
-    func setActiveUser(userID: String) {
-        self.storage.setActiveUserID(id: userID)
-    }
-    
     /// Gets all users
     func getUsers() -> [User] {
         return self.userIDs.compactMap { self.storage.getUser(userID: $0) }
-    }
-    
-    /// Updates a user's stored data
-    /// - Parameter user: Updated `User`
-    func updateUser(_ user: User) {
-        if !userIDs.contains(user.id) {
-            self.addUser(user)
-        } else {
-            self.storage.upsertUser(user: user)
-        }
     }
     
     /// Deletes a user based on their ID
@@ -65,18 +56,19 @@ final class UserModel {
         userIDs.remove(userID)
         storage.setUserIDs(Array(userIDs))
         storage.deleteUser(userID: userID)
+        if userID == self.activeUser?.id { self.activeUser = nil }
     }
 }
 
 /// Jellyfin-specific userdata
-public struct UserJellyfin: Codable {
+public struct UserJellyfin: Codable, Hashable {
     let accessToken: String
     let sessionID: String
 }
 
 /// Types of streaming services
 /// Temporary name for compatibility until migration is complete
-public enum ServiceType: Codable {
+public enum ServiceType: Codable, Hashable {
     case Jellyfin(UserJellyfin)
     
     public var rawValue: String {
@@ -134,13 +126,15 @@ public enum ServiceType: Codable {
 }
 
 /// Basic structure for a user
-public struct User: Codable, Identifiable {
+public struct User: Codable, Identifiable, Hashable {
     let serviceURL: URL
     let serviceType: ServiceType
     let serviceID: String
     public let id: String
     let displayName: String
     var usesSubtitles: Bool // Set default as false
+    /// Nil means no pin
+    var pin: String?
     
     init(
         serviceURL: URL,
@@ -148,7 +142,8 @@ public struct User: Codable, Identifiable {
         serviceID: String,
         id: String,
         displayName: String,
-        usesSubtitles: Bool = false
+        usesSubtitles: Bool = false,
+        pin: String? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -156,6 +151,7 @@ public struct User: Codable, Identifiable {
         self.serviceType = serviceType
         self.serviceID = serviceID
         self.usesSubtitles = usesSubtitles
+        self.pin = pin
     }
     
     /// Create a user from encoded JSON.
@@ -169,6 +165,7 @@ public struct User: Codable, Identifiable {
             serviceID = try container.decode(String.self, forKey: .serviceID)
             id = try container.decode(String.self, forKey: .id)
             displayName = try container.decode(String.self, forKey: .displayName)
+            pin = try container.decodeIfPresent(String.self, forKey: .pin)
             
             usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
         }

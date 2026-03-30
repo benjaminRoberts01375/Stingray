@@ -35,9 +35,9 @@ public final class SettingsModel {
         willSet(newValue) {
             self.storage.setProfileSwitchingMethod(to: newValue)
             if self.profileSwitchingMethod == .manual {
-                guard let newUserID = self.userModel.getActiveUser()?.id
+                guard let newUser = self.userModel.activeUser
                 else { return }
-                self.userModel.setActiveUser(userID: newUserID)
+                self.userModel.activeUser = newUser
             }
         }
     }
@@ -47,6 +47,18 @@ public final class SettingsModel {
         willSet(newValue) {
             self.storage.setBitrateCap(newValue)
         }
+    }
+
+    /// Track if the user uses subtitles
+    var usesSubtitles: Bool {
+        get { self.userModel.activeUser?.usesSubtitles ?? false }
+        set(newValue) { self.userModel.activeUser?.usesSubtitles = newValue }
+    }
+    
+    /// A short password required to show the users's content
+    var pin: String? {
+        get { self.userModel.activeUser?.pin }
+        set(newValue) { self.userModel.activeUser?.pin = newValue }
     }
     
     /// Create a SettingsModel from some kind of storage

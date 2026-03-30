@@ -29,8 +29,7 @@ class ContentProvider: TVTopShelfContentProvider {
         }
         
         // Fetch content concurrently
-        let activeUser = userModel.getActiveUser()
-        Log.info("TopShelf: Loading content for \(activeUser?.displayName ?? "Unknown") - \(activeUser?.id ?? "Unknown ID")")
+        Log.info("TopShelf: Loading content for \(userModel.activeUser?.displayName ?? "Unknown") - \(userModel.activeUser?.id ?? "Unknown ID")")
         async let upNextMedia = streamingModel.retrieveUpNext()
         async let recentlyAddedMedia = streamingModel.retrieveRecentlyAdded(.all)
         

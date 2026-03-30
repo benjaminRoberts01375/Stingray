@@ -77,10 +77,10 @@ Extensive content metadata.
   - [x] Media Source ID
   - [x] Video stream ID
   - [x] Audio stream ID
-- [ ] Profiles
+- [x] Profiles
   - [x] Sync between Apple TV users and Jellyfin users.
   - [x] Show all profiles on every Apple TV account, but remember last used profile
-  - [ ] Set PINs for certain profiles
+  - [x] Set PINs for certain profiles
 - [x] Extend playback buffer
 - [x] Lower priority of downloading media
 - [x] Use the same view model across all player views
@@ -95,6 +95,7 @@ Extensive content metadata.
   - [x] Prevent old AVPlayers getting stuck on async threads
 - [x] Extend the maximum configurable bitrate to 100 Mbps
 - [x] Add the number of items in each library at the bottom of a library
+- [x] Store the active user as an object in `UserModel.activeUser`.
 
 ## Long-Term TODO List
 

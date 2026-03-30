@@ -117,12 +117,15 @@ public struct ProfilePickerView: View {
     }
     
     static func switchUser(user: User, userModel: UserModel, currentLoginState: LoginState) -> LoginState {
-        userModel.setActiveUser(userID: user.id)
+        userModel.activeUser = user
         
         // If we're already logged in as this user, reuse the existing streaming service instance
-        if case .loggedIn(let existingService) = currentLoginState,
-           existingService.userID == user.id {
-            return currentLoginState // Return the same state to avoid recreating the service which causes an infinte loop
+        if case .loggedIn(let existingService) = currentLoginState {
+            if existingService.userID == user.id { return currentLoginState } // Return the same state to avoid recreating the service
+            else if user.pin != nil { return .requiresPIN(user) } // May require a PIN when switching users
+        }
+        if case .pickingUser = currentLoginState {
+            if user.pin != nil { return .requiresPIN(user) } // May require a PIN when switching users
         }
         
         // Otherwise, create a new streaming service instance
