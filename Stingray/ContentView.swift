@@ -71,9 +71,11 @@ struct ContentView: View {
             }
         }
         .onChange(of: self.scenePhase) { _, newPhase in
-            if newPhase == .active && self.settings.profileSwitchingMethod == .askOnResume {
-                self.loginState = .pickingUser
+            if newPhase != .active { return } // Did we become active
+            if case .loggedIn(let streamingService) = self.loginState, streamingService.playerProgress != nil { // Streaming something
+                return
             }
+            if self.settings.profileSwitchingMethod == .askOnResume { self.loginState = .pickingUser } // Should we ask
         }
         .environment(settings)
         .environment(userModel)
@@ -91,8 +93,10 @@ struct ContentView: View {
             switch self.settings.profileSwitchingMethod {
             case .askOnLaunch, .askOnResume:
                 Log.info("Showing profile picker")
-                self.loginState = .pickingUser
-                return
+                if case .loggedIn(let streamingService) = self.loginState, streamingService.playerProgress != nil { // Streaming something
+                    self.loginState = .pickingUser
+                    return
+                }
             default: break
             }
             
