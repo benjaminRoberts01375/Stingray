@@ -26,6 +26,8 @@ public enum StorageKeys {
     case localUserID
     /// A unique ID for the maximum bitrate option
     case maxBitrate
+    /// Modifies a preference for a given UserID
+    case preference(PreferenceKey, String)
     
     /// A string representation of the enum
     public var rawValue: String {
@@ -38,8 +40,13 @@ public enum StorageKeys {
         case .linkUser(let id): return "linkUser-\(id)"
         case .localUserID: return "localUserID"
         case .maxBitrate: return "maxBitrate"
+        case .preference(let preference, let userID): return "preference-\(preference.rawValue)-\(userID)"
         }
     }
+}
+
+public enum PreferenceKey: String {
+    case pin
 }
 
 public enum DBType: String {

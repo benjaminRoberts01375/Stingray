@@ -55,6 +55,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.usesSubtitles = newValue }
     }
     
+    /// A short password required to show the users's content
+    var pin: String? {
+        get { self.userModel.activeUser?.pin }
+        set(newValue) { self.userModel.activeUser?.pin = newValue }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users

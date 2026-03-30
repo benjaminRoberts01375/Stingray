@@ -15,9 +15,11 @@ final class UserModel {
     
     /// The signed in user
     public var activeUser: User? {
-        willSet(newUser) {
-            guard let userID = newUser?.id else { return }
+        didSet {
+            guard let userID = self.activeUser?.id else { return }
             self.storage.setActiveUserID(id: userID)
+            guard let user = self.activeUser else { return }
+            self.storage.upsertUser(user: user)
         }
     }
     
@@ -59,14 +61,14 @@ final class UserModel {
 }
 
 /// Jellyfin-specific userdata
-public struct UserJellyfin: Codable {
+public struct UserJellyfin: Codable, Hashable {
     let accessToken: String
     let sessionID: String
 }
 
 /// Types of streaming services
 /// Temporary name for compatibility until migration is complete
-public enum ServiceType: Codable {
+public enum ServiceType: Codable, Hashable {
     case Jellyfin(UserJellyfin)
     
     public var rawValue: String {
@@ -124,13 +126,15 @@ public enum ServiceType: Codable {
 }
 
 /// Basic structure for a user
-public struct User: Codable, Identifiable {
+public struct User: Codable, Identifiable, Hashable {
     let serviceURL: URL
     let serviceType: ServiceType
     let serviceID: String
     public let id: String
     let displayName: String
     var usesSubtitles: Bool // Set default as false
+    /// Nil means no pin
+    var pin: String?
     
     init(
         serviceURL: URL,
@@ -138,7 +142,8 @@ public struct User: Codable, Identifiable {
         serviceID: String,
         id: String,
         displayName: String,
-        usesSubtitles: Bool = false
+        usesSubtitles: Bool = false,
+        pin: String? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -146,6 +151,7 @@ public struct User: Codable, Identifiable {
         self.serviceType = serviceType
         self.serviceID = serviceID
         self.usesSubtitles = usesSubtitles
+        self.pin = pin
     }
     
     /// Create a user from encoded JSON.
@@ -159,6 +165,7 @@ public struct User: Codable, Identifiable {
             serviceID = try container.decode(String.self, forKey: .serviceID)
             id = try container.decode(String.self, forKey: .id)
             displayName = try container.decode(String.self, forKey: .displayName)
+            pin = try container.decodeIfPresent(String.self, forKey: .pin)
             
             usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
         }

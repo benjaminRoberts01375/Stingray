@@ -15,6 +15,8 @@ enum LoginState {
     case loggedIn(any StreamingServiceProtocol)
     /// There are accounts signed in, but the current user needs to be picked
     case pickingUser
+    /// User is signed in, but requires a PIN
+    case requiresPIN(User)
 }
 
 struct ContentView: View {
@@ -52,6 +54,9 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding(128)
+            case .requiresPIN(let user):
+                PINEntry(loginState: $loginState, user: user)
+                    .padding(128)
                 
             case .loggedIn(let streamingService):
                 DashboardView(
@@ -89,6 +94,13 @@ struct ContentView: View {
                 self.loginState = .pickingUser
                 return
             }
+            
+            // User requires PIN
+            if defaultUser.pin != nil {
+                self.loginState = .requiresPIN(defaultUser)
+                return
+            }
+            
             switch defaultUser.serviceType {
             case .Jellyfin(let userJellyfin):
                 Log.info("Signing in as user \(defaultUser.displayName) - \(defaultUser.id)")
