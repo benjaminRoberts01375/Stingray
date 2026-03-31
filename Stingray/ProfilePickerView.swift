@@ -9,7 +9,7 @@ import SwiftUI
 
 public struct ProfilePickerView: View {
     /// List of all users who have at some point signed into Stingray
-    var users: [User] {
+    private var users: [User] {
         return userModel.getUsers()
     }
     /// Login state for the entire app
@@ -24,10 +24,6 @@ public struct ProfilePickerView: View {
             return streamingServiceProtocol
         default: return nil
         }
-    }
-    
-    init(loginState: Binding<LoginState>) {
-        self._loginState = loginState
     }
     
     public var body: some View {

@@ -132,8 +132,11 @@ public struct User: Codable, Identifiable, Hashable {
     let serviceID: String
     public let id: String
     let displayName: String
-    var usesSubtitles: Bool // Set default as false
-    /// Nil means no pin
+    
+    // Settings
+    /// Track if the user wants subtitles
+    var usesSubtitles: Bool
+    /// Quick password required for user sign-in
     var pin: String?
     /// Play the next piece of content if available
     var autoplay: Bool
@@ -169,9 +172,9 @@ public struct User: Codable, Identifiable, Hashable {
             serviceID = try container.decode(String.self, forKey: .serviceID)
             id = try container.decode(String.self, forKey: .id)
             displayName = try container.decode(String.self, forKey: .displayName)
+            // Settings
             pin = try container.decodeIfPresent(String.self, forKey: .pin)
             autoplay = try container.decodeIfPresent(Bool.self, forKey: .autoplay) ?? false
-            
             usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
