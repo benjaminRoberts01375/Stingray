@@ -68,31 +68,33 @@ public struct PINEntry: View {
     @State private var error: String = ""
     
     public var body: some View {
-        Text("Enter PIN for \(self.user.displayName)")
-            .font(.title)
-            .fontWeight(.bold)
-        Spacer()
-        SecureField("PIN", text: $pinEntry)
-            .frame(width: 400)
-        Spacer()
-        HStack {
-            Button("Submit") {
-                if self.userModel.activeUser?.pin != self.pinEntry {
-                    self.error = "Invalid PIN"
-                    return
+        VStack {
+            Text("Enter PIN for \(self.user.displayName)")
+                .font(.title)
+                .fontWeight(.bold)
+            Spacer()
+            SecureField("PIN", text: $pinEntry)
+                .frame(width: 400)
+            Spacer()
+            HStack {
+                Button("Submit") {
+                    if self.userModel.activeUser?.pin != self.pinEntry {
+                        self.error = "Invalid PIN"
+                        return
+                    }
+                    self.loginState = ProfilePickerView.switchUser(
+                        user: self.user,
+                        userModel: self.userModel,
+                        currentLoginState: self.loginState
+                    )
                 }
-                self.loginState = ProfilePickerView.switchUser(
-                    user: self.user,
-                    userModel: self.userModel,
-                    currentLoginState: self.loginState
-                )
+                .disabled(pinEntry.isEmpty)
+                Button("Switch User...") { self.loginState = .pickingUser }
             }
-            .disabled(pinEntry.isEmpty)
-            Button("Switch User...") { self.loginState = .pickingUser }
+            Text(self.error)
+                .foregroundStyle(.red)
+                .opacity(self.error.isEmpty ? 0 : 1)
         }
-        Text(self.error)
-            .foregroundStyle(.red)
-            .opacity(self.error.isEmpty ? 0 : 1)
     }
 }
 

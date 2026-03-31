@@ -58,7 +58,6 @@ struct ContentView: View {
                 .padding(128)
             case .requiresPIN(let user):
                 PINEntry(loginState: $loginState, user: user)
-                    .padding(128)
                 
             case .loggedIn(let streamingService):
                 DashboardView(
