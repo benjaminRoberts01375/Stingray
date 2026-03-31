@@ -99,6 +99,7 @@ Extensive content metadata.
 - [x] Add the number of items in each library at the bottom of a library
 - [x] Store the active user as an object in `UserModel.activeUser`.
 - [x] Fix the wrong user being deleted.
+- [x] Update security email.
 
 ## Long-Term TODO List
 
