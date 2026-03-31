@@ -83,8 +83,12 @@ public struct ProfilePickerView: View {
                 .buttonStyle(.plain)
                 .contextMenu {
                     Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
-                        self.userModel.deleteUser(user.id)
-                        if self.streamingService?.userID == user.id {
+                        let userIDToDelete = user.id  // Capture immediately to prevent a race condition
+                        let wasActiveUser = self.streamingService?.userID == userIDToDelete
+                        
+                        self.userModel.deleteUser(userIDToDelete)
+                        
+                        if wasActiveUser {
                             if let nextUser = self.userModel.getUsers().first {
                                 self.loginState = Self.switchUser(
                                     user: nextUser, userModel: self.userModel, currentLoginState: self.loginState
