@@ -27,6 +27,7 @@ We appreciate every contribution, and we're happy about every new contributor. S
 1. Please try to keep pull requests as focused as possible. A PR should do exactly one thing and not bleed into other, unrelated areas. The smaller a PR, the fewer changes are likely needed, and the quicker it will likely be merged. For larger/more impactful PRs, please reach out to us first to discuss your plans. The best way to do this is through our [discussions](https://github.com/benjaminRoberts01375/Stingray/discussions/new?category=ideas).
 2. Please ensure all class/struct/enum variables and functions are commented. With Xcode, you can generate a comment template with `Option + Command + /`.
 3. When you fork Stingray to work on it, make sure to fork from the current version branch **NOT MAIN**. Main is the current release, what's out for users to use today, while a version branch is used to work on an upcoming release. This is done to allow for hot fixes without the patch getting tangled up in the upcoming release. Once you've completed your work, merge it back into the version branch.
+4. A TODO list is generally added to the bottom of the `README.md` during development. This outlines general goals for the version, but may change with time as features and improvements to be more or less feasible.
 
 ## Finding Work
   
