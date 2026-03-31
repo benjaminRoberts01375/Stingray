@@ -34,11 +34,11 @@ public struct SettingsView: View {
                 .fullScreenCover(isPresented: $showPinSetup) {
                     if self.settings.pin == nil {
                         PINSetup()
-                            .padding(128)
+                            .padding(64)
                             .stingrayBackground()
                     } else {
                         PINDelete()
-                            .padding(128)
+                            .padding(64)
                             .stingrayBackground()
                     }
                 }
