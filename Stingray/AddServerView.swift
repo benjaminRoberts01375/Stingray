@@ -18,6 +18,7 @@ struct AddServerView: View {
     @State private var errorSummary: String = ""
     @State private var awaitingLogin: Bool = false
     @Environment(UserModel.self) var userModel: UserModel
+    @Environment(\.dismiss) var dismiss
     
     init(loginState: Binding<LoginState>) {
         self._loggedIn = loginState
@@ -126,6 +127,7 @@ struct AddServerView: View {
                 }
             }
             awaitingLogin = false
+            self.dismiss()
         }
     }
 }
