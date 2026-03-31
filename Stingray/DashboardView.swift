@@ -10,6 +10,7 @@ import SwiftUI
 struct DashboardView: View {
     var streamingService: StreamingServiceProtocol
     @State private var selectedTab: String = "home"
+    @State private var lastLoadedUserID: String?
     @Binding var navigationPath: NavigationPath
     @Binding var deepLinkRequest: DeepLinkRequest?
     @Binding var loggedIn: LoginState
@@ -78,9 +79,13 @@ struct DashboardView: View {
             navigationPath.append(request) // Navigate to requested media
             deepLinkRequest = nil // Clear the request
         }
-        .onChange(of: streamingService.userID, initial: true) {
-            self.selectedTab = "home"
-            Task { await streamingService.retrieveLibraries() }
+        .onChange(of: self.streamingService.userID, initial: true) { _, newValue in
+            // Only load if this is the first time (initial) or the user ID actually changed
+            if self.lastLoadedUserID != newValue {
+                self.lastLoadedUserID = newValue
+                self.selectedTab = "home"
+                Task { await self.streamingService.retrieveLibraries() }
+            }
         }
     }
 }
