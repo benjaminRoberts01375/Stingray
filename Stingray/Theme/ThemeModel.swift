@@ -49,6 +49,7 @@ final class ThemeModel {
         switch theme {
         case .deepSea: return ThemeDefaultDark()
         case .notesApp: return NotesAppLight()
+        case .beach: return BeachLight()
         }
     }
     
@@ -56,12 +57,14 @@ final class ThemeModel {
     public enum Themes: Codable, CaseIterable {
         case deepSea
         case notesApp
+        case beach
         
         /// User facing name of the theme
         var displayName: String {
             switch self {
             case .deepSea: return "Deep Sea"
             case .notesApp: return "Notes App"
+            case .beach: return "Beach"
             }
         }
         
@@ -70,6 +73,7 @@ final class ThemeModel {
             switch self {
             case .deepSea: return "Deep sea blues"
             case .notesApp: return "No thrills light grayscale"
+            case .beach: return "A day at the beach"
             }
         }
     }

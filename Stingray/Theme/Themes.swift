@@ -62,7 +62,7 @@ public final class ThemeDefaultDark: ThemeProtocol {
     }
 }
 
-/// A white theme with a little splash of color in the background
+/// A white theme and grayscale theme
 public final class NotesAppLight: ThemeProtocol {
     public let colorScheme: ColorScheme = .light
     
@@ -73,6 +73,33 @@ public final class NotesAppLight: ThemeProtocol {
     public func buttonSecondary() -> Color { Color.gray }
     
     public func activeColor() -> Color { Color.gray.opacity(0.15) }
+    
+    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+}
+
+/// A light theme with a little splash of color in the background
+public final class BeachLight: ThemeProtocol {
+    public let colorScheme: ColorScheme = .light
+    static let tan = Color(red: 1, green: 0.973, blue: 0.863)
+    
+    public func appBackground() -> AnyView {
+        AnyView(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.094, green: 0.635, blue: 0.996),
+                    Self.tan
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+    
+    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.thinMaterial) }
+    
+    public func buttonSecondary() -> Color { Color.gray }
+    
+    public func activeColor() -> Color { Color.white.opacity(0.5) }
     
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
 }
