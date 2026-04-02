@@ -226,6 +226,7 @@ public struct DetailMediaView: View {
         .navigationDestination(for: PlayerViewModel.self) { vm in
             PlayerView(vm: vm, navigation: $navigation)
         }
+        .colorScheme(.dark)
     }
 }
 

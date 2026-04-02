@@ -19,10 +19,6 @@ struct StingrayApp: App {
     var body: some Scene {
         WindowGroup {
             loadApp()
-                .preferredColorScheme(.dark)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .stingrayBackground()
-                .ignoresSafeArea()
         }
     }
     

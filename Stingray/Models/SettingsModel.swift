@@ -12,6 +12,8 @@ import Foundation
 public final class SettingsModel {
     /// Storage location for user details
     private let userModel: UserModel
+    /// Storage location for the user's theme
+    private let theme: ThemeModel
     /// All user setable bitrate options
     static let bitrateOptions = stride(from: 20_000_000, to: 110_000_000, by: 10_000_000).reversed() +
     [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000, 100_000]
@@ -69,14 +71,33 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.pin = newValue }
     }
     
+    /// The desired dark theme for the user
+    var themeDark: ThemeModel.Themes {
+        get { self.theme.dark }
+        set(newValue) {
+            self.theme.dark = newValue
+            self.userModel.activeUser?.darkTheme = newValue
+        }
+    }
+
+    /// The desired light theme for the user
+    var themeLight: ThemeModel.Themes {
+        get { self.theme.light }
+        set(newValue) {
+            self.theme.light = newValue
+            self.userModel.activeUser?.lightTheme = newValue
+        }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users
     ///   - storage: Settings storage location
-    init(userModel: UserModel, storage: SettingsStorageProtocol) {
+    init(userModel: UserModel, storage: SettingsStorageProtocol, theme: ThemeModel) {
         self.storage = storage
         self.userModel = userModel
         self.profileSwitchingMethod = storage.getProfileSwitchingMethod()
         self.bitrate = storage.getBitrateCap()
+        self.theme = theme
     }
 }

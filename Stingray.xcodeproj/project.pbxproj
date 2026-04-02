@@ -66,6 +66,8 @@
 				Models/SlimMediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
 				Models/UserModel.swift,
+				Theme/ThemeModel.swift,
+				Theme/Themes.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};

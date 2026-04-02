@@ -57,6 +57,7 @@ public struct PINSetup: View {
 public struct PINEntry: View {
     @Environment(\.dismiss) var dismiss
     @Environment(UserModel.self) var userModel: UserModel
+    @Environment(ThemeModel.self) var themeModel
     
     /// Not read, only set to successfully login or switch users
     @Binding var loginState: LoginState
@@ -85,7 +86,8 @@ public struct PINEntry: View {
                     self.loginState = ProfilePickerView.switchUser(
                         user: self.user,
                         userModel: self.userModel,
-                        currentLoginState: self.loginState
+                        currentLoginState: self.loginState,
+                        themeModel: self.themeModel
                     )
                 }
                 .disabled(pinEntry.isEmpty)

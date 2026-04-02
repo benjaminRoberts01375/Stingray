@@ -25,8 +25,10 @@ struct ContentView: View {
     @State private var navigationPath: NavigationPath
     @State private var settings: SettingsModel
     @State private var userModel: UserModel
+    @State private var theme: ThemeModel
     
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.colorScheme) var colorScheme
     
     init() throws(SetupErrors) {
         let defaultsStorage: DefaultsBasicStorage
@@ -38,7 +40,13 @@ struct ContentView: View {
         let userModel = UserModel(storage: userStorage)
         self.userModel = userModel
         self.navigationPath = NavigationPath()
-        self.settings = SettingsModel(userModel: userModel, storage: settingStorage)
+        let themeModel = ThemeModel(
+            darkTheme: userModel.activeUser?.darkTheme ?? .deepSea,
+            lightTheme: userModel.activeUser?.lightTheme ?? .notesApp,
+            colorScheme: ColorScheme.light
+        )
+        self.theme = themeModel
+        self.settings = SettingsModel(userModel: userModel, storage: settingStorage, theme: themeModel)
     }
     
     var body: some View {
@@ -77,8 +85,14 @@ struct ContentView: View {
             }
             self.loginState = .pickingUser
         }
+        .colorScheme(self.theme.currentTheme.colorScheme)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .stingrayBackground()
+        .ignoresSafeArea()
         .environment(settings)
         .environment(userModel)
+        .environment(theme)
+        .onChange(of: self.colorScheme, initial: true) { self.theme.systemColorScheme = $1 }
         .onAppear {
             switch self.loginState {
             case .loggedIn: return

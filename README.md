@@ -100,6 +100,8 @@ Extensive content metadata.
 - [x] Store the active user as an object in `UserModel.activeUser`.
 - [x] Fix the wrong user being deleted.
 - [x] Update security email.
+- [x] Added theming support.
+  - [x] Added light-mode theme "Notes App".
 
 ## Long-Term TODO List
 

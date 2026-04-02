@@ -29,8 +29,9 @@ public struct SettingsView: View {
                         Spacer()
                         Text(self.settings.pin == nil ? "Configure..." : "Configured")
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+                .buttonStyle(StingrayFormButtonStyle())
                 .fullScreenCover(isPresented: $showPinSetup) {
                     if self.settings.pin == nil {
                         PINSetup()
@@ -44,6 +45,7 @@ public struct SettingsView: View {
                 }
             }
             
+            // Profile selection
             Section(
                 header: Text("Profile Switching").bold(),
                 footer: Text(self.settings.profileSwitchingMethod.description)
@@ -60,17 +62,13 @@ public struct SettingsView: View {
             
             // Playback settings
             Section( header: Text("Playback Settings").bold() ) {
-                Button { self.settings.autoplay.toggle() }
-                label: {
-                    HStack {
-                        Text("Autoplay Next Episode")
-                        Spacer()
-                        Text(self.settings.autoplay ? "Enabled" : "Disabled")
-                    }
+                DoubleButton(label: "Autoplay Next Episode", sublabel: self.settings.autoplay ? "Enabled" : "Disabled") {
+                    self.settings.autoplay.toggle()
                 }
-                .padding(.horizontal)
-                
-                Menu {
+                DoubleMenu(
+                    label: "Target Video Bitrate",
+                    sublabel: settings.bitrate == nil ? "Maximum" : "Limited to \(Int.formatMegabitsPerSec(settings.bitrate))"
+                ) {
                     ForEach([nil] + SettingsModel.bitrateOptions, id: \.self) { bitrateOption in
                         Button { settings.bitrate = bitrateOption }
                         label: {
@@ -80,17 +78,41 @@ public struct SettingsView: View {
                             else { Text(Int.formatMegabitsPerSec(bitrateOption)) }
                         }
                     }
-                } label: {
-                    HStack {
-                        Text("Target Video Bitrate")
-                        Spacer()
-                        Text(settings.bitrate == nil ? "Maximum" : "Limited to \(Int.formatMegabitsPerSec(settings.bitrate))")
-                            .foregroundStyle(.secondary)
+                }
+            }
+            
+            // Themes
+            Section( header: Text("Themes").bold() ) {
+                DoubleMenu(label: "Light Theme", sublabel: self.settings.themeLight.displayName) {
+                    ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
+                        Button { self.settings.themeLight = option }
+                        label: {
+                            if self.settings.themeLight == option {
+                                Label(option.displayName, systemImage: "checkmark")
+                                Text(option.description)
+                            }
+                            else {
+                                Text(option.displayName)
+                                Text(option.description)
+                            }
+                        }
                     }
                 }
-                .padding(.horizontal, -20)
-                .padding(.vertical, -10)
-                .listRowBackground(Color.clear)
+                DoubleMenu(label: "Dark Theme", sublabel: self.settings.themeDark.displayName) {
+                    ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
+                        Button { self.settings.themeDark = option }
+                        label: {
+                            if self.settings.themeDark == option {
+                                Label(option.displayName, systemImage: "checkmark")
+                                Text(option.description)
+                            }
+                            else {
+                                Text(option.displayName)
+                                Text(option.description)
+                            }
+                        }
+                    }
+                }
             }
             
             // Connection info

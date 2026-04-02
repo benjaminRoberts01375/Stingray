@@ -140,6 +140,10 @@ public struct User: Codable, Identifiable, Hashable {
     var pin: String?
     /// Play the next piece of content if available
     var autoplay: Bool
+    /// The user's dark theme choice
+    var darkTheme: ThemeModel.Themes
+    /// The user's light theme choice
+    var lightTheme: ThemeModel.Themes
     
     init(
         serviceURL: URL,
@@ -149,7 +153,9 @@ public struct User: Codable, Identifiable, Hashable {
         displayName: String,
         usesSubtitles: Bool = false,
         pin: String? = nil,
-        autplay: Bool = false
+        autplay: Bool = false,
+        darkTheme: ThemeModel.Themes = .deepSea,
+        lightTheme: ThemeModel.Themes = .notesApp
     ) {
         self.id = id
         self.displayName = displayName
@@ -159,6 +165,8 @@ public struct User: Codable, Identifiable, Hashable {
         self.usesSubtitles = usesSubtitles
         self.pin = pin
         self.autoplay = autplay
+        self.darkTheme = darkTheme
+        self.lightTheme = lightTheme
     }
     
     /// Create a user from encoded JSON.
@@ -174,8 +182,10 @@ public struct User: Codable, Identifiable, Hashable {
             displayName = try container.decode(String.self, forKey: .displayName)
             // Settings
             pin = try container.decodeIfPresent(String.self, forKey: .pin)
-            autoplay = try container.decodeIfPresent(Bool.self, forKey: .autoplay) ?? false
-            usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
+            autoplay = (try? container.decodeIfPresent(Bool.self, forKey: .autoplay)) ?? false
+            usesSubtitles = (try? container.decodeIfPresent(Bool.self, forKey: .usesSubtitles)) ?? false
+            darkTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .darkTheme)) ?? .deepSea
+            lightTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .lightTheme)) ?? .notesApp
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
