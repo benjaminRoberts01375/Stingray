@@ -18,6 +18,7 @@ public struct SettingsView: View {
     public var body: some View {
         @Bindable var settings = settings
         Form {
+            // MARK: Profiles
             // Profile picker
             Section(header: Text("Account").bold()) {
                 ProfilePickerView(loginState: $loginState)
@@ -60,7 +61,7 @@ public struct SettingsView: View {
             }
             .listRowBackground(Color.clear)
             
-            // Playback settings
+            // MARK: Playback settings
             Section( header: Text("Playback Settings").bold() ) {
                 DoubleButton(label: "Autoplay Next Episode", sublabel: self.settings.autoplay ? "Enabled" : "Disabled") {
                     self.settings.autoplay.toggle()
@@ -79,10 +80,22 @@ public struct SettingsView: View {
                         }
                     }
                 }
+                DoubleMenu(label: "Playback Speed", sublabel: self.settings.playbackSpeed.name) {
+                    ForEach(PlaybackSpeed.allCases, id: \.value) { speed in
+                        Button { settings.playbackSpeed = speed }
+                        label: {
+                            if settings.playbackSpeed == speed {
+                                Label(speed.name, systemImage: "checkmark")
+                            }
+                            else { Text(speed.name) }
+                        }
+                    }
+                }
             }
             
-            // Themes
+            // MARK: Themes
             Section( header: Text("Themes").bold() ) {
+                // Light mode
                 DoubleMenu(label: "Light Theme", sublabel: self.settings.themeLight.displayName) {
                     ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
                         Button { self.settings.themeLight = option }
@@ -98,6 +111,7 @@ public struct SettingsView: View {
                         }
                     }
                 }
+                // Dark mode
                 DoubleMenu(label: "Dark Theme", sublabel: self.settings.themeDark.displayName) {
                     ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
                         Button { self.settings.themeDark = option }
@@ -115,7 +129,7 @@ public struct SettingsView: View {
                 }
             }
             
-            // Connection info
+            // MARK: Connection info
             Section {
                 switch loginState {
                 case .loggedIn(let streamingService):

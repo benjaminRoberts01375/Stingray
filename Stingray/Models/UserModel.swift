@@ -144,6 +144,8 @@ public struct User: Codable, Identifiable, Hashable {
     var darkTheme: ThemeModel.Themes
     /// The user's light theme choice
     var lightTheme: ThemeModel.Themes
+    /// How fast the viewer wants the player to run
+    var playbackSpeed: PlaybackSpeed
     
     init(
         serviceURL: URL,
@@ -155,7 +157,8 @@ public struct User: Codable, Identifiable, Hashable {
         pin: String? = nil,
         autplay: Bool = false,
         darkTheme: ThemeModel.Themes = .deepSea,
-        lightTheme: ThemeModel.Themes = .notesApp
+        lightTheme: ThemeModel.Themes = .notesApp,
+        playbackSpeed: PlaybackSpeed = .one
     ) {
         self.id = id
         self.displayName = displayName
@@ -167,6 +170,7 @@ public struct User: Codable, Identifiable, Hashable {
         self.autoplay = autplay
         self.darkTheme = darkTheme
         self.lightTheme = lightTheme
+        self.playbackSpeed = playbackSpeed
     }
     
     /// Create a user from encoded JSON.
@@ -186,6 +190,7 @@ public struct User: Codable, Identifiable, Hashable {
             usesSubtitles = (try? container.decodeIfPresent(Bool.self, forKey: .usesSubtitles)) ?? false
             darkTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .darkTheme)) ?? .deepSea
             lightTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .lightTheme)) ?? .notesApp
+            playbackSpeed = (try? container.decodeIfPresent(PlaybackSpeed.self, forKey: .playbackSpeed)) ?? .one
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -193,5 +198,44 @@ public struct User: Codable, Identifiable, Hashable {
             else { throw JSONError.failedJSONDecode("User", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch { throw JSONError.failedJSONDecode("User", error) }
+    }
+}
+
+// This should go in PlayerViewModel.swift, but can't because of the TopShelf
+/// How fast the player can play content back.
+public enum PlaybackSpeed: CaseIterable, Codable {
+    /// 1/4 the speed of realtime
+    case quarter
+    /// 1/2 the speed of realtime
+    case half
+    /// Realtime
+    case one
+    /// 1.25x the speed of realtime
+    case oneAndQuarter
+    /// 1.5x the speed of realtime
+    case oneAndHalf
+    /// 2x the speed of realtime
+    case two
+    
+    var value: Float {
+        switch self {
+        case .quarter: return 0.25
+        case .half: return 0.5
+        case .one: return 1
+        case .oneAndQuarter: return 1.25
+        case .oneAndHalf: return 1.5
+        case .two: return 2
+        }
+    }
+    
+    var name: String {
+        switch self {
+        case .quarter: return "0.25x"
+        case .half: return "0.5x"
+        case .one: return "1x"
+        case .oneAndQuarter: return "1.25x"
+        case .oneAndHalf: return "1.5x"
+        case .two: return "2x"
+        }
     }
 }

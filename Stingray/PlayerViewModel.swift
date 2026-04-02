@@ -45,6 +45,8 @@ final class PlayerViewModel: Hashable {
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
+    /// Trigger to refresh transport bar items
+    public var transportBarNeedsUpdate: Bool = false
     
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
@@ -100,7 +102,7 @@ final class PlayerViewModel: Hashable {
             subtitleID: .newID(subtitleID),
             bitrate: settingsModel.bitrate
         )
-        
+        self.player.rate = self.settingsModel.playbackSpeed.value
     }
     
     /// Dictates how the player should transition a particular stream
@@ -283,6 +285,12 @@ final class PlayerViewModel: Hashable {
             }
         default: break
         }
+    }
+    
+    public func changeSpeed(_ speed: PlaybackSpeed) {
+        self.player.rate = speed.value
+        self.settingsModel.playbackSpeed = speed
+        self.transportBarNeedsUpdate.toggle() // Trigger UI update
     }
     
     deinit {

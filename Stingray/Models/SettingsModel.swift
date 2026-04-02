@@ -65,6 +65,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.autoplay = newValue }
     }
     
+    /// How fast the player plays content
+    var playbackSpeed: PlaybackSpeed {
+        get { self.userModel.activeUser?.playbackSpeed ?? .one }
+        set(newValue) { self.userModel.activeUser?.playbackSpeed = newValue }
+    }
+    
     /// A short password required to show the users's content
     var pin: String? {
         get { self.userModel.activeUser?.pin }

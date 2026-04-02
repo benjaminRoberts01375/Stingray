@@ -30,7 +30,8 @@ struct PlayerView: View {
                 self.vm.mediaSourceID +
                 (self.vm.playerProgress?.subtitleID ?? "") +
                 (self.vm.playerProgress?.videoID ?? "") +
-                (self.vm.playerProgress?.audioID ?? "")
+                (self.vm.playerProgress?.audioID ?? "") +
+                (String(self.vm.transportBarNeedsUpdate))
             )
         }
         .onDisappear { // Only stop the player if PiP is not active
@@ -483,6 +484,24 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
                 )
             )
         }
+        
+        // MARK: Playback speed picker
+        var playbackSpeeds: [UIAction] = []
+        for speed in PlaybackSpeed.allCases {
+            let action = UIAction(title: speed.name) { _ in
+                self.vm.changeSpeed(speed)
+            }
+            action.state = vm.player.rate == speed.value ? .on : .off
+            playbackSpeeds.append(action)
+        }
+        
+        items.append(
+            UIMenu(
+                title: "Playback Speed",
+                image: UIImage(systemName: "gauge.with.dots.needle.33percent"),
+                children: playbackSpeeds
+            )
+        )
         
         // MARK: Episode picker
         // TV Season-related buttons

@@ -492,6 +492,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         subtitleMetadata.extendedLanguageTag = "und"
         
         item.externalMetadata = [titleMetadata, subtitleMetadata]
+        item.audioTimePitchAlgorithm = .spectral
         
         // Setup streaming buffering
         item.preferredForwardBufferDuration = TimeInterval(600) // 10 minutes
