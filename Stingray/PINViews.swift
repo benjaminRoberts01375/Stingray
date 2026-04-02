@@ -35,7 +35,7 @@ public struct PINSetup: View {
                 }
                 .frame(width: 400)
             Spacer()
-            Button("Save") {
+            Button("Save PIN") {
                 self.userModel.activeUser?.pin = self.desiredPIN
                 self.dismiss()
             }

@@ -633,7 +633,7 @@ fileprivate struct EpisodeView: View {
                             }
                         }
                     } else {
-                        Text("No Description Available")
+                        Text("No description available")
                             .foregroundStyle(.tertiary)
                     }
                     Spacer(minLength: 0)

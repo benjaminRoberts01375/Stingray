@@ -146,7 +146,7 @@ struct MediaDetailLoader: View {
         case .found(let foundMedia):
             DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
         case .temporarilyNotFound:
-            ProgressView("Loading Libraries...")
+            ProgressView("Loading libraries...")
         case .notFound:
             Text("Media Not Found")
             Text("It may not have been compatible with Stingray")
@@ -208,15 +208,15 @@ struct SystemInfoView: View {
             }
             else { Text("Unknown Stingray Version") }
             // Jellyfin
-            Text(" • Jellyfin Server ")
+            Text(" • " + "Jellyfin Server ")
             if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
             if let version = self.streamingService.serverVersion { Text("v\(version)") }
             // tvOS version
             let osVersion = ProcessInfo.processInfo.operatingSystemVersion
-            Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
+            Text(" • " + "tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
             // Apple TV model
             if let model = getAppleTVModel() {
-                Text(" • \(model)")
+                Text(" • " + model)
             }
         }
         .foregroundStyle(.tertiary)
@@ -248,15 +248,15 @@ public struct LibrariesInfoView: View {
             let mediaCounts = countMedia(libraries: libraries)
             HStack(spacing: 0) {
                 if case .complete = self.streamingService.libraryStatus {
-                    Text("Libraries: \(libraries.count)")
+                    Text("Libraries" + ": \(libraries.count)")
                         .foregroundStyle(.tertiary)
                 } else {
                     ProgressView()
-                    Text(" Libraries: \(libraries.count)")
+                    Text("Libraries" + ": \(libraries.count)")
                         .foregroundStyle(.tertiary)
                 }
                 ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
-                    Text(" • \(key): \(mediaCounts[key] ?? 0)")
+                    Text(" • " + "\(key): \(mediaCounts[key] ?? 0)")
                         .foregroundStyle(.tertiary)
                 }
             }

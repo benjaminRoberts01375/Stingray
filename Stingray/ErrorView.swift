@@ -57,7 +57,7 @@ public struct ErrorExpandedView: View {
     
     public var body: some View {
         VStack(alignment: .leading) {
-            Text("Error:")
+            Text("Error" + ":")
             Text(errorDesc())
         }
         .padding(.horizontal, 50)

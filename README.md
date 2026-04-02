@@ -102,6 +102,7 @@ Extensive content metadata.
 - [x] Update security email.
 - [x] Added theming support.
   - [x] Added light-mode theme "Notes App".
+- [x] Translation support
 
 ## Long-Term TODO List
 

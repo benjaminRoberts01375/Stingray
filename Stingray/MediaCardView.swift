@@ -88,7 +88,7 @@ struct MediaCardLoading: View {
             Color.gray.opacity(0.2)
             VStack {
                 ProgressView()
-                Text("Getting thumbnail")
+                Text("Getting thumbnail...")
             }
         }
     }

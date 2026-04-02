@@ -1,0 +1,888 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "\"%@\" " : {
+      "comment" : "Wrap a String in quotes",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%@\" "
+          }
+        }
+      }
+    },
+    "%@ %@" : {
+      "comment" : "Two strings one after another",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "%@ fps" : {
+      "comment" : "Frame rate down to 2 decimal places",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ fps"
+          }
+        }
+      }
+    },
+    "%@, Episode %lld" : {
+      "comment" : "Season Name, Episode Number",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, Episode %2$lld"
+          }
+        }
+      }
+    },
+    "%@Description" : {
+      "comment" : "A label for the description of content or series. The argument may be an empty string or “Series Name “",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@Description"
+          }
+        }
+      }
+    },
+    "%lld × %lldpx" : {
+      "comment" : "Resolution in pixels",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld × %2$lldpx"
+          }
+        }
+      }
+    },
+    "%lld bits per second" : {
+      "comment" : "Content bitrate",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bits per second"
+          }
+        }
+      }
+    },
+    "%lld Items" : {
+      "comment" : "Number of items",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Items"
+          }
+        }
+      }
+    },
+    "%lld seconds" : {
+      "comment" : "Number of seconds",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld seconds"
+          }
+        }
+      }
+    },
+    "0 Items" : {
+      "comment" : "No content has loaded",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 Items"
+          }
+        }
+      }
+    },
+    "Account" : {
+      "comment" : "Section header for the profile picker",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account"
+          }
+        }
+      }
+    },
+    "Add User" : {
+      "comment" : "Add a user to this app",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add User"
+          }
+        }
+      }
+    },
+    "Configure..." : {
+      "comment" : "Something can be configured and will bring the user to another screen",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure..."
+          }
+        }
+      }
+    },
+    "Configured" : {
+      "comment" : "Something has been configured",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configured"
+          }
+        }
+      }
+    },
+    "Connect" : {
+      "comment" : "Form a network connection",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect"
+          }
+        }
+      }
+    },
+    "Continue from %@" : {
+      "comment" : "Continue from some start point. The argument is a time code like “12:34\"",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue from %@"
+          }
+        }
+      }
+    },
+    "Delete PIN" : {
+      "comment" : "First confirmation for deleting a PIN",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete PIN"
+          }
+        }
+      }
+    },
+    "Delete PIN for %@" : {
+      "comment" : "Header for deleting a PIN for a user. The argument is the name of the user.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete PIN for %@"
+          }
+        }
+      }
+    },
+    "Enter PIN" : {
+      "comment" : "A label displayed above a field for entering a PIN.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter PIN"
+          }
+        }
+      }
+    },
+    "Enter PIN for %@" : {
+      "comment" : "Header for entering a pin for a specific user. The argument is the name of the user.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter PIN for %@"
+          }
+        }
+      }
+    },
+    "Episode %lld" : {
+      "comment" : "A label displaying the episode number.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Episode %lld"
+          }
+        }
+      }
+    },
+    "Episode Description" : {
+      "comment" : "A heading for the description of an episode.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Episode Description"
+          }
+        }
+      }
+    },
+    "Genres" : {
+      "comment" : "A label for the applicable genres for this content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genres"
+          }
+        }
+      }
+    },
+    "Getting libraries..." : {
+      "comment" : "A message displayed when the user is waiting for the library information to be retrieved.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getting libraries..."
+          }
+        }
+      }
+    },
+    "Getting thumbnail..." : {
+      "comment" : "A placeholder text displayed when a media item's thumbnail is being loaded.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getting thumbnail..."
+          }
+        }
+      }
+    },
+    "Home" : {
+      "comment" : "A tab in the user's dashboard.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        }
+      }
+    },
+    "Hostname" : {
+      "comment" : "A label for the hostname (IP) of a server.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hostname"
+          }
+        }
+      }
+    },
+    "It may not have been compatible with Stingray" : {
+      "comment" : "A description of why a media item might not be found.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It may not have been compatible with Stingray"
+          }
+        }
+      }
+    },
+    "Live Data" : {
+      "comment" : "A label displayed above the live data section of the player's stats.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Data"
+          }
+        }
+      }
+    },
+    "Loading libraries..." : {
+      "comment" : "A placeholder text that appears while the app is loading libraries.",
+      "isCommentAutoGenerated" : true
+    },
+    "Loading special features..." : {
+      "comment" : "A placeholder text that appears while special features are loading.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading special features..."
+          }
+        }
+      }
+    },
+    "Logout" : {
+      "comment" : "A context menu item that logs out a user.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logout"
+          }
+        }
+      }
+    },
+    "Maturity" : {
+      "comment" : "Age rating for the content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maturity"
+          }
+        }
+      }
+    },
+    "Media Not Found" : {
+      "comment" : "A message displayed when a media item cannot be found.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media Not Found"
+          }
+        }
+      }
+    },
+    "Media types like collections, playlists, and music aren't yet supported." : {
+      "comment" : "A description of why the library is empty.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media types like collections, playlists, and music aren't yet supported."
+          }
+        }
+      }
+    },
+    "Metadata" : {
+      "comment" : "A heading for the metadata of a player.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadata"
+          }
+        }
+      }
+    },
+    "No description available" : {
+      "comment" : "A description of a placeholder displayed when a media item doesn't have an image.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No description available"
+          }
+        }
+      }
+    },
+    "No image available" : {
+      "comment" : "A description of a placeholder displayed when a media item doesn't have an image.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No image available"
+          }
+        }
+      }
+    },
+    "No metadata available" : {
+      "comment" : "No data is available for a piece of content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No metadata available"
+          }
+        }
+      }
+    },
+    "No results for \"%@\"" : {
+      "comment" : "A message displayed when a search for media fails. The argument is the search term/phrase",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No results for \"%@\""
+          }
+        }
+      }
+    },
+    "Not found yet, but we're still getting your media..." : {
+      "comment" : "A placeholder text that appears when the search results are being fetched.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not found yet, but we're still getting your media..."
+          }
+        }
+      }
+    },
+    "Overview" : {
+      "comment" : "Summary of the content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overview"
+          }
+        }
+      }
+    },
+    "Password" : {
+      "comment" : "A label for the password field.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        }
+      }
+    },
+    "People" : {
+      "comment" : "Header for people who have played in a piece of content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "People"
+          }
+        }
+      }
+    },
+    "Person icon" : {
+      "comment" : "A label displayed in the center of the profile image when the image is not available.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Person icon"
+          }
+        }
+      }
+    },
+    "PIN" : {
+      "comment" : "A field for entering a PIN, and a confirmation field for re-entry.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PIN"
+          }
+        }
+      }
+    },
+    "PIN Confirmation" : {
+      "comment" : "A label for the user to confirm their PIN.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PIN Confirmation"
+          }
+        }
+      }
+    },
+    "Placeholder image" : {
+      "comment" : "A hint for a placeholder image.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placeholder image"
+          }
+        }
+      }
+    },
+    "Play button" : {
+      "comment" : "A button that plays media.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play button"
+          }
+        }
+      }
+    },
+    "Play button menu" : {
+      "comment" : "A menu that appears when tapping the play button.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play button menu"
+          }
+        }
+      }
+    },
+    "Playback Metadata" : {
+      "comment" : "A section of the player's stats tab that displays information about the video's playback.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playback Metadata"
+          }
+        }
+      }
+    },
+    "Playback Settings" : {
+      "comment" : "A heading for playback settings.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Playback Settings"
+          }
+        }
+      }
+    },
+    "Port" : {
+      "comment" : "A label for the port number.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        }
+      }
+    },
+    "Profile Switching" : {
+      "comment" : "Header for picking the active user profile",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile Switching"
+          }
+        }
+      }
+    },
+    "Protocol" : {
+      "comment" : "A label for picking the HTTProtocol when adding a new user",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protocol"
+          }
+        }
+      }
+    },
+    "Released" : {
+      "comment" : "Header for when Jellyfin content was released",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Released"
+          }
+        }
+      }
+    },
+    "Restart" : {
+      "comment" : "All restart options if there are multiple media sources",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restart"
+          }
+        }
+      }
+    },
+    "Restart %@" : {
+      "comment" : "Restart watching this particular media title. The argument is the name of the content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restart %@"
+          }
+        }
+      }
+    },
+    "Resume" : {
+      "comment" : "All resume options if there are multiple media sources",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        }
+      }
+    },
+    "Resume %@" : {
+      "comment" : "Continue watching this particular media title. The argument is the name of the content",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume %@"
+          }
+        }
+      }
+    },
+    "Save PIN" : {
+      "comment" : "A button that saves the PIN.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save PIN"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "comment" : "A tab in the dashboard that allows users to search for content.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        }
+      }
+    },
+    "Show Error" : {
+      "comment" : "A button that shows an error message when pressed.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Error"
+          }
+        }
+      }
+    },
+    "Sign into Jellyfin" : {
+      "comment" : "A title for the screen that lets you sign into a Jellyfin server.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign into Jellyfin"
+          }
+        }
+      }
+    },
+    "Stingray v%@" : {
+      "comment" : "A label displaying the version of the current version of the app. The argument is the version of the app.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stingray v%@"
+          }
+        }
+      }
+    },
+    "Submit" : {
+      "comment" : "A button that submits a PIN.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit"
+          }
+        }
+      }
+    },
+    "Switch User..." : {
+      "comment" : "A button that switches to a different user.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch User..."
+          }
+        }
+      }
+    },
+    "Temporary placeholder for missing image" : {
+      "comment" : "A temporary placeholder for a missing image.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temporary placeholder for missing image"
+          }
+        }
+      }
+    },
+    "Themes" : {
+      "comment" : "A section in the settings view that allows users to select their preferred light and dark theme.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Themes"
+          }
+        }
+      }
+    },
+    "This library appears to be empty." : {
+      "comment" : "A message displayed when a library is empty.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This library appears to be empty."
+          }
+        }
+      }
+    },
+    "Unknown Stingray Version" : {
+      "comment" : "A placeholder for the Stingray version when it cannot be retrieved.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown Stingray Version"
+          }
+        }
+      }
+    },
+    "URL" : {
+      "comment" : "A label for the URL of a server.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL"
+          }
+        }
+      }
+    },
+    "Username" : {
+      "comment" : "A label for the username field.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username"
+          }
+        }
+      }
+    },
+    "v%@" : {
+      "comment" : "Version of something",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "v%@"
+          }
+        }
+      }
+    },
+    "Waiting to get libraries..." : {
+      "comment" : "A placeholder text displayed when the user's libraries are being fetched.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting to get libraries..."
+          }
+        }
+      }
+    },
+    "Welcome back to Jellyfin" : {
+      "comment" : "A welcome message for returning users.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome back to Jellyfin"
+          }
+        }
+      }
+    },
+    "You absolutely want to delete the PIN?" : {
+      "comment" : "Final confirmation for deleting a user’s PIN",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You absolutely want to delete the PIN?"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.2"
+}
