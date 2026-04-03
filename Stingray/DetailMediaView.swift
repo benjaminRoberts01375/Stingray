@@ -688,12 +688,15 @@ fileprivate struct EpisodeNavigationView: View {
             )
         } label: {
             VStack(spacing: 0) {
+                if !self.settings.loadThumbnailArt { Spacer(minLength: 0) }
                 ArtView(media: self.episode, streamingService: streamingService, title: self.episode.title)
-                Spacer(minLength: 0)
-                Text(episode.title)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .padding()
+                if self.settings.loadThumbnailArt {
+                    Spacer(minLength: 0)
+                    Text(episode.title)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .padding()
+                }
                 Spacer(minLength: 0)
             }
             .frame(width: 400, height: 325)
