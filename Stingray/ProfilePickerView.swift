@@ -10,7 +10,7 @@ import SwiftUI
 public struct ProfilePickerView: View {
     /// List of all users who have at some point signed into Stingray
     private var users: [User] {
-        return userModel.getUsers()
+        return userModel.getUsers().sorted { $0.displayName < $1.displayName }
     }
     /// Login state for the entire app
     @Binding public var loginState: LoginState

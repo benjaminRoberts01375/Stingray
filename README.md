@@ -106,7 +106,8 @@ Extensive content metadata.
   - [x] Added dark-mode theme "Void"
 - [x] Translation support.
 - [x] Adjustable playback speed.
-- [x] Enable the explicit access control SwiftLint rule
+- [x] Enable the explicit access control SwiftLint rule.
+- [x] Sort users alphabetically on profile picker screen.
 
 ## Long-Term TODO List
 
