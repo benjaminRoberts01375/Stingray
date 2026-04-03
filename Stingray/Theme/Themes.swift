@@ -29,7 +29,7 @@ public protocol ThemeProtocol {
 }
 
 /// A dark blue color scheme, like deep in the ocean
-public final class ThemeDefaultDark: ThemeProtocol {
+public final class ThemeDeepSea: ThemeProtocol {
     public let colorScheme: ColorScheme = .dark
     
     public func appBackground() -> AnyView {
@@ -63,7 +63,7 @@ public final class ThemeDefaultDark: ThemeProtocol {
 }
 
 /// A white theme and grayscale theme
-public final class NotesAppLight: ThemeProtocol {
+public final class ThemeNotesAppLight: ThemeProtocol {
     public let colorScheme: ColorScheme = .light
     
     public func appBackground() -> AnyView { AnyView(Color.white) }
@@ -78,7 +78,7 @@ public final class NotesAppLight: ThemeProtocol {
 }
 
 /// A light theme with a little splash of color in the background
-public final class BeachLight: ThemeProtocol {
+public final class ThemeBeachLight: ThemeProtocol {
     public let colorScheme: ColorScheme = .light
     static let tan = Color(red: 1, green: 0.973, blue: 0.863)
     

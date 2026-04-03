@@ -87,3 +87,8 @@ custom_rules:
     regex: '\bprint\s*\(\s*' # Matches `print(`
     match_kinds: # Help against comments and such
       - identifier
+  theme_class_naming:
+    name: "Theme Class Naming"
+    regex: 'class\s+(?!Theme)\w+\s*:\s*[^{]*\bThemeProtocol\b'
+    message: "Themes must be prefixed with 'Theme'."
+    severity: error

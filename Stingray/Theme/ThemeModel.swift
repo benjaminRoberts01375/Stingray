@@ -47,9 +47,9 @@ final class ThemeModel {
     /// - Returns: Mapped concrete theme
     static func concreteThemeFromTheme(_ theme: Themes) -> any ThemeProtocol {
         switch theme {
-        case .deepSea: return ThemeDefaultDark()
-        case .notesApp: return NotesAppLight()
-        case .beach: return BeachLight()
+        case .deepSea: return ThemeDeepSea()
+        case .notesApp: return ThemeNotesAppLight()
+        case .beach: return ThemeBeachLight()
         case .void: return ThemeVoidDark()
         }
     }
