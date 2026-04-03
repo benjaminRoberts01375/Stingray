@@ -9,6 +9,8 @@ import BlurHashKit
 import SwiftUI
 
 public struct MediaCard: View {
+    @Environment(SettingsModel.self) private var settings
+    
     public let media: any SlimMediaProtocol
     public let url: URL?
     public let action: @MainActor () -> Void
@@ -29,36 +31,49 @@ public struct MediaCard: View {
         }
         label: {
             VStack(spacing: 0) {
-                if media.imageTags?.primary != nil {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: Self.cardSize.width, height: 285)
-                            .clipped()
-                    } placeholder: {
-                        if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
-                           let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 32)) {
-                            Image(uiImage: blurImage)
+                if self.settings.loadThumbnailArt {
+                    if media.imageTags?.primary != nil {
+                        AsyncImage(url: url) { image in
+                            image
                                 .resizable()
                                 .scaledToFill()
-                                .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
                                 .frame(width: Self.cardSize.width, height: 285)
                                 .clipped()
-                        } else {
-                            MediaCardLoading()
+                        } placeholder: {
+                            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
+                               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 32)) {
+                                Image(uiImage: blurImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
+                                    .frame(width: Self.cardSize.width, height: 285)
+                                    .clipped()
+                            } else {
+                                MediaCardLoading()
+                            }
                         }
+                    } else {
+                        MediaCardNoImage()
                     }
-                } else {
-                    MediaCardNoImage()
+                    Text(media.title)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .truncationMode(.tail)
+                        .padding(.horizontal, 5)
+                        .padding(.top, 5)
+                    Spacer(minLength: 0)
                 }
-                Text(media.title)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .truncationMode(.tail)
-                    .padding(.horizontal, 5)
-                    .padding(.top, 5)
-                Spacer(minLength: 0)
+                else {
+                    Spacer(minLength: 0)
+                    Text(media.title)
+                        .font(.system(size: 30))
+                        .bold()
+                        .multilineTextAlignment(.center)
+                        .truncationMode(.tail)
+                        .padding(.horizontal)
+                        .frame(width: Self.cardSize.width)
+                    Spacer(minLength: 0)
+                }
             }
             .background {
                 if !(self.media.errors?.isEmpty ?? true) {

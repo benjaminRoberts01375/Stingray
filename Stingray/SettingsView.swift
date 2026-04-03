@@ -129,6 +129,13 @@ public struct SettingsView: View {
                 }
             }
             
+            // MARK: Accessibility
+            Section( header: Text("Accessibility").bold() ) {
+                DoubleButton(label: "Load Poster Art", sublabel: self.settings.loadThumbnailArt ? "Enabled" : "Disabled") {
+                    self.settings.loadThumbnailArt.toggle()
+                }
+            }
+            
             // MARK: Connection info
             Section {
                 switch loginState {

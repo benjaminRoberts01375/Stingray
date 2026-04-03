@@ -95,6 +95,12 @@ public final class SettingsModel {
         }
     }
     
+    /// Should the poster art be displayed
+    public var loadThumbnailArt: Bool {
+        get { self.userModel.activeUser?.loadThumbnailArt ?? true }
+        set(newValue) { self.userModel.activeUser?.loadThumbnailArt = newValue }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users

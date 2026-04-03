@@ -146,6 +146,8 @@ public struct User: Codable, Identifiable, Hashable {
     public  var lightTheme: ThemeModel.Themes
     /// How fast the viewer wants the player to run
     public var playbackSpeed: PlaybackSpeed
+    /// A toggle for whether to display posters
+    public var loadThumbnailArt: Bool
     
     public init(
         serviceURL: URL,
@@ -158,7 +160,8 @@ public struct User: Codable, Identifiable, Hashable {
         autplay: Bool = false,
         darkTheme: ThemeModel.Themes = .deepSea,
         lightTheme: ThemeModel.Themes = .notesApp,
-        playbackSpeed: PlaybackSpeed = .one
+        playbackSpeed: PlaybackSpeed = .one,
+        loadThumbnailArt: Bool = true
     ) {
         self.id = id
         self.displayName = displayName
@@ -171,6 +174,7 @@ public struct User: Codable, Identifiable, Hashable {
         self.darkTheme = darkTheme
         self.lightTheme = lightTheme
         self.playbackSpeed = playbackSpeed
+        self.loadThumbnailArt = loadThumbnailArt
     }
     
     /// Create a user from encoded JSON.
@@ -191,6 +195,7 @@ public struct User: Codable, Identifiable, Hashable {
             darkTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .darkTheme)) ?? .deepSea
             lightTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .lightTheme)) ?? .beach
             playbackSpeed = (try? container.decodeIfPresent(PlaybackSpeed.self, forKey: .playbackSpeed)) ?? .one
+            loadThumbnailArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadThumbnailArt)) ?? true
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
