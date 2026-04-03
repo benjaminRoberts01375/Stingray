@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "- or -" : {
+
+    },
     "\"%@\" " : {
       "comment" : "Wrap a String in quotes",
       "localizations" : {
@@ -134,6 +137,9 @@
         }
       }
     },
+    "Authentication" : {
+
+    },
     "Configure..." : {
       "comment" : "Something can be configured and will bring the user to another screen",
       "localizations" : {
@@ -158,6 +164,7 @@
     },
     "Connect" : {
       "comment" : "Form a network connection",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -199,6 +206,12 @@
           }
         }
       }
+    },
+    "Enter code %@ to login" : {
+
+    },
+    "Enter Credentials" : {
+
     },
     "Enter PIN" : {
       "comment" : "A label displayed above a field for entering a PIN.",
@@ -344,6 +357,9 @@
           }
         }
       }
+    },
+    "Login" : {
+
     },
     "Logout" : {
       "comment" : "A context menu item that logs out a user.",
@@ -626,6 +642,12 @@
         }
       }
     },
+    "Quick Connect" : {
+
+    },
+    "Quick Connect failed to load" : {
+
+    },
     "Released" : {
       "comment" : "Header for when Jellyfin content was released",
       "localizations" : {
@@ -776,6 +798,9 @@
           }
         }
       }
+    },
+    "Test Connection" : {
+
     },
     "Themes" : {
       "comment" : "A section in the settings view that allows users to select their preferred light and dark theme.",

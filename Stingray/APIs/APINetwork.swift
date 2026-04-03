@@ -247,6 +247,108 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
+    /// Gets the state of quick connect
+    /// - Returns: A boolean whether quick connect is available or not
+    func quickConnectAvailable() async throws(NetworkError) -> Bool {
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/QuickConnect/Enabled",
+                headers: nil,
+                urlParams: nil,
+                body: nil
+            )
+        }
+    }
+    
+    /// Get the quick connect code and the secret
+    /// - Returns: A tuple with the quick connect and secret which is used for checking if the user entered the code yet
+    func getQuickConnectCodes() async throws(AccountErrors) -> (String, String) {
+        struct Root: Codable {
+            let Authenticated: Bool
+            let Secret: String
+            let Code: String
+            let DeviceId: String
+            let AppName: String
+            let AppVersion: String
+            let DateAdded: String
+        }
+        
+        do {
+            let root: Root = try await network.request(
+                verb: .post,
+                path: "/QuickConnect/Initiate",
+                headers: nil,
+                urlParams: nil,
+                body: nil
+            )
+            return (root.Code, root.Secret)
+        } catch {
+            throw AccountErrors.quickConnectFailed(error)
+        }
+    }
+    
+    // TODO: Docstring
+    func getQuickConnectState(secret: String) async throws(NetworkError) -> Bool {
+        // TODO: Same as above
+        struct Root: Codable {
+            let Authenticated: Bool
+            let Secret: String
+            let Code: String
+            let DeviceId: String
+            let DeviceName: String
+            let AppName: String
+            let AppVersion: String
+            let DateAdded: String
+        }
+        let params : [URLQueryItem] = [
+            URLQueryItem(name: "secret", value: secret)
+        ]
+        
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/QuickConnect/Connect",
+                headers: nil,
+                urlParams: params,
+                body: nil
+            )
+            return root.Authenticated
+        }
+    }
+    
+    /// Login using the quick connect secret
+    func login(quickConnectSecret: String) async throws(AccountErrors) -> APILoginResponse {
+        struct Response: Codable {
+            let User: User
+            let SessionInfo: SessionInfo
+            let ServerId: String
+        }
+        
+        struct User: Codable {
+            let Name: String
+        }
+        
+        struct SessionInfo: Codable {
+            let Id: String
+            let UserId: String
+        }
+        
+        let requestBody: [String: String] = [
+            "Secret": quickConnectSecret
+        ]
+        do {
+            return try await network.request(
+                verb: .post,
+                path: "/Users/AuthenticateWithQuickConnect",
+                headers: nil,
+                urlParams: nil,
+                body: requestBody)
+        } catch {
+            throw AccountErrors.loginFailed(error)
+        }
+    }
+    
     func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User

@@ -329,11 +329,14 @@ public enum AccountErrors: RError {
     case loginFailed(RError?)
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
+    /// Failed to get the quick connect code
+    case quickConnectFailed(RError)
     
     public var next: (RError)? {
         switch self {
         case .loginFailed(let next): return next
         case .serverVersionFailed(let next): return next
+        case .quickConnectFailed(let next): return next
         }
     }
     
@@ -343,6 +346,8 @@ public enum AccountErrors: RError {
             return "Login failed"
         case .serverVersionFailed:
             return "Failed to get server version"
+        case .quickConnectFailed:
+            return "Failed to get quick connect code"
         }
     }
 }
