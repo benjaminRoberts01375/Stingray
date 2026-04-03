@@ -96,7 +96,7 @@ public struct SettingsView: View {
             // MARK: Themes
             Section( header: Text("Themes").bold() ) {
                 // Light mode
-                DoubleMenu(label: "Light Theme", sublabel: self.settings.themeLight.displayName) {
+                DoubleMenu(label: "Light Mode", sublabel: self.settings.themeLight.displayName) {
                     ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
                         Button { self.settings.themeLight = option }
                         label: {
@@ -112,7 +112,7 @@ public struct SettingsView: View {
                     }
                 }
                 // Dark mode
-                DoubleMenu(label: "Dark Theme", sublabel: self.settings.themeDark.displayName) {
+                DoubleMenu(label: "Dark Mode", sublabel: self.settings.themeDark.displayName) {
                     ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
                         Button { self.settings.themeDark = option }
                         label: {
