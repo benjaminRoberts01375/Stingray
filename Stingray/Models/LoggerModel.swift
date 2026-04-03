@@ -8,7 +8,7 @@
 import OSLog
 
 /// A nice wrapper around the `Logger` type.
-final class Log {
+public final class Log {
     /// Shared instance of the `Log` singleton.
     private static let shared = Log()
     
@@ -25,7 +25,7 @@ final class Log {
     /// - Parameter message: Message to log.
     /// - Note: Meant for variable values, flow tracing, and other debugging.
     /// - Important: Logs are set to public, so show no secrets.
-    static func debug(_ message: String) {
+    public static func debug(_ message: String) {
         Log.shared.logger.debug("\(message, privacy: .public)")
     }
     
@@ -33,7 +33,7 @@ final class Log {
     /// - Parameter message: Message to log.
     /// - Note: Data only slightly more important than debug info, like a profile loading, or an API completed setup,
     /// - Important: Logs are set to public, so show no secrets.
-    static func info(_ message: String) {
+    public static func info(_ message: String) {
         Log.shared.logger.info("\(message, privacy: .public)")
     }
     
@@ -41,7 +41,7 @@ final class Log {
     /// - Parameter message: Message to log.
     /// - Note: Meant to display a recoverable issue, and perhaps a retry was attempted, like a missing key in JSON.
     /// - Important: Logs are set to public, so show no secrets.
-    static func warning(_ message: String) {
+    public static func warning(_ message: String) {
         Log.shared.logger.warning("\(message, privacy: .public)")
     }
     
@@ -49,7 +49,7 @@ final class Log {
     /// - Parameter message: Message to log
     /// - Note: Something is unrecoverable, like a library failed to load.
     /// - Important: Logs are set to public, so show no secrets.
-    static func error(_ message: String) {
+    public static func error(_ message: String) {
         Log.shared.logger.error("\(message, privacy: .public)")
     }
     
@@ -57,7 +57,7 @@ final class Log {
     /// - Parameter message: Message to save.
     /// - Note: Completely unrecoverable, the user is either stuck or the app is about to crash.
     /// - Important: Logs are set to public, so show no secrets.
-    static func critical(_ message: String) {
+    public static func critical(_ message: String) {
         Log.shared.logger.critical("\(message, privacy: .public)")
     }
 }

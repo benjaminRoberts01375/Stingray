@@ -12,7 +12,7 @@ extension String {
     /// Create a neatly formatted string based off the number of ticks a stream may have.
     /// 10,000,000 ticks = 1 second.
     /// - Parameter ticks: Stream ticks
-    init(duration: TimeInterval) {
+    public init(duration: TimeInterval) {
         let seconds = Int(duration)
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
@@ -27,7 +27,7 @@ extension String {
 extension String {
     /// Converts a PascalCase string to a space-separated string
     /// Example: "MyName" -> "My Name"
-    func pascalCaseToSpaces() -> String {
+    public func pascalCaseToSpaces() -> String {
         // Handle empty strings
         if self.isEmpty { return self }
         

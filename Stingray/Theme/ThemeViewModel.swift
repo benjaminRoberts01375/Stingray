@@ -8,7 +8,7 @@
 import SwiftUI
 
 public struct StingrayBackground: ViewModifier {
-    @Environment(ThemeModel.self) var theme
+    @Environment(ThemeModel.self) public var theme
     
     public func body(content: Content) -> some View {
         content
@@ -25,11 +25,11 @@ public extension View {
     }
 }
 
-struct StingrayFormButtonStyle: ButtonStyle {
-    @Environment(\.isFocused) var isFocused
-    @Environment(ThemeModel.self) var theme
+public struct StingrayFormButtonStyle: ButtonStyle {
+    @Environment(\.isFocused) public var isFocused
+    @Environment(ThemeModel.self) public var theme
     
-    func makeBody(configuration: Configuration) -> some View {
+    public func makeBody(configuration: Configuration) -> some View {
         GeometryReader { geo in
             configuration.label
                 .foregroundStyle(isFocused ? Color.black : Color.primary)
@@ -54,13 +54,13 @@ struct StingrayFormButtonStyle: ButtonStyle {
 
 public struct DoubleButton: View {
     /// Primary label to show on left-hand side of button
-    let label: String
+    public let label: String
     /// Secondary label to show on right-hand side of button
-    let sublabel: String
+    public let sublabel: String
     /// Code to run when the button's pressed
-    let action: () -> Void
+    public let action: () -> Void
     
-    @Environment(ThemeModel.self) var theme: ThemeModel
+    @Environment(ThemeModel.self) private var theme: ThemeModel
     
     public var body: some View {
         Button { action() }
@@ -79,13 +79,13 @@ public struct DoubleButton: View {
 
 public struct DoubleMenu<Content: View>: View {
     /// Primary label to show on left-hand side of button
-    let label: String
+    public let label: String
     /// Secondary label to show on right-hand side of button
-    let sublabel: String
+    public let sublabel: String
     /// Content to show in the menu
-    @ViewBuilder let content: () -> Content
+    @ViewBuilder public let content: () -> Content
     
-    @Environment(ThemeModel.self) var theme: ThemeModel
+    @Environment(ThemeModel.self) private var theme: ThemeModel
     
     public var body: some View {
         Menu { content() }

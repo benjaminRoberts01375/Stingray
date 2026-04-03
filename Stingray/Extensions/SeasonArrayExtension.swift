@@ -11,7 +11,7 @@ import Foundation
 extension Array where Element == any TVSeasonProtocol {
     /// Quickly get the next episode to watch.
     /// - Returns: The next episode to watch, nil if the array is empty.
-    func nextUp() -> (any TVEpisodeProtocol)? {
+    public func nextUp() -> (any TVEpisodeProtocol)? {
         let allEpisodes = self.flatMap(\.episodes)
         // If the first episode hasn't been played suggest it
         if let firstEpisode = allEpisodes.first, firstEpisode.lastPlayed == nil {

@@ -8,22 +8,22 @@
 import BlurHashKit
 import SwiftUI
 
-struct MediaCard: View {
-    let media: any SlimMediaProtocol
-    let url: URL?
-    let action: @MainActor () -> Void
-    @State var showError: Bool = false
+public struct MediaCard: View {
+    public let media: any SlimMediaProtocol
+    public let url: URL?
+    public let action: @MainActor () -> Void
+    @State private var showError: Bool = false
     
-    static let cardSize = CGSize(width: 200, height: 370)
-    static let imageHeight = Self.cardSize.height - 85
+    public static let cardSize = CGSize(width: 200, height: 370)
+    public static let imageHeight = Self.cardSize.height - 85
     
-    init(media: any SlimMediaProtocol, streamingService: StreamingServiceProtocol, action: @escaping @MainActor () -> Void) {
+    public init(media: any SlimMediaProtocol, streamingService: StreamingServiceProtocol, action: @escaping @MainActor () -> Void) {
         self.media = media
         self.url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 400)
         self.action = action
     }
     
-    var body: some View {
+    public var body: some View {
         Button {
             if self.media.errors == nil { action() }
         }
@@ -82,8 +82,8 @@ struct MediaCard: View {
     }
 }
 
-struct MediaCardLoading: View {
-    var body: some View {
+public struct MediaCardLoading: View {
+    public var body: some View {
         ZStack {
             Color.gray.opacity(0.2)
             VStack {
@@ -94,8 +94,8 @@ struct MediaCardLoading: View {
     }
 }
 
-struct MediaCardNoImage: View {
-    var body: some View {
+public struct MediaCardNoImage: View {
+    public var body: some View {
         ZStack {
             Color.gray.opacity(0.15)
             VStack(spacing: 8) {

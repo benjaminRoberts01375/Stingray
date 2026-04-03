@@ -14,7 +14,7 @@ extension URL {
     ///   - path: Relative path to a resource
     ///   - urlParams: Parameters to add
     /// - Returns: The built URL
-    func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {
+    public func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {
         let base = self.appendingPathComponent("") // Fixes trailing slash issues
         guard let url = URL(string: path, relativeTo: base)
         else { return nil }

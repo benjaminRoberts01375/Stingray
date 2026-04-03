@@ -9,9 +9,9 @@ import SwiftUI
 
 public struct SettingsView: View {
     /// Tracks if the user has logged in, is about to login, or needs to login.
-    @Binding var loginState: LoginState
+    @Binding public var loginState: LoginState
     /// System-wide settings
-    @Environment(SettingsModel.self) var settings: SettingsModel
+    @Environment(SettingsModel.self) private var settings: SettingsModel
     /// Controlls the pin configuration screen showing and hiding
     @State private var showPinSetup: Bool = false
     
@@ -149,7 +149,7 @@ public struct SettingsView: View {
 /// Readable versions of the profile switching options. Only used here so an extension was used.
 extension SettingsModel.ProfileSwitching {
     /// Picker display name
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .askOnLaunch:
             return "Ask on Launch"
@@ -163,7 +163,7 @@ extension SettingsModel.ProfileSwitching {
     }
     
     /// More thorough description of the selected values.
-    var description: String {
+    public var description: String {
         switch self {
         case .askOnResume:
             return """

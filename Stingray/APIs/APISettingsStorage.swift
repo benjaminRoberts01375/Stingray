@@ -25,9 +25,9 @@ public protocol SettingsStorageProtocol {
 
 /// Implementation of the `SettingsStorageProtocol`.
 public final class SettingStorage: SettingsStorageProtocol {
-    let basicStorage: BasicStorageProtocol
+    public let basicStorage: BasicStorageProtocol
     
-    init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
+    public init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
     
     public func setProfileSwitchingMethod(to method: SettingsModel.ProfileSwitching) {
         try? self.basicStorage.setSecureData(.userSwitchingMethod, data: method) // TODO: Fails silently

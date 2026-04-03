@@ -9,9 +9,9 @@ import Foundation
 
 /// Basic data to store about the user
 @Observable
-final class UserModel {
+public final class UserModel {
     /// Storage device to permanently store user data
-    var storage: UserStorageProtocol
+    public var storage: UserStorageProtocol
     
     /// The signed in user
     public var activeUser: User? {
@@ -28,7 +28,7 @@ final class UserModel {
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
-    init(storage: UserStorageProtocol) {
+    public init(storage: UserStorageProtocol) {
         self.storage = storage
         self.userIDs = Set(self.storage.getUserIDs())
         self.activeUser = nil
@@ -39,20 +39,20 @@ final class UserModel {
     
     /// Adds a user to storage based on a `User` type
     /// - Parameter user: User to add
-    func addUser(_ user: User) {
+    public func addUser(_ user: User) {
         userIDs.insert(user.id)
         storage.upsertUser(user: user)
         storage.setUserIDs(Array(userIDs))
     }
     
     /// Gets all users
-    func getUsers() -> [User] {
+    public func getUsers() -> [User] {
         return self.userIDs.compactMap { self.storage.getUser(userID: $0) }
     }
     
     /// Deletes a user based on their ID
     /// - Parameter userID: ID of the user to delete
-    func deleteUser(_ userID: String) {
+    public func deleteUser(_ userID: String) {
         userIDs.remove(userID)
         storage.setUserIDs(Array(userIDs))
         storage.deleteUser(userID: userID)
@@ -62,8 +62,8 @@ final class UserModel {
 
 /// Jellyfin-specific userdata
 public struct UserJellyfin: Codable, Hashable {
-    let accessToken: String
-    let sessionID: String
+    public let accessToken: String
+    public let sessionID: String
 }
 
 /// Types of streaming services
@@ -127,27 +127,27 @@ public enum ServiceType: Codable, Hashable {
 
 /// Basic structure for a user
 public struct User: Codable, Identifiable, Hashable {
-    let serviceURL: URL
-    let serviceType: ServiceType
-    let serviceID: String
+    public let serviceURL: URL
+    public let serviceType: ServiceType
+    public let serviceID: String
     public let id: String
-    let displayName: String
+    public let displayName: String
     
     // Settings
     /// Track if the user wants subtitles
-    var usesSubtitles: Bool
+    public var usesSubtitles: Bool
     /// Quick password required for user sign-in
-    var pin: String?
+    public var pin: String?
     /// Play the next piece of content if available
-    var autoplay: Bool
+    public var autoplay: Bool
     /// The user's dark theme choice
-    var darkTheme: ThemeModel.Themes
+    public var darkTheme: ThemeModel.Themes
     /// The user's light theme choice
-    var lightTheme: ThemeModel.Themes
+    public  var lightTheme: ThemeModel.Themes
     /// How fast the viewer wants the player to run
-    var playbackSpeed: PlaybackSpeed
+    public var playbackSpeed: PlaybackSpeed
     
-    init(
+    public init(
         serviceURL: URL,
         serviceType: ServiceType,
         serviceID: String,
@@ -217,7 +217,7 @@ public enum PlaybackSpeed: CaseIterable, Codable {
     /// 2x the speed of realtime
     case two
     
-    var value: Float {
+    public var value: Float {
         switch self {
         case .quarter: return 0.25
         case .half: return 0.5
@@ -228,7 +228,7 @@ public enum PlaybackSpeed: CaseIterable, Codable {
         }
     }
     
-    var name: String {
+    public var name: String {
         switch self {
         case .quarter: return "0.25x"
         case .half: return "0.5x"

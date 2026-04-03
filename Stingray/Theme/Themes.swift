@@ -80,7 +80,7 @@ public final class ThemeNotesAppLight: ThemeProtocol {
 /// A light theme with a little splash of color in the background
 public final class ThemeBeachLight: ThemeProtocol {
     public let colorScheme: ColorScheme = .light
-    static let tan = Color(red: 1, green: 0.973, blue: 0.863)
+    public static let tan = Color(red: 1, green: 0.973, blue: 0.863)
     
     public func appBackground() -> AnyView {
         AnyView(

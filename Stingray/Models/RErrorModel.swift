@@ -107,7 +107,7 @@ public enum NetworkError: RError {
     ///   - netErr: NetworkError that was thrown
     ///   - httpProtocol: HTTP protocol used
     /// - Returns: Formatted error
-    static func overrideNetErrorMessage(netErr: NetworkError, httpProtocol: HttpProtocol) -> String {
+    public static func overrideNetErrorMessage(netErr: NetworkError, httpProtocol: HttpProtocol) -> String {
         switch netErr {
         case .invalidURL:
             switch httpProtocol {
@@ -135,7 +135,7 @@ public enum NetworkError: RError {
     }
 }
 
-enum HttpProtocol: String, CaseIterable {
+public enum HttpProtocol: String, CaseIterable {
     case http = "http"
     case https = "https"
 }
@@ -348,18 +348,18 @@ public enum AccountErrors: RError {
 }
 
 /// Different ways the Jellyfin server can have an error.
-enum JellyfinNetworkErrors: RError {
+public enum JellyfinNetworkErrors: RError {
     /// Failed to update the playback position.
     case playbackUpdateFailed(RError)
     
-    var next: (any RError)? {
+    public var next: (any RError)? {
         switch self {
         case .playbackUpdateFailed(let err):
             return err
         }
     }
     
-    var errorDescription: String {
+    public var errorDescription: String {
         switch self {
         case .playbackUpdateFailed: return "Failed to update playback status"
         }

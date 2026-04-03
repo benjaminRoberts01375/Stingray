@@ -7,7 +7,7 @@
 
 import AVKit
 
-protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
+public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
     var libraryStatus: LibraryStatus { get }
     /// The name of the user.
@@ -64,7 +64,7 @@ protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
 }
 
 /// Describes the current setup status for a downloaded library
-enum LibraryStatus {
+public enum LibraryStatus {
     /// The library object has been created but hasn't fetched
     case waiting
     /// The library object has been created and is fetching
@@ -91,19 +91,19 @@ public enum MediaLookupStatus {
 @Observable
 public final class JellyfinModel: StreamingServiceProtocol {
     /// Network used to connect to Jellyfin
-    var networkAPI: AdvancedNetworkProtocol
+    public var networkAPI: AdvancedNetworkProtocol
     /// Status for downloading the library.
-    var libraryStatus: LibraryStatus
+    public var libraryStatus: LibraryStatus
     
-    var usersName: String
-    var userID: String
-    var sessionID: String
-    var accessToken: String
-    var serverName: String?
-    var serverID: String
-    var serverVersion: String?
-    var serviceURL: URL
-    var playerProgress: PlayerProtocol?
+    public var usersName: String
+    public var userID: String
+    public var sessionID: String
+    public var accessToken: String
+    public var serverName: String?
+    public var serverID: String
+    public var serverVersion: String?
+    public var serviceURL: URL
+    public var playerProgress: PlayerProtocol?
     
     /// Create a `JellyfinModel` based on known data.
     /// - Parameters:
@@ -172,7 +172,12 @@ public final class JellyfinModel: StreamingServiceProtocol {
     ///   - username: Signin username.
     ///   - password: Signin password.
     /// - Returns: The configured Jellyfin model.
-    static func login(url: URL, username: String, password: String, userModel: UserModel) async throws(AccountErrors) -> JellyfinModel {
+    public static func login(
+        url: URL,
+        username: String,
+        password: String,
+        userModel: UserModel
+    ) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
         do {
             let response = try await networkAPI.login(username: username, password: password)
@@ -194,7 +199,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
     }
     
     /// Fetch libraries and library media.
-    func retrieveLibraries() async {
+    public func retrieveLibraries() async {
         let maxConcurrentLibraries = 2
         
         self.libraryStatus = .retrieving
@@ -307,7 +312,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
+    public func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
         let libraries: [LibraryModel]
         switch self.libraryStatus {
         case .available(let libs), .complete(let libs):
@@ -372,7 +377,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    func playbackStart(
+    public func playbackStart(
         mediaSource: any MediaSourceProtocol,
         videoID: String,
         audioID: String,
@@ -415,12 +420,12 @@ public final class JellyfinModel: StreamingServiceProtocol {
         self.playerProgress?.start()
     }
     
-    func playbackEnd() {
+    public func playbackEnd() {
         self.playerProgress?.stop()
         self.playerProgress = nil
     }
     
-    static func getProfileImageURL(userID: String, serviceURL: URL) -> URL? {
+    public static func getProfileImageURL(userID: String, serviceURL: URL) -> URL? {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         let url = networkAPI.getUserImageURL(userID: userID)
         Log.debug("Profile URL: \(url?.absoluteString ?? "No URL")")
@@ -429,7 +434,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
 }
 
 /// Describes a data structure for storing player data. Note that you must call `start()` and `stop()` manually.
-protocol PlayerProtocol {
+public protocol PlayerProtocol {
     /// Player actively being used to watch content.
     var player: AVPlayer { get }
     /// ID for the subtitles based on the server
@@ -450,17 +455,17 @@ protocol PlayerProtocol {
 }
 
 /// Tracks the playback status of Jellyfin content.
-final class JellyfinPlayerProgress: PlayerProtocol {
-    var player: AVPlayer
+public final class JellyfinPlayerProgress: PlayerProtocol {
+    public var player: AVPlayer
     /// Network to use for communicating to Jellyfin.
     private let network: any AdvancedNetworkProtocol
     /// Track how often to page Jellyfin.
     private var timer: Timer?
-    var mediaSource: any MediaSourceProtocol
-    let videoID: String
-    let bitrate: Int
-    let audioID: String
-    let subtitleID: String?
+    public var mediaSource: any MediaSourceProtocol
+    public let videoID: String
+    public let bitrate: Int
+    public let audioID: String
+    public let subtitleID: String?
     /// Unique ID for playback. If settings are changed, a new ID is needed.
     private let playbackSessionID: String
     /// Server provided identifier for the session.
@@ -468,7 +473,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
     /// API access token.
     private let accessToken: String
     
-    init(
+    public init(
         player: AVPlayer,
         network: any AdvancedNetworkProtocol,
         mediaSource: any MediaSourceProtocol,
@@ -513,7 +518,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         self.timer = nil
     }
     
-    func start() {
+    public func start() {
         self.timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             
@@ -539,7 +544,7 @@ final class JellyfinPlayerProgress: PlayerProtocol {
         }
     }
     
-    func stop() {
+    public func stop() {
         let playbackTicks = TimeInterval(self.player.currentTime().seconds).ticks
         self.timer?.invalidate()
         self.mediaSource.startPoint = TimeInterval(ticks: playbackTicks)

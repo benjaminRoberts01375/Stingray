@@ -8,13 +8,13 @@
 import SwiftUI
 
 public struct LibraryView: View {
-    @State var library: any LibraryProtocol
+    @State public var library: any LibraryProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    let streamingService: StreamingServiceProtocol
-    let cardWidth = CGFloat(200)
-    let cardSpacing = CGFloat(50)
+    public let streamingService: StreamingServiceProtocol
+    public let cardWidth = CGFloat(200)
+    public let cardSpacing = CGFloat(50)
     
     public var body: some View {
         ScrollView {
@@ -41,9 +41,9 @@ public struct LibraryView: View {
 }
 
 public struct MediaGridView: View {
-    static let cardSpacing = 50.0
-    let allMedia: [any MediaProtocol]
-    let streamingService: any StreamingServiceProtocol
+    public static let cardSpacing = 50.0
+    public let allMedia: [any MediaProtocol]
+    public let streamingService: any StreamingServiceProtocol
     
     @Binding public var navigation: NavigationPath
     

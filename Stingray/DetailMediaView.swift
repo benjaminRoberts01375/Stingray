@@ -12,11 +12,11 @@ import SwiftUI
 // MARK: Main view
 public struct DetailMediaView: View {
     /// Media that contains content to play
-    let media: any MediaProtocol
+    public let media: any MediaProtocol
     /// Streaming service the user is using
-    let streamingService: any StreamingServiceProtocol
+    public let streamingService: any StreamingServiceProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
     @State private var shouldBackgroundBlur: Bool = false
     @State private var shouldRevealBottomShelf: Bool = false
@@ -304,7 +304,7 @@ fileprivate struct MediaLogoView: View {
 // MARK: Movie metadata
 public struct MediaMetadataView: View {
     /// Media to show metadata for
-    let media: any MediaProtocol
+    public let media: any MediaProtocol
     
     public var body: some View {
         if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
@@ -757,9 +757,9 @@ fileprivate struct ArtView: View {
 
 // MARK: Actor browser
 public struct PeopleBrowserView: View {
-    // Media to pull people from
-    let media: any MediaProtocol
-    let streamingService: any StreamingServiceProtocol
+    /// Media to pull people from
+    public let media: any MediaProtocol
+    public let streamingService: any StreamingServiceProtocol
     
     public var body: some View {
         ScrollView(.horizontal) {
@@ -796,10 +796,10 @@ fileprivate enum ButtonType: Hashable {
 }
 
 public struct SpecialFeaturesView: View {
-    let streamingService: any StreamingServiceProtocol
-    let media: any MediaProtocol
+    public let streamingService: any StreamingServiceProtocol
+    public let media: any MediaProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
     public var body: some View {
         VStack {
@@ -824,16 +824,16 @@ public struct SpecialFeaturesView: View {
 }
 
 public struct SpecialFeaturesRow: View {
-    let streamingService: any StreamingServiceProtocol
-    let rowData: [any SpecialFeatureProtocol]
-    let title: String
-    let media: any MediaProtocol
+    public let streamingService: any StreamingServiceProtocol
+    public let rowData: [any SpecialFeatureProtocol]
+    public let title: String
+    public let media: any MediaProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    @Environment(SettingsModel.self) var settings: SettingsModel
+    @Environment(SettingsModel.self) private var settings: SettingsModel
     
-    init(
+    public init(
         streamingService: any StreamingServiceProtocol,
         rowData: [any SpecialFeatureProtocol],
         media: any MediaProtocol,

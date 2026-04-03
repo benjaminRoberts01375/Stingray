@@ -146,12 +146,12 @@ public protocol BasicStorageProtocol {
     func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors)
 }
 
-final class DefaultsBasicStorage: BasicStorageProtocol {
+public final class DefaultsBasicStorage: BasicStorageProtocol {
     private let defaults: UserDefaults
     private let topShelf: UserDefaults?
-    static let dbVersion = "3"
+    public static let dbVersion = "3"
     
-    init() throws(BasicStorageErrors) {
+    public init() throws(BasicStorageErrors) {
         self.defaults = UserDefaults.standard
         self.topShelf = UserDefaults(suiteName: "group.com.benlab.stingray")
         
@@ -172,63 +172,63 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         }
     }
     
-    func getString(_ key: StorageKeys) -> String? {
+    public func getString(_ key: StorageKeys) -> String? {
         let key = defaults.string(forKey: key.rawValue)
         if key == "" { return nil } // Little extra safety
         return key
     }
     
-    func setString(_ key: StorageKeys, value: String) {
+    public func setString(_ key: StorageKeys, value: String) {
         defaults.set(value, forKey: key.rawValue)
     }
     
-    func getInt(_ key: StorageKeys) -> Int {
+    public func getInt(_ key: StorageKeys) -> Int {
         return defaults.integer(forKey: key.rawValue)
     }
     
-    func setInt(_ key: StorageKeys, value: Int?) {
+    public func setInt(_ key: StorageKeys, value: Int?) {
         defaults.set(value, forKey: key.rawValue)
     }
     
-    func getURL(_ key: StorageKeys) -> URL? {
+    public func getURL(_ key: StorageKeys) -> URL? {
         return URL(string: defaults.string(forKey: key.rawValue) ?? "")
     }
     
-    func setURL(_ key: StorageKeys, value: URL?) {
+    public func setURL(_ key: StorageKeys, value: URL?) {
         defaults.set(value?.absoluteString ?? "", forKey: key.rawValue)
     }
     
-    func getBool(_ key: StorageKeys) -> Bool {
+    public func getBool(_ key: StorageKeys) -> Bool {
         return defaults.bool(forKey: key.rawValue)
     }
     
-    func setBool(_ key: StorageKeys, value: Bool) {
+    public func setBool(_ key: StorageKeys, value: Bool) {
         defaults.set(value, forKey: key.rawValue)
     }
     
-    func getStringArray(_ key: StorageKeys) -> [String] {
+    public func getStringArray(_ key: StorageKeys) -> [String] {
         return defaults.stringArray(forKey: key.rawValue) ?? []
     }
     
-    func setStringArray(_ key: StorageKeys, value: [String]) {
+    public func setStringArray(_ key: StorageKeys, value: [String]) {
         defaults.set(value, forKey: key.rawValue)
     }
     
-    func deleteString(_ key: StorageKeys) {
+    public func deleteString(_ key: StorageKeys) {
         defaults.removeObject(forKey: key.rawValue)
     }
     
-    func setTopShelfString(_ key: StorageKeys, value: String) {
+    public func setTopShelfString(_ key: StorageKeys, value: String) {
         self.topShelf?.set(value, forKey: key.rawValue)
     }
     
-    func getTopShelfString(_ key: StorageKeys) -> String? {
+    public func getTopShelfString(_ key: StorageKeys) -> String? {
         let foundData = self.topShelf?.string(forKey: key.rawValue)
         if foundData == "" { return nil } // Little extra safety
         return foundData
     }
     
-    func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors) {
+    public func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors) {
         let encodedData: Data
         do { encodedData = try JSONEncoder().encode(data) }
         catch { throw BasicStorageErrors.encodingFailed(JSONError.failedJSONEncode(key.rawValue), key.rawValue) }
@@ -258,7 +258,7 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         else if status != errSecSuccess { throw BasicStorageErrors.saveFailed(status, key.rawValue) } // Entry failed to succeed
     }
     
-    func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D {
+    public func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: "com.benlab.Stingray",
@@ -283,7 +283,7 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         catch { throw BasicStorageErrors.decodingFailed(JSONError.failedJSONDecode(key.rawValue, error), key.rawValue) }
     }
     
-    func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors) {
+    public func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors) {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key.rawValue,
@@ -298,7 +298,7 @@ final class DefaultsBasicStorage: BasicStorageProtocol {
         }
     }
     
-    static func keychainAccessGroup() -> String {
+    public static func keychainAccessGroup() -> String {
         guard let teamID = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String else {
             fatalError("Could not read AppIdentifierPrefix from bundle")
         }

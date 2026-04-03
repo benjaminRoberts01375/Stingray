@@ -13,14 +13,14 @@ public struct ProfilePickerView: View {
         return userModel.getUsers()
     }
     /// Login state for the entire app
-    @Binding var loginState: LoginState
+    @Binding public var loginState: LoginState
     /// Functions and values regarding the users
-    @Environment(UserModel.self) var userModel: UserModel
+    @Environment(UserModel.self) private var userModel: UserModel
     /// Current theme
-    @Environment(ThemeModel.self) var themeModel: ThemeModel
+    @Environment(ThemeModel.self) private var themeModel: ThemeModel
     
     // A simple way to derrive the streaming service from the login state
-    var streamingService: (any StreamingServiceProtocol)? {
+    public var streamingService: (any StreamingServiceProtocol)? {
         switch loginState {
         case .loggedIn(let streamingServiceProtocol):
             return streamingServiceProtocol
@@ -119,7 +119,7 @@ public struct ProfilePickerView: View {
         }
     }
     
-    static func switchUser(user: User, userModel: UserModel, currentLoginState: LoginState, themeModel: ThemeModel) -> LoginState {
+    public static func switchUser(user: User, userModel: UserModel, currentLoginState: LoginState, themeModel: ThemeModel) -> LoginState {
         userModel.activeUser = user
         themeModel.dark = user.darkTheme
         themeModel.light = user.lightTheme

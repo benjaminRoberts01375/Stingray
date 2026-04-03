@@ -48,6 +48,7 @@ opt_in_rules:
   - static_operator
   - toggle_bool
   - inclusive_language
+  - explicit_acl
 
 # Rules
 line_length:

@@ -102,8 +102,11 @@ Extensive content metadata.
 - [x] Update security email.
 - [x] Added theming support.
   - [x] Added light-mode theme "Notes App".
+  - [x] Added light-mode theme "Beach"..
+  - [x] Added dark-mode theme "Void"
 - [x] Translation support.
 - [x] Adjustable playback speed.
+- [x] Enable the explicit access control SwiftLint rule
 
 ## Long-Term TODO List
 

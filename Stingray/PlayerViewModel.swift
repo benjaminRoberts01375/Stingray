@@ -9,7 +9,7 @@ import AVKit
 import SwiftUI
 
 @Observable
-final class PlayerViewModel: Hashable {
+public final class PlayerViewModel: Hashable {
     /// Player with formatted URL already set
     public var player: AVPlayer
     /// Media that contains the source to play
@@ -56,12 +56,12 @@ final class PlayerViewModel: Hashable {
     @ObservationIgnored public var navigationPath: NavigationPath?
     
     // Hashable Conformance
-    static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
+    public static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
         lhs.mediaSourceID == rhs.mediaSourceID &&
         lhs.startTime == rhs.startTime
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
         hasher.combine(startTime.seconds)
     }
@@ -260,13 +260,13 @@ final class PlayerViewModel: Hashable {
         )
     }
     
-    func stopPlayer() {
+    public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
     
-    func savePlaybackDate() {
+    public func savePlaybackDate() {
         switch self.media.mediaType {
         case .tv(let seasons):
             if var seasons = seasons {

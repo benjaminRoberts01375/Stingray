@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// Login phase of the application
-enum LoginState {
+public enum LoginState {
     /// All users are logged out
     case loggedOut
     /// There is at least one user signed in
@@ -19,18 +19,18 @@ enum LoginState {
     case requiresPIN(User)
 }
 
-struct ContentView: View {
-    @State var loginState: LoginState = .loggedOut
-    @State var deepLinkRequest: DeepLinkRequest?
+public struct ContentView: View {
+    @State private var loginState: LoginState = .loggedOut
+    @State private var deepLinkRequest: DeepLinkRequest?
     @State private var navigationPath: NavigationPath
     @State private var settings: SettingsModel
     @State private var userModel: UserModel
     @State private var theme: ThemeModel
     
-    @Environment(\.scenePhase) var scenePhase
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var colorScheme
     
-    init() throws(SetupErrors) {
+    public init() throws(SetupErrors) {
         let defaultsStorage: DefaultsBasicStorage
         do { defaultsStorage = try DefaultsBasicStorage() }
         catch { throw SetupErrors.databaseError(error) }
@@ -49,7 +49,7 @@ struct ContentView: View {
         self.settings = SettingsModel(userModel: userModel, storage: settingStorage, theme: themeModel)
     }
     
-    var body: some View {
+    public var body: some View {
         NavigationStack(path: $navigationPath) {
             switch loginState {
             case .loggedOut:
@@ -179,7 +179,7 @@ struct ContentView: View {
     }
     
     /// Deletes all entries within the global keychain.
-    func nukeKeychain() {
+    public func nukeKeychain() {
         // Check for ResetKeychain argument
         if !ProcessInfo.processInfo.arguments.contains("-ResetKeychain") {
             Log.debug("Leaving Keychain alone.")
@@ -201,7 +201,7 @@ struct ContentView: View {
         listKeychainEntries()
     }
     
-    func listKeychainEntries() {
+    public func listKeychainEntries() {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "com.benlab.Stingray",
@@ -243,10 +243,10 @@ struct ContentView: View {
     }
 }
 
-struct DeepLinkRequest: Equatable, Hashable {
-    let mediaID: String
-    let parentID: String
-    let id = UUID() // Ensure each request is unique
+public struct DeepLinkRequest: Equatable, Hashable {
+    public let mediaID: String
+    public let parentID: String
+    public let id = UUID() // Ensure each request is unique
 }
 
 #Preview {

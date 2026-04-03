@@ -3,10 +3,10 @@
 import SwiftUI
 
 public struct CenterWrappedRowsLayout: Layout {
-    var itemWidth: CGFloat
-    var itemHeight: CGFloat
-    var horizontalSpacing: CGFloat
-    var verticalSpacing: CGFloat
+    public var itemWidth: CGFloat
+    public var itemHeight: CGFloat
+    public var horizontalSpacing: CGFloat
+    public var verticalSpacing: CGFloat
     
     public init(itemWidth: CGFloat, itemHeight: CGFloat, horizontalSpacing: CGFloat = 50, verticalSpacing: CGFloat = 50) {
         self.itemWidth = itemWidth
