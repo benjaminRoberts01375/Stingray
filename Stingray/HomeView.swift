@@ -252,7 +252,7 @@ public struct LibrariesInfoView: View {
                         .foregroundStyle(.tertiary)
                 } else {
                     ProgressView()
-                    Text("Libraries" + ": \(libraries.count)")
+                    Text(" " + "Libraries" + ": \(libraries.count)")
                         .foregroundStyle(.tertiary)
                 }
                 ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
