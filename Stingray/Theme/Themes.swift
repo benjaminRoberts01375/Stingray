@@ -103,3 +103,18 @@ public final class BeachLight: ThemeProtocol {
     
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
 }
+
+/// A super dark theme
+public final class ThemeVoidDark: ThemeProtocol {
+    public let colorScheme: ColorScheme = .dark
+    
+    public func appBackground() -> AnyView { AnyView(Color.black) }
+    
+    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1)) }
+    
+    public func buttonSecondary() -> Color { Color.gray }
+    
+    public func activeColor() -> Color { Color.gray.opacity(0.15) }
+    
+    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
+}

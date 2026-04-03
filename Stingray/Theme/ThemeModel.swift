@@ -50,6 +50,7 @@ final class ThemeModel {
         case .deepSea: return ThemeDefaultDark()
         case .notesApp: return NotesAppLight()
         case .beach: return BeachLight()
+        case .void: return ThemeVoidDark()
         }
     }
     
@@ -58,6 +59,7 @@ final class ThemeModel {
         case deepSea
         case notesApp
         case beach
+        case void
         
         /// User facing name of the theme
         var displayName: String {
@@ -65,6 +67,7 @@ final class ThemeModel {
             case .deepSea: return "Deep Sea"
             case .notesApp: return "Notes App"
             case .beach: return "Beach"
+            case .void: return "Void"
             }
         }
         
@@ -74,6 +77,7 @@ final class ThemeModel {
             case .deepSea: return "Deep sea blues"
             case .notesApp: return "No thrills light grayscale"
             case .beach: return "A day at the beach"
+            case .void: return "The void consumed all color"
             }
         }
     }
