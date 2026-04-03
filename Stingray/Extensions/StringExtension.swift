@@ -17,7 +17,15 @@ extension String {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         let secs = (seconds % 3600) % 60
-        self = String(format: "%d:%02d:%02d", hours, minutes, secs)
+        if hours != .zero {
+            self = String(format: "%d:%02d:%02d", hours, minutes, secs)
+            return
+        }
+        if minutes < 10 {
+            self = String(format: "%d:%02d", minutes, secs)
+            return
+        }
+        self = String(format: "%02d:%02d", minutes, secs)
     }
 }
 

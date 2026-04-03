@@ -112,6 +112,7 @@ Extensive content metadata.
 - [x] Allow hiding poster art.
 - [x] Allow hiding media background art.
 - [x] Allow replacing media logos with text variants.
+- [x] Improve time code formatting. 0:00:59 -> 0:59, 00:01:23 -> 1:23, 00:15:00 -> 15:00
 
 ## Long-Term TODO List
 
