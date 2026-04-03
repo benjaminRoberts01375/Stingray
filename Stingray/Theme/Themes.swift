@@ -26,6 +26,9 @@ public protocol ThemeProtocol {
     
     /// View used when there is no default image on profiles
     func defaultProfileImage() -> AnyShapeStyle
+    
+    /// Color to use for shading the add profile icon
+    func addProfileStyle() -> AnyShapeStyle
 }
 
 /// A dark blue color scheme, like deep in the ocean
@@ -60,6 +63,8 @@ public final class ThemeDeepSea: ThemeProtocol {
             )
         )
     }
+    
+    public func addProfileStyle() -> AnyShapeStyle { AnyShapeStyle(.white) }
 }
 
 /// A white theme and grayscale theme
@@ -75,6 +80,8 @@ public final class ThemeNotesAppLight: ThemeProtocol {
     public func activeColor() -> Color { Color.gray.opacity(0.15) }
     
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
 }
 
 /// A light theme with a little splash of color in the background
@@ -102,6 +109,8 @@ public final class ThemeBeachLight: ThemeProtocol {
     public func activeColor() -> Color { Color.white.opacity(0.5) }
     
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
 }
 
 /// A super dark theme
@@ -117,4 +126,6 @@ public final class ThemeVoidDark: ThemeProtocol {
     public func activeColor() -> Color { Color.gray.opacity(0.15) }
     
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
+    
+    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
 }

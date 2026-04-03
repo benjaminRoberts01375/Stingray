@@ -109,6 +109,7 @@ public struct ProfilePickerView: View {
                         .resizable()
                         .scaledToFit()
                         .accessibilityLabel("Person icon")
+                        .foregroundStyle(self.themeModel.currentTheme.addProfileStyle())
                         .padding(.top, 30)
                     Spacer()
                     Text("Add User")
