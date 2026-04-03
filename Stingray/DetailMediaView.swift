@@ -688,7 +688,7 @@ fileprivate struct EpisodeNavigationView: View {
             )
         } label: {
             VStack(spacing: 0) {
-                ArtView(media: episode, streamingService: streamingService)
+                ArtView(media: self.episode, streamingService: streamingService, title: self.episode.title)
                 Spacer(minLength: 0)
                 Text(episode.title)
                     .multilineTextAlignment(.center)
@@ -736,30 +736,40 @@ fileprivate struct ActorImage: View {
 fileprivate struct ArtView: View {
     let media: any Displayable
     let streamingService: any StreamingServiceProtocol
+    let title: String
     
+    @Environment(SettingsModel.self) private var settings
     @State private var imageOpacity: Double = 0
     
     var body: some View {
-        ZStack {
-            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
-               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
-                Image(uiImage: blurImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .clipped()
-                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-            }
-            if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
-                AsyncImage(url: url) { image in
-                    image
+        if self.settings.loadThumbnailArt {
+            ZStack {
+                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
+                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
+                    Image(uiImage: blurImage)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .animation(.easeOut(duration: 0.5), value: imageOpacity)
-                        .onAppear { imageOpacity = 1 }
-                } placeholder: {
-                    EmptyView()
+                        .aspectRatio(contentMode: .fill)
+                        .clipped()
+                        .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
+                }
+                if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .animation(.easeOut(duration: 0.5), value: imageOpacity)
+                            .onAppear { imageOpacity = 1 }
+                    } placeholder: {
+                        EmptyView()
+                    }
                 }
             }
+        }
+        else {
+            Text(self.title)
+                .font(.system(size: 35))
+                .bold()
+                .multilineTextAlignment(.center)
         }
     }
 }
@@ -877,7 +887,7 @@ public struct SpecialFeaturesRow: View {
                                 )
                             } label: {
                                 VStack(spacing: 0) {
-                                    ArtView(media: specialFeature, streamingService: self.streamingService)
+                                    ArtView(media: specialFeature, streamingService: self.streamingService, title: mediaSource.name)
                                         .frame(maxHeight: 250)
                                     Spacer(minLength: 0)
                                     Text(mediaSource.name)
