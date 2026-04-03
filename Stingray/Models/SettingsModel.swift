@@ -101,6 +101,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.loadThumbnailArt = newValue }
     }
     
+    /// Should the detail media view load background art
+    public var loadMediaBackgroundArt: Bool {
+        get { self.userModel.activeUser?.loadMediaBackgroundArt ?? true }
+        set(newValue) { self.userModel.activeUser?.loadMediaBackgroundArt = newValue }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users

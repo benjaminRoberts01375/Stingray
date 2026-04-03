@@ -134,6 +134,9 @@ public struct SettingsView: View {
                 DoubleButton(label: "Load Poster Art", sublabel: self.settings.loadThumbnailArt ? "Enabled" : "Disabled") {
                     self.settings.loadThumbnailArt.toggle()
                 }
+                DoubleButton(label: "Load Media Backgrounds", sublabel: self.settings.loadMediaBackgroundArt ? "Enabled" : "Disabled") {
+                    self.settings.loadMediaBackgroundArt.toggle()
+                }
             }
             
             // MARK: Connection info

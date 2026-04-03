@@ -236,35 +236,38 @@ fileprivate struct MediaBackgroundView: View {
     let backgroundImageURL: URL?
     @State private var backgroundOpacity: Double = 0
     @Binding var shouldBlurBackground: Bool
+    @Environment(SettingsModel.self) private var settings
     
     var body: some View {
-        GeometryReader { geo in
-            // Background image
-            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
-               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
-                Image(uiImage: blurImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-                    .clipped()
-                    .accessibilityHint("Placeholder image", isEnabled: false)
-            }
-            if backgroundImageURL != nil {
-                AsyncImage(url: backgroundImageURL) { image in
-                    image
+        if self.settings.loadMediaBackgroundArt {
+            GeometryReader { geo in
+                // Background image
+                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
+                    Image(uiImage: blurImage)
                         .resizable()
+                        .aspectRatio(contentMode: .fill)
                         .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-                        .opacity(backgroundOpacity)
-                        .animation(.spring(.smooth), value: backgroundOpacity)
-                        .onAppear { backgroundOpacity = 1 }
-                } placeholder: {
-                    EmptyView()
+                        .clipped()
+                        .accessibilityHint("Placeholder image", isEnabled: false)
                 }
+                if backgroundImageURL != nil {
+                    AsyncImage(url: backgroundImageURL) { image in
+                        image
+                            .resizable()
+                            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                            .opacity(backgroundOpacity)
+                            .animation(.spring(.smooth), value: backgroundOpacity)
+                            .onAppear { backgroundOpacity = 1 }
+                    } placeholder: {
+                        EmptyView()
+                    }
+                }
+                // Blurry background
+                Color.clear
+                    .background(.thinMaterial.opacity(shouldBlurBackground ? 1 : 0))
+                    .animation(.smooth(duration: 0.5), value: shouldBlurBackground)
             }
-            // Blurry background
-            Color.clear
-                .background(.thinMaterial.opacity(shouldBlurBackground ? 1 : 0))
-                .animation(.smooth(duration: 0.5), value: shouldBlurBackground)
         }
     }
 }

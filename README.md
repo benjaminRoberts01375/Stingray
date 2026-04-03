@@ -110,6 +110,7 @@ Extensive content metadata.
 - [x] Sort users alphabetically on profile picker screen.
 - [x] Allow account switching when libraries fail to load.
 - [x] Allow hiding poster art.
+- [x] Allow hiding media background art.
 
 ## Long-Term TODO List
 
