@@ -56,9 +56,9 @@ public final class ThemeModel {
     
     /// Available themes to choose from
     public enum Themes: Codable, CaseIterable {
-        case deepSea
         case notesApp
         case beach
+        case deepSea
         case void
         
         /// User facing name of the theme
@@ -77,7 +77,7 @@ public final class ThemeModel {
             case .deepSea: return "Deep sea blues"
             case .notesApp: return "No thrills light grayscale"
             case .beach: return "A day at the beach"
-            case .void: return "The void consumed all color"
+            case .void: return "The void consumes all color"
             }
         }
     }
