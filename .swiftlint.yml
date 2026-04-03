@@ -93,3 +93,13 @@ custom_rules:
     regex: 'class\s+(?!Theme)\w+\s*:\s*[^{]*\bThemeProtocol\b'
     message: "Themes must be prefixed with 'Theme'."
     severity: error
+  no_internal_acl:
+    name: "No Internal ACL"
+    regex: "\\binternal\\b"
+    message: "Use of 'internal' is not allowed, and should likely be marked as public."
+    severity: error
+    match_kinds:
+      - keyword
+      - identifier
+      - typeidentifier
+      - attribute.builtin
