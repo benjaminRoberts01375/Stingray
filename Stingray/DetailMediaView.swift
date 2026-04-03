@@ -274,13 +274,14 @@ fileprivate struct MediaBackgroundView: View {
 
 // MARK: Movie logo and basics
 fileprivate struct MediaLogoView: View {
+    @Environment(SettingsModel.self) private var settings
     @State private var logoOpacity: Double = 0
     let media: any MediaProtocol
     let logoImageURL: URL?
     
     var body: some View {
         VStack(spacing: 15) {
-            if logoImageURL != nil {
+            if logoImageURL != nil && !self.settings.replaceLogosWithText {
                 AsyncImage(url: logoImageURL) { image in
                     image
                         .resizable()
@@ -292,6 +293,11 @@ fileprivate struct MediaLogoView: View {
                     EmptyView()
                 }
                 .frame(width: 400)
+            }
+            else {
+                Text(self.media.title)
+                    .font(.title)
+                    .bold()
             }
             if !media.tagline.isEmpty {
                 Text(media.tagline)

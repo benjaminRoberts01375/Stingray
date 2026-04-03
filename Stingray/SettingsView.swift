@@ -137,6 +137,9 @@ public struct SettingsView: View {
                 DoubleButton(label: "Load Media Backgrounds", sublabel: self.settings.loadMediaBackgroundArt ? "Enabled" : "Disabled") {
                     self.settings.loadMediaBackgroundArt.toggle()
                 }
+                DoubleButton(label: "Replace Logos with Text", sublabel: self.settings.replaceLogosWithText ? "Enabled" : "Disabled") {
+                    self.settings.replaceLogosWithText.toggle()
+                }
             }
             
             // MARK: Connection info

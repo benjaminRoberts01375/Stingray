@@ -111,6 +111,7 @@ Extensive content metadata.
 - [x] Allow account switching when libraries fail to load.
 - [x] Allow hiding poster art.
 - [x] Allow hiding media background art.
+- [x] Allow replacing media logos with text variants.
 
 ## Long-Term TODO List
 

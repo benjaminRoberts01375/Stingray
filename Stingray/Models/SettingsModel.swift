@@ -107,6 +107,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.loadMediaBackgroundArt = newValue }
     }
     
+    /// Allows replacing media logos with text
+    public var replaceLogosWithText: Bool {
+        get { self.userModel.activeUser?.replaceLogosWithText ?? false }
+        set(newValue) { self.userModel.activeUser?.replaceLogosWithText = newValue }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users
