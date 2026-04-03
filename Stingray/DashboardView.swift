@@ -21,8 +21,16 @@ public struct DashboardView: View {
             case .waiting, .retrieving: ProgressView()
             case .error(let err):
                 VStack {
+                    Text("Failed to Load Libraries")
+                        .font(.title)
+                        .bold()
+                    Spacer()
+                    ProfilePickerView(loginState: self.$loggedIn)
+                        .padding(.vertical)
                     ErrorView(error: err, summary: "The server formatted the library's metadata unexpectedly.")
+                        .padding(.vertical)
                     SystemInfoView(streamingService: streamingService)
+                    Spacer()
                 }
             case .available(let libraries), .complete(let libraries):
                 TabView(selection: $selectedTab) {

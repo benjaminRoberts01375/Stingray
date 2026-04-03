@@ -108,6 +108,7 @@ Extensive content metadata.
 - [x] Adjustable playback speed.
 - [x] Enable the explicit access control SwiftLint rule.
 - [x] Sort users alphabetically on profile picker screen.
+- [x] Allow account switching when libraries fail to load.
 
 ## Long-Term TODO List
 
