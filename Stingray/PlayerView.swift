@@ -209,7 +209,7 @@ fileprivate struct PlayerStreamingStats: View {
     /// Updates the real-time stats
     private func updateStats() async {
         guard let currentItem = self.vm.player.currentItem,
-              let track = self.vm.player.currentItem?.tracks.first,
+              let track = currentItem.tracks.first,
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last
         else { return }
@@ -226,9 +226,8 @@ fileprivate struct PlayerStreamingStats: View {
         self.frameRate = track.currentVideoFrameRate
         
         // Get codec and profile
-        if let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
-           let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
-           let formatDescription = formatDescriptions.first {
+        if let assetTrack = track.assetTrack,
+           let formatDescription = try? await assetTrack.load(.formatDescriptions).first {
             let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
             let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
             if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
