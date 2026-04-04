@@ -74,6 +74,8 @@ fileprivate struct DashboardRow: View {
     
     @State private var status: DashboardRowStatus = .unstarted
     
+    @Environment(SettingsModel.self) private var settings
+    
     var body: some View {
         VStack(alignment: .leading) {
             switch status {
@@ -82,6 +84,7 @@ fileprivate struct DashboardRow: View {
             default:
                 Text(title)
                     .font(.title2.bold())
+                    .foregroundStyle(self.settings.themeCurrent.header1())
                     .task {
                         // Check if we already have cached data
                         if let cachedMedia = cache[title] {

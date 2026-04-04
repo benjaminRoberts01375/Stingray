@@ -71,6 +71,7 @@ public struct MediaCard: View {
                         .bold()
                         .multilineTextAlignment(.center)
                         .truncationMode(.tail)
+                        .foregroundStyle(self.settings.themeCurrent.header2())
                         .padding(.horizontal)
                         .frame(width: Self.cardSize.width)
                     Spacer(minLength: 0)

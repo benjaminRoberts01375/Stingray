@@ -32,6 +32,12 @@ public protocol ThemeProtocol {
     
     /// If a button has a secondary element, shade it accordingly
     func labelSecondary() -> AnyShapeStyle
+    
+    /// Style to use for some of the largest text used
+    func header1() -> AnyShapeStyle
+    
+    /// Style to use for slightly smaller than the largest text
+    func header2() -> AnyShapeStyle
 }
 
 /// A dark blue color scheme, like deep in the ocean
@@ -70,6 +76,10 @@ public final class ThemeDeepSea: ThemeProtocol {
     }
     
     public func addProfileStyle() -> AnyShapeStyle { AnyShapeStyle(.white) }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
 }
 
 /// A white theme and grayscale theme
@@ -89,6 +99,10 @@ public final class ThemeNotesAppLight: ThemeProtocol {
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
     
     public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
 }
 
 /// A light theme with a little splash of color in the background
@@ -120,6 +134,10 @@ public final class ThemeBeachLight: ThemeProtocol {
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
     
     public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
 }
 
 /// A super dark theme
@@ -139,4 +157,8 @@ public final class ThemeVoidDark: ThemeProtocol {
     public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
     public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
 }

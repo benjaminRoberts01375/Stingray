@@ -115,6 +115,9 @@ public struct DetailMediaView: View {
                                 Text("Overview")
                                     .font(.headline.bold())
                                     .lineLimit(2)
+                                    .foregroundStyle(
+                                        self.focus == .overview ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                    )
                                 Text(media.description)
                                     .multilineTextAlignment(.leading)
                             }
@@ -135,6 +138,9 @@ public struct DetailMediaView: View {
                                         Text("Genres")
                                             .font(.headline.bold())
                                             .lineLimit(2)
+                                            .foregroundStyle(
+                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                            )
                                         Text(media.genres.joined(separator: ", "))
                                             .multilineTextAlignment(.leading)
                                     }
@@ -144,6 +150,9 @@ public struct DetailMediaView: View {
                                         Text("Released")
                                             .font(.headline.bold())
                                             .lineLimit(2)
+                                            .foregroundStyle(
+                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                            )
                                         Text(String(Calendar.current.component(.year, from: releaseDate)))
                                             .lineLimit(1)
                                     }
@@ -152,6 +161,9 @@ public struct DetailMediaView: View {
                                     Text("Maturity")
                                         .font(.headline.bold())
                                         .lineLimit(1)
+                                        .foregroundStyle(
+                                            self.focus == .metadata ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                        )
                                     Text(maturity)
                                         .lineLimit(1)
                                 }
@@ -163,7 +175,7 @@ public struct DetailMediaView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
-                    .focused($focus, equals: .overview)
+                    .focused($focus, equals: .metadata)
                 }
                 .padding(.vertical, {
                     switch self.media.mediaType {
@@ -179,6 +191,7 @@ public struct DetailMediaView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("People")
                         .font(.title3.bold())
+                        .foregroundStyle(self.settings.themeCurrent.header1())
                         .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
                 }
@@ -217,7 +230,7 @@ public struct DetailMediaView: View {
         }
         .onChange(of: focus) { _, newValue in
             switch newValue {
-            case .media, .season, .overview:
+            case .media, .season, .overview, .metadata:
                 self.shouldBackgroundBlur = true
                 self.shouldRevealBottomShelf = true
             case .play:
@@ -302,6 +315,7 @@ fileprivate struct MediaLogoView: View {
                 Text(self.media.title)
                     .font(.title)
                     .bold()
+                    .foregroundStyle(self.settings.themeCurrent.header1())
             }
             if !media.tagline.isEmpty {
                 Text(media.tagline)
@@ -519,7 +533,7 @@ fileprivate struct SeasonSelectorView: View {
             .focused($focus, equals: .season(season.id))
             .disabled({
                 switch focus {
-                case .play, .overview:
+                case .play, .overview, .metadata:
                     return true
                 case .media(let mediaID):
                     return !season.episodes.contains { $0.id == mediaID }
@@ -778,6 +792,8 @@ fileprivate struct ArtView: View {
                 .font(.system(size: 35))
                 .bold()
                 .multilineTextAlignment(.center)
+                .foregroundStyle(self.settings.themeCurrent.header2())
+                .padding(.horizontal)
         }
     }
 }
@@ -804,6 +820,9 @@ public struct PeopleBrowserView: View {
                             Text(person.name)
                                 .multilineTextAlignment(.center)
                                 .font(.headline)
+                                .foregroundStyle(
+                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                )
                             Text(person.role)
                                 .multilineTextAlignment(.center)
                                 .font(.caption)
@@ -828,6 +847,7 @@ fileprivate enum ButtonType: Hashable {
     case season(String)
     case media(String)
     case overview
+    case metadata
 }
 
 public struct SpecialFeaturesView: View {
@@ -885,6 +905,7 @@ public struct SpecialFeaturesRow: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(self.title)
                 .font(.title3.bold())
+                .foregroundStyle(self.settings.themeCurrent.header1())
                 .padding(.top)
             ScrollView(.horizontal) {
                 LazyHStack {
