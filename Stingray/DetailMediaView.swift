@@ -23,6 +23,8 @@ public struct DetailMediaView: View {
     @State private var shouldShowMetaData: Bool = false
     @FocusState private var focus: ButtonType?
     
+    @Environment(SettingsModel.self) private var settings
+    
     public var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -186,22 +188,24 @@ public struct DetailMediaView: View {
             .padding(32)
             .offset(y: shouldRevealBottomShelf ? 0 : 500)
             .background(alignment: .bottom) { // Subtle black shadow
-                let titleShadowSize = 800.0
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(stops: [
-                                .init(color: .black, location: 0),
-                                .init(color: .black.opacity(0), location: 1)
-                            ]),
-                            center: UnitPoint(x: 0.5, y: 0.5),
-                            startRadius: 0,
-                            endRadius: titleShadowSize
+                if self.settings.loadMediaBackgroundArt {
+                    let titleShadowSize = 800.0
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(stops: [
+                                    .init(color: .black, location: 0),
+                                    .init(color: .black.opacity(0), location: 1)
+                                ]),
+                                center: UnitPoint(x: 0.5, y: 0.5),
+                                startRadius: 0,
+                                endRadius: titleShadowSize
+                            )
+                            .opacity(0.9)
                         )
-                        .opacity(0.9)
-                    )
-                    .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
-                    .offset(y: titleShadowSize)
+                        .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
+                        .offset(y: titleShadowSize)
+                }
             }
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
@@ -226,7 +230,7 @@ public struct DetailMediaView: View {
         .navigationDestination(for: PlayerViewModel.self) { vm in
             PlayerView(vm: vm, navigation: $navigation)
         }
-        .colorScheme(.dark)
+        .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.settings.themeCurrent.colorScheme)
     }
 }
 

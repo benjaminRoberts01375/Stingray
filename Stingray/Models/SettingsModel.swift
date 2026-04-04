@@ -95,6 +95,9 @@ public final class SettingsModel {
         }
     }
     
+    /// The current theme in use
+    public var themeCurrent: any ThemeProtocol { self.theme.currentTheme }
+    
     /// Should the poster art be displayed
     public var loadThumbnailArt: Bool {
         get { self.userModel.activeUser?.loadThumbnailArt ?? true }
