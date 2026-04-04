@@ -896,12 +896,14 @@ public struct SpecialFeaturesRow: View {
                                 VStack(spacing: 0) {
                                     ArtView(media: specialFeature, streamingService: self.streamingService, title: mediaSource.name)
                                         .frame(maxHeight: 250)
-                                    Spacer(minLength: 0)
-                                    Text(mediaSource.name)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal, 10)
-                                    Spacer(minLength: 0)
+                                    if self.settings.loadThumbnailArt {
+                                        Spacer(minLength: 0)
+                                        Text(mediaSource.name)
+                                            .lineLimit(2)
+                                            .multilineTextAlignment(.center)
+                                            .padding(.horizontal, 10)   
+                                        Spacer(minLength: 0)
+                                    }
                                 }
                                 .frame(width: 400, height: 325)
                             }
