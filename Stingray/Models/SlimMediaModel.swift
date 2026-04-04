@@ -71,7 +71,7 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
     public var parentID: String?
     public var errors: [any RError]?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case seriesID = "SeriesId"
         case seriesTitle = "SeriesName"
@@ -167,7 +167,7 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
     public var logo: [String: String]?
     public var backdrop: [String: String]?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case primary = "Primary"
         case logo = "Logo"
         case backdrop = "Backdrop"
@@ -220,7 +220,7 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
     public var logo: String?
     public var primary: String?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case thumbnail = "Thumb"
         case logo = "Logo"
         case primary = "Primary"

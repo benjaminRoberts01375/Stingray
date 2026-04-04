@@ -53,7 +53,7 @@ public enum NetworkRequestType: String {
 /// A Jellyfin specific basic network struct for making network requests
 public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     /// Address of the Jellyfin server
-    var address: URL
+    public var address: URL
     /// Unique identifier based on the device
     private let deviceId: String
     /// Human readable device name
@@ -61,7 +61,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     /// Current stingray version
     private let appVersion: String
     
-    init(address: URL) {
+    public init(address: URL) {
         self.address = address
         self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString

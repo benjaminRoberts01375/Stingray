@@ -7,22 +7,30 @@
 
 import SwiftUI
 
-struct DashboardView: View {
-    var streamingService: StreamingServiceProtocol
+public struct DashboardView: View {
+    public var streamingService: StreamingServiceProtocol
     @State private var selectedTab: String = "home"
     @State private var lastLoadedUserID: String?
-    @Binding var navigationPath: NavigationPath
-    @Binding var deepLinkRequest: DeepLinkRequest?
-    @Binding var loggedIn: LoginState
+    @Binding public var navigationPath: NavigationPath
+    @Binding public var deepLinkRequest: DeepLinkRequest?
+    @Binding public var loggedIn: LoginState
     
-    var body: some View {
+    public var body: some View {
         VStack {
             switch streamingService.libraryStatus {
             case .waiting, .retrieving: ProgressView()
             case .error(let err):
                 VStack {
+                    Text("Failed to Load Libraries")
+                        .font(.title)
+                        .bold()
+                    Spacer()
+                    ProfilePickerView(loginState: self.$loggedIn)
+                        .padding(.vertical)
                     ErrorView(error: err, summary: "The server formatted the library's metadata unexpectedly.")
+                        .padding(.vertical)
                     SystemInfoView(streamingService: streamingService)
+                    Spacer()
                 }
             case .available(let libraries), .complete(let libraries):
                 TabView(selection: $selectedTab) {
@@ -91,14 +99,14 @@ struct DashboardView: View {
 }
 
 /// A type-erased wrapper for MediaProtocol that conforms to Hashable
-struct AnyMedia: Hashable {
-    let media: any MediaProtocol
+public struct AnyMedia: Hashable {
+    public let media: any MediaProtocol
     
-    static func == (lhs: AnyMedia, rhs: AnyMedia) -> Bool {
+    public static func == (lhs: AnyMedia, rhs: AnyMedia) -> Bool {
         lhs.media.id == rhs.media.id
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
     }
 }

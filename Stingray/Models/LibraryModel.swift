@@ -33,7 +33,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var id: String
     public var libraryType: String
     
-    init(title: String, id: String, libraryType: String) {
+    public init(title: String, id: String, libraryType: String) {
         self.title = title
         self.media = .unloaded
         self.id = id
@@ -42,7 +42,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         else { self.libraryType = libraryType.prefix(1).uppercased() + libraryType.dropFirst() }
     }
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case title = "Name"
         case media = "media"
         case id = "Id"

@@ -8,11 +8,11 @@
 import SwiftUI
 
 public struct SearchView: View {
-    var streamingService: StreamingServiceProtocol
+    public var streamingService: StreamingServiceProtocol
     
-    @State var searchText: String = ""
-    @State var searchResults: SearchStatus = .empty
-    @Binding var navigation: NavigationPath
+    @State private var searchText: String = ""
+    @State private var searchResults: SearchStatus = .empty
+    @Binding public var navigation: NavigationPath
     
     public var body: some View {
         ScrollView {
@@ -34,7 +34,7 @@ public struct SearchView: View {
     }
     
     /// Search results
-    enum SearchStatus {
+    public enum SearchStatus {
         /// Found search results
         case found([any MediaProtocol])
         /// None were found, but some may be found soon
@@ -45,7 +45,7 @@ public struct SearchView: View {
         case empty
     }
     
-    func search() -> SearchStatus {
+    public func search() -> SearchStatus {
         if searchText.isEmpty { return .empty }
         var scoredMedia: [MediaScore] = []
         
@@ -106,7 +106,7 @@ extension String {
     /// will have a perfect result against "Assassination Classroom" since the full title is truncated to the length of the original search
     /// term. 0 = a perfect match, >0 = an imperfect match.
     /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
-    func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
+    public func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
         // Normalize both strings
         let selfLower = self.lowercased()
         let targetLower = structuredTarget.lowercased()
@@ -145,11 +145,11 @@ extension String {
 }
 
 /// Scores a piece of media based on the sortTitle for searching
-struct MediaScore {
+public struct MediaScore {
     /// Associated media
-    let media: any MediaProtocol
+    public let media: any MediaProtocol
     /// Score of the media
-    let score: Int
+    public let score: Int
     /// Title the score is based on
-    let sortTitle: String
+    public let sortTitle: String
 }

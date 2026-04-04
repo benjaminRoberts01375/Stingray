@@ -9,7 +9,7 @@ import AVKit
 import SwiftUI
 
 @Observable
-final class PlayerViewModel: Hashable {
+public final class PlayerViewModel: Hashable {
     /// Player with formatted URL already set
     public var player: AVPlayer
     /// Media that contains the source to play
@@ -45,6 +45,8 @@ final class PlayerViewModel: Hashable {
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
+    /// Trigger to refresh transport bar items
+    public var transportBarNeedsUpdate: Bool = false
     
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
@@ -54,12 +56,12 @@ final class PlayerViewModel: Hashable {
     @ObservationIgnored public var navigationPath: NavigationPath?
     
     // Hashable Conformance
-    static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
+    public static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
         lhs.mediaSourceID == rhs.mediaSourceID &&
         lhs.startTime == rhs.startTime
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
         hasher.combine(startTime.seconds)
     }
@@ -100,7 +102,7 @@ final class PlayerViewModel: Hashable {
             subtitleID: .newID(subtitleID),
             bitrate: settingsModel.bitrate
         )
-        
+        self.player.rate = self.settingsModel.playbackSpeed.value
     }
     
     /// Dictates how the player should transition a particular stream
@@ -258,13 +260,13 @@ final class PlayerViewModel: Hashable {
         )
     }
     
-    func stopPlayer() {
+    public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
     
-    func savePlaybackDate() {
+    public func savePlaybackDate() {
         switch self.media.mediaType {
         case .tv(let seasons):
             if var seasons = seasons {
@@ -283,6 +285,12 @@ final class PlayerViewModel: Hashable {
             }
         default: break
         }
+    }
+    
+    public func changeSpeed(_ speed: PlaybackSpeed) {
+        self.player.rate = speed.value
+        self.settingsModel.playbackSpeed = speed
+        self.transportBarNeedsUpdate.toggle() // Trigger UI update
     }
     
     deinit {

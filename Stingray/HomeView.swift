@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-struct HomeView: View {
-    let streamingService: StreamingServiceProtocol
+public struct HomeView: View {
+    public let streamingService: StreamingServiceProtocol
     
     @State private var dashboardCache: [String: [SlimMedia]] = [:]
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading) {
             DashboardRow(
                 title: "Next Up",
@@ -134,14 +134,14 @@ fileprivate struct MediaPicker: View {
     }
 }
 
-struct MediaDetailLoader: View {
-    let mediaID: String
-    let parentID: String?
-    let streamingService: StreamingServiceProtocol
+public struct MediaDetailLoader: View {
+    public let mediaID: String
+    public let parentID: String?
+    public let streamingService: StreamingServiceProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    var body: some View {
+    public var body: some View {
         switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
         case .found(let foundMedia):
             DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
@@ -197,10 +197,10 @@ fileprivate struct MediaNavigationLoadingCard: View {
     }
 }
 
-struct SystemInfoView: View {
-    let streamingService: any StreamingServiceProtocol
+public struct SystemInfoView: View {
+    public let streamingService: any StreamingServiceProtocol
     
-    var body: some View {
+    public var body: some View {
         // Display Stingray and Jellyfin server versions
         HStack(alignment: .center, spacing: 0) {
             if let stingrayVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {  // Stingray
@@ -236,7 +236,7 @@ struct SystemInfoView: View {
 
 public struct LibrariesInfoView: View {
     /// Streaming service containing libraries
-    let streamingService: any StreamingServiceProtocol
+    public let streamingService: any StreamingServiceProtocol
     
     @State private var movieCount: Int = 0
     
@@ -252,7 +252,7 @@ public struct LibrariesInfoView: View {
                         .foregroundStyle(.tertiary)
                 } else {
                     ProgressView()
-                    Text("Libraries" + ": \(libraries.count)")
+                    Text(" " + "Libraries" + ": \(libraries.count)")
                         .foregroundStyle(.tertiary)
                 }
                 ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in

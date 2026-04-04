@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct AddServerView: View {
-    @Binding var loggedIn: LoginState
+public struct AddServerView: View {
+    @Binding public var loggedIn: LoginState
     @State private var httpProcol: HttpProtocol = .http
     @State private var httpHostname: String = ""
     @State private var httpPort: String = "8096"
@@ -21,14 +21,14 @@ struct AddServerView: View {
     @State private var quickConnectAvailable: Bool = false
     @State private var connectionOk: Bool = false
     @State private var jellyfinServerInfo: JellyfinServerInfoModel?
-    @Environment(UserModel.self) var userModel: UserModel
-    @Environment(\.dismiss) var dismiss
+    @Environment(UserModel.self) public var userModel: UserModel
+    @Environment(\.dismiss) public var dismiss
     
-    init(loginState: Binding<LoginState>) {
+    public init(loginState: Binding<LoginState>) {
         self._loggedIn = loginState
     }
     
-    var body: some View {
+    public var body: some View {
         VStack {
             Text("Sign into Jellyfin")
                 .font(.title)
@@ -122,7 +122,7 @@ struct AddServerView: View {
         }
     }
     
-    func loadExistingServerInfo() {
+    public func loadExistingServerInfo() {
         guard let serviceURL = userModel.activeUser?.serviceURL ?? userModel.getUsers().first?.serviceURL else {
             return
         }

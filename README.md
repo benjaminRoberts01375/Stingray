@@ -102,7 +102,17 @@ Extensive content metadata.
 - [x] Update security email.
 - [x] Added theming support.
   - [x] Added light-mode theme "Notes App".
-- [x] Translation support
+  - [x] Added light-mode theme "Beach"..
+  - [x] Added dark-mode theme "Void"
+- [x] Translation support.
+- [x] Adjustable playback speed.
+- [x] Enable the explicit access control SwiftLint rule.
+- [x] Sort users alphabetically on profile picker screen.
+- [x] Allow account switching when libraries fail to load.
+- [x] Allow hiding poster art.
+- [x] Allow hiding media background art.
+- [x] Allow replacing media logos with text variants.
+- [x] Improve time code formatting. 0:00:59 -> 0:59, 00:01:23 -> 1:23, 00:15:00 -> 15:00
 
 ## Long-Term TODO List
 
@@ -117,7 +127,6 @@ Extensive content metadata.
 ### Detail Media View
 
 - [ ] Episode thumbnails where the thumbnail cannot fill the container should use the loaded thumbnail to blur background, instead of the unreliable blur hash.
-- [ ] Replace options for continuing and restarting episodes with an alert to be shared with movies for consistency.
 - [ ] Optionally blur unwatched TV episode thumbnails.
 
 ### Playback

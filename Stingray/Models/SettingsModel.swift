@@ -15,7 +15,7 @@ public final class SettingsModel {
     /// Storage location for the user's theme
     private let theme: ThemeModel
     /// All user setable bitrate options
-    static let bitrateOptions = stride(from: 20_000_000, to: 110_000_000, by: 10_000_000).reversed() +
+    public static let bitrateOptions = stride(from: 20_000_000, to: 110_000_000, by: 10_000_000).reversed() +
     [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000, 100_000]
     
     /// Type for when Stingray will ask the user about switching profiles.
@@ -32,10 +32,10 @@ public final class SettingsModel {
     }
     
     /// Storage device to permanently store user data
-    @ObservationIgnored var storage: SettingsStorageProtocol
+    @ObservationIgnored public var storage: SettingsStorageProtocol
     
     /// Describes how and when the current user will be switched. Updating this value updates permanent storage.
-    var profileSwitchingMethod: ProfileSwitching {
+    public var profileSwitchingMethod: ProfileSwitching {
         willSet(newValue) {
             self.storage.setProfileSwitchingMethod(to: newValue)
             if self.profileSwitchingMethod == .manual {
@@ -47,32 +47,38 @@ public final class SettingsModel {
     }
     
     /// Video bitrate option
-    var bitrate: Int? {
+    public var bitrate: Int? {
         willSet(newValue) {
             self.storage.setBitrateCap(newValue)
         }
     }
 
     /// Track if the user uses subtitles
-    var usesSubtitles: Bool {
+    public var usesSubtitles: Bool {
         get { self.userModel.activeUser?.usesSubtitles ?? false }
         set(newValue) { self.userModel.activeUser?.usesSubtitles = newValue }
     }
     
     /// Should the next piece of content load (if available)
-    var autoplay: Bool {
+    public var autoplay: Bool {
         get { self.userModel.activeUser?.autoplay ?? false }
         set(newValue) { self.userModel.activeUser?.autoplay = newValue }
     }
     
+    /// How fast the player plays content
+    public var playbackSpeed: PlaybackSpeed {
+        get { self.userModel.activeUser?.playbackSpeed ?? .one }
+        set(newValue) { self.userModel.activeUser?.playbackSpeed = newValue }
+    }
+    
     /// A short password required to show the users's content
-    var pin: String? {
+    public var pin: String? {
         get { self.userModel.activeUser?.pin }
         set(newValue) { self.userModel.activeUser?.pin = newValue }
     }
     
     /// The desired dark theme for the user
-    var themeDark: ThemeModel.Themes {
+    public var themeDark: ThemeModel.Themes {
         get { self.theme.dark }
         set(newValue) {
             self.theme.dark = newValue
@@ -81,7 +87,7 @@ public final class SettingsModel {
     }
 
     /// The desired light theme for the user
-    var themeLight: ThemeModel.Themes {
+    public var themeLight: ThemeModel.Themes {
         get { self.theme.light }
         set(newValue) {
             self.theme.light = newValue
@@ -89,11 +95,29 @@ public final class SettingsModel {
         }
     }
     
+    /// Should the poster art be displayed
+    public var loadThumbnailArt: Bool {
+        get { self.userModel.activeUser?.loadThumbnailArt ?? true }
+        set(newValue) { self.userModel.activeUser?.loadThumbnailArt = newValue }
+    }
+    
+    /// Should the detail media view load background art
+    public var loadMediaBackgroundArt: Bool {
+        get { self.userModel.activeUser?.loadMediaBackgroundArt ?? true }
+        set(newValue) { self.userModel.activeUser?.loadMediaBackgroundArt = newValue }
+    }
+    
+    /// Allows replacing media logos with text
+    public var replaceLogosWithText: Bool {
+        get { self.userModel.activeUser?.replaceLogosWithText ?? false }
+        set(newValue) { self.userModel.activeUser?.replaceLogosWithText = newValue }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users
     ///   - storage: Settings storage location
-    init(userModel: UserModel, storage: SettingsStorageProtocol, theme: ThemeModel) {
+    public init(userModel: UserModel, storage: SettingsStorageProtocol, theme: ThemeModel) {
         self.storage = storage
         self.userModel = userModel
         self.profileSwitchingMethod = storage.getProfileSwitchingMethod()

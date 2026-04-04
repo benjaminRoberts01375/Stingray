@@ -34,10 +34,10 @@ public protocol UserStorageProtocol {
 }
 
 public final class UserStorage: UserStorageProtocol {
-    let basicStorage: BasicStorageProtocol
-    var localUserID: String
+    public let basicStorage: BasicStorageProtocol
+    public var localUserID: String
     
-    init(basicStorage: BasicStorageProtocol) {
+    public init(basicStorage: BasicStorageProtocol) {
         Log.info("Setting up Basic Storage")
         self.basicStorage = basicStorage
         // Ensure there's a UUID for each tvOS user

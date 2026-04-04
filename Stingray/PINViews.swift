@@ -13,8 +13,8 @@ public struct PINSetup: View {
     @State private var contentIsFilled: Bool = false // Both the desired and confirmation fields have data
     @State private var error: String = ""
     
-    @Environment(UserModel.self) var userModel: UserModel
-    @Environment(\.dismiss) var dismiss
+    @Environment(UserModel.self) private var userModel: UserModel
+    @Environment(\.dismiss) private var dismiss
     
     public var body: some View {
         VStack {
@@ -48,21 +48,21 @@ public struct PINSetup: View {
     }
     
     /// Check the provided info, show an error if there's an issue
-    func checkPIN() {
+    public func checkPIN() {
         if desiredPIN != pinConfirmation { self.error = "PINs do not match." }
         else { self.error = "" }
     }
 }
 
 public struct PINEntry: View {
-    @Environment(\.dismiss) var dismiss
-    @Environment(UserModel.self) var userModel: UserModel
-    @Environment(ThemeModel.self) var themeModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(UserModel.self) private var userModel: UserModel
+    @Environment(ThemeModel.self) private var themeModel
     
     /// Not read, only set to successfully login or switch users
-    @Binding var loginState: LoginState
+    @Binding public var loginState: LoginState
     /// User the PIN is meant for
-    let user: User
+    public let user: User
     /// PIN attempt
     @State private var pinEntry: String = ""
     /// Reason to not allow sign-in
@@ -101,8 +101,8 @@ public struct PINEntry: View {
 }
 
 public struct PINDelete: View {
-    @Environment(\.dismiss) var dismiss
-    @Environment(UserModel.self) var userModel: UserModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(UserModel.self) private var userModel: UserModel
     /// PIN attempt
     @State private var pinEntry: String = ""
     /// Reason to not allow sign-in

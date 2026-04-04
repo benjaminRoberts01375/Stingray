@@ -9,12 +9,12 @@ import AVKit
 import SwiftUI
 
 // MARK: Parent view
-struct PlayerView: View {
-    @Environment(\.dismiss) var dismiss
-    @State var vm: PlayerViewModel
-    @Binding var navigation: NavigationPath
+public struct PlayerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State public var vm: PlayerViewModel
+    @Binding public var navigation: NavigationPath
     
-    var body: some View {
+    public var body: some View {
         VStack {
             AVPlayerViewControllerRepresentable(vm: self.vm) {
                 self.vm.navigationPath = self.navigation
@@ -30,7 +30,8 @@ struct PlayerView: View {
                 self.vm.mediaSourceID +
                 (self.vm.playerProgress?.subtitleID ?? "") +
                 (self.vm.playerProgress?.videoID ?? "") +
-                (self.vm.playerProgress?.audioID ?? "")
+                (self.vm.playerProgress?.audioID ?? "") +
+                (String(self.vm.transportBarNeedsUpdate))
             )
         }
         .onDisappear { // Only stop the player if PiP is not active
@@ -208,7 +209,7 @@ fileprivate struct PlayerStreamingStats: View {
     /// Updates the real-time stats
     private func updateStats() async {
         guard let currentItem = self.vm.player.currentItem,
-              let track = self.vm.player.currentItem?.tracks.first,
+              let track = currentItem.tracks.first,
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last
         else { return }
@@ -225,9 +226,8 @@ fileprivate struct PlayerStreamingStats: View {
         self.frameRate = track.currentVideoFrameRate
         
         // Get codec and profile
-        if let videoTrack = try? await currentItem.asset.loadTracks(withMediaType: .video).first,
-           let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
-           let formatDescription = formatDescriptions.first {
+        if let assetTrack = track.assetTrack,
+           let formatDescription = try? await assetTrack.load(.formatDescriptions).first {
             let codecType = CMFormatDescriptionGetMediaSubType(formatDescription)
             let fourCC = withUnsafeBytes(of: codecType.bigEndian) { String(bytes: $0, encoding: .ascii) ?? "????" }
             if fourCC.hasPrefix("hvc") || fourCC.hasPrefix("hev") { self.videoCodec = getHEVCProfile(from: formatDescription) ?? "HEVC" }
@@ -296,15 +296,15 @@ fileprivate struct MaterialEffectModifier: ViewModifier {
 }
 
 // MARK: UIKit Player
-struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
-    let vm: PlayerViewModel
+public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    public let vm: PlayerViewModel
     
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
-    let onStartPiP: () -> Void
-    let onRestoreFromPiP: () -> Void
-    let onStopFromPiP: () -> Void
+    public let onStartPiP: () -> Void
+    public let onRestoreFromPiP: () -> Void
+    public let onStopFromPiP: () -> Void
     
-    func makeCoordinator() -> Coordinator {
+    public func makeCoordinator() -> Coordinator {
         let coordinator = Coordinator(
             id: self.vm.mediaSourceID,
             onStartPiP: self.onStartPiP,
@@ -322,7 +322,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         return coordinator
     }
     
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
+    public func makeUIViewController(context: Context) -> AVPlayerViewController {
         Log.info("Loading player...")
         let controller = AVPlayerViewController()
         controller.player = self.vm.player
@@ -364,7 +364,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         return controller
     }
     
-    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+    public func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
         uiViewController.player = self.vm.player
         uiViewController.transportBarCustomMenuItems = makeTransportBarItems()
     }
@@ -484,6 +484,24 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             )
         }
         
+        // MARK: Playback speed picker
+        var playbackSpeeds: [UIAction] = []
+        for speed in PlaybackSpeed.allCases {
+            let action = UIAction(title: speed.name) { _ in
+                self.vm.changeSpeed(speed)
+            }
+            action.state = vm.player.rate == speed.value ? .on : .off
+            playbackSpeeds.append(action)
+        }
+        
+        items.append(
+            UIMenu(
+                title: "Playback Speed",
+                image: UIImage(systemName: "gauge.with.dots.needle.33percent"),
+                children: playbackSpeeds
+            )
+        )
+        
         // MARK: Episode picker
         // TV Season-related buttons
         if let seasons = self.vm.seasons {
@@ -544,22 +562,22 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
         return items
     }
     
-    class Coordinator: NSObject, AVPlayerViewControllerDelegate {
-        let onStartPiP: () -> Void
-        let onRestoreFromPiP: () -> Void
-        let onStopFromPiP: () -> Void
+    public class Coordinator: NSObject, AVPlayerViewControllerDelegate {
+        public let onStartPiP: () -> Void
+        public let onRestoreFromPiP: () -> Void
+        public let onStopFromPiP: () -> Void
         /// Used for PiP identification
-        let id: String
+        public let id: String
         
         // Maintain a reference to a PiP instance
-        weak var playerViewController: AVPlayerViewController?
+        public weak var playerViewController: AVPlayerViewController?
         // Maintain a reference to this Coordinator while PiP is active
-        static var activePiPCoordinator: Coordinator?
+        public static var activePiPCoordinator: Coordinator?
         
         // Track whether we're restoring vs closing
         private var isRestoringFromPiP = false
         
-        init(
+        public init(
             id: String,
             onStartPiP: @escaping () -> Void,
             onRestoreFromPiP: @escaping () -> Void,
@@ -571,19 +589,19 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             self.onStopFromPiP = onStopFromPiP
         }
         
-        func stopPlayer() {
+        public func stopPlayer() {
             // On tvOS, stopping the player will end PiP automatically
             playerViewController?.player?.pause()
             playerViewController?.player?.replaceCurrentItem(with: nil)
         }
         
-        func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
+        public func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
             Log.info("PiP starting")
             self.onStartPiP()
             Self.activePiPCoordinator = self // Keep self alive
         }
         
-        func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
+        public func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
             Log.info("PiP stopped")
             if !isRestoringFromPiP {
                 onStopFromPiP()
@@ -593,7 +611,7 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             Self.activePiPCoordinator = nil
         }
         
-        func playerViewController(
+        public func playerViewController(
             _ playerViewController: AVPlayerViewController,
             failedToStartPictureInPictureWithError error: Error
         ) {
@@ -601,13 +619,13 @@ struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
             Self.activePiPCoordinator = nil
         }
         
-        func playerViewControllerShouldAutomaticallyDismissAtPictureInPictureStart(
+        public func playerViewControllerShouldAutomaticallyDismissAtPictureInPictureStart(
             _ playerViewController: AVPlayerViewController
         ) -> Bool {
             true
         }
         
-        func playerViewController(
+        public func playerViewController(
             _ playerViewController: AVPlayerViewController,
             restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
         ) {

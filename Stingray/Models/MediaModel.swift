@@ -81,7 +81,7 @@ extension MediaSourceProtocol {
     ///   - baseStream: Initial stream to pull metadata from.
     ///   - streamType: Desired type of stream.
     /// - Returns: A potential matching stream.
-    func getSimilarStream(baseStream: any MediaStreamProtocol, streamType: StreamType) -> (any MediaStreamProtocol)? {
+    public func getSimilarStream(baseStream: any MediaStreamProtocol, streamType: StreamType) -> (any MediaStreamProtocol)? {
         var streams: [any MediaStreamProtocol]
         switch streamType {
         case .video:
@@ -170,7 +170,7 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var errors: [RError]?
     public var specialFeatures: SpecialFeaturesStatus
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case title = "Name"
         case taglines = "Taglines"
@@ -388,7 +388,7 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
     public var startPoint: TimeInterval
     public var duration: TimeInterval
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
         case mediaStreams = "MediaStreams"
@@ -444,7 +444,7 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var codec: String
     public var isDefault: Bool
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Index"
         case title = "DisplayTitle"
         case type = "Type"
@@ -496,7 +496,7 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var role: String
     public var imageHashes: MediaImageBlurHashes?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case name = "Name"
         case role = "Role"
@@ -658,7 +658,7 @@ public final class TVEpisode: TVEpisodeProtocol {
     public var lastPlayed: Date?
     public var overview: String?
     
-    init(
+    public init(
         id: String,
         blurHashes: MediaImageBlurHashes? = nil,
         title: String,
@@ -725,7 +725,7 @@ public enum MediaType: Decodable {
         }
     }
     
-    var rawValue: String {
+    public var rawValue: String {
         switch self {
         case .movies:
             return "Movie"
@@ -745,7 +745,7 @@ public final class SpecialFeature: SpecialFeatureProtocol, Decodable {
     public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
     public var imageTags: (any MediaImagesProtocol)?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case title = "Name"
         case featureType = "ExtraType"

@@ -9,15 +9,16 @@ import SwiftUI
 
 public struct SettingsView: View {
     /// Tracks if the user has logged in, is about to login, or needs to login.
-    @Binding var loginState: LoginState
+    @Binding public var loginState: LoginState
     /// System-wide settings
-    @Environment(SettingsModel.self) var settings: SettingsModel
+    @Environment(SettingsModel.self) private var settings: SettingsModel
     /// Controlls the pin configuration screen showing and hiding
     @State private var showPinSetup: Bool = false
     
     public var body: some View {
         @Bindable var settings = settings
         Form {
+            // MARK: Profiles
             // Profile picker
             Section(header: Text("Account").bold()) {
                 ProfilePickerView(loginState: $loginState)
@@ -60,7 +61,7 @@ public struct SettingsView: View {
             }
             .listRowBackground(Color.clear)
             
-            // Playback settings
+            // MARK: Playback settings
             Section( header: Text("Playback Settings").bold() ) {
                 DoubleButton(label: "Autoplay Next Episode", sublabel: self.settings.autoplay ? "Enabled" : "Disabled") {
                     self.settings.autoplay.toggle()
@@ -79,11 +80,23 @@ public struct SettingsView: View {
                         }
                     }
                 }
+                DoubleMenu(label: "Playback Speed", sublabel: self.settings.playbackSpeed.name) {
+                    ForEach(PlaybackSpeed.allCases, id: \.value) { speed in
+                        Button { settings.playbackSpeed = speed }
+                        label: {
+                            if settings.playbackSpeed == speed {
+                                Label(speed.name, systemImage: "checkmark")
+                            }
+                            else { Text(speed.name) }
+                        }
+                    }
+                }
             }
             
-            // Themes
+            // MARK: Themes
             Section( header: Text("Themes").bold() ) {
-                DoubleMenu(label: "Light Theme", sublabel: self.settings.themeLight.displayName) {
+                // Light mode
+                DoubleMenu(label: "Light Mode", sublabel: self.settings.themeLight.displayName) {
                     ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
                         Button { self.settings.themeLight = option }
                         label: {
@@ -98,7 +111,8 @@ public struct SettingsView: View {
                         }
                     }
                 }
-                DoubleMenu(label: "Dark Theme", sublabel: self.settings.themeDark.displayName) {
+                // Dark mode
+                DoubleMenu(label: "Dark Mode", sublabel: self.settings.themeDark.displayName) {
                     ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
                         Button { self.settings.themeDark = option }
                         label: {
@@ -115,7 +129,20 @@ public struct SettingsView: View {
                 }
             }
             
-            // Connection info
+            // MARK: Accessibility
+            Section( header: Text("Accessibility").bold() ) {
+                DoubleButton(label: "Load Poster Art", sublabel: self.settings.loadThumbnailArt ? "Enabled" : "Disabled") {
+                    self.settings.loadThumbnailArt.toggle()
+                }
+                DoubleButton(label: "Load Media Backgrounds", sublabel: self.settings.loadMediaBackgroundArt ? "Enabled" : "Disabled") {
+                    self.settings.loadMediaBackgroundArt.toggle()
+                }
+                DoubleButton(label: "Replace Logos with Text", sublabel: self.settings.replaceLogosWithText ? "Enabled" : "Disabled") {
+                    self.settings.replaceLogosWithText.toggle()
+                }
+            }
+            
+            // MARK: Connection info
             Section {
                 switch loginState {
                 case .loggedIn(let streamingService):
@@ -135,7 +162,7 @@ public struct SettingsView: View {
 /// Readable versions of the profile switching options. Only used here so an extension was used.
 extension SettingsModel.ProfileSwitching {
     /// Picker display name
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .askOnLaunch:
             return "Ask on Launch"
@@ -149,7 +176,7 @@ extension SettingsModel.ProfileSwitching {
     }
     
     /// More thorough description of the selected values.
-    var description: String {
+    public var description: String {
         switch self {
         case .askOnResume:
             return """

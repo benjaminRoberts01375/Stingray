@@ -18,7 +18,7 @@ extension KeyedDecodingContainer {
     ///   - errLabel: Label denoting the object which owns this key
     ///   - required: The field is a required field, and will add an error if missing. Default is true
     /// - Returns: The decoded value for the given key, if possible
-    func decodeFieldSafely<T: Decodable>(
+    public func decodeFieldSafely<T: Decodable>(
         _ type: T.Type,
         forKey key: Key,
         default defaultValue: T,
