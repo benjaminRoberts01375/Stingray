@@ -69,7 +69,7 @@ public struct DoubleButton: View {
                 Text(label)
                 Spacer()
                 Text(sublabel)
-                    .foregroundStyle(theme.currentTheme.buttonSecondary())
+                    .foregroundStyle(theme.currentTheme.labelSecondary())
                     .fontWeight(.regular)
             }
         }
@@ -94,7 +94,7 @@ public struct DoubleMenu<Content: View>: View {
                 Text(label)
                 Spacer()
                 Text(sublabel)
-                    .foregroundStyle(theme.currentTheme.buttonSecondary())
+                    .foregroundStyle(theme.currentTheme.labelSecondary())
                     .fontWeight(.regular)
             }
         }

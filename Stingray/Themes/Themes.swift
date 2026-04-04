@@ -18,9 +18,6 @@ public protocol ThemeProtocol {
     /// The background color of a normal button or menu
     func buttonBackground() -> AnyShapeStyle
     
-    /// If a button has a secondary element, shade it accordingly
-    func buttonSecondary() -> Color
-    
     /// When an option is active but not selected
     func activeColor() -> Color
     
@@ -29,6 +26,9 @@ public protocol ThemeProtocol {
     
     /// Color to use for shading the add profile icon
     func addProfileStyle() -> AnyShapeStyle
+    
+    /// If a button has a secondary element, shade it accordingly
+    func labelSecondary() -> AnyShapeStyle
 }
 
 /// A dark blue color scheme, like deep in the ocean
@@ -47,7 +47,7 @@ public final class ThemeDeepSea: ThemeProtocol {
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.clear) }
     
-    public func buttonSecondary() -> Color { Color.gray }
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
     public func activeColor() -> Color { Color.white.opacity(0.25) }
     
@@ -75,7 +75,7 @@ public final class ThemeNotesAppLight: ThemeProtocol {
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.gray.opacity(0.15)) }
     
-    public func buttonSecondary() -> Color { Color.gray }
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
     public func activeColor() -> Color { Color.gray.opacity(0.15) }
     
@@ -104,7 +104,7 @@ public final class ThemeBeachLight: ThemeProtocol {
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.thinMaterial) }
     
-    public func buttonSecondary() -> Color { Color.gray }
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
     public func activeColor() -> Color { Color.white.opacity(0.5) }
     
@@ -121,7 +121,7 @@ public final class ThemeVoidDark: ThemeProtocol {
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1)) }
     
-    public func buttonSecondary() -> Color { Color.gray }
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
     public func activeColor() -> Color { Color.gray.opacity(0.15) }
     
