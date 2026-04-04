@@ -27,6 +27,9 @@ public protocol ThemeProtocol {
     /// Color to use for shading the add profile icon
     func addProfileStyle() -> AnyShapeStyle
     
+    /// The normal color used on labels
+    func labelPrimary() -> AnyShapeStyle
+    
     /// If a button has a secondary element, shade it accordingly
     func labelSecondary() -> AnyShapeStyle
 }
@@ -46,6 +49,8 @@ public final class ThemeDeepSea: ThemeProtocol {
     }
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.clear) }
+    
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
     
     public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
@@ -74,6 +79,8 @@ public final class ThemeNotesAppLight: ThemeProtocol {
     public func appBackground() -> AnyView { AnyView(Color.white) }
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.gray.opacity(0.15)) }
+    
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
     
     public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
@@ -104,6 +111,8 @@ public final class ThemeBeachLight: ThemeProtocol {
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.thinMaterial) }
     
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
     public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     
     public func activeColor() -> Color { Color.white.opacity(0.5) }
@@ -120,6 +129,8 @@ public final class ThemeVoidDark: ThemeProtocol {
     public func appBackground() -> AnyView { AnyView(Color.black) }
     
     public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1)) }
+    
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.white.opacity(0.9)) }
     
     public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
     

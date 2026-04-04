@@ -699,6 +699,7 @@ fileprivate struct EpisodeNavigationView: View {
                     Text(episode.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
+                        .foregroundStyle(self.settings.themeCurrent.labelPrimary())
                         .padding()
                 }
                 Spacer(minLength: 0)
@@ -787,6 +788,10 @@ public struct PeopleBrowserView: View {
     public let media: any MediaProtocol
     public let streamingService: any StreamingServiceProtocol
     
+    @Environment(SettingsModel.self) private var settings
+    
+    @FocusState private var focusedActor: String?
+    
     public var body: some View {
         ScrollView(.horizontal) {
             HStack {
@@ -802,10 +807,14 @@ public struct PeopleBrowserView: View {
                             Text(person.role)
                                 .multilineTextAlignment(.center)
                                 .font(.caption)
+                                .foregroundStyle(
+                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.settings.themeCurrent.labelPrimary()
+                                )
                         }
                     }
                     .buttonStyle(.plain)
                     .padding()
+                    .focused(self.$focusedActor, equals: person.id)
                 }
             }
         }
@@ -901,7 +910,8 @@ public struct SpecialFeaturesRow: View {
                                         Text(mediaSource.name)
                                             .lineLimit(2)
                                             .multilineTextAlignment(.center)
-                                            .padding(.horizontal, 10)   
+                                            .foregroundStyle(self.settings.themeCurrent.labelPrimary())
+                                            .padding(.horizontal, 10)
                                         Spacer(minLength: 0)
                                     }
                                 }

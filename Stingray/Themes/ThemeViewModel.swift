@@ -62,11 +62,14 @@ public struct DoubleButton: View {
     
     @Environment(ThemeModel.self) private var theme: ThemeModel
     
+    @FocusState private var isFocused: Bool
+    
     public var body: some View {
         Button { action() }
         label: {
             HStack {
                 Text(label)
+                    .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : theme.currentTheme.labelPrimary())
                 Spacer()
                 Text(sublabel)
                     .foregroundStyle(theme.currentTheme.labelSecondary())
@@ -74,6 +77,7 @@ public struct DoubleButton: View {
             }
         }
         .buttonStyle(StingrayFormButtonStyle())
+        .focused($isFocused, equals: true)
     }
 }
 
@@ -87,11 +91,14 @@ public struct DoubleMenu<Content: View>: View {
     
     @Environment(ThemeModel.self) private var theme: ThemeModel
     
+    @FocusState private var isFocused: Bool
+    
     public var body: some View {
         Menu { content() }
         label: {
             HStack {
                 Text(label)
+                    .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : theme.currentTheme.labelPrimary())
                 Spacer()
                 Text(sublabel)
                     .foregroundStyle(theme.currentTheme.labelSecondary())
@@ -99,5 +106,6 @@ public struct DoubleMenu<Content: View>: View {
             }
         }
         .buttonStyle(StingrayFormButtonStyle())
+        .focused($isFocused, equals: true)
     }
 }
