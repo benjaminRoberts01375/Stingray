@@ -85,41 +85,6 @@ public protocol BasicStorageProtocol {
     ///   - key: Key the string resides at.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     func deleteString(_ key: StorageKeys)
-    /// Get a `[String]` from local storage
-    /// - Parameters:
-    ///   - key: The key where the data might be stored.
-    ///   - id: Unique ID for saving multiple versions of this value at this key.
-    /// - Returns: The found `[String]`
-    func getStringArray(_ key: StorageKeys) -> [String]
-    /// Set a `[String]` into local storage
-    /// - Parameters:
-    ///   - key: The key where data is to be stored.
-    ///   - value: Array to set.
-    ///   - id: Unique ID for saving multiple versions of this value at this key
-    func setStringArray(_ key: StorageKeys, value: [String])
-    /// Get a URL from local storage
-    /// - Parameters:
-    ///   - key: The key where the data might be stored.
-    ///   - id: Unique ID for saving multiple versions of this value at this key.
-    /// - Returns: The found `URL`.
-    func getURL(_ key: StorageKeys) -> URL?
-    /// Set a `URL` into local storage
-    /// - Parameters:
-    ///   - key: The key where data is to be stored.
-    ///   - value: `URL` to set.
-    ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func setURL(_ key: StorageKeys, value: URL?)
-    /// Set a `Boolean` into local storage
-    /// - Parameters:
-    ///   - key: The key where data is to be stored.
-    ///   - value: `Boolean` to set.
-    ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func setBool(_ key: StorageKeys, value: Bool)
-    /// Get a `Boolean` from local storage
-    /// - Parameter key: The key where the data might be stored.
-    /// - Returns: The found `Boolean`.
-    ///   - id: Unique ID for saving multiple versions of this value at this key.
-    func getBool(_ key: StorageKeys) -> Bool
     /// Store data in a place compatible with the Top Shelf.
     /// - Parameters:
     ///   - key: The key where data is to be stored.
@@ -187,30 +152,6 @@ public final class DefaultsBasicStorage: BasicStorageProtocol {
     }
     
     public func setInt(_ key: StorageKeys, value: Int?) {
-        defaults.set(value, forKey: key.rawValue)
-    }
-    
-    public func getURL(_ key: StorageKeys) -> URL? {
-        return URL(string: defaults.string(forKey: key.rawValue) ?? "")
-    }
-    
-    public func setURL(_ key: StorageKeys, value: URL?) {
-        defaults.set(value?.absoluteString ?? "", forKey: key.rawValue)
-    }
-    
-    public func getBool(_ key: StorageKeys) -> Bool {
-        return defaults.bool(forKey: key.rawValue)
-    }
-    
-    public func setBool(_ key: StorageKeys, value: Bool) {
-        defaults.set(value, forKey: key.rawValue)
-    }
-    
-    public func getStringArray(_ key: StorageKeys) -> [String] {
-        return defaults.stringArray(forKey: key.rawValue) ?? []
-    }
-    
-    public func setStringArray(_ key: StorageKeys, value: [String]) {
         defaults.set(value, forKey: key.rawValue)
     }
     
