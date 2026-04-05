@@ -23,16 +23,10 @@ public struct SettingsView: View {
             Section(header: Text("Account").bold()) {
                 ProfilePickerView(loginState: $loginState)
                     .focusSection()
-                Button { self.showPinSetup = true }
-                label: {
-                    HStack {
-                        Text("PIN")
-                        Spacer()
-                        Text(self.settings.pin == nil ? "Configure..." : "Configured")
-                    }
-                    .padding(.horizontal)
+                // PIN button
+                DoubleButton(label: "PIN", sublabel: self.settings.pin == nil ? "Configure..." : "Configured") {
+                    self.showPinSetup = true
                 }
-                .buttonStyle(StingrayFormButtonStyle())
                 .fullScreenCover(isPresented: $showPinSetup) {
                     if self.settings.pin == nil {
                         PINSetup()

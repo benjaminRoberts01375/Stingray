@@ -140,6 +140,7 @@
     },
     "Configure..." : {
       "comment" : "Something can be configured and will bring the user to another screen",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -151,6 +152,7 @@
     },
     "Configured" : {
       "comment" : "Something has been configured",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
