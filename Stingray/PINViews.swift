@@ -57,7 +57,7 @@ public struct PINSetup: View {
 public struct PINEntry: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(UserModel.self) private var userModel: UserModel
-    @Environment(ThemeModel.self) private var themeModel
+    @Environment(SettingsModel.self) private var settings
     
     /// Not read, only set to successfully login or switch users
     @Binding public var loginState: LoginState
@@ -87,7 +87,7 @@ public struct PINEntry: View {
                         user: self.user,
                         userModel: self.userModel,
                         currentLoginState: self.loginState,
-                        themeModel: self.themeModel
+                        settingsModel: self.settings
                     )
                 }
                 .disabled(pinEntry.isEmpty)

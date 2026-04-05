@@ -17,7 +17,7 @@ public struct ProfilePickerView: View {
     /// Functions and values regarding the users
     @Environment(UserModel.self) private var userModel: UserModel
     /// Current theme
-    @Environment(ThemeModel.self) private var themeModel: ThemeModel
+    @Environment(SettingsModel.self) private var settings
     
     // A simple way to derrive the streaming service from the login state
     public var streamingService: (any StreamingServiceProtocol)? {
@@ -36,7 +36,7 @@ public struct ProfilePickerView: View {
                         user: user,
                         userModel: self.userModel,
                         currentLoginState: loginState,
-                        themeModel: self.themeModel
+                        settingsModel: self.settings
                     )
                 }
                 label: {
@@ -62,7 +62,7 @@ public struct ProfilePickerView: View {
                                     Image(systemName: "person.fill")
                                         .resizable()
                                         .scaledToFit()
-                                        .foregroundStyle(self.themeModel.currentTheme.defaultProfileImage())
+                                        .foregroundStyle(self.settings.themeCurrent.defaultProfileImage())
                                         .accessibilityLabel("Person icon")
                                         .padding(50)
                                 }
@@ -75,7 +75,7 @@ public struct ProfilePickerView: View {
                     .padding(16)
                     .padding(.horizontal, 16)
                     .background { // Only show white background if the current user is this user
-                        streamingService?.userID == user.id ? self.themeModel.currentTheme.activeColor() : .clear
+                        streamingService?.userID == user.id ? self.settings.themeCurrent.activeColor() : .clear
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 40))
                     .padding(.horizontal, -16)
@@ -94,7 +94,7 @@ public struct ProfilePickerView: View {
                                     user: nextUser,
                                     userModel: self.userModel,
                                     currentLoginState: self.loginState,
-                                    themeModel: self.themeModel
+                                    settingsModel: self.settings
                                 )
                             }
                             else { self.loginState = .loggedOut }
@@ -109,7 +109,7 @@ public struct ProfilePickerView: View {
                         .resizable()
                         .scaledToFit()
                         .accessibilityLabel("Person icon")
-                        .foregroundStyle(self.themeModel.currentTheme.addProfileStyle())
+                        .foregroundStyle(self.settings.themeCurrent.addProfileStyle())
                         .padding(.top, 30)
                     Spacer()
                     Text("Add User")
@@ -120,10 +120,22 @@ public struct ProfilePickerView: View {
         }
     }
     
-    public static func switchUser(user: User, userModel: UserModel, currentLoginState: LoginState, themeModel: ThemeModel) -> LoginState {
+    /// Switch the current login state to a logged in user
+    /// - Parameters:
+    ///   - user: User to sign in with
+    ///   - userModel: Location where users are stored
+    ///   - currentLoginState: The current `LoginState`
+    ///   - settingsModel: Location of settings and themes
+    /// - Returns: Updated `LoginState`
+    public static func switchUser(
+        user: User,
+        userModel: UserModel,
+        currentLoginState: LoginState,
+        settingsModel: SettingsModel
+    ) -> LoginState {
         userModel.activeUser = user
-        themeModel.dark = user.darkTheme
-        themeModel.light = user.lightTheme
+        settingsModel.themeDark = user.darkTheme
+        settingsModel.themeLight = user.lightTheme
         
         // If we're already logged in as this user, reuse the existing streaming service instance
         if case .loggedIn(let existingService) = currentLoginState {
