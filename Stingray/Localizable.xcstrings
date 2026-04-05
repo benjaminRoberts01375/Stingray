@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "- or -" : {
-
-    },
     "\"%@\" " : {
       "comment" : "Wrap a String in quotes",
       "localizations" : {
@@ -141,9 +138,6 @@
         }
       }
     },
-    "Authentication" : {
-
-    },
     "Configure..." : {
       "comment" : "Something can be configured and will bring the user to another screen",
       "localizations" : {
@@ -168,7 +162,6 @@
     },
     "Connect" : {
       "comment" : "Form a network connection",
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -210,6 +203,9 @@
           }
         }
       }
+    },
+    "Disconnect" : {
+
     },
     "Enter code %@ to login" : {
 
@@ -485,6 +481,9 @@
         }
       }
     },
+    "or" : {
+
+    },
     "Overview" : {
       "comment" : "Summary of the content",
       "localizations" : {
@@ -653,7 +652,7 @@
     "Quick Connect" : {
 
     },
-    "Quick Connect failed to load" : {
+    "Quick Connect not available" : {
 
     },
     "Released" : {
@@ -806,9 +805,6 @@
           }
         }
       }
-    },
-    "Test Connection" : {
-
     },
     "Themes" : {
       "comment" : "A section in the settings view that allows users to select their preferred light and dark theme.",
