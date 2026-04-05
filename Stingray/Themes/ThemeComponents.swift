@@ -25,6 +25,7 @@ public extension View {
     }
 }
 
+/// Style buttons in a `Form` view.
 public struct StingrayFormButtonStyle: ButtonStyle {
     @Environment(\.isFocused) public var isFocused
     @Environment(SettingsModel.self) private var settings
@@ -52,6 +53,7 @@ public struct StingrayFormButtonStyle: ButtonStyle {
     }
 }
 
+/// A button designed for a `Form` view that shows a label on the left, and some status or information on the right
 public struct DoubleButton: View {
     /// Primary label to show on left-hand side of button
     public let label: String
@@ -81,6 +83,7 @@ public struct DoubleButton: View {
     }
 }
 
+/// A menu designed for a `Form` view that shows a label on the left, and some status or information on the right
 public struct DoubleMenu<Content: View>: View {
     /// Primary label to show on left-hand side of button
     public let label: String
