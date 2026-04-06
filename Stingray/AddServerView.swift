@@ -139,6 +139,7 @@ public struct AddServerView: View {
             self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
             Log.error("Unknown error while signing in: \(error)")
         }
+        loading = false
     }
     
     private func connect() {
@@ -178,14 +179,13 @@ public struct AddServerView: View {
             do {
                 quickConnectAvailable = try await jellyfinServerInfo.getQuickConnectEnabled()
                 connected = true
-                loading = false
             } catch let error as RError {
                 connected = false
-                loading = false
                 self.error = error
                 setError()
                 return
             }
+            loading = false
             
             if quickConnectAvailable {
                 // get the code for quick connect
@@ -216,7 +216,7 @@ public struct AddServerView: View {
             loading = true
             do {
                 guard let jellyfinURL = jellyfinURL else {
-                    // TODO: Throw error
+                    Log.error("Could not unwrap server URL")
                     return
                 }
                 if let quickConnectSecret = quickConnectSecret {
@@ -232,7 +232,9 @@ public struct AddServerView: View {
                 }
             } catch let error as RError {
                 self.error = AccountErrors.loginFailed(error)
-                self.setError()
+                setError()
+                // do not dismiss on error, so return
+                return
             }
             loading = false
             self.dismiss()
