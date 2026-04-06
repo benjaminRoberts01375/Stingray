@@ -19,7 +19,7 @@ public struct AddServerView: View {
     @State private var errorSummary: String = ""
     @State private var loading: Bool = false
     @State private var connected: Bool = false
-    @State private var jellyfinURL: URL?
+    private var jellyfinURL: URL?
     @Environment(UserModel.self) public var userModel: UserModel
     @Environment(\.dismiss) public var dismiss
     
