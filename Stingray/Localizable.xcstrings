@@ -387,7 +387,15 @@
       }
     },
     "Login" : {
-
+      "comment" : "A button allowing the user to verify username / password",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Login"
+          }
+        }
+      }
     },
     "Logout" : {
       "comment" : "A context menu item that logs out a user.",
