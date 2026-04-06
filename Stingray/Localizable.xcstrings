@@ -205,13 +205,37 @@
       }
     },
     "Disconnect" : {
-
+      "comment" : "A button allowing to connect to a different server",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnect"
+          }
+        }
+      }
     },
     "Enter code %@ to login" : {
-
+      "comment" : "A label showing the Quick Connect code",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter code %@ to login"
+          }
+        }
+      }
     },
     "Enter Credentials" : {
-
+      "comment" : "A headline asking the user to provide username and password",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter Credentials"
+          }
+        }
+      }
     },
     "Enter PIN" : {
       "comment" : "A label displayed above a field for entering a PIN.",
@@ -650,10 +674,26 @@
       }
     },
     "Quick Connect" : {
-
+      "comment" : "A label for Quick Connect",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Connect"
+          }
+        }
+      }
     },
     "Quick Connect not available" : {
-
+      "comment" : "A hint for the Quick Connect feature not being available on this server.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Connect not available"
+          }
+        }
+      }
     },
     "Released" : {
       "comment" : "Header for when Jellyfin content was released",
