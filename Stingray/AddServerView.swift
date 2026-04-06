@@ -81,6 +81,8 @@ public struct AddServerView: View {
                         }
                         .buttonStyle(.borderedProminent)
                     }
+                    // make the login 50% the size of the horizontal space
+                    .frame(maxWidth: .infinity)
                     HStack {
                         VStack {
                             HStack {
@@ -91,16 +93,18 @@ public struct AddServerView: View {
                                 Divider()
                             }
                         }
-                        VStack {
-                            Text("Quick Connect")
-                                .font(.title3)
-                            if let quickConnectCode {
-                                Text("Enter code \(quickConnectCode) to login")
-                            } else {
-                                Text("Quick Connect not available")
-                            }
+                    }
+                    VStack {
+                        Text("Quick Connect")
+                            .font(.title3)
+                        if let quickConnectCode {
+                            Text("Enter code \(quickConnectCode) to login")
+                        } else {
+                            Text("Quick Connect not available")
                         }
                     }
+                    // make the quick connect view 50% the size of the horizontal space
+                    .frame(maxWidth: .infinity)
                 }
             }
             if let error = self.error {
@@ -164,6 +168,7 @@ public struct AddServerView: View {
                 self.error = netError
                 self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
             }
+            self.loading = false
             return
         }
         self.jellyfinURL = url
@@ -171,7 +176,6 @@ public struct AddServerView: View {
         // check if quick connect is available
         let jellyfinServerInfo = JellyfinServerInfoModel(url: url)
         Task {
-            self.loading = true
             var quickConnectAvailable = false
             do {
                 quickConnectAvailable = try await jellyfinServerInfo.getQuickConnectEnabled()
@@ -187,8 +191,8 @@ public struct AddServerView: View {
                 do {
                     self.quickConnectCode = try await jellyfinServerInfo.getQuickConnectCodes()
                     self.loading = false
-                    // start polling to check if quick connect authentication succeeded every 5 seconds
-                    while quickConnectAvailable {
+                    // start polling every 5 seconds to check if quick connect authentication succeeded
+                    while self.connected {
                         let quickConnectSecret = try await jellyfinServerInfo.checkCheckConnectAuthentication()
                         if quickConnectSecret != nil {
                             self.setupConnection(quickConnectSecret: quickConnectSecret)
