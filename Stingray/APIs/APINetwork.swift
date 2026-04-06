@@ -249,7 +249,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     
     /// Gets the state of quick connect
     /// - Returns: A boolean whether quick connect is available or not
-    func quickConnectAvailable() async throws(NetworkError) -> Bool {
+    public func quickConnectAvailable() async throws(NetworkError) -> Bool {
         do {
             return try await network.request(
                 verb: .get,
@@ -263,7 +263,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     
     /// Get the quick connect code and the secret
     /// - Returns: A tuple with the quick connect and secret which is used for checking if the user entered the code yet
-    func getQuickConnectCodes() async throws(AccountErrors) -> (String, String) {
+    public func getQuickConnectCodes() async throws(AccountErrors) -> (String, String) {
         struct Root: Codable {
             let Authenticated: Bool
             let Secret: String
@@ -287,10 +287,13 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             throw AccountErrors.quickConnectFailed(error)
         }
     }
-    
-    // TODO: Docstring
+
+    /// Get the current state of an earlier initiated quick connect session
+    /// - Parameters:
+    ///   - secret: The secret returned by getQuickConnectCodes()
+    /// - Returns: A boolean - true if the code was entered by the user, false if the authentication is still pending
+    ///
     func getQuickConnectState(secret: String) async throws(NetworkError) -> Bool {
-        // TODO: Same as above
         struct Root: Codable {
             let Authenticated: Bool
             let Secret: String
@@ -318,6 +321,9 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     }
     
     /// Login using the quick connect secret
+    /// - Parameters:
+    ///   - quickConnectSecret: The secret returned by getQuickConnectCodes()
+    /// - Returns: An authenticated APILoginResponse
     public func login(quickConnectSecret: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
@@ -343,7 +349,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 path: "/Users/AuthenticateWithQuickConnect",
                 headers: nil,
                 urlParams: nil,
-                body: requestBody)
+                body: requestBody
+            )
         } catch {
             throw AccountErrors.loginFailed(error)
         }
