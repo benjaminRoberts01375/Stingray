@@ -128,7 +128,6 @@ public struct AddServerView: View {
         }
         httpPort = String(serviceURL.port ?? 8096)
         httpHostname = serviceURL.host ?? ""
-        connect()
     }
     
     private func setError() {
@@ -173,7 +172,7 @@ public struct AddServerView: View {
         jellyfinURL = url
         
         // check if quick connect is available
-        let jellyfinServerInfo = JellyfinServerInfoModel(url: url)
+        let jellyfinServerInfo = JellyfinQuickConnectModel(url: url)
         Task {
             var quickConnectAvailable = false
             do {
