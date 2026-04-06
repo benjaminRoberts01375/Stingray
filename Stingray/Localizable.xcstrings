@@ -506,7 +506,15 @@
       }
     },
     "or" : {
-
+      "comment" : "A label indicating an alternative login method",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "or"
+          }
+        }
+      }
     },
     "Overview" : {
       "comment" : "Summary of the content",
