@@ -40,26 +40,26 @@ public struct AddServerView: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .disabled(connected)
+                .disabled(connected || loading)
                 switch httpProcol {
                 case .http:
                     TextField("Hostname", text: $httpHostname)
                         .disabled(connected)
                     TextField("Port", text: $httpPort)
                         .keyboardType(.numberPad)
-                        .disabled(connected)
+                        .disabled(connected || loading)
                 case .https:
                     TextField("URL", text: $httpHostname)
-                        .disabled(connected)
+                        .disabled(connected || loading)
                 }
             }
             if !connected {
                 Button("Connect") {
-                    self.connect()
-                }
+                    connect()
+                }.disabled(loading)
             } else {
                 Button("Disconnect") {
-                    self.connected = false
+                    connected = false
                 }
             }
             if connected {
@@ -76,8 +76,6 @@ public struct AddServerView: View {
                                 setupConnection(quickConnectSecret: nil)
                             }
                             .disabled(loading)
-                            ProgressView()
-                                .opacity(loading ? 1 : 0)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -107,11 +105,13 @@ public struct AddServerView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+            Spacer()
+            ProgressView()
+                .opacity(loading ? 1 : 0)
             if let error = self.error {
                 ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
             }
-            Spacer()
         }
         .onAppear { // Done separately so we can ue the @Environment, also helps against reloads
             loadExistingServerInfo()
@@ -143,10 +143,9 @@ public struct AddServerView: View {
     }
     
     private func connect() {
-        self.error = nil
-        self.quickConnectCode = nil
-        self.connected = false
-        self.loading = true
+        error = nil
+        quickConnectCode = nil
+        loading = true
         
         // Setup URL
         var url: URL?
@@ -161,17 +160,17 @@ public struct AddServerView: View {
             switch httpProcol {
             case .http:
                 netError = NetworkError.invalidURL("http://\(httpHostname):\(httpPort)")
-                self.error = netError
-                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
+                error = netError
+                errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
             case .https:
                 netError = NetworkError.invalidURL("https://\(httpHostname)")
-                self.error = netError
-                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
+                error = netError
+                errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
             }
-            self.loading = false
+            loading = false
             return
         }
-        self.jellyfinURL = url
+        jellyfinURL = url
         
         // check if quick connect is available
         let jellyfinServerInfo = JellyfinServerInfoModel(url: url)
@@ -179,23 +178,25 @@ public struct AddServerView: View {
             var quickConnectAvailable = false
             do {
                 quickConnectAvailable = try await jellyfinServerInfo.getQuickConnectEnabled()
-                self.connected = true
+                connected = true
+                loading = false
             } catch let error as RError {
-                self.connected = false
+                connected = false
+                loading = false
                 self.error = error
                 setError()
                 return
             }
+            
             if quickConnectAvailable {
-                // get the code
+                // get the code for quick connect
                 do {
-                    self.quickConnectCode = try await jellyfinServerInfo.getQuickConnectCodes()
-                    self.loading = false
+                    quickConnectCode = try await jellyfinServerInfo.getQuickConnectCodes()
                     // start polling every 5 seconds to check if quick connect authentication succeeded
-                    while self.connected {
+                    while connected {
                         let quickConnectSecret = try await jellyfinServerInfo.checkCheckConnectAuthentication()
                         if quickConnectSecret != nil {
-                            self.setupConnection(quickConnectSecret: quickConnectSecret)
+                            setupConnection(quickConnectSecret: quickConnectSecret)
                             break
                         }
                         // Wait for 5 seconds and then recheck if the user authenticated yet
@@ -203,12 +204,10 @@ public struct AddServerView: View {
                     }
                 } catch let error as RError {
                     self.error = error
-                    self.setError()
+                    setError()
                     return
                 }
             }
-            self.connected = true
-            self.loading = false
         }
     }
     
@@ -217,7 +216,7 @@ public struct AddServerView: View {
         Task {
             loading = true
             do {
-                guard let jellyfinURL = self.jellyfinURL else {
+                guard let jellyfinURL = jellyfinURL else {
                     // TODO: Throw error
                     return
                 }
