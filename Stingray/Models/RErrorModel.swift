@@ -329,7 +329,7 @@ public enum AccountErrors: RError {
     case loginFailed(RError?)
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
-    /// Failed to get the quick connect code
+    /// Error during quick connect
     case quickConnectFailed(RError)
     
     public var next: (RError)? {
@@ -347,7 +347,7 @@ public enum AccountErrors: RError {
         case .serverVersionFailed:
             return "Failed to get server version"
         case .quickConnectFailed:
-            return "Failed to get quick connect code"
+            return "Quick Connect failed"
         }
     }
 }

@@ -262,7 +262,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     }
     
     /// Get the quick connect code and the secret
-    /// - Returns: A tuple with the quick connect and secret which is used for checking if the user entered the code yet
+    /// - Returns: A tuple with the quick connect code and secret which is used for checking if the user entered the code yet
     public func getQuickConnectCodes() async throws(AccountErrors) -> (String, String) {
         struct Root: Codable {
             let Authenticated: Bool
@@ -293,7 +293,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     ///   - secret: The secret returned by getQuickConnectCodes()
     /// - Returns: A boolean - true if the code was entered by the user, false if the authentication is still pending
     ///
-    public func getQuickConnectState(secret: String) async throws(NetworkError) -> Bool {
+    public func quickConnectAuthenticated(secret: String) async throws(AccountErrors) -> Bool {
         struct Root: Codable {
             let Authenticated: Bool
             let Secret: String
@@ -317,6 +317,9 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
             return root.Authenticated
+        }
+        catch {
+            throw AccountErrors.quickConnectFailed(error)
         }
     }
     
@@ -352,7 +355,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: requestBody
             )
         } catch {
-            throw AccountErrors.loginFailed(error)
+            throw AccountErrors.quickConnectFailed(error)
         }
     }
     

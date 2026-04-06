@@ -87,13 +87,13 @@ public enum MediaLookupStatus {
     case notFound
 }
 
-/// A harness for the quick connect feature of a jellyfin server
+/// A harness for authenticating with quick connect
 public final class JellyfinQuickConnectModel {
     /// Network used to connect to jellyfin
     private var networkAPI: JellyfinAdvancedNetwork
     /// The URL of the jellyfin server
     public var serviceURL: URL
-    /// The secret if quick connect is initialted
+    /// The secret after quick connect is initialted
     private var quickConnectSecret: String?
 
     /// Create a `JellyfinQuickConnectModel` based on URL
@@ -112,7 +112,7 @@ public final class JellyfinQuickConnectModel {
         }
     }
 
-    /// Get the quick-connect code and the secret for verification
+    /// Get the quick connect code and the secret for verification
     /// - Returns: The quick connect code a user has to enter
     public func getQuickConnectCodes() async throws(AccountErrors) -> String {
         do {
@@ -124,16 +124,16 @@ public final class JellyfinQuickConnectModel {
         }
     }
 
-    /// Checks the Quick Connect connection, returns a secret if authenticated
-    /// The secret can be used to login
+    /// Checks the quick connect authentication state, returns a secret if authenticated
+    /// The secret can be used to log the user in
     /// - Returns: The secret if the session authenticated, nil if authentication is still pending
-    public func checkCheckConnectAuthentication() async throws(NetworkError) -> String? {
+    public func checkCheckConnectAuthentication() async throws(AccountErrors) -> String? {
         do {
             guard let quickConnectSecret else {
                 Log.error("Could get load quick connect secret - make sure to call getQuickConnectCodes() first")
                 return nil
             }
-            let authenticated = try await self.networkAPI.getQuickConnectState(secret: quickConnectSecret)
+            let authenticated = try await self.networkAPI.quickConnectAuthenticated(secret: quickConnectSecret)
             if !authenticated {
                 return nil
             } else {
@@ -254,10 +254,10 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    /// Log into a Jellyfin server.
+    /// Log into a Jellyfin server using the quick connect feature
     /// - Parameters:
     ///   - url: Base URL.
-    ///   - quickConnectSecret: The quick connect secret retrieved from the server
+    ///   - quickConnectSecret: The quick connect secret retrieved by the server
     /// - Returns: The configured Jellyfin model.
     public static func login(url: URL, quickConnectSecret: String, userModel: UserModel) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
