@@ -40,6 +40,13 @@ public final class UserStorage: UserStorageProtocol {
     public init(basicStorage: BasicStorageProtocol) {
         Log.info("Setting up Basic Storage")
         self.basicStorage = basicStorage
+        self.localUserID = ""
+        
+        // Check if registered userIDs exist - iCloud seems to screw these up sometimes
+        var userIDs = self.getUserIDs()
+        userIDs = userIDs.filter { return self.getUser(userID: $0) != nil }
+        self.setUserIDs(userIDs)
+        
         // Ensure there's a UUID for each tvOS user
         if let localUserID = self.basicStorage.getString(.localUserID) { // Local user ID is already configured
             self.localUserID = localUserID

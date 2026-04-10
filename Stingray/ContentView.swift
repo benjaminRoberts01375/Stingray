@@ -182,19 +182,22 @@ public struct ContentView: View {
             return
         }
         Log.info("Nuking Keychain...")
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "com.benlab.Stingray",
-            kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain as String: true
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: "com.benlab.Stingray",
+            kSecAttrAccessGroup: DefaultsBasicStorage.keychainAccessGroup(),
+            kSecUseUserIndependentKeychain: true,
+            kSecAttrSynchronizable: kSecAttrSynchronizableAny
         ]
         let status = SecItemDelete(query as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
             Log.debug("Keychain reset failed for class kSecClassGenericPassword: \(status)")
+            self.listKeychainEntries()
+            return
         }
         
         Log.info("Keychain nuked.")
-        listKeychainEntries()
+        self.listKeychainEntries()
     }
     
     public func listKeychainEntries() {

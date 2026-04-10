@@ -180,7 +180,8 @@ public final class DefaultsBasicStorage: BasicStorageProtocol {
             kSecValueData: encodedData,
             kSecAttrService: "com.benlab.Stingray",
             kSecAttrAccessGroup: Self.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain: true
+            kSecUseUserIndependentKeychain: true,
+            kSecAttrSynchronizable: false
         ]
         
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -190,7 +191,8 @@ public final class DefaultsBasicStorage: BasicStorageProtocol {
                 kSecAttrAccount: key.rawValue,
                 kSecAttrService: "com.benlab.Stingray",
                 kSecAttrAccessGroup: Self.keychainAccessGroup(),
-                kSecUseUserIndependentKeychain: true
+                kSecUseUserIndependentKeychain: true,
+                kSecAttrSynchronizable: false
             ]
             let updatedData: [CFString: Any] = [kSecValueData: encodedData]
             let updateStatus = SecItemUpdate(lookupQuery as CFDictionary, updatedData as CFDictionary)
