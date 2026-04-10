@@ -23,6 +23,7 @@ public struct AddServerView: View {
     @State private var loading: Bool = false
     @State private var connected: Bool = false
     @State private var jellyfinURL: URL?
+    
     @Environment(UserModel.self) public var userModel: UserModel
     @Environment(\.dismiss) public var dismiss
     
@@ -120,6 +121,7 @@ public struct AddServerView: View {
         }
         // Done separately so we can ue the @Environment, also helps against reloads
         .onAppear { self.loadExistingServerInfo() }
+        .onDisappear { self.connected = false } // A small hacky fix to stop checking QuickConnect
     }
     
     public func loadExistingServerInfo() {
@@ -247,7 +249,6 @@ public struct AddServerView: View {
                 return
             }
             self.loading = false
-            self.connected = false // A small hacky fix to stop checking QuickConnect
             self.dismiss()
         }
     }
