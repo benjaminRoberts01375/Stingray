@@ -47,13 +47,16 @@ public struct AddServerView: View {
                 switch httpProcol {
                 case .http:
                     TextField("Hostname", text: $httpHostname)
-                        .disabled(connected)
+                        .disabled(self.connected)
+                        .opacity(self.connected ? 0.5 : 1)
                     TextField("Port", text: $httpPort)
                         .keyboardType(.numberPad)
                         .disabled(self.connected || self.loading)
+                        .opacity(self.connected ? 0.5 : 1)
                 case .https:
                     TextField("URL", text: $httpHostname)
                         .disabled(self.connected || self.loading)
+                        .opacity(self.connected ? 0.5 : 1)
                 }
             }
             if !self.connected {
