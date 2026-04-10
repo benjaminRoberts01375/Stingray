@@ -87,6 +87,60 @@ public enum MediaLookupStatus {
     case notFound
 }
 
+/// A harness for authenticating with quick connect
+public final class JellyfinQuickConnectModel {
+    /// Network used to connect to jellyfin
+    private var networkAPI: JellyfinAdvancedNetwork
+    /// The URL of the jellyfin server
+    public var serviceURL: URL
+    /// The secret after quick connect is initialted
+    private var quickConnectSecret: String?
+
+    /// Create a `JellyfinQuickConnectModel` based on URL
+    /// - Parameters:
+    ///   - url: The URL of the jellyfin server
+    public init(url: URL) {
+        self.serviceURL = url
+        self.networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
+    }
+
+    /// Check if quick connect is enabled on the server
+    /// - Returns: A bool if quick connect is enabled or not
+    /// - Throws: Throws when unable to check if Quick Connect is enabled due to network issues
+    public func getQuickConnectEnabled() async throws(QuickConnectErrors) -> Bool {
+        do { return try await networkAPI.quickConnectAvailable() }
+        catch { throw QuickConnectErrors.isEnabled(error) }
+    }
+
+    /// Get the quick connect code and the secret for verification
+    /// - Returns: The quick connect code a user has to enter
+    /// - Throws: Only throws when Stingray is unable to obtain a Quick Connect code due to network issues
+    public func getQuickConnectCodes() async throws(QuickConnectErrors) -> String {
+        do {
+            let (code, secret) = try await networkAPI.getQuickConnectCodes()
+            quickConnectSecret = secret
+            return code
+        }
+        catch { throw QuickConnectErrors.quickConnectCodesFailed(error) }
+    }
+
+    /// Checks the quick connect authentication state, returns a secret if authenticated
+    /// The secret can be used to log the user in
+    /// - Returns: The secret if the session authenticated, nil if authentication is still pending
+    /// - Throws: Only throws when Stingray is unable to verify the user entered the Quick Connect code due to network issues
+    public func getQuickConnectSecret() async throws(QuickConnectErrors) -> String? {
+        guard let quickConnectSecret else {
+            Log.error("Could get load quick connect secret - make sure to call getQuickConnectCodes() first")
+            return nil
+        }
+        do {
+            let authenticated = try await self.networkAPI.quickConnectAuthenticated(secret: quickConnectSecret)
+            return authenticated ? quickConnectSecret : nil
+        }
+        catch let err as RError { throw .statusFailedtoFetch(err) }
+    }
+}
+
 /// A harness for connecting to Jellyfin.
 @Observable
 public final class JellyfinModel: StreamingServiceProtocol {
@@ -198,6 +252,30 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
+    /// Log into a Jellyfin server using the quick connect feature
+    /// - Parameters:
+    ///   - url: Base URL.
+    ///   - quickConnectSecret: The quick connect secret retrieved by the server
+    /// - Returns: The configured Jellyfin model.
+    public static func login(url: URL, quickConnectSecret: String, userModel: UserModel) async throws(QuickConnectErrors) -> JellyfinModel {
+        let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
+        do {
+            let response = try await networkAPI.login(quickConnectSecret: quickConnectSecret)
+            let newUser = User(
+                serviceURL: url,
+                serviceType: .Jellyfin(
+                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+                ),
+                serviceID: response.serverId,
+                id: response.userId,
+                displayName: response.userName
+            )
+            userModel.addUser(newUser)
+            userModel.activeUser = newUser
+            return JellyfinModel(response: response, serviceURL: url)
+        } catch { throw QuickConnectErrors.loginFailed(error) }
+    }
+
     /// Fetch libraries and library media.
     public func retrieveLibraries() async {
         let maxConcurrentLibraries = 2

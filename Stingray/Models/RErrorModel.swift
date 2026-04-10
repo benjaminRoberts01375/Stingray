@@ -329,7 +329,7 @@ public enum AccountErrors: RError {
     case loginFailed(RError?)
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
-    
+
     public var next: (RError)? {
         switch self {
         case .loginFailed(let next): return next
@@ -454,6 +454,44 @@ public enum SetupErrors: RError {
     public var errorDescription: String {
         switch self {
         case .databaseError: return "Failed to setup databases. Stingray may be able to continue, but this protects your data"
+        }
+    }
+}
+
+/// Errors relating to the Jellyfin Quick Connect feature
+public enum QuickConnectErrors: RError {
+    /// Could not connect to the Jellyfin server at all
+    case initialConnectionFailed(RError)
+    /// Failed to login user
+    case loginFailed(RError)
+    /// Failed to get Quick Connect codes
+    case quickConnectCodesFailed(RError)
+    /// Error checking Quick Connect code status with server
+    case authFailed(RError)
+    /// Failed to check if Quick Connect is enabled
+    case isEnabled(RError)
+    
+    case statusFailedtoFetch(RError)
+    
+    public var next: (any RError)? {
+        switch self {
+        case .initialConnectionFailed(let err): return err
+        case .loginFailed(let err): return err
+        case .authFailed(let err): return err
+        case .quickConnectCodesFailed(let err): return err
+        case .isEnabled(let err): return err
+        case .statusFailedtoFetch(let err): return err
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .initialConnectionFailed: return "Failed to connect to the Jellyfin server"
+        case .loginFailed: return "Login failed despite good Quick Connect code"
+        case .authFailed: return "Failed to check if Quick Connect code was used"
+        case .quickConnectCodesFailed: return "Failed to get Quick Connect code"
+        case .isEnabled: return "Failed to check if Quick Connect is available"
+        case .statusFailedtoFetch: return "Failed to check if Quick Connect has been setup on the Jellyfin server"
         }
     }
 }

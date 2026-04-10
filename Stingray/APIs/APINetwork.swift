@@ -247,6 +247,122 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
+    /// Gets the state of quick connect
+    /// - Returns: A boolean whether quick connect is available or not
+    /// - Throws: `QuickConnectErrors` based on network conditions
+    public func quickConnectAvailable() async throws(QuickConnectErrors) -> Bool {
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/QuickConnect/Enabled",
+                headers: nil,
+                urlParams: nil,
+                body: nil
+            )
+        }
+        catch { throw QuickConnectErrors.isEnabled(error) }
+    }
+    
+    /// Get the quick connect code and the secret
+    /// - Returns: A tuple with the quick connect code and secret which is used for checking if the user entered the code yet
+    /// - Throws: `QuickConnectErrors` based on network conditions and Jellyfin permissions
+    public func getQuickConnectCodes() async throws(QuickConnectErrors) -> (String, String) {
+        struct Root: Codable {
+            let Authenticated: Bool
+            let Secret: String
+            let Code: String
+            let DeviceId: String
+            let AppName: String
+            let AppVersion: String
+            let DateAdded: String
+        }
+        
+        do {
+            let root: Root = try await network.request(
+                verb: .post,
+                path: "/QuickConnect/Initiate",
+                headers: nil,
+                urlParams: nil,
+                body: nil
+            )
+            return (root.Code, root.Secret)
+        }
+        catch { throw QuickConnectErrors.quickConnectCodesFailed(error) }
+    }
+
+    /// Check if the user entered the provided quick connect code into Jellyfin
+    /// - Parameters:
+    ///   - secret: The secret returned by getQuickConnectCodes()
+    /// - Returns: A boolean - true if the code was entered by the user, false if the authentication is still pending
+    /// - Throws: A `QuickConnectError` when authentication fails
+    public func quickConnectAuthenticated(secret: String) async throws(QuickConnectErrors) -> Bool {
+        struct Root: Codable {
+            let Authenticated: Bool
+            let Secret: String
+            let Code: String
+            let DeviceId: String
+            let DeviceName: String
+            let AppName: String
+            let AppVersion: String
+            let DateAdded: String
+        }
+        let params : [URLQueryItem] = [
+            URLQueryItem(name: "secret", value: secret)
+        ]
+        
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/QuickConnect/Connect",
+                headers: nil,
+                urlParams: params,
+                body: nil
+            )
+            return root.Authenticated
+        }
+        catch { throw QuickConnectErrors.authFailed(error) }
+    }
+    
+    /// Login using a quick connect secret retrieved earlier
+    /// - Parameters:
+    ///   - quickConnectSecret: The secret returned by getQuickConnectCodes()
+    /// - Returns: An authenticated APILoginResponse
+    public func login(quickConnectSecret: String) async throws(QuickConnectErrors) -> APILoginResponse {
+        struct Response: Codable {
+            let User: User
+            let SessionInfo: SessionInfo
+            let ServerId: String
+        }
+        
+        struct User: Codable {
+            let Name: String
+        }
+        
+        struct SessionInfo: Codable {
+            let Id: String
+            let UserId: String
+        }
+        
+        let requestBody: [String: String] = [
+            "Secret": quickConnectSecret
+        ]
+        do {
+            return try await network.request(
+                verb: .post,
+                path: "/Users/AuthenticateWithQuickConnect",
+                headers: nil,
+                urlParams: nil,
+                body: requestBody
+            )
+        } catch { throw QuickConnectErrors.loginFailed(error) }
+    }
+    
+    /// Login using a username and password
+    /// - Parameters:
+    ///   - username: Jellyfin Username
+    ///   - password: Jellyfin Password
+    /// - Returns: However successful logging in was
+    /// - Throws: Account errors based on Jellyfin permissions and network conditions
     public func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
@@ -277,9 +393,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 urlParams: nil,
                 body: requestBody
             )
-        } catch {
-            throw AccountErrors.loginFailed(error)
         }
+        catch { throw AccountErrors.loginFailed(error) }
     }
     
     public func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {

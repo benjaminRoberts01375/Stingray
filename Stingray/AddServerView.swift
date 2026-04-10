@@ -9,14 +9,21 @@ import SwiftUI
 
 public struct AddServerView: View {
     @Binding public var loggedIn: LoginState
+    
     @State private var httpProcol: HttpProtocol = .http
     @State private var httpHostname: String = ""
     @State private var httpPort: String = "8096"
+    
     @State private var username: String = ""
     @State private var password: String = ""
+    
+    @State private var quickConnectCode: String?
     @State private var error: RError?
     @State private var errorSummary: String = ""
-    @State private var awaitingLogin: Bool = false
+    @State private var loading: Bool = false
+    @State private var connected: Bool = false
+    @State private var jellyfinURL: URL?
+    
     @Environment(UserModel.self) public var userModel: UserModel
     @Environment(\.dismiss) public var dismiss
     
@@ -37,39 +44,84 @@ public struct AddServerView: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .disabled(self.connected || self.loading)
                 switch httpProcol {
                 case .http:
                     TextField("Hostname", text: $httpHostname)
+                        .disabled(self.connected)
+                        .opacity(self.connected ? 0.5 : 1)
                     TextField("Port", text: $httpPort)
                         .keyboardType(.numberPad)
+                        .disabled(self.connected || self.loading)
+                        .opacity(self.connected ? 0.5 : 1)
                 case .https:
                     TextField("URL", text: $httpHostname)
+                        .disabled(self.connected || self.loading)
+                        .opacity(self.connected ? 0.5 : 1)
                 }
             }
-            HStack {
-                TextField("Username", text: $username)
-                SecureField("Password", text: $password)
+            if !self.connected {
+                Spacer()
+                Button("Connect") { self.connectToServer() }
+                    .disabled(self.loading)
             }
+            else {
+                Button("Disconnect") { self.connected = false }
+            }
+            if self.connected {
+                Divider()
+                HStack {
+                    VStack {
+                        Text("Enter Credentials").font(.title3)
+                        TextField("Username", text: $username)
+                        SecureField("Password", text: $password)
+                        HStack {
+                            ProgressView()
+                                .opacity(0)
+                            Button("Login") {
+                                self.setupConnection(quickConnectSecret: nil)
+                            }
+                            .disabled(self.loading)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    // make the login 50% the size of the horizontal space
+                    .frame(maxWidth: .infinity)
+                    HStack {
+                        VStack {
+                            HStack {
+                                Divider()
+                            }
+                            Text("or").font(.title2)
+                            HStack {
+                                Divider()
+                            }
+                        }
+                    }
+                    VStack {
+                        Text("Quick Connect")
+                            .font(.title3)
+                        if let quickConnectCode {
+                            Text("Enter code \(quickConnectCode) to login")
+                        } else {
+                            Text("Quick Connect not available")
+                        }
+                    }
+                    // make the quick connect view 50% the size of the horizontal space
+                    .frame(maxWidth: .infinity)
+                }
+                Spacer()
+            }
+            ProgressView()
+                .opacity(self.loading ? 1 : 0)
             if let error = self.error {
                 ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
             }
-            Spacer()
-            HStack {
-                ProgressView()
-                    .opacity(0)
-                Button("Connect") {
-                    setupConnection()
-                }
-                .disabled(awaitingLogin)
-                ProgressView()
-                    .opacity(awaitingLogin ? 1 : 0)
-            }
-            .buttonStyle(.borderedProminent)
         }
-        .onAppear { // Done separately so we can ue the @Environment, also helps against reloads
-            loadExistingServerInfo()
-        }
+        // Done separately so we can ue the @Environment, also helps against reloads
+        .onAppear { self.loadExistingServerInfo() }
+        .onDisappear { self.connected = false } // A small hacky fix to stop checking QuickConnect
     }
     
     public func loadExistingServerInfo() {
@@ -84,7 +136,24 @@ public struct AddServerView: View {
         httpHostname = serviceURL.host ?? ""
     }
     
-    public func setupConnection() {
+    private func setError() {
+        guard let error = self.error else { return }
+        if let netErr = error.last() as? NetworkError {
+            self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
+            Log.error("Error signing in: \(error.rDescription())")
+        } else {
+            self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
+            Log.error("Unknown error while signing in: \(error)")
+        }
+        self.loading = false
+    }
+    
+    /// Initial connection to server before Username and Password or Quick Connect can be used
+    private func connectToServer() {
+        self.error = nil
+        self.quickConnectCode = nil
+        self.loading = true
+        
         // Setup URL
         var url: URL?
         switch httpProcol {
@@ -105,28 +174,81 @@ public struct AddServerView: View {
                 self.error = netError
                 self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
             }
+            self.loading = false
             return
         }
+        self.jellyfinURL = url
         
-        // Setup streaming service
+        // Check if quick connect is available
         Task {
-            awaitingLogin = true
+            let jellyfinServerInfo = JellyfinQuickConnectModel(url: url)
+            var quickConnectAvailable = false
             do {
-                let streamingService = try await JellyfinModel.login(
-                    url: url, username: username, password: password, userModel: self.userModel
-                )
-                self.loggedIn = .loggedIn(streamingService)
+                quickConnectAvailable = try await jellyfinServerInfo.getQuickConnectEnabled()
+                self.connected = true
             } catch let error as RError {
-                self.error = AccountErrors.loginFailed(error)
-                if let netErr = error.last() as? NetworkError {
-                    self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netErr, httpProtocol: self.httpProcol)
-                    Log.error("Error signing in: \(error.rDescription())")
-                } else {
-                    self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
-                    Log.error("Unknown error while signing in: \(error)")
+                self.connected = false
+                self.error = error
+                self.setError()
+                return
+            }
+            self.loading = false
+            
+            if quickConnectAvailable {
+                // Get the code for quick connect code
+                do {
+                    self.quickConnectCode = try await jellyfinServerInfo.getQuickConnectCodes()
+                    // Start polling every 5 seconds to check if quick connect authentication succeeded
+                    while self.connected {
+                        let quickConnectSecret = try await jellyfinServerInfo.getQuickConnectSecret()
+                        if quickConnectSecret != nil {
+                            self.setupConnection(quickConnectSecret: quickConnectSecret)
+                            break
+                        }
+                        // Wait for 5 seconds and then recheck if the user authenticated yet
+                        try? await Task.sleep(for: .seconds(5))
+                    }
+                } catch let error as RError {
+                    self.error = error
+                    self.setError()
+                    return
                 }
             }
-            awaitingLogin = false
+        }
+    }
+    
+    /// Setup user with the Jellyfin server
+    /// - Parameter quickConnectSecret: Quick Connection secret generated by the Jellyfin server
+    private func setupConnection(quickConnectSecret: String?) {
+        // Setup streaming service
+        self.loading = true
+        Task {
+            do {
+                guard let jellyfinURL = jellyfinURL else {
+                    Log.error("Could not unwrap server URL")
+                    return
+                }
+                // Login using Quick Connect
+                if let quickConnectSecret = quickConnectSecret {
+                    let streamingService = try await JellyfinModel.login(
+                        url: jellyfinURL, quickConnectSecret: quickConnectSecret, userModel: self.userModel
+                    )
+                    self.loggedIn = .loggedIn(streamingService)
+                }
+                // Login using normal credentials
+                else {
+                    let streamingService = try await JellyfinModel.login(
+                        url: jellyfinURL, username: username, password: password, userModel: self.userModel
+                    )
+                    self.loggedIn = .loggedIn(streamingService)
+                }
+            } catch let error as RError {
+                self.error = AccountErrors.loginFailed(error)
+                self.setError()
+                // Do not dismiss on error, so return
+                return
+            }
+            self.loading = false
             self.dismiss()
         }
     }
