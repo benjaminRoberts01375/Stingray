@@ -233,23 +233,28 @@ public final class JellyfinModel: StreamingServiceProtocol {
         userModel: UserModel
     ) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        do {
-            let response = try await networkAPI.login(username: username, password: password)
-            let newUser = User(
-                serviceURL: url,
-                serviceType: .Jellyfin(
-                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-                ),
-                serviceID: response.serverId,
-                id: response.userId,
-                displayName: response.userName
-            )
-            userModel.addUser(newUser)
-            userModel.activeUser = newUser
-            return JellyfinModel(response: response, serviceURL: url)
-        } catch {
-            throw AccountErrors.loginFailed(error)
+        let response: APILoginResponse
+        
+        do { response = try await networkAPI.login(username: username, password: password) }
+        catch { throw AccountErrors.loginFailed(error) }
+        
+        let newUser = User(
+            serviceURL: url,
+            serviceType: .Jellyfin(
+                UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+            ),
+            serviceID: response.serverId,
+            id: response.userId,
+            displayName: response.userName
+        )
+        Log.critical("\(response.userId) in \(userModel.userIDs)")
+        if userModel.userIDs.contains(response.userId) {
+            throw AccountErrors.loginFailed(AccountErrors.userAlreadyExists)
         }
+        
+        userModel.addUser(newUser)
+        userModel.activeUser = newUser
+        return JellyfinModel(response: response, serviceURL: url)
     }
     
     /// Log into a Jellyfin server using the quick connect feature
@@ -259,21 +264,27 @@ public final class JellyfinModel: StreamingServiceProtocol {
     /// - Returns: The configured Jellyfin model.
     public static func login(url: URL, quickConnectSecret: String, userModel: UserModel) async throws(QuickConnectErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
-        do {
-            let response = try await networkAPI.login(quickConnectSecret: quickConnectSecret)
-            let newUser = User(
-                serviceURL: url,
-                serviceType: .Jellyfin(
-                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-                ),
-                serviceID: response.serverId,
-                id: response.userId,
-                displayName: response.userName
-            )
-            userModel.addUser(newUser)
-            userModel.activeUser = newUser
-            return JellyfinModel(response: response, serviceURL: url)
-        } catch { throw QuickConnectErrors.loginFailed(error) }
+        let response: APILoginResponse
+        
+        do { response = try await networkAPI.login(quickConnectSecret: quickConnectSecret) }
+        catch { throw QuickConnectErrors.loginFailed(error) }
+        
+        let newUser = User(
+            serviceURL: url,
+            serviceType: .Jellyfin(
+                UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+            ),
+            serviceID: response.serverId,
+            id: response.userId,
+            displayName: response.userName
+        )
+        if userModel.userIDs.contains(response.userId) {
+            throw QuickConnectErrors.loginFailed(AccountErrors.userAlreadyExists)
+        }
+        
+        userModel.addUser(newUser)
+        userModel.activeUser = newUser
+        return JellyfinModel(response: response, serviceURL: url)
     }
 
     /// Fetch libraries and library media.
