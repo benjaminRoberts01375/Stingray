@@ -249,7 +249,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     
     /// Gets the state of quick connect
     /// - Returns: A boolean whether quick connect is available or not
-    public func quickConnectAvailable() async throws(NetworkError) -> Bool {
+    /// - Throws: `QuickConnectErrors` based on network conditions
+    public func quickConnectAvailable() async throws(QuickConnectErrors) -> Bool {
         do {
             return try await network.request(
                 verb: .get,
@@ -259,11 +260,13 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
         }
+        catch { throw QuickConnectErrors.isEnabled(error) }
     }
     
     /// Get the quick connect code and the secret
     /// - Returns: A tuple with the quick connect code and secret which is used for checking if the user entered the code yet
-    public func getQuickConnectCodes() async throws(AccountErrors) -> (String, String) {
+    /// - Throws: `QuickConnectErrors` based on network conditions and Jellyfin permissions
+    public func getQuickConnectCodes() async throws(QuickConnectErrors) -> (String, String) {
         struct Root: Codable {
             let Authenticated: Bool
             let Secret: String
@@ -283,17 +286,16 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
             return (root.Code, root.Secret)
-        } catch {
-            throw AccountErrors.quickConnectFailed(error)
         }
+        catch { throw QuickConnectErrors.quickConnectCodesFailed(error) }
     }
 
-    /// Get the current state of an earlier initiated quick connect session
+    /// Check if the user entered the provided quick connect code into Jellyfin
     /// - Parameters:
     ///   - secret: The secret returned by getQuickConnectCodes()
     /// - Returns: A boolean - true if the code was entered by the user, false if the authentication is still pending
-    ///
-    public func quickConnectAuthenticated(secret: String) async throws(AccountErrors) -> Bool {
+    /// - Throws: A `QuickConnectError` when authentication fails
+    public func quickConnectAuthenticated(secret: String) async throws(QuickConnectErrors) -> Bool {
         struct Root: Codable {
             let Authenticated: Bool
             let Secret: String
@@ -318,16 +320,14 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             )
             return root.Authenticated
         }
-        catch {
-            throw AccountErrors.quickConnectFailed(error)
-        }
+        catch { throw QuickConnectErrors.authFailed(error) }
     }
     
     /// Login using a quick connect secret retrieved earlier
     /// - Parameters:
     ///   - quickConnectSecret: The secret returned by getQuickConnectCodes()
     /// - Returns: An authenticated APILoginResponse
-    public func login(quickConnectSecret: String) async throws(AccountErrors) -> APILoginResponse {
+    public func login(quickConnectSecret: String) async throws(QuickConnectErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
             let SessionInfo: SessionInfo
@@ -354,11 +354,15 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 urlParams: nil,
                 body: requestBody
             )
-        } catch {
-            throw AccountErrors.quickConnectFailed(error)
-        }
+        } catch { throw QuickConnectErrors.loginFailed(error) }
     }
     
+    /// Login using a username and password
+    /// - Parameters:
+    ///   - username: Jellyfin Username
+    ///   - password: Jellyfin Password
+    /// - Returns: However successful logging in was
+    /// - Throws: Account errors based on Jellyfin permissions and network conditions
     public func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
@@ -389,9 +393,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 urlParams: nil,
                 body: requestBody
             )
-        } catch {
-            throw AccountErrors.loginFailed(error)
         }
+        catch { throw AccountErrors.loginFailed(error) }
     }
     
     public func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {

@@ -9,11 +9,14 @@ import SwiftUI
 
 public struct AddServerView: View {
     @Binding public var loggedIn: LoginState
+    
     @State private var httpProcol: HttpProtocol = .http
     @State private var httpHostname: String = ""
     @State private var httpPort: String = "8096"
+    
     @State private var username: String = ""
     @State private var password: String = ""
+    
     @State private var quickConnectCode: String?
     @State private var error: RError?
     @State private var errorSummary: String = ""
@@ -40,29 +43,28 @@ public struct AddServerView: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .disabled(connected || loading)
+                .disabled(self.connected || self.loading)
                 switch httpProcol {
                 case .http:
                     TextField("Hostname", text: $httpHostname)
                         .disabled(connected)
                     TextField("Port", text: $httpPort)
                         .keyboardType(.numberPad)
-                        .disabled(connected || loading)
+                        .disabled(self.connected || self.loading)
                 case .https:
                     TextField("URL", text: $httpHostname)
-                        .disabled(connected || loading)
+                        .disabled(self.connected || self.loading)
                 }
             }
-            if !connected {
-                Button("Connect") {
-                    connect()
-                }.disabled(loading)
-            } else {
-                Button("Disconnect") {
-                    connected = false
-                }
+            if !self.connected {
+                Spacer()
+                Button("Connect") { self.connectToServer() }
+                    .disabled(self.loading)
             }
-            if connected {
+            else {
+                Button("Disconnect") { self.connected = false }
+            }
+            if self.connected {
                 Divider()
                 HStack {
                     VStack {
@@ -73,9 +75,9 @@ public struct AddServerView: View {
                             ProgressView()
                                 .opacity(0)
                             Button("Login") {
-                                setupConnection(quickConnectSecret: nil)
+                                self.setupConnection(quickConnectSecret: nil)
                             }
-                            .disabled(loading)
+                            .disabled(self.loading)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -104,18 +106,17 @@ public struct AddServerView: View {
                     // make the quick connect view 50% the size of the horizontal space
                     .frame(maxWidth: .infinity)
                 }
+                Spacer()
             }
-            Spacer()
             ProgressView()
-                .opacity(loading ? 1 : 0)
+                .opacity(self.loading ? 1 : 0)
             if let error = self.error {
                 ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
             }
         }
-        .onAppear { // Done separately so we can ue the @Environment, also helps against reloads
-            loadExistingServerInfo()
-        }
+        // Done separately so we can ue the @Environment, also helps against reloads
+        .onAppear { self.loadExistingServerInfo() }
     }
     
     public func loadExistingServerInfo() {
@@ -139,13 +140,14 @@ public struct AddServerView: View {
             self.errorSummary = "An unexpected error occurred. Please make sure your login details are correct."
             Log.error("Unknown error while signing in: \(error)")
         }
-        loading = false
+        self.loading = false
     }
     
-    private func connect() {
-        error = nil
-        quickConnectCode = nil
-        loading = true
+    /// Initial connection to server before Username and Password or Quick Connect can be used
+    private func connectToServer() {
+        self.error = nil
+        self.quickConnectCode = nil
+        self.loading = true
         
         // Setup URL
         var url: URL?
@@ -160,42 +162,42 @@ public struct AddServerView: View {
             switch httpProcol {
             case .http:
                 netError = NetworkError.invalidURL("http://\(httpHostname):\(httpPort)")
-                error = netError
-                errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
+                self.error = netError
+                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .http)
             case .https:
                 netError = NetworkError.invalidURL("https://\(httpHostname)")
-                error = netError
-                errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
+                self.error = netError
+                self.errorSummary = NetworkError.overrideNetErrorMessage(netErr: netError, httpProtocol: .https)
             }
-            loading = false
+            self.loading = false
             return
         }
-        jellyfinURL = url
+        self.jellyfinURL = url
         
-        // check if quick connect is available
-        let jellyfinServerInfo = JellyfinQuickConnectModel(url: url)
+        // Check if quick connect is available
         Task {
+            let jellyfinServerInfo = JellyfinQuickConnectModel(url: url)
             var quickConnectAvailable = false
             do {
                 quickConnectAvailable = try await jellyfinServerInfo.getQuickConnectEnabled()
-                connected = true
+                self.connected = true
             } catch let error as RError {
-                connected = false
+                self.connected = false
                 self.error = error
-                setError()
+                self.setError()
                 return
             }
-            loading = false
+            self.loading = false
             
             if quickConnectAvailable {
-                // get the code for quick connect
+                // Get the code for quick connect code
                 do {
-                    quickConnectCode = try await jellyfinServerInfo.getQuickConnectCodes()
-                    // start polling every 5 seconds to check if quick connect authentication succeeded
-                    while connected {
-                        let quickConnectSecret = try await jellyfinServerInfo.checkCheckConnectAuthentication()
+                    self.quickConnectCode = try await jellyfinServerInfo.getQuickConnectCodes()
+                    // Start polling every 5 seconds to check if quick connect authentication succeeded
+                    while self.connected {
+                        let quickConnectSecret = try await jellyfinServerInfo.getQuickConnectSecret()
                         if quickConnectSecret != nil {
-                            setupConnection(quickConnectSecret: quickConnectSecret)
+                            self.setupConnection(quickConnectSecret: quickConnectSecret)
                             break
                         }
                         // Wait for 5 seconds and then recheck if the user authenticated yet
@@ -203,28 +205,33 @@ public struct AddServerView: View {
                     }
                 } catch let error as RError {
                     self.error = error
-                    setError()
+                    self.setError()
                     return
                 }
             }
         }
     }
     
+    /// Setup user with the Jellyfin server
+    /// - Parameter quickConnectSecret: Quick Connection secret generated by the Jellyfin server
     private func setupConnection(quickConnectSecret: String?) {
         // Setup streaming service
+        self.loading = true
         Task {
-            loading = true
             do {
                 guard let jellyfinURL = jellyfinURL else {
                     Log.error("Could not unwrap server URL")
                     return
                 }
+                // Login using Quick Connect
                 if let quickConnectSecret = quickConnectSecret {
                     let streamingService = try await JellyfinModel.login(
                         url: jellyfinURL, quickConnectSecret: quickConnectSecret, userModel: self.userModel
                     )
                     self.loggedIn = .loggedIn(streamingService)
-                } else {
+                }
+                // Login using normal credentials
+                else {
                     let streamingService = try await JellyfinModel.login(
                         url: jellyfinURL, username: username, password: password, userModel: self.userModel
                     )
@@ -232,11 +239,11 @@ public struct AddServerView: View {
                 }
             } catch let error as RError {
                 self.error = AccountErrors.loginFailed(error)
-                setError()
-                // do not dismiss on error, so return
+                self.setError()
+                // Do not dismiss on error, so return
                 return
             }
-            loading = false
+            self.loading = false
             self.dismiss()
         }
     }

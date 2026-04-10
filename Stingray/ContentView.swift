@@ -54,7 +54,6 @@ public struct ContentView: View {
             switch loginState {
             case .loggedOut:
                 AddServerView(loginState: $loginState)
-                    .padding(128)
             case .pickingUser:
                 VStack {
                     Text("Welcome back to Jellyfin")
