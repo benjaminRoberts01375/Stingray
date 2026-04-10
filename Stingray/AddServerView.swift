@@ -247,6 +247,7 @@ public struct AddServerView: View {
                 return
             }
             self.loading = false
+            self.connected = false // A small hacky fix to stop checking QuickConnect
             self.dismiss()
         }
     }
