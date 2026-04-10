@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 11/12/25.
 //
 
+import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 public struct AddServerView: View {
@@ -101,10 +102,18 @@ public struct AddServerView: View {
                     VStack {
                         Text("Quick Connect")
                             .font(.title3)
-                        if let quickConnectCode {
-                            Text("Enter code \(quickConnectCode) to login")
-                        } else {
-                            Text("Quick Connect not available")
+                        if let quickConnectCode { Text("Enter code \(quickConnectCode) to login") }
+                        else { Text("Quick Connect not available") }
+                        if let url = self.jellyfinURL?.buildURL(path: "web/#/quickconnect", urlParams: nil),
+                           let qrCode = Self.generateQRCode(from: url) {
+                            Image(uiImage: qrCode)
+                                .interpolation(.none)
+                                .resizable()
+                                .accessibilityLabel("QR Code to \(url.absoluteString)")
+                                .frame(width: 300, height: 300)
+                                .shadow(radius: 10)
+                                .padding(.horizontal)
+                            Text(url.absoluteString)
                         }
                     }
                     // make the quick connect view 50% the size of the horizontal space
@@ -251,6 +260,19 @@ public struct AddServerView: View {
             self.loading = false
             self.dismiss()
         }
+    }
+    
+    /// Generate a QR Code from a URL
+    /// - Parameter url: URL to encode
+    /// - Returns: QR Code if available
+    public static func generateQRCode(from url: URL) -> UIImage? {
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(url.absoluteString.utf8)
+        
+        guard let outputImage = filter.outputImage,
+              let cgImage = CIContext().createCGImage(outputImage, from: outputImage.extent)
+        else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 }
 
