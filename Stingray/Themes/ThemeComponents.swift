@@ -59,6 +59,8 @@ public struct DoubleButton: View {
     public let label: String
     /// Secondary label to show on right-hand side of button
     public let sublabel: String
+    /// The type of action the button may cause
+    public let role: ButtonRole?
     /// Code to run when the button's pressed
     public let action: () -> Void
     
@@ -66,12 +68,23 @@ public struct DoubleButton: View {
     
     @FocusState private var isFocused: Bool
     
+    public init(label: String, sublabel: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
+        self.label = label
+        self.sublabel = sublabel
+        self.action = action
+        self.role = role
+    }
+    
     public var body: some View {
-        Button { action() }
+        Button(role: role) { action() }
         label: {
             HStack {
                 Text(label)
-                    .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : self.settings.themeCurrent.labelPrimary())
+                    .foregroundStyle({
+                        if self.isFocused { return AnyShapeStyle(Color.black) }
+                        else if self.role == .destructive { return AnyShapeStyle(Color.red) }
+                        else { return self.settings.themeCurrent.labelPrimary() }
+                    }())
                 Spacer()
                 Text(sublabel)
                     .foregroundStyle(self.settings.themeCurrent.labelSecondary())
