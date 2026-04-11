@@ -61,10 +61,16 @@ public struct AddServerView: View {
                         .opacity(self.connected ? 0.5 : 1)
                 }
             }
+            .focusSection()
             if !self.connected {
                 Spacer()
-                Button("Connect") { self.connectToServer() }
-                    .disabled(self.loading)
+                HStack {
+                    Button("Connect") { self.connectToServer() }
+                        .disabled(self.loading)
+                        .focusSection()
+                }
+                .frame(maxWidth: .infinity)
+                .focusSection()
             }
             else {
                 Button("Disconnect") { self.connected = false }
