@@ -12,8 +12,12 @@ public struct SettingsView: View {
     @Binding public var loginState: LoginState
     /// System-wide settings
     @Environment(SettingsModel.self) private var settings: SettingsModel
-    /// Controlls the pin configuration screen showing and hiding
+    /// Controls the pin configuration screen showing and hiding
     @State private var showPinSetup: Bool = false
+    /// Controls when to show a dialog box for logging out
+    @State private var showLogoutAlert: Bool = false
+    
+    @Environment(UserModel.self) private var userModel: UserModel
     
     public var body: some View {
         @Bindable var settings = settings
@@ -38,9 +42,19 @@ public struct SettingsView: View {
                             .stingrayBackground()
                     }
                 }
+                if let user = self.userModel.activeUser {
+                    DoubleButton(label: "Logout...", sublabel: "", role: .destructive) { self.showLogoutAlert = true }
+                        .alert("Logout \(user.displayName)", isPresented: $showLogoutAlert) {
+                            Button("Logout", role: .destructive) {
+                                self.userModel.deleteUser(user.id)
+                                if self.userModel.userIDs.isEmpty { self.loginState = .loggedOut }
+                                else { self.loginState = .pickingUser }
+                            }
+                        } message: { Text("Are you sure you want \(user.displayName) to logout?") }
+                }
             }
             
-            // Profile selection
+            // Profile switching
             Section(
                 header: Text("Profile Switching").bold(),
                 footer: Text(self.settings.profileSwitchingMethod.description)
