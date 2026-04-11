@@ -9,9 +9,7 @@ import SwiftUI
 
 public struct ProfilePickerView: View {
     /// List of all users who have at some point signed into Stingray
-    private var users: [User] {
-        return userModel.getUsers().sorted { $0.displayName < $1.displayName }
-    }
+    @State private var users: [User] = []
     /// Login state for the entire app
     @Binding public var loginState: LoginState
     /// Functions and values regarding the users
@@ -30,77 +28,9 @@ public struct ProfilePickerView: View {
     
     public var body: some View {
         CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
+            Spacer(minLength: 0)
             ForEach(users) { user in
-                Button {
-                    loginState = Self.switchUser(
-                        user: user,
-                        userModel: self.userModel,
-                        currentLoginState: loginState,
-                        settingsModel: self.settings
-                    )
-                }
-                label: {
-                    VStack(alignment: .center) {
-                        switch user.serviceType {
-                        case .Jellyfin:
-                            AsyncImage(
-                                url: JellyfinModel.getProfileImageURL(
-                                    userID: user.id,
-                                    serviceURL: user.serviceURL
-                                )
-                            ) { phase in
-                                switch phase {
-                                case .empty:
-                                    Spacer()
-                                    ProgressView()
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                default:
-                                    // Handle the error here
-                                    Image(systemName: "person.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .foregroundStyle(self.settings.themeCurrent.defaultProfileImage())
-                                        .accessibilityLabel("Person icon")
-                                        .padding(50)
-                                }
-                            }
-                        }
-                        Spacer()
-                        Text(user.displayName)
-                            .font(.callout.bold())
-                    }
-                    .padding(16)
-                    .padding(.horizontal, 16)
-                    .background { // Only show white background if the current user is this user
-                        streamingService?.userID == user.id ? self.settings.themeCurrent.activeColor() : .clear
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 40))
-                    .padding(.horizontal, -16)
-                }
-                .buttonStyle(.plain)
-                .contextMenu {
-                    Button("Logout", systemImage: "tv.slash.fill", role: .destructive) {
-                        let userIDToDelete = user.id  // Capture immediately to prevent a race condition
-                        let wasActiveUser = self.streamingService?.userID == userIDToDelete
-                        
-                        self.userModel.deleteUser(userIDToDelete)
-                        
-                        if wasActiveUser {
-                            if let nextUser = self.userModel.getUsers().first {
-                                self.loginState = Self.switchUser(
-                                    user: nextUser,
-                                    userModel: self.userModel,
-                                    currentLoginState: self.loginState,
-                                    settingsModel: self.settings
-                                )
-                            }
-                            else { self.loginState = .loggedOut }
-                        }
-                    }
-                }
+                ProfilePickerUser(loginState: $loginState, user: user)
             }
             NavigationLink { AddServerView(loginState: $loginState) }
             label: {
@@ -117,7 +47,9 @@ public struct ProfilePickerView: View {
                 }
             }
             .buttonStyle(.plain)
+            Spacer(minLength: 0)
         }
+        .onAppear { self.users = userModel.getUsers().sorted { $0.displayName < $1.displayName } }
     }
     
     /// Switch the current login state to a logged in user
@@ -160,5 +92,77 @@ public struct ProfilePickerView: View {
                 )
             )
         }
+    }
+}
+
+fileprivate struct ProfilePickerUser: View {
+    /// Functions and values regarding the users
+    @Environment(UserModel.self) private var userModel: UserModel
+    /// Current theme
+    @Environment(SettingsModel.self) private var settings
+    /// Login state for the entire app
+    @Binding var loginState: LoginState
+
+    /// Controls showing the logout confirmation alert
+    @State private var showLogoutAlert: Bool = false
+
+    /// User to display
+    let user: User
+
+    var body: some View {
+        Button {
+            self.loginState = ProfilePickerView.switchUser(
+                user: user,
+                userModel: self.userModel,
+                currentLoginState: self.loginState,
+                settingsModel: self.settings
+            )
+        }
+        label: {
+            VStack(alignment: .center) {
+                switch user.serviceType {
+                case .Jellyfin:
+                    AsyncImage(
+                        url: JellyfinModel.getProfileImageURL(
+                            userID: user.id,
+                            serviceURL: user.serviceURL
+                        )
+                    ) { phase in
+                        switch phase {
+                        case .empty:
+                            Spacer()
+                            ProgressView()
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                        default:
+                            // Handle the error here
+                            Image(systemName: "person.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(self.settings.themeCurrent.defaultProfileImage())
+                                .accessibilityLabel("Icon for \(user.displayName)")
+                                .padding(50)
+                        }
+                    }
+                }
+                Spacer()
+                Text(user.displayName)
+                    .font(.callout.bold())
+            }
+            .padding(16)
+            .padding(.horizontal, 16)
+            .background { // Only show white background if the current user is this user
+                switch self.loginState {
+                case .loggedIn(let streamingService):
+                    streamingService.userID == user.id ? self.settings.themeCurrent.activeColor() : .clear
+                default: Color.clear
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 40))
+            .padding(.horizontal, -16)
+        }
+        .buttonStyle(.plain)
     }
 }
