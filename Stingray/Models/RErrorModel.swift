@@ -508,6 +508,8 @@ public enum StoreErrors: RError {
     case purchasesUpdated
     case tamperedPurchase(Product, Error)
     case productUnavailable
+    case productsUnavailable(Error)
+    case productsStillLoading
     
     public var next: (any RError)? { nil }
     
@@ -517,6 +519,8 @@ public enum StoreErrors: RError {
         case .purchasesUpdated: return "Apple changed the purchases API and added a case"
         case .tamperedPurchase(let product, let err): return "Purchasing \(product.id) could not be verified: \(err.localizedDescription)"
         case .productUnavailable: return "This product is unavailable"
+        case .productsUnavailable(let err): return "All products are unavailable: \(err.localizedDescription)"
+        case .productsStillLoading: return "Products are still loading"
         }
     }
 }

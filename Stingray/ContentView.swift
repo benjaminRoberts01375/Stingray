@@ -152,7 +152,7 @@ public struct ContentView: View {
             // Listening for new purchases
             for await result in StoreKit.Transaction.updates {
                 if case .verified(let transaction) = result {
-                    if transaction.productID == PurchasesModel.ProductIDs.supporter.rawValue {
+                    if transaction.productID == PurchasesModel.ProductID.supporter.rawValue {
                         self.purchases.boughtSupporter = transaction.revocationDate == nil
                     }
                     await transaction.finish()

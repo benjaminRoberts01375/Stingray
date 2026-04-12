@@ -17,7 +17,7 @@ public final class PurchasesModel {
     public var boughtSupporter: Bool
     
     /// A simple string that contains the ID for the supporter tier
-    public enum ProductIDs: String, CaseIterable {
+    public enum ProductID: String, CaseIterable {
         case supporter = "com.benlab.Stingray.Supporter"
     }
     
@@ -31,14 +31,14 @@ public final class PurchasesModel {
     public func setupProducts() async {
         // Get all available products
         self.products = .fetching
-        do { self.products = .ready(try await Product.products(for: [ProductIDs.supporter.rawValue])) }
-        catch { self.products = .failed(error) }
+        do { self.products = .ready(try await Product.products(for: [ProductID.supporter.rawValue])) }
+        catch { self.products = .failed(StoreErrors.productsUnavailable(error)) }
         
         // Check to see if the user bought any previously
         for await result in Transaction.currentEntitlements {
             switch result {
             case .verified(let transaction):
-                if transaction.productID == ProductIDs.supporter.rawValue {
+                if transaction.productID == ProductID.supporter.rawValue {
                     self.boughtSupporter = transaction.revocationDate == nil // False = revoked
                     Log.info("User is a supporter: \(self.boughtSupporter)")
                 }
@@ -56,21 +56,22 @@ public final class PurchasesModel {
         /// Products have been fetched and are ready to go
         case ready([Product])
         /// Products failed to fetch
-        case failed(Error)
+        case failed(RError)
     }
     
     /// Purchase a product from StoreKit
     /// - Parameter product: Product to buy
-    /// - Returns: The successfulness of the purchase
     /// - Throws: If there was an issue buying the product, either from buying or tampering
-    public func purchase(_ product: Product) async throws(StoreErrors) -> PurchaseOutcome {
+    /// - Important: This function does not return any state other than failures, and instead relies
+    /// on observing the relevant `bought` variable
+    public func purchase(_ product: Product) async throws(StoreErrors) {
         let result: Product.PurchaseResult
         do { result = try await product.purchase() }
         catch { throw .purchaseFailed(product, error) }
         
         switch result {
-        case .pending: return .waiting
-        case .userCancelled: return .cancelled
+        case .pending: return
+        case .userCancelled: return
         case .success(let tx):
             switch tx {
             case .unverified(_, let err): throw .tamperedPurchase(product, err)
@@ -78,19 +79,8 @@ public final class PurchasesModel {
                 await transaction.finish()
                 self.boughtSupporter = transaction.revocationDate == nil
                 Log.info("User is now a supporter: \(self.boughtSupporter)")
-                return .success
             }
         @unknown default: throw .purchasesUpdated
         }
-    }
-    
-    /// Denotes the result of buying a product
-    public enum PurchaseOutcome {
-        /// The transaction is still loading
-        case waiting
-        /// The transaction worked correctly
-        case success
-        /// The user no longer wants to buy it
-        case cancelled
     }
 }
