@@ -175,19 +175,28 @@ public struct SettingsView: View {
 /// Lists all available themes and allows the user to update their theme preferences
 public struct ThemesListView: View {
     @Environment(SettingsModel.self) private var settings
+    @Environment(PurchasesModel.self) private var purchases
+    
     /// Is the list meant to set dark or light mode themes
     public let themeType: ColorScheme
     
     public var body: some View {
         ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
             Button {
-                if self.themeType == .dark { self.settings.themeDark = option }
+                if !self.purchases.boughtSupporter && option.requiresSupporter {
+                    Log.critical("Not a supporter!")
+                }
+                else if self.themeType == .dark { self.settings.themeDark = option }
                 else { self.settings.themeLight = option }
             }
             label: {
                 let currentTheme = self.themeType == .dark ? self.settings.themeDark : self.settings.themeLight
                 if currentTheme == option {
                     Label(option.displayName, systemImage: "checkmark")
+                    Text(option.description)
+                }
+                else if option.requiresSupporter && !self.purchases.boughtSupporter {
+                    Label(option.displayName, systemImage: "lock.fill")
                     Text(option.description)
                 }
                 else {
