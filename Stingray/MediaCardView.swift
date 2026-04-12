@@ -18,7 +18,6 @@ public struct MediaCard: View {
     @State private var showError: Bool = false
     
     public static let cardSize = CGSize(width: 200, height: 370)
-    public static let imageHeight = Self.cardSize.height - 85
     
     public init(media: any SlimMediaProtocol, streamingService: StreamingServiceProtocol, action: @escaping @MainActor () -> Void) {
         self.media = media
@@ -95,7 +94,7 @@ public struct MediaCard: View {
                 ErrorExpandedView(errorDesc: errors.rDescription)
             }
         }
-        .frame(width: Self.cardSize.width, height: Self.cardSize.height)
+        .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
         .id(media.id) // Stabilize view identity
     }
 }
