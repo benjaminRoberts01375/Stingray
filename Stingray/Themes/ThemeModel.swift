@@ -80,5 +80,15 @@ public final class ThemeModel {
             case .void: return "The void consumes all color"
             }
         }
+        
+        /// Check if the theme requires being a supporter
+        public var requiresSupporter: Bool {
+            switch self {
+            case .notesApp: return false
+            case .beach: return false
+            case .deepSea: return false
+            case .void: return false
+            }
+        }
     }
 }

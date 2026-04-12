@@ -61,6 +61,8 @@
 				Extensions/TimeIntervalExtension.swift,
 				Extensions/URLExtension.swift,
 				Models/LoggerModel.swift,
+				Models/Purchases.storekit,
+				Models/PurchasesModel.swift,
 				Models/RErrorModel.swift,
 				Models/SettingsModel.swift,
 				Models/SlimMediaModel.swift,

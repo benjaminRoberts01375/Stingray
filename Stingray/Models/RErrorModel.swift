@@ -5,7 +5,7 @@
 //  Created by Ben Roberts on 1/24/26.
 //
 
-import Foundation
+import StoreKit
 
 /// A "Recursive Error", allows for creating a linked list of errors to create a stack trace.
 public protocol RError: LocalizedError {
@@ -497,6 +497,26 @@ public enum QuickConnectErrors: RError {
         case .quickConnectCodesFailed: return "Failed to get Quick Connect code"
         case .isEnabled: return "Failed to check if Quick Connect is available"
         case .statusFailedtoFetch: return "Failed to check if Quick Connect has been setup on the Jellyfin server"
+            
+        }
+    }
+}
+
+/// Errors for in app purchases
+public enum StoreErrors: RError {
+    case purchaseFailed(Product, Error)
+    case purchasesUpdated
+    case tamperedPurchase(Product, Error)
+    case productUnavailable
+    
+    public var next: (any RError)? { nil }
+    
+    public var errorDescription: String {
+        switch self {
+        case .purchaseFailed(let product, let err): return "Failed to purchase \(product.id): \(err.localizedDescription)"
+        case .purchasesUpdated: return "Apple changed the purchases API and added a case"
+        case .tamperedPurchase(let product, let err): return "Purchasing \(product.id) could not be verified: \(err.localizedDescription)"
+        case .productUnavailable: return "This product is unavailable"
         }
     }
 }

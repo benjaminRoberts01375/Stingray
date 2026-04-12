@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 11/12/25.
 //
 
+import StoreKit
 import SwiftUI
 
 /// Login phase of the application
@@ -25,6 +26,7 @@ public struct ContentView: View {
     @State private var navigationPath: NavigationPath
     @State private var settings: SettingsModel
     @State private var userModel: UserModel
+    @State private var purchases: PurchasesModel
     
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
@@ -44,6 +46,8 @@ public struct ContentView: View {
             lightTheme: userModel.activeUser?.lightTheme ?? .beach,
             colorScheme: ColorScheme.light
         )
+        let purchases = PurchasesModel()
+        self.purchases = purchases
         self.settings = SettingsModel(userModel: userModel, storage: settingStorage, theme: themeModel)
     }
     
@@ -86,8 +90,9 @@ public struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .stingrayBackground()
         .ignoresSafeArea()
-        .environment(settings)
-        .environment(userModel)
+        .environment(self.settings)
+        .environment(self.userModel)
+        .environment(self.purchases)
         .onChange(of: self.colorScheme, initial: true) { self.settings.systemTheme = $1 }
         .onAppear {
             switch self.loginState {
@@ -139,6 +144,19 @@ public struct ContentView: View {
                         serviceURL: defaultUser.serviceURL
                     )
                 )
+            }
+        }
+        .task {
+            await self.purchases.setupProducts()
+            
+            // Listening for new purchases
+            for await result in StoreKit.Transaction.updates {
+                if case .verified(let transaction) = result {
+                    if transaction.productID == PurchasesModel.ProductIDs.supporter.rawValue {
+                        self.purchases.boughtSupporter = transaction.revocationDate == nil
+                    }
+                    await transaction.finish()
+                }
             }
         }
     }
