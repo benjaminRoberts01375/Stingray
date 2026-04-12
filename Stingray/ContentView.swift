@@ -25,6 +25,7 @@ public struct ContentView: View {
     @State private var deepLinkRequest: DeepLinkRequest?
     @State private var navigationPath: NavigationPath
     @State private var settings: SettingsModel
+    @State private var theme: ThemeModel
     @State private var userModel: UserModel
     @State private var purchases: PurchasesModel
     
@@ -46,6 +47,7 @@ public struct ContentView: View {
             lightTheme: userModel.activeUser?.lightTheme ?? .beach,
             colorScheme: ColorScheme.light
         )
+        self.theme = themeModel
         let purchases = PurchasesModel()
         self.purchases = purchases
         self.settings = SettingsModel(userModel: userModel, storage: settingStorage, theme: themeModel)
@@ -86,10 +88,11 @@ public struct ContentView: View {
             }
             self.loginState = .pickingUser
         }
-        .colorScheme(self.settings.themeCurrent.colorScheme)
+        .colorScheme(self.theme.currentTheme.colorScheme)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .stingrayBackground()
         .ignoresSafeArea()
+        .environment(self.theme)
         .environment(self.settings)
         .environment(self.userModel)
         .environment(self.purchases)

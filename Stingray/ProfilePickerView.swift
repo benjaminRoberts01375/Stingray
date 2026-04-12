@@ -12,10 +12,9 @@ public struct ProfilePickerView: View {
     @State private var users: [User] = []
     /// Login state for the entire app
     @Binding public var loginState: LoginState
-    /// Functions and values regarding the users
-    @Environment(UserModel.self) private var userModel: UserModel
-    /// Current theme
-    @Environment(SettingsModel.self) private var settings
+    
+    @Environment(UserModel.self) private var userModel
+    @Environment(ThemeModel.self) private var theme
     
     // A simple way to derrive the streaming service from the login state
     public var streamingService: (any StreamingServiceProtocol)? {
@@ -39,7 +38,7 @@ public struct ProfilePickerView: View {
                         .resizable()
                         .scaledToFit()
                         .accessibilityLabel("Person icon")
-                        .foregroundStyle(self.settings.themeCurrent.addProfileStyle())
+                        .foregroundStyle(self.theme.currentTheme.addProfileStyle())
                         .padding(.top, 30)
                     Spacer()
                     Text("Add User")
@@ -98,8 +97,10 @@ public struct ProfilePickerView: View {
 fileprivate struct ProfilePickerUser: View {
     /// Functions and values regarding the users
     @Environment(UserModel.self) private var userModel: UserModel
-    /// Current theme
+    /// Current settings for the user
     @Environment(SettingsModel.self) private var settings
+    /// Theme data for this user
+    @Environment(ThemeModel.self) private var theme
     /// Login state for the entire app
     @Binding var loginState: LoginState
 
@@ -141,7 +142,7 @@ fileprivate struct ProfilePickerUser: View {
                             Image(systemName: "person.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(self.settings.themeCurrent.defaultProfileImage())
+                                .foregroundStyle(self.theme.currentTheme.defaultProfileImage())
                                 .accessibilityLabel("Icon for \(user.displayName)")
                                 .padding(50)
                         }
@@ -156,7 +157,7 @@ fileprivate struct ProfilePickerUser: View {
             .background { // Only show white background if the current user is this user
                 switch self.loginState {
                 case .loggedIn(let streamingService):
-                    streamingService.userID == user.id ? self.settings.themeCurrent.activeColor() : .clear
+                    streamingService.userID == user.id ? self.theme.currentTheme.activeColor() : .clear
                 default: Color.clear
                 }
             }

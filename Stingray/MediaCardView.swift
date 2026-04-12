@@ -10,6 +10,7 @@ import SwiftUI
 
 public struct MediaCard: View {
     @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     public let media: any SlimMediaProtocol
     public let url: URL?
@@ -59,7 +60,7 @@ public struct MediaCard: View {
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .truncationMode(.tail)
-                        .foregroundStyle(self.settings.themeCurrent.labelPrimary())
+                        .foregroundStyle(self.theme.currentTheme.labelPrimary())
                         .padding(.horizontal, 5)
                         .padding(.top, 5)
                     Spacer(minLength: 0)
@@ -71,7 +72,7 @@ public struct MediaCard: View {
                         .bold()
                         .multilineTextAlignment(.center)
                         .truncationMode(.tail)
-                        .foregroundStyle(self.settings.themeCurrent.header2())
+                        .foregroundStyle(self.theme.currentTheme.header2())
                         .padding(.horizontal)
                         .frame(width: Self.cardSize.width)
                     Spacer(minLength: 0)

@@ -95,9 +95,6 @@ public final class SettingsModel {
         }
     }
     
-    /// The current theme in use
-    public var themeCurrent: any ThemeProtocol { self.theme.currentTheme }
-    
     /// The system color theme (ex. dark mode vs light mode)
     public var systemTheme: ColorScheme {
         get { self.theme.systemColorScheme }

@@ -24,6 +24,7 @@ public struct DetailMediaView: View {
     @FocusState private var focus: ButtonType?
     
     @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     public var body: some View {
         ZStack(alignment: .bottom) {
@@ -116,7 +117,7 @@ public struct DetailMediaView: View {
                                     .font(.headline.bold())
                                     .lineLimit(2)
                                     .foregroundStyle(
-                                        self.focus == .overview ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                        self.focus == .overview ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
                                     )
                                 Text(media.description)
                                     .multilineTextAlignment(.leading)
@@ -139,7 +140,7 @@ public struct DetailMediaView: View {
                                             .font(.headline.bold())
                                             .lineLimit(2)
                                             .foregroundStyle(
-                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
                                             )
                                         Text(media.genres.joined(separator: ", "))
                                             .multilineTextAlignment(.leading)
@@ -151,7 +152,7 @@ public struct DetailMediaView: View {
                                             .font(.headline.bold())
                                             .lineLimit(2)
                                             .foregroundStyle(
-                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
                                             )
                                         Text(String(Calendar.current.component(.year, from: releaseDate)))
                                             .lineLimit(1)
@@ -162,7 +163,7 @@ public struct DetailMediaView: View {
                                         .font(.headline.bold())
                                         .lineLimit(1)
                                         .foregroundStyle(
-                                            self.focus == .metadata ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                            self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
                                         )
                                     Text(maturity)
                                         .lineLimit(1)
@@ -191,7 +192,7 @@ public struct DetailMediaView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("People")
                         .font(.title3.bold())
-                        .foregroundStyle(self.settings.themeCurrent.header1())
+                        .foregroundStyle(self.theme.currentTheme.header1())
                         .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
                 }
@@ -243,7 +244,7 @@ public struct DetailMediaView: View {
         .navigationDestination(for: PlayerViewModel.self) { vm in
             PlayerView(vm: vm, navigation: $navigation)
         }
-        .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.settings.themeCurrent.colorScheme)
+        .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
     }
 }
 
@@ -292,7 +293,10 @@ fileprivate struct MediaBackgroundView: View {
 // MARK: Movie logo and basics
 fileprivate struct MediaLogoView: View {
     @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
+    
     @State private var logoOpacity: Double = 0
+    
     let media: any MediaProtocol
     let logoImageURL: URL?
     
@@ -315,7 +319,7 @@ fileprivate struct MediaLogoView: View {
                 Text(self.media.title)
                     .font(.title)
                     .bold()
-                    .foregroundStyle(self.settings.themeCurrent.header1())
+                    .foregroundStyle(self.theme.currentTheme.header1())
             }
             if !media.tagline.isEmpty {
                 Text(media.tagline)
@@ -690,6 +694,7 @@ fileprivate struct EpisodeNavigationView: View {
     
     @Binding var navigation: NavigationPath
     
+    @Environment(ThemeModel.self) var theme
     @Environment(SettingsModel.self) var settings: SettingsModel
     
     var body: some View {
@@ -713,7 +718,7 @@ fileprivate struct EpisodeNavigationView: View {
                     Text(episode.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
-                        .foregroundStyle(self.settings.themeCurrent.labelPrimary())
+                        .foregroundStyle(self.theme.currentTheme.labelPrimary())
                         .padding()
                 }
                 Spacer(minLength: 0)
@@ -760,6 +765,7 @@ fileprivate struct ArtView: View {
     let streamingService: any StreamingServiceProtocol
     let title: String
     
+    @Environment(ThemeModel.self) private var theme
     @Environment(SettingsModel.self) private var settings
     @State private var imageOpacity: Double = 0
     
@@ -792,7 +798,7 @@ fileprivate struct ArtView: View {
                 .font(.system(size: 35))
                 .bold()
                 .multilineTextAlignment(.center)
-                .foregroundStyle(self.settings.themeCurrent.header2())
+                .foregroundStyle(self.theme.currentTheme.header2())
                 .padding(.horizontal)
         }
     }
@@ -804,7 +810,7 @@ public struct PeopleBrowserView: View {
     public let media: any MediaProtocol
     public let streamingService: any StreamingServiceProtocol
     
-    @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     @FocusState private var focusedActor: String?
     
@@ -821,13 +827,13 @@ public struct PeopleBrowserView: View {
                                 .multilineTextAlignment(.center)
                                 .font(.headline)
                                 .foregroundStyle(
-                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.settings.themeCurrent.header2()
+                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
                                 )
                             Text(person.role)
                                 .multilineTextAlignment(.center)
                                 .font(.caption)
                                 .foregroundStyle(
-                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.settings.themeCurrent.labelPrimary()
+                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.theme.currentTheme.labelPrimary()
                                 )
                         }
                     }
@@ -887,6 +893,7 @@ public struct SpecialFeaturesRow: View {
     @Binding public var navigation: NavigationPath
     
     @Environment(SettingsModel.self) private var settings: SettingsModel
+    @Environment(ThemeModel.self) private var theme
     
     public init(
         streamingService: any StreamingServiceProtocol,
@@ -905,7 +912,7 @@ public struct SpecialFeaturesRow: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(self.title)
                 .font(.title3.bold())
-                .foregroundStyle(self.settings.themeCurrent.header1())
+                .foregroundStyle(self.theme.currentTheme.header1())
                 .padding(.top)
             ScrollView(.horizontal) {
                 LazyHStack {
@@ -931,7 +938,7 @@ public struct SpecialFeaturesRow: View {
                                         Text(mediaSource.name)
                                             .lineLimit(2)
                                             .multilineTextAlignment(.center)
-                                            .foregroundStyle(self.settings.themeCurrent.labelPrimary())
+                                            .foregroundStyle(self.theme.currentTheme.labelPrimary())
                                             .padding(.horizontal, 10)
                                         Spacer(minLength: 0)
                                     }

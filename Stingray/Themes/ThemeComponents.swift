@@ -8,11 +8,12 @@
 import SwiftUI
 
 public struct StingrayBackground: ViewModifier {
-    @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     public func body(content: Content) -> some View {
         content
-            .background { self.settings.themeCurrent.appBackground() }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background { self.theme.currentTheme.appBackground() }
             .ignoresSafeArea()
     }
 }
@@ -28,7 +29,7 @@ public extension View {
 /// Style buttons in a `Form` view.
 public struct StingrayFormButtonStyle: ButtonStyle {
     @Environment(\.isFocused) public var isFocused
-    @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     public func makeBody(configuration: Configuration) -> some View {
         GeometryReader { geo in
@@ -40,7 +41,7 @@ public struct StingrayFormButtonStyle: ButtonStyle {
                 .frame(maxWidth: .infinity)
                 .background {
                     Capsule()
-                        .fill(isFocused ? AnyShapeStyle(Color.white) : self.settings.themeCurrent.buttonBackground())
+                        .fill(isFocused ? AnyShapeStyle(Color.white) : self.theme.currentTheme.buttonBackground())
                         .shadow(color: .black.opacity(isFocused ? 0.45 : 0), radius: isFocused ? 15 : 0, y: isFocused ? 16 : 0)
                 }
                 .padding(.horizontal, -20)
@@ -64,7 +65,7 @@ public struct DoubleButton: View {
     /// Code to run when the button's pressed
     public let action: () -> Void
     
-    @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     @FocusState private var isFocused: Bool
     
@@ -83,11 +84,11 @@ public struct DoubleButton: View {
                     .foregroundStyle({
                         if self.isFocused { return AnyShapeStyle(Color.black) }
                         else if self.role == .destructive { return AnyShapeStyle(Color.red) }
-                        else { return self.settings.themeCurrent.labelPrimary() }
+                        else { return self.theme.currentTheme.labelPrimary() }
                     }())
                 Spacer()
                 Text(sublabel)
-                    .foregroundStyle(self.settings.themeCurrent.labelSecondary())
+                    .foregroundStyle(self.theme.currentTheme.labelSecondary())
                     .fontWeight(.regular)
             }
         }
@@ -105,7 +106,7 @@ public struct DoubleMenu<Content: View>: View {
     /// Content to show in the menu
     @ViewBuilder public let content: () -> Content
     
-    @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     @FocusState private var isFocused: Bool
     
@@ -114,10 +115,10 @@ public struct DoubleMenu<Content: View>: View {
         label: {
             HStack {
                 Text(label)
-                    .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : self.settings.themeCurrent.labelPrimary())
+                    .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : self.theme.currentTheme.labelPrimary())
                 Spacer()
                 Text(sublabel)
-                    .foregroundStyle(self.settings.themeCurrent.labelSecondary())
+                    .foregroundStyle(self.theme.currentTheme.labelSecondary())
                     .fontWeight(.regular)
             }
         }
