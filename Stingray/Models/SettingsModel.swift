@@ -126,6 +126,7 @@ public final class SettingsModel {
     /// - Parameters:
     ///   - userModel: Storage location of users
     ///   - storage: Settings storage location
+    ///   - theme: Theme storage location
     public init(userModel: UserModel, storage: SettingsStorageProtocol, theme: ThemeModel) {
         self.storage = storage
         self.userModel = userModel
