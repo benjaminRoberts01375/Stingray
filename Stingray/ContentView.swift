@@ -41,7 +41,7 @@ public struct ContentView: View {
         self.navigationPath = NavigationPath()
         let themeModel = ThemeModel(
             darkTheme: userModel.activeUser?.darkTheme ?? .deepSea,
-            lightTheme: userModel.activeUser?.lightTheme ?? .notesApp,
+            lightTheme: userModel.activeUser?.lightTheme ?? .beach,
             colorScheme: ColorScheme.light
         )
         self.settings = SettingsModel(userModel: userModel, storage: settingStorage, theme: themeModel)

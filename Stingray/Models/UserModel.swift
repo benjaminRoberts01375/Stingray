@@ -163,7 +163,7 @@ public struct User: Codable, Identifiable, Hashable {
         pin: String? = nil,
         autplay: Bool = false,
         darkTheme: ThemeModel.Themes = .deepSea,
-        lightTheme: ThemeModel.Themes = .notesApp,
+        lightTheme: ThemeModel.Themes = .beach,
         playbackSpeed: PlaybackSpeed = .one,
         loadThumbnailArt: Bool = true,
         loadMediaBackgroundArt: Bool = true,
