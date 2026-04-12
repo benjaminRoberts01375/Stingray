@@ -19,6 +19,10 @@ public struct SettingsView: View {
     
     @Environment(UserModel.self) private var userModel: UserModel
     
+    @Environment(PurchasesModel.self) private var purchases: PurchasesModel
+    /// Controls the sheet to show the supporting Stingray screen
+    @State private var showSupportStingray: Bool = false
+    
     public var body: some View {
         @Bindable var settings = settings
         Form {
@@ -123,6 +127,31 @@ public struct SettingsView: View {
                 }
                 DoubleButton(label: "Replace Logos with Text", sublabel: self.settings.replaceLogosWithText ? "Enabled" : "Disabled") {
                     self.settings.replaceLogosWithText.toggle()
+                }
+            }
+            
+            // MARK: Supporting Stingray
+            Section( header: Text("Support Stingray").bold() ) {
+                DoubleButton(
+                    label: "Support Stingray",
+                    sublabel: {
+                        switch self.purchases.products {
+                        case .failed: return "Error loading products"
+                        case .fetching, .waiting: return "Loading..."
+                        case .ready: 
+                            return self.purchases.boughtSupporter ? "Thanks for supporting Stingray!" : "Become a supporter..."
+                        }
+                    }(),
+                    action: {
+                        switch self.purchases.products {
+                        case .ready: self.showSupportStingray = true
+                        default: break
+                        }
+                    }
+                )
+                .fullScreenCover(isPresented: $showSupportStingray) {
+                    SupportStingrayView()
+                        .stingrayBackground()
                 }
             }
             
