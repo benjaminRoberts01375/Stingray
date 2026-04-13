@@ -9,6 +9,9 @@ import SwiftUI
 
 /// How a theme needs to be built
 public protocol ThemeProtocol {
+    /// A light-weight stand-in for this theme that holds basic info like the name and description
+    var representation: ThemeModel.Themes { get }
+    
     /// Prefer dark mode or light mode SwiftUI rendering
     var colorScheme: ColorScheme { get }
     
@@ -42,6 +45,8 @@ public protocol ThemeProtocol {
 
 /// A dark blue color scheme, like deep in the ocean
 public final class ThemeDeepSea: ThemeProtocol {
+    public let representation: ThemeModel.Themes = .deepSea
+    
     public let colorScheme: ColorScheme = .dark
     
     public func appBackground() -> AnyView {
@@ -84,6 +89,8 @@ public final class ThemeDeepSea: ThemeProtocol {
 
 /// A white theme and grayscale theme
 public final class ThemeNotesAppLight: ThemeProtocol {
+    public let representation: ThemeModel.Themes = .notesApp
+    
     public let colorScheme: ColorScheme = .light
     
     public func appBackground() -> AnyView { AnyView(Color.white) }
@@ -107,6 +114,8 @@ public final class ThemeNotesAppLight: ThemeProtocol {
 
 /// A light theme with a little splash of color in the background
 public final class ThemeBeachLight: ThemeProtocol {
+    public let representation: ThemeModel.Themes = .beach
+    
     public let colorScheme: ColorScheme = .light
     public static let tan = Color(red: 1, green: 0.973, blue: 0.863)
     
@@ -142,6 +151,8 @@ public final class ThemeBeachLight: ThemeProtocol {
 
 /// A super dark theme
 public final class ThemeVoidDark: ThemeProtocol {
+    public let representation: ThemeModel.Themes = .void
+    
     public let colorScheme: ColorScheme = .dark
     
     public func appBackground() -> AnyView { AnyView(Color.black) }
