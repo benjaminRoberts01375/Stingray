@@ -14,7 +14,6 @@ public struct StingrayBackground: ViewModifier {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background { self.theme.currentTheme.appBackground() }
-            .ignoresSafeArea()
     }
 }
 
