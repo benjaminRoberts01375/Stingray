@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Manages the current theme
 @Observable
-public final class ThemeModel {
+public final class ThemeModel: Identifiable {
     /// Theme for system dark mode
     public var darkTheme: any ThemeProtocol
     /// Theme for system light mode
