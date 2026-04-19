@@ -51,6 +51,7 @@ public final class ThemeModel: Identifiable {
         case .notesApp: return ThemeNotesAppLight()
         case .beach: return ThemeBeachLight()
         case .void: return ThemeVoidDark()
+        case .test: return ThemeTestBeachLight()
         }
     }
     
@@ -60,6 +61,7 @@ public final class ThemeModel: Identifiable {
         case beach
         case deepSea
         case void
+        case test
         
         /// User facing name of the theme
         public var displayName: String {
@@ -68,6 +70,7 @@ public final class ThemeModel: Identifiable {
             case .notesApp: return "Notes App"
             case .beach: return "Beach"
             case .void: return "Void"
+            case .test: return "Testing"
             }
         }
         
@@ -78,6 +81,7 @@ public final class ThemeModel: Identifiable {
             case .notesApp: return "No thrills light grayscale"
             case .beach: return "A day at the beach"
             case .void: return "The void consumes all color"
+            case .test: return "Meant to be removed later"
             }
         }
         
@@ -88,6 +92,7 @@ public final class ThemeModel: Identifiable {
             case .beach: return false
             case .deepSea: return false
             case .void: return false
+            case .test: return true
             }
         }
     }

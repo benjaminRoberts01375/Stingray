@@ -247,3 +247,30 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
         catch let error { throw JSONError.failedJSONDecode("MediaImages", error) }
     }
 }
+
+/// Some media designed to be displayed as an example
+public final class ExampleMedia: SlimMediaProtocol {
+    public let id: String
+    
+    public let title: String
+    
+    public let errors: [any RError]?
+    
+    public let imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    
+    public let imageTags: (any MediaImagesProtocol)?
+    
+    public static func == (lhs: ExampleMedia, rhs: ExampleMedia) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    
+    public init(title: String) {
+        self.title = title
+        self.id = UUID().uuidString
+        self.errors = nil
+        self.imageBlurHashes = nil
+        self.imageTags = nil
+    }
+}

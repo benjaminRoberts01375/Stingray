@@ -173,3 +173,40 @@ public final class ThemeVoidDark: ThemeProtocol {
     
     public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
 }
+
+/// A light theme with a little splash of color in the background
+public final class ThemeTestBeachLight: ThemeProtocol {
+    public let representation: ThemeModel.Themes = .test
+    
+    public let colorScheme: ColorScheme = .light
+    public static let tan = Color(red: 1, green: 0.973, blue: 0.863)
+    
+    public func appBackground() -> AnyView {
+        AnyView(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.094, green: 0.635, blue: 0.996),
+                    Self.tan
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+    
+    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.thinMaterial) }
+    
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
+    
+    public func activeColor() -> Color { Color.white.opacity(0.5) }
+    
+    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+}
