@@ -15,7 +15,7 @@ public struct SupportStingrayView: View {
     private let exampleThemes: [ThemeModel] = [ // TODO: Temp themes. Real supporte themes will need to be used here
         ThemeModel(darkTheme: .notesApp, lightTheme: .notesApp, colorScheme: .light),
         ThemeModel(darkTheme: .void, lightTheme: .void, colorScheme: .dark),
-        ThemeModel(darkTheme: .test, lightTheme: .test, colorScheme: .light)
+        ThemeModel(darkTheme: .spaceVampires, lightTheme: .spaceVampires, colorScheme: .dark)
     ]
     
     public var body: some View {

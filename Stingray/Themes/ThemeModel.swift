@@ -47,11 +47,11 @@ public final class ThemeModel: Identifiable {
     /// - Returns: Mapped concrete theme
     public static func concreteThemeFromTheme(_ theme: Themes) -> any ThemeProtocol {
         switch theme {
-        case .deepSea: return ThemeDeepSea()
+        case .deepSea: return ThemeDeepSeaDark()
         case .notesApp: return ThemeNotesAppLight()
         case .beach: return ThemeBeachLight()
         case .void: return ThemeVoidDark()
-        case .test: return ThemeTestBeachLight()
+        case .spaceVampires: return ThemeSpaceVampiresDark()
         }
     }
     
@@ -61,7 +61,7 @@ public final class ThemeModel: Identifiable {
         case beach
         case deepSea
         case void
-        case test
+        case spaceVampires
         
         /// User facing name of the theme
         public var displayName: String {
@@ -70,7 +70,7 @@ public final class ThemeModel: Identifiable {
             case .notesApp: return "Notes App"
             case .beach: return "Beach"
             case .void: return "Void"
-            case .test: return "Testing"
+            case .spaceVampires: return "Space Vampires"
             }
         }
         
@@ -81,7 +81,7 @@ public final class ThemeModel: Identifiable {
             case .notesApp: return "No thrills light grayscale"
             case .beach: return "A day at the beach"
             case .void: return "The void consumes all color"
-            case .test: return "Meant to be removed later"
+            case .spaceVampires: return "Dracula on a clear night"
             }
         }
         
@@ -92,7 +92,7 @@ public final class ThemeModel: Identifiable {
             case .beach: return false
             case .deepSea: return false
             case .void: return false
-            case .test: return true
+            case .spaceVampires: return true
             }
         }
     }
