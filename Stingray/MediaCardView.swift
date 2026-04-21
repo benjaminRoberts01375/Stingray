@@ -59,7 +59,7 @@ public struct MediaCard: View {
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .truncationMode(.tail)
-                        .foregroundStyle(self.theme.currentTheme.labelPrimary())
+                        .foregroundStyle(self.theme.currentTheme.header2())
                         .padding(.horizontal, 5)
                         .padding(.top, 5)
                     Spacer(minLength: 0)
