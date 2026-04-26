@@ -112,6 +112,153 @@ public final class ThemeNotesAppLight: ThemeProtocol {
     public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
 }
 
+/// A light theme that has a white base with splashes of color that subtly move around
+public final class ThemeFrostyLight: ThemeProtocol {
+    public static let darkPink = Color(
+        red: 0.3803921568627451,
+        green: 0.12941176470588237,
+        blue: 0.17647058823529413
+    )
+    
+    public let representation: ThemeModel.Themes = .frosty
+    
+    public let colorScheme: ColorScheme = .light
+    
+    public func appBackground() -> AnyView {
+        AnyView( SlidingBubblesView() )
+    }
+    
+    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.clear) }
+    
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.blue) }
+    
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
+    
+    public func activeColor() -> Color { Color.blue.opacity(0.15) }
+    
+    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func addProfileStyle() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.blue) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Self.darkPink) }
+    
+    /// Circles that slowly fade in and fade out with subtle movements
+    public struct SlidingBubblesView: View {
+        @State private var bubbles: [BubbleModel] = []
+        @State private var spawnTimer: Timer?
+        
+        public var body: some View {
+            GeometryReader { geo in
+                ZStack {
+                    Color.white
+                    ForEach(self.bubbles) { SlidingBubbleView(bubble: $0) }
+                }
+                .onAppear {
+                    // Start some initial bubbles
+                    let count = Int(((geo.size.width * geo.size.height) / 207360).rounded(.awayFromZero) ) // 10 at 4k
+                    let duration = { return TimeInterval.random(in: 8...15) }
+                    self.bubbles = (1...count).map { i in
+                        BubbleModel(
+                            startPosition: CGPoint(
+                                x: CGFloat.random(in: -50...geo.size.width + 50),
+                                y: CGFloat.random(in: -50...geo.size.height + 50)
+                            ),
+                            duration: duration() * Double(i) // Stagger disappear
+                        )
+                    }
+                    
+                    // Setup bubble spawning
+                    self.spawnTimer = Timer.scheduledTimer(withTimeInterval: 11.5 / Double(count), repeats: true) { _ in
+                        self.bubbles.append(
+                            BubbleModel(
+                                startPosition: CGPoint(
+                                    x: CGFloat.random(in: -50...geo.size.width + 50),
+                                    y: CGFloat.random(in: -50...geo.size.height + 50)
+                                ),
+                                duration: duration()
+                            )
+                        )
+                        self.bubbles.removeAll(where: { $0.complete })
+                    }
+                }
+                .onDisappear { self.spawnTimer?.invalidate() }
+            }
+        }
+    }
+    
+    /// A single circle that fades in, slides a bit, and fades out
+    public struct SlidingBubbleView: View {
+        /// Data about the bubble to animate
+        @State public var bubble: BubbleModel
+        
+        public var body: some View {
+            Circle()
+                .fill(self.bubble.color.opacity(self.bubble.opacity))
+                .frame(width: self.bubble.radius, height: self.bubble.radius)
+                .position(self.bubble.startPosition)
+                .blur(radius: self.bubble.radius * 0.4)
+                .offset(self.bubble.offsetPosition)
+                .onAppear {
+                    // Move the bubble
+                    let distance: CGFloat = 10
+                    withAnimation(.linear(duration: self.bubble.duration)) {
+                        self.bubble.offsetPosition = CGSize(
+                            width: self.bubble.duration * CGFloat.random(in: -distance...distance),
+                            height: self.bubble.duration * CGFloat.random(in: -distance...distance)
+                        )
+                    }
+                    
+                    // Start to fade in
+                    withAnimation(.linear(duration: BubbleModel.fadeTime)) {
+                        self.bubble.opacity = Double.random(in: 0.2...0.5)
+                    }
+                    
+                    // Fade out
+                    withAnimation(.linear(duration: BubbleModel.fadeTime).delay(self.bubble.duration - BubbleModel.fadeTime)) {
+                        self.bubble.opacity = 0
+                        Task { // Delay the deletion time so the transition can complete
+                            try? await Task.sleep(for: .seconds(self.bubble.duration))
+                            await MainActor.run { self.bubble.complete = true }
+                        }
+                    }
+                }
+        }
+    }
+    
+    /// Animation data for a bubble
+    @Observable
+    public final class BubbleModel: Identifiable {
+        /// Where on screen the bubble starts
+        public let startPosition: CGPoint
+        /// 1/2 the size of the bubble
+        public let radius: CGFloat = CGFloat.random(in: 100...500)
+        /// Color of the bubble
+        public let color: Color = [.red, .blue, .green, .yellow, .orange, .cyan, .indigo, .mint, .pink, .teal].randomElement() ?? .red
+        /// How long the bubble should be shown for
+        public let duration: TimeInterval
+
+        /// Bubble transparency
+        public var opacity: Double = 0
+        /// How far the bubble slides
+        public var offsetPosition: CGSize = .zero
+        /// Tracks when the animation is complete. Set by the `SlidingBubbleView`
+        public var complete: Bool = false
+
+        /// How long it takes for a bubble to fade in/out
+        public static let fadeTime: TimeInterval = 1.5
+        
+        /// Sets up the data for a bubble
+        /// - Parameters:
+        ///   - startPosition: Where on screen the bubble should start
+        public init(startPosition: CGPoint, duration: TimeInterval) {
+            self.startPosition = startPosition
+            self.duration = duration
+        }
+    }
+}
+
 /// A light theme with a little splash of color in the background
 public final class ThemeBeachLight: ThemeProtocol {
     public let representation: ThemeModel.Themes = .beach

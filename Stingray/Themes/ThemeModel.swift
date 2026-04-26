@@ -52,12 +52,14 @@ public final class ThemeModel: Identifiable {
         case .beach: return ThemeBeachLight()
         case .void: return ThemeVoidDark()
         case .spaceVampires: return ThemeSpaceVampiresDark()
+        case .frosty: return ThemeFrostyLight()
         }
     }
     
     /// Available themes to choose from
     public enum Themes: Codable, CaseIterable {
         case notesApp
+        case frosty
         case beach
         case deepSea
         case void
@@ -71,6 +73,7 @@ public final class ThemeModel: Identifiable {
             case .beach: return "Beach"
             case .void: return "Void"
             case .spaceVampires: return "Space Vampires"
+            case .frosty: return "Frosty"
             }
         }
         
@@ -82,6 +85,7 @@ public final class ThemeModel: Identifiable {
             case .beach: return "A day at the beach"
             case .void: return "The void consumes all color"
             case .spaceVampires: return "Dracula on a clear night"
+            case .frosty: return "Little splashes of color"
             }
         }
         
@@ -93,6 +97,7 @@ public final class ThemeModel: Identifiable {
             case .deepSea: return false
             case .void: return false
             case .spaceVampires: return true
+            case .frosty: return true
             }
         }
     }
