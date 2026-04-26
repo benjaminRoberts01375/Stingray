@@ -155,6 +155,7 @@ public final class ThemeFrostyLight: ThemeProtocol {
                     Color.white
                     ForEach(self.bubbles) { SlidingBubbleView(bubble: $0) }
                 }
+                .drawingGroup() // Render to offscreen buffer for better performance
                 .onAppear {
                     // Start some initial bubbles
                     let count = Int(((geo.size.width * geo.size.height) / 207360).rounded(.awayFromZero) ) // 10 at 4k
@@ -196,32 +197,29 @@ public final class ThemeFrostyLight: ThemeProtocol {
         public var body: some View {
             Circle()
                 .fill(self.bubble.color.opacity(self.bubble.opacity))
+                .animation(.linear(duration: BubbleModel.fadeTime), value: self.bubble.opacity)
                 .frame(width: self.bubble.radius, height: self.bubble.radius)
                 .position(self.bubble.startPosition)
                 .blur(radius: self.bubble.radius * 0.4)
                 .offset(self.bubble.offsetPosition)
+                .animation(.linear(duration: self.bubble.duration), value: self.bubble.offsetPosition)
                 .onAppear {
+                    // Start to fade in
+                    self.bubble.opacity = Double.random(in: 0.2...0.5)
+                    
                     // Move the bubble
                     let distance: CGFloat = 10
-                    withAnimation(.linear(duration: self.bubble.duration)) {
-                        self.bubble.offsetPosition = CGSize(
-                            width: self.bubble.duration * CGFloat.random(in: -distance...distance),
-                            height: self.bubble.duration * CGFloat.random(in: -distance...distance)
-                        )
-                    }
-                    
-                    // Start to fade in
-                    withAnimation(.linear(duration: BubbleModel.fadeTime)) {
-                        self.bubble.opacity = Double.random(in: 0.2...0.5)
-                    }
+                    self.bubble.offsetPosition = CGSize(
+                        width: self.bubble.duration * CGFloat.random(in: -distance...distance),
+                        height: self.bubble.duration * CGFloat.random(in: -distance...distance)
+                    )
                     
                     // Fade out
-                    withAnimation(.linear(duration: BubbleModel.fadeTime).delay(self.bubble.duration - BubbleModel.fadeTime)) {
+                    Task { // Delay the deletion time so the transition can complete
+                        try? await Task.sleep(for: .seconds(self.bubble.duration - BubbleModel.fadeTime))
                         self.bubble.opacity = 0
-                        Task { // Delay the deletion time so the transition can complete
-                            try? await Task.sleep(for: .seconds(self.bubble.duration))
-                            await MainActor.run { self.bubble.complete = true }
-                        }
+                        try? await Task.sleep(for: .seconds(BubbleModel.fadeTime))
+                        await MainActor.run { self.bubble.complete = true }
                     }
                 }
         }
