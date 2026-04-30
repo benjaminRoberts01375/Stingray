@@ -53,6 +53,7 @@ public final class ThemeModel: Identifiable {
         case .void: return ThemeVoidDark()
         case .spaceVampires: return ThemeSpaceVampiresDark()
         case .frosty: return ThemeFrostyLight()
+        case .retro: return ThemeRetroMid()
         }
     }
     
@@ -61,9 +62,10 @@ public final class ThemeModel: Identifiable {
         case notesApp
         case frosty
         case beach
+        case retro
         case deepSea
-        case void
         case spaceVampires
+        case void
         
         /// User facing name of the theme
         public var displayName: String {
@@ -74,6 +76,7 @@ public final class ThemeModel: Identifiable {
             case .void: return "Void"
             case .spaceVampires: return "Space Vampires"
             case .frosty: return "Frosty"
+            case .retro: return "Synth"
             }
         }
         
@@ -86,18 +89,15 @@ public final class ThemeModel: Identifiable {
             case .void: return "The void consumes all color"
             case .spaceVampires: return "Dracula on a clear night"
             case .frosty: return "Little splashes of color"
+            case .retro: return "Ride like the 2000's"
             }
         }
         
         /// Check if the theme requires being a supporter
         public var requiresSupporter: Bool {
             switch self {
-            case .notesApp: return false
-            case .beach: return false
-            case .deepSea: return false
-            case .void: return false
-            case .spaceVampires: return true
-            case .frosty: return true
+            case .retro, .frosty, .spaceVampires: return true
+            default: return false
             }
         }
     }

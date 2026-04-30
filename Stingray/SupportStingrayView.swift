@@ -12,9 +12,9 @@ public struct SupportStingrayView: View {
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
     @State private var error: RError?
     
-    private let exampleThemes: [ThemeModel] = [ // TODO: Temp themes. Real supporte themes will need to be used here
+    private let exampleThemes: [ThemeModel] = [
         ThemeModel(darkTheme: .frosty, lightTheme: .frosty, colorScheme: .light),
-        ThemeModel(darkTheme: .void, lightTheme: .void, colorScheme: .dark),
+        ThemeModel(darkTheme: .retro, lightTheme: .retro, colorScheme: .dark),
         ThemeModel(darkTheme: .spaceVampires, lightTheme: .spaceVampires, colorScheme: .dark)
     ]
     

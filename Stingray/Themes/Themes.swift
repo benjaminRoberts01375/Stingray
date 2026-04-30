@@ -236,14 +236,14 @@ public final class ThemeFrostyLight: ThemeProtocol {
         public let color: Color = [.red, .blue, .green, .yellow, .orange, .cyan, .indigo, .mint, .pink, .teal].randomElement() ?? .red
         /// How long the bubble should be shown for
         public let duration: TimeInterval
-
+        
         /// Bubble transparency
         public var opacity: Double = 0
         /// How far the bubble slides
         public var offsetPosition: CGSize = .zero
         /// Tracks when the animation is complete. Set by the `SlidingBubbleView`
         public var complete: Bool = false
-
+        
         /// How long it takes for a bubble to fade in/out
         public static let fadeTime: TimeInterval = 1.5
         
@@ -550,4 +550,242 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     public func header1() -> AnyShapeStyle { AnyShapeStyle(Self.pink) }
     
     public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.yellow) }
+}
+
+/// A beach with water coming in and out
+public final class ThemeRetroMid: ThemeProtocol {
+    public static let gridColor = Color(red: 0.7411764705882353, green: 0.17254901960784313, blue: 0.4823529411764706) // #BD2C7B
+    
+    public let representation: ThemeModel.Themes = .retro
+    
+    public let colorScheme: ColorScheme = .dark
+    
+    public func appBackground() -> AnyView {
+        AnyView(RetroVibes())
+    }
+    
+    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.regularMaterial) }
+    
+    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    
+    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
+    
+    public func activeColor() -> Color { RetroVibes.deepYellow.opacity(0.75) }
+    
+    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(RetroVibes.deepPurple) }
+    
+    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
+    
+    public func header1() -> AnyShapeStyle { AnyShapeStyle(RetroVibes.deepYellow) }
+    
+    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    
+    public struct RetroVibes: View {
+        public static let deepPurple = Color(red: 0.11764705882352941, green: 0.011764705882352941, blue: 0.23529411764705882)
+        public static let deepPink = Color(red: 0.7333333333333333, green: 0.0784313725490196, blue: 0.42745098039215684)
+        public static let deepYellow = Color(red: 1, green: 0.9372549019607843, blue: 0.615686274509804)
+        
+        public let columns: Int = 15
+        public let rows: Int = 16
+        /// X position of the vanishing point (0.0 = left, 1.0 = right)
+        public let vanishingPointX: CGFloat = 0.5
+        /// Seconds for one row's worth of grid travel toward the camera
+        public let cycleDuration: Double = 60.0
+        
+        public var body: some View {
+            GeometryReader { geo in
+                ZStack {
+                    Circle()
+                        .foregroundStyle(
+                            RadialGradient(
+                                colors: [.clear, .orange.opacity(0.45), Self.deepYellow],
+                                center: UnitPoint(x: 1.4, y: -0.3),
+                                startRadius: 30,
+                                endRadius: 1000
+                            )
+                        )
+                        .brightness(0.1)
+                        .offset(y: -geo.size.height / 4)
+                        .frame(height: geo.size.height / 2.5)
+                    VStack(alignment: .center, spacing: 0) {
+                        Spacer(minLength: 0)
+                        ZStack {
+                            HStack { // Background mountains
+                                Triangle()
+                                    .frame(width: geo.size.width / 3, height: geo.size.height / 3)
+                                    .offset(x: CGFloat.random(in: 100...250))
+                                Triangle()
+                                    .frame(width: geo.size.width / 3, height: geo.size.height / 3)
+                                    .offset(x: CGFloat.random(in: 100...200))
+                                Triangle()
+                                    .frame(width: geo.size.width / 3, height: geo.size.height / 3)
+                                    .offset(x: CGFloat.random(in: -200...100))
+                                Triangle()
+                                    .frame(width: geo.size.width / 3, height: geo.size.height / 3)
+                                    .offset(x: CGFloat.random(in: -300...100))
+                            }
+                            .foregroundStyle(
+                                LinearGradient(
+                                    stops: [
+                                        Gradient.Stop(
+                                            color: Self.deepPurple,
+                                            location: 0.5
+                                        ),
+                                        Gradient.Stop(
+                                            color: .pink,
+                                            location: 1.2
+                                        )
+                                    ],
+                                    startPoint: .bottom,
+                                    endPoint: .top
+                                )
+                            )
+                            
+                            HStack(alignment: .bottom) { // Midground mountains
+                                ForEach(0..<4) { _ in
+                                    Triangle()
+                                        .frame(
+                                            height: geo.size.height / (CGFloat.random(in: 4...6)),
+                                            alignment: .bottom
+                                        )
+                                        .offset(x: CGFloat.random(in: -400...400))
+                                }
+                            }
+                            .frame(maxWidth: geo.size.width * 1.3, maxHeight: geo.size.height / 3, alignment: .bottom)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    stops: [
+                                        Gradient.Stop(
+                                            color: Self.deepPurple,
+                                            location: 0.3
+                                        ),
+                                        Gradient.Stop(
+                                            color: .pink,
+                                            location: 1.2
+                                        )
+                                    ],
+                                    startPoint: .bottom,
+                                    endPoint: .top
+                                )
+                            )
+                            .brightness(0.03)
+                            
+                            HStack { // Foreground mountains
+                                Triangle()
+                                    .frame(maxHeight: geo.size.height / 3 - 40)
+                                    .offset(x: CGFloat.random(in: -100...0))
+                                Triangle()
+                                    .frame(maxHeight: geo.size.height / 3 - 40)
+                                Triangle()
+                                    .frame(maxHeight: geo.size.height / 3 - 40)
+                                    .offset(x: CGFloat.random(in: 0...100))
+                            }
+                            .frame(maxWidth: geo.size.width, maxHeight: geo.size.height / 3, alignment: .bottom)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Self.deepPurple, .pink],
+                                    startPoint: .bottom,
+                                    endPoint: .top
+                                )
+                            )
+                            .brightness(0.04)
+                        }
+                        .frame(width: geo.size.width, height: geo.size.height / 3, alignment: .bottom)
+                        .clipped()
+                        
+                        // Ground
+                        TimelineView(.animation) { timeline in
+                            Canvas { context, size in
+                                let elapsed = timeline.date.timeIntervalSinceReferenceDate
+                                let phase = CGFloat(elapsed.truncatingRemainder(dividingBy: cycleDuration) / cycleDuration)
+                                context.stroke(
+                                    self.floorGenerator(in: size, phase: phase),
+                                    with: .color(ThemeRetroMid.gridColor),
+                                    lineWidth: 5
+                                )
+                            }
+                        }
+                        .frame(maxHeight: geo.size.height / 3)
+                        .background(
+                            RadialGradient(
+                                colors: [.pink, Self.deepPurple],
+                                center: UnitPoint(x: 0.5, y: 1.3),
+                                startRadius: 5,
+                                endRadius: 400
+                            )
+                        )
+                        .background(Self.deepPurple)
+                    }
+                }
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Self.deepYellow,
+                            Self.deepPink,
+                            Self.deepPurple
+                        ],
+                        startPoint: .center,
+                        endPoint: .top
+                    )
+                )
+            }
+        }
+        
+        /// Generates a grid floor
+        /// - Parameters:
+        ///   - size: Available size to draw the floor
+        ///   - phase: Offset of the horizontal lines for animation
+        /// - Returns: The planned floor
+        public func floorGenerator(in size: CGSize, phase: CGFloat = 0) -> Path {
+            var path = Path()
+            
+            // Vanishing point sits above the canvas; horizonOffset controls perspective steepness
+            let horizonOffset = size.height * 0.5
+            let vanishingPoint = CGPoint(
+                x: size.width * vanishingPointX,
+                y: -horizonOffset
+            )
+            
+            // Bottom extension factor — how far past the canvas bottom edge the lines reach
+            let s = 1 + size.height / horizonOffset
+            
+            // Column lines: top spans 0...size.width, bottom fans past the canvas edges
+            for col in 0...columns {
+                let t = CGFloat(col) / CGFloat(columns)
+                let topX = t * size.width
+                let bottomX = vanishingPoint.x + s * (topX - vanishingPoint.x)
+                
+                path.move(to: CGPoint(x: topX, y: 0))
+                path.addLine(to: CGPoint(x: bottomX, y: size.height))
+            }
+            
+            // Horizontal rows: phase shifts each row toward the camera, wrapping at the horizon
+            for row in 0...rows {
+                var raw = CGFloat(row) / CGFloat(rows) + phase
+                raw -= floor(raw)
+                let curved = raw * raw
+                let y = curved * size.height
+                
+                let rowS = (y + horizonOffset) / horizonOffset
+                let leftX = vanishingPoint.x + rowS * (0 - vanishingPoint.x)
+                let rightX = vanishingPoint.x + rowS * (size.width - vanishingPoint.x)
+                
+                path.move(to: CGPoint(x: leftX, y: y))
+                path.addLine(to: CGPoint(x: rightX, y: y))
+            }
+            
+            return path
+        }
+    }
+}
+
+public struct Triangle: Shape {
+    public func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.closeSubpath()
+        }
+    }
 }
