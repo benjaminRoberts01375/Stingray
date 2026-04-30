@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// MARK: Themes
 /// How a theme needs to be built
 public protocol ThemeProtocol {
     /// A light-weight stand-in for this theme that holds basic info like the name and description
@@ -777,6 +778,42 @@ public final class ThemeRetroMid: ThemeProtocol {
             return path
         }
     }
+}
+
+// MARK: Previews
+#Preview("Deep Sea") {
+    ThemeDeepSeaDark().appBackground()
+        .ignoresSafeArea()
+}
+
+#Preview("Notes App") {
+    ThemeNotesAppLight().appBackground()
+        .ignoresSafeArea()
+}
+
+#Preview("Frosty") {
+    ThemeFrostyLight().appBackground()
+        .ignoresSafeArea()
+}
+
+#Preview("Beach") {
+    ThemeBeachLight().appBackground()
+        .ignoresSafeArea()
+}
+
+#Preview("Void") {
+    ThemeVoidDark().appBackground()
+        .ignoresSafeArea()
+}
+
+#Preview("Space Vampires") {
+    ThemeSpaceVampiresDark().appBackground()
+        .ignoresSafeArea()
+}
+
+#Preview("Retro") {
+    ThemeRetroMid().appBackground()
+        .ignoresSafeArea()
 }
 
 public struct Triangle: Shape {
