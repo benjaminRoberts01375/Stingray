@@ -159,3 +159,91 @@ public extension View {
         modifier(AvailableGlass(shape: shape, padding: padding))
     }
 }
+
+/// Makes text taste the rainbow
+public struct RainbowText: View {
+    /// Text to rainbow-ify
+    public let text: String
+    /// Animation phase
+    @State private var phase: Double = 0
+    /// Colors of the rainbow starting with red
+    private static let colors: [RGB] = [
+        RGB(red: 1.0, green: 0.0, blue: 0.0), // Red
+        RGB(red: 1.0, green: 0.5, blue: 0.0), // Orange
+        RGB(red: 1.0, green: 1.0, blue: 0.0), // Yellow
+        RGB(red: 0.0, green: 1.0, blue: 0.0), // Green
+        RGB(red: 0.0, green: 1.0, blue: 1.0), // Cyan
+        RGB(red: 0.0, green: 0.0, blue: 1.0), // Blue
+        RGB(red: 0.5, green: 0.0, blue: 0.5)  // Purple
+    ]
+    
+    public var body: some View {
+        TimelineView(.animation) { timeline in
+            HStack(spacing: 0) {
+                ForEach(Array(self.text.enumerated()), id: \.offset) { index, character in
+                    Text(String(character))
+                        .foregroundStyle(self.colorForIndex(index, at: timeline.date))
+                        .saturation(0.75)
+                }
+            }
+        }
+    }
+    
+    /// Calculate the interpolated rainbow color for a character at a specific index and time.
+    /// - Parameters:
+    ///   - index: The position of the character in the text string.
+    ///   - date: The current date/time used to animate the rainbow effect.
+    /// - Returns: The interpolated color for this character at this moment in time.
+    private func colorForIndex(_ index: Int, at date: Date) -> Color {
+        let colorCount = Double(Self.colors.count)
+        let timeOffset = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2.0) / 2.0
+        let letterOffset = Double(index) / Double(self.text.count)
+        var animatedOffset = (letterOffset - timeOffset).truncatingRemainder(dividingBy: 1.0)
+        
+        // Ensure animatedOffset is always positive
+        if animatedOffset < 0 { animatedOffset += 1.0 }
+        
+        let colorIndex = Int(animatedOffset * colorCount)
+        let nextColorIndex = (colorIndex + 1) % Self.colors.count
+        let fraction = (animatedOffset * colorCount).truncatingRemainder(dividingBy: 1.0)
+        
+        // Interpolate between colors for smooth transitions
+        return interpolateColor(
+            from: Self.colors[colorIndex],
+            to: Self.colors[nextColorIndex],
+            iFrac: fraction
+        )
+    }
+    
+    /// Smoothly blend between two colors using linear interpolation. Helpful if the word doesn't perfectly fit the rainbow
+    /// - Parameters:
+    ///   - from: The starting color.
+    ///   - to: The ending color.
+    ///   - iFrac: The interpolation fraction between 0.0 (all `from`) and 1.0 (all `to`).
+    /// - Returns: A blended color.
+    private func interpolateColor(from fromColor: RGB, to toColor: RGB, iFrac: Double) -> Color {
+        // This creates a gradient-like blend between colors
+        return Color(
+            red: linearInterpolation(from: fromColor.red, to: toColor.red, i: iFrac),
+            green: linearInterpolation(from: fromColor.green, to: toColor.green, i: iFrac),
+            blue: linearInterpolation(from: fromColor.blue, to: toColor.blue, i: iFrac)
+        )
+    }
+    
+    /// Perform linear interpolation between two values.
+    /// - Parameters:
+    ///   - from: The starting value.
+    ///   - to: The ending value.
+    ///   - interpolation: The interpolation parameter between 0.0 and 1.0.
+    /// - Returns: The interpolated value.
+    private func linearInterpolation(from: Double, to: Double, i interpolation: Double) -> Double {
+        return from + (to - from) * interpolation
+    }
+    
+    /// RGB color components.
+    private struct RGB {
+        let red: Double
+        let green: Double
+        let blue: Double
+    }
+}
