@@ -35,11 +35,26 @@ public struct SupportStingrayView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
                 }
+                .frame(maxWidth: .infinity)
+                
                 VStack {
                     if self.purchases.boughtSupporter {
-                        Text("Thanks!")
-                            .font(.title)
-                            .bold()
+                        VStack {
+                            RainbowText(text: "Thanks!")
+                                .font(.title3)
+                                .bold()
+                            Text("""
+                        This really means a lot, and helps keep development and updates free for everyone else. Free and Open Source \
+                        Software (FOSS) is some of the most important software made, and you just did your part to keep it possible.
+                        """)
+                            .multilineTextAlignment(.center)
+                            .padding(.vertical)
+                            Text("Thank you, and go watch something awesome in style :)")
+                        }
+                        .availableGlass()
+                        Text("PS - Frosty with Space Vampires is my day-to-day setup.")
+                            .foregroundStyle(.secondary)
+                            .padding(.top)
                     }
                     else if let error = error { ErrorView(error: error, summary: "Failed to purchase") }
                     else {
@@ -74,6 +89,7 @@ public struct SupportStingrayView: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
             Spacer()
         }
