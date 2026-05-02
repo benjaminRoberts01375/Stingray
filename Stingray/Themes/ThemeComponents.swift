@@ -125,3 +125,37 @@ public struct DoubleMenu<Content: View>: View {
         .focused($isFocused, equals: true)
     }
 }
+
+/// Uses liquid glass if available, and falls back to `ultraThinMaterial` if needed (with a shape)
+public struct AvailableGlass<S: Shape>: ViewModifier {
+    /// Shape for either the material or liquid glass to take
+    public let shape: S
+    /// Padding between content and edge
+    public let padding: CGFloat
+    
+    public func body(content: Content) -> some View {
+        if #available(tvOS 26.0, *) {
+            content
+                .padding(self.padding)
+                .glassEffect(.regular, in: self.shape)
+                .padding(-self.padding)
+        }
+        else {
+            content
+                .padding(self.padding)
+                .background(.ultraThinMaterial, in: self.shape)
+                .padding(-self.padding)
+        }
+    }
+}
+
+/// An extension for adding theme-related modifers to views
+public extension View {
+    /// Switches between iOS 18's `ultraThinMaterial` and tvOS 26's regular `glassEffect`
+    /// - Parameter shape: Shape the background takes
+    /// - Parameter padding: Padding between edge and content
+    /// - Returns: View with background
+    func availableGlass<S: Shape>(in shape: S = .rect(cornerRadius: 24.0), padding: CGFloat = 20) -> some View {
+        modifier(AvailableGlass(shape: shape, padding: padding))
+    }
+}
