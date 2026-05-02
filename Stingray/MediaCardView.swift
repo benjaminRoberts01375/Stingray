@@ -10,6 +10,7 @@ import SwiftUI
 
 public struct MediaCard: View {
     @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     public let media: any SlimMediaProtocol
     public let url: URL?
@@ -17,7 +18,6 @@ public struct MediaCard: View {
     @State private var showError: Bool = false
     
     public static let cardSize = CGSize(width: 200, height: 370)
-    public static let imageHeight = Self.cardSize.height - 85
     
     public init(media: any SlimMediaProtocol, streamingService: StreamingServiceProtocol, action: @escaping @MainActor () -> Void) {
         self.media = media
@@ -59,7 +59,7 @@ public struct MediaCard: View {
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .truncationMode(.tail)
-                        .foregroundStyle(self.settings.themeCurrent.labelPrimary())
+                        .foregroundStyle(self.theme.currentTheme.header2())
                         .padding(.horizontal, 5)
                         .padding(.top, 5)
                     Spacer(minLength: 0)
@@ -71,7 +71,7 @@ public struct MediaCard: View {
                         .bold()
                         .multilineTextAlignment(.center)
                         .truncationMode(.tail)
-                        .foregroundStyle(self.settings.themeCurrent.header2())
+                        .foregroundStyle(self.theme.currentTheme.header2())
                         .padding(.horizontal)
                         .frame(width: Self.cardSize.width)
                     Spacer(minLength: 0)
@@ -94,7 +94,7 @@ public struct MediaCard: View {
                 ErrorExpandedView(errorDesc: errors.rDescription)
             }
         }
-        .frame(width: Self.cardSize.width, height: Self.cardSize.height)
+        .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
         .id(media.id) // Stabilize view identity
     }
 }

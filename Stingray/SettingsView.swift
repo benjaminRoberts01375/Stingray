@@ -19,6 +19,10 @@ public struct SettingsView: View {
     
     @Environment(UserModel.self) private var userModel: UserModel
     
+    @Environment(PurchasesModel.self) private var purchases: PurchasesModel
+    /// Controls the sheet to show the supporting Stingray screen
+    @State private var showSupportStingray: Bool = false
+    
     public var body: some View {
         @Bindable var settings = settings
         Form {
@@ -105,35 +109,11 @@ public struct SettingsView: View {
             Section( header: Text("Themes").bold() ) {
                 // Light mode
                 DoubleMenu(label: "Light Mode", sublabel: self.settings.themeLight.displayName) {
-                    ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
-                        Button { self.settings.themeLight = option }
-                        label: {
-                            if self.settings.themeLight == option {
-                                Label(option.displayName, systemImage: "checkmark")
-                                Text(option.description)
-                            }
-                            else {
-                                Text(option.displayName)
-                                Text(option.description)
-                            }
-                        }
-                    }
+                    ThemesListView(showSupportStingray: $showSupportStingray, themeType: .light)
                 }
                 // Dark mode
                 DoubleMenu(label: "Dark Mode", sublabel: self.settings.themeDark.displayName) {
-                    ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
-                        Button { self.settings.themeDark = option }
-                        label: {
-                            if self.settings.themeDark == option {
-                                Label(option.displayName, systemImage: "checkmark")
-                                Text(option.description)
-                            }
-                            else {
-                                Text(option.displayName)
-                                Text(option.description)
-                            }
-                        }
-                    }
+                    ThemesListView(showSupportStingray: $showSupportStingray, themeType: .dark)
                 }
             }
             
@@ -150,6 +130,32 @@ public struct SettingsView: View {
                 }
             }
             
+            // MARK: Supporting Stingray
+            Section( header: Text("Support Stingray").bold() ) {
+                DoubleButton(
+                    label: "Support Stingray",
+                    sublabel: {
+                        switch self.purchases.products {
+                        case .failed: return "Error loading products"
+                        case .fetching, .waiting: return "Loading..."
+                        case .ready: 
+                            return self.purchases.boughtSupporter ? "Thanks for supporting Stingray!" : "Become a supporter..."
+                        }
+                    }(),
+                    action: {
+                        switch self.purchases.products {
+                        case .ready: self.showSupportStingray = true
+                        default: break
+                        }
+                    }
+                )
+                .fullScreenCover(isPresented: $showSupportStingray) {
+                    SupportStingrayView()
+                        .stingrayBackground()
+                        .ignoresSafeArea()
+                }
+            }
+            
             // MARK: Connection info
             Section {
                 switch loginState {
@@ -163,6 +169,43 @@ public struct SettingsView: View {
                 }
             }
             .listRowBackground(Color.clear)
+        }
+    }
+}
+
+/// Lists all available themes and allows the user to update their theme preferences
+public struct ThemesListView: View {
+    @Environment(SettingsModel.self) private var settings
+    @Environment(PurchasesModel.self) private var purchases
+    @Binding public var showSupportStingray: Bool
+    
+    /// Is the list meant to set dark or light mode themes
+    public let themeType: ColorScheme
+    
+    public var body: some View {
+        ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
+            Button {
+                if !self.purchases.boughtSupporter && option.requiresSupporter {
+                    self.showSupportStingray = true
+                }
+                else if self.themeType == .dark { self.settings.themeDark = option }
+                else { self.settings.themeLight = option }
+            }
+            label: {
+                let currentTheme = self.themeType == .dark ? self.settings.themeDark : self.settings.themeLight
+                if currentTheme == option {
+                    Label(option.displayName, systemImage: "checkmark")
+                    Text(option.description)
+                }
+                else if option.requiresSupporter && !self.purchases.boughtSupporter {
+                    Label(option.displayName, systemImage: "lock.fill")
+                    Text(option.description)
+                }
+                else {
+                    Text(option.displayName)
+                    Text(option.description)
+                }
+            }
         }
     }
 }

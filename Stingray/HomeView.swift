@@ -74,7 +74,7 @@ fileprivate struct DashboardRow: View {
     
     @State private var status: DashboardRowStatus = .unstarted
     
-    @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -84,7 +84,7 @@ fileprivate struct DashboardRow: View {
             default:
                 Text(title)
                     .font(.title2.bold())
-                    .foregroundStyle(self.settings.themeCurrent.header1())
+                    .foregroundStyle(self.theme.currentTheme.header1())
                     .task {
                         // Check if we already have cached data
                         if let cachedMedia = cache[title] {
@@ -172,10 +172,10 @@ fileprivate struct MediaNavigationLoadingPicker: View {
     }
 }
 
-fileprivate struct MediaNavigationLoadingCard: View {
+public struct MediaNavigationLoadingCard: View {
     private let randomWordCount = Int.random(in: 3...5)
     
-    var body: some View {
+    public var body: some View {
         Button {
             
         } label: {

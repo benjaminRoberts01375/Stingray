@@ -74,7 +74,7 @@ fileprivate struct PlayerDescriptionView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
-                .modifier(MaterialEffectModifier())
+                .availableGlass()
                 
                 switch media.mediaType {
                 case .movies, .unknown:
@@ -93,7 +93,7 @@ fileprivate struct PlayerDescriptionView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         .padding()
-                        .modifier(MaterialEffectModifier())
+                        .availableGlass()
                     }
                 }
             }
@@ -110,7 +110,7 @@ fileprivate struct PlayerPeopleView: View {
         PeopleBrowserView(media: self.media, streamingService: self.streamingService)
             .padding()
             .padding(.horizontal, 24)
-            .modifier(MaterialEffectModifier())
+            .availableGlass()
     }
 }
 
@@ -172,7 +172,7 @@ fileprivate struct PlayerStreamingStats: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
-                .modifier(MaterialEffectModifier())
+                .availableGlass()
                 VStack(alignment: .leading) {
                     Text("Live Data")
                         .font(.title3.bold())
@@ -183,7 +183,7 @@ fileprivate struct PlayerStreamingStats: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
-                .modifier(MaterialEffectModifier())
+                .availableGlass()
             }
             VStack(alignment: .leading) {
                 Text("Playback Metadata")
@@ -196,7 +196,7 @@ fileprivate struct PlayerStreamingStats: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding()
-            .modifier(MaterialEffectModifier())
+            .availableGlass()
         }
         .task { // Update stats periodically
             while !Task.isCancelled {
@@ -271,27 +271,6 @@ fileprivate struct PlayerStreamingStats: View {
         else { return nil }
         
         return hvcC[1] == 2 ? "HEVC Main10" : "HEVC Main"
-    }
-}
-
-fileprivate struct MaterialEffectModifier: ViewModifier {
-    let padding = 20.0
-    let radius = 24.0
-    
-    func body(content: Content) -> some View {
-        if #available(tvOS 26.0, *) {
-            content
-                .padding(padding)
-                .glassEffect(.regular, in: .rect(cornerRadius: radius))
-                .padding(-padding)
-                .clipShape(RoundedRectangle(cornerRadius: radius))
-        } else {
-            content
-                .padding(padding)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: radius))
-                .padding(-padding)
-                .clipShape(RoundedRectangle(cornerRadius: radius))
-        }
     }
 }
 
