@@ -22,6 +22,8 @@ public struct ThemeExampleView: View {
                 Text(self.theme.currentTheme.representation.displayName)
                     .font(.title)
                     .fontWeight(.bold)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                     .foregroundStyle(self.theme.currentTheme.header1())
                 Text("Ain't it great?")
                     .font(.title3)
