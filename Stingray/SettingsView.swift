@@ -152,6 +152,7 @@ public struct SettingsView: View {
                 .fullScreenCover(isPresented: $showSupportStingray) {
                     SupportStingrayView()
                         .stingrayBackground()
+                        .ignoresSafeArea()
                 }
             }
             
