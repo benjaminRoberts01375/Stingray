@@ -109,11 +109,11 @@ public struct SettingsView: View {
             Section( header: Text("Themes").bold() ) {
                 // Light mode
                 DoubleMenu(label: "Light Mode", sublabel: self.settings.themeLight.displayName) {
-                    ThemesListView(themeType: .light)
+                    ThemesListView(showSupportStingray: $showSupportStingray, themeType: .light)
                 }
                 // Dark mode
                 DoubleMenu(label: "Dark Mode", sublabel: self.settings.themeDark.displayName) {
-                    ThemesListView(themeType: .dark)
+                    ThemesListView(showSupportStingray: $showSupportStingray, themeType: .dark)
                 }
             }
             
@@ -152,6 +152,7 @@ public struct SettingsView: View {
                 .fullScreenCover(isPresented: $showSupportStingray) {
                     SupportStingrayView()
                         .stingrayBackground()
+                        .ignoresSafeArea()
                 }
             }
             
@@ -176,6 +177,7 @@ public struct SettingsView: View {
 public struct ThemesListView: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(PurchasesModel.self) private var purchases
+    @Binding public var showSupportStingray: Bool
     
     /// Is the list meant to set dark or light mode themes
     public let themeType: ColorScheme
@@ -184,7 +186,7 @@ public struct ThemesListView: View {
         ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
             Button {
                 if !self.purchases.boughtSupporter && option.requiresSupporter {
-                    Log.critical("Not a supporter!")
+                    self.showSupportStingray = true
                 }
                 else if self.themeType == .dark { self.settings.themeDark = option }
                 else { self.settings.themeLight = option }

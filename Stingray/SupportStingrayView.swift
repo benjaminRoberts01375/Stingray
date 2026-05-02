@@ -12,10 +12,10 @@ public struct SupportStingrayView: View {
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
     @State private var error: RError?
     
-    private let exampleThemes: [ThemeModel] = [ // TODO: Temp themes. Real supporte themes will need to be used here
-        ThemeModel(darkTheme: .notesApp, lightTheme: .notesApp, colorScheme: .light),
-        ThemeModel(darkTheme: .void, lightTheme: .void, colorScheme: .dark),
-        ThemeModel(darkTheme: .test, lightTheme: .test, colorScheme: .light)
+    private let exampleThemes: [ThemeModel] = [
+        ThemeModel(darkTheme: .frosty, lightTheme: .frosty, colorScheme: .light),
+        ThemeModel(darkTheme: .retro, lightTheme: .retro, colorScheme: .dark),
+        ThemeModel(darkTheme: .spaceVampires, lightTheme: .spaceVampires, colorScheme: .dark)
     ]
     
     public var body: some View {
@@ -35,11 +35,26 @@ public struct SupportStingrayView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
                 }
+                .frame(maxWidth: .infinity)
+                
                 VStack {
                     if self.purchases.boughtSupporter {
-                        Text("Thanks!")
-                            .font(.title)
-                            .bold()
+                        VStack {
+                            RainbowText(text: "Thanks!")
+                                .font(.title3)
+                                .bold()
+                            Text("""
+                            This really means a lot, and helps keep development and updates free for everyone else. Free and Open Source \
+                            Software (FOSS) is some of the most important software made, and you just did your part to keep it possible.
+                            """)
+                            .multilineTextAlignment(.center)
+                            .padding(.vertical)
+                            Text("Thank you, and go watch something awesome in style :)")
+                        }
+                        .availableGlass()
+                        Text("PS - Frosty with Space Vampires is my day-to-day setup.")
+                            .foregroundStyle(.secondary)
+                            .padding(.top)
                     }
                     else if let error = error { ErrorView(error: error, summary: "Failed to purchase") }
                     else {
@@ -47,33 +62,38 @@ public struct SupportStingrayView: View {
                         case .waiting, .fetching: ProgressView()
                         case .ready(let products):
                             if let product = (products.first { $0.id == PurchasesModel.ProductID.supporter.rawValue }) {
-                                Text("Helping Out")
-                                    .font(.title3)
-                                    .bold()
-                                Text("""
+                                VStack {
+                                    Text("Helping Out")
+                                        .font(.title3)
+                                        .bold()
+                                    Text("""
                                     It takes a lot of time, work, and even some money to keep the development of Stingray going. \
-                                    Funding is always appreciated but **never** required. It helps keep Stingray going, and you \
-                                    get some fun themes :)
+                                    Funding is always appreciated but **never** required. No functionality is locked behind a \
+                                    paywall, it's just a few animated themes and a big ol' thanks :)
                                     """)
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical)
-                                Button {
-                                    Task {
-                                        do { try await self.purchases.purchase(product) }
-                                        catch let error as RError { self.error = error }
+                                
+                                    Button {
+                                        Task {
+                                            do { try await self.purchases.purchase(product) }
+                                            catch let error as RError { self.error = error }
+                                        }
                                     }
+                                    label: { Text("Support for \(product.displayPrice)") }
                                 }
-                                label: { Text("Support for \(product.displayPrice)") }
+                                .availableGlass()
                             }
                             else { ErrorView(error: StoreErrors.productUnavailable, summary: "Could not find product") }
                         case .failed(let error): ErrorView(error: error, summary: "Purchases not available")
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
             Spacer()
         }
-        .padding(.vertical, 64)
+        .padding(64)
         .onChange(of: self.purchases.boughtSupporter) { _, support in
             Log.critical("User has \(support ? "purchased" : "cancelled") the support tier")
         }

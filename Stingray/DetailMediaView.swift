@@ -718,7 +718,6 @@ fileprivate struct EpisodeNavigationView: View {
                     Text(episode.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
-                        .foregroundStyle(self.theme.currentTheme.labelPrimary())
                         .padding()
                 }
                 Spacer(minLength: 0)
@@ -832,9 +831,6 @@ public struct PeopleBrowserView: View {
                             Text(person.role)
                                 .multilineTextAlignment(.center)
                                 .font(.caption)
-                                .foregroundStyle(
-                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.theme.currentTheme.labelPrimary()
-                                )
                         }
                     }
                     .buttonStyle(.plain)
@@ -938,7 +934,7 @@ public struct SpecialFeaturesRow: View {
                                         Text(mediaSource.name)
                                             .lineLimit(2)
                                             .multilineTextAlignment(.center)
-                                            .foregroundStyle(self.theme.currentTheme.labelPrimary())
+                                            .foregroundStyle(Color.white)
                                             .padding(.horizontal, 10)
                                         Spacer(minLength: 0)
                                     }
