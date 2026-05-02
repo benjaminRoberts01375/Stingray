@@ -44,9 +44,9 @@ public struct SupportStingrayView: View {
                                 .font(.title3)
                                 .bold()
                             Text("""
-                        This really means a lot, and helps keep development and updates free for everyone else. Free and Open Source \
-                        Software (FOSS) is some of the most important software made, and you just did your part to keep it possible.
-                        """)
+                            This really means a lot, and helps keep development and updates free for everyone else. Free and Open Source \
+                            Software (FOSS) is some of the most important software made, and you just did your part to keep it possible.
+                            """)
                             .multilineTextAlignment(.center)
                             .padding(.vertical)
                             Text("Thank you, and go watch something awesome in style :)")
