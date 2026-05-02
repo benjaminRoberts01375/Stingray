@@ -47,23 +47,27 @@ public struct SupportStingrayView: View {
                         case .waiting, .fetching: ProgressView()
                         case .ready(let products):
                             if let product = (products.first { $0.id == PurchasesModel.ProductID.supporter.rawValue }) {
-                                Text("Helping Out")
-                                    .font(.title3)
-                                    .bold()
-                                Text("""
+                                VStack {
+                                    Text("Helping Out")
+                                        .font(.title3)
+                                        .bold()
+                                    Text("""
                                     It takes a lot of time, work, and even some money to keep the development of Stingray going. \
                                     Funding is always appreciated but **never** required. It helps keep Stingray going, and you \
                                     get some fun themes :)
                                     """)
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical)
-                                Button {
-                                    Task {
-                                        do { try await self.purchases.purchase(product) }
-                                        catch let error as RError { self.error = error }
+                                
+                                    Button {
+                                        Task {
+                                            do { try await self.purchases.purchase(product) }
+                                            catch let error as RError { self.error = error }
+                                        }
                                     }
+                                    label: { Text("Support for \(product.displayPrice)") }
                                 }
-                                label: { Text("Support for \(product.displayPrice)") }
+                                .availableGlass()
                             }
                             else { ErrorView(error: StoreErrors.productUnavailable, summary: "Could not find product") }
                         case .failed(let error): ErrorView(error: error, summary: "Purchases not available")
@@ -73,7 +77,7 @@ public struct SupportStingrayView: View {
             }
             Spacer()
         }
-        .padding(.vertical, 64)
+        .padding(64)
         .onChange(of: self.purchases.boughtSupporter) { _, support in
             Log.critical("User has \(support ? "purchased" : "cancelled") the support tier")
         }
