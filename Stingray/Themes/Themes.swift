@@ -579,7 +579,12 @@ public final class ThemeRetroMid: ThemeProtocol {
     
     public func header1() -> AnyShapeStyle { AnyShapeStyle(RetroVibes.deepYellow) }
     
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    public func header2() -> AnyShapeStyle {
+        AnyShapeStyle(
+            Color.white
+                .shadow(.drop(radius: 5))
+        )
+    }
     
     public struct RetroVibes: View {
         public static let deepPurple = Color(red: 0.11764705882352941, green: 0.011764705882352941, blue: 0.23529411764705882)
