@@ -53,8 +53,8 @@ public struct SupportStingrayView: View {
                                         .bold()
                                     Text("""
                                     It takes a lot of time, work, and even some money to keep the development of Stingray going. \
-                                    Funding is always appreciated but **never** required. It helps keep Stingray going, and you \
-                                    get some fun themes :)
+                                    Funding is always appreciated but **never** required. No functionality is locked behind a \
+                                    paywall, it's just a few animated themes and a big ol' thanks :)
                                     """)
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical)
