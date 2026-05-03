@@ -82,6 +82,7 @@ public struct MediaCard: View {
                     Color.red.opacity(0.25)
                 }
             }
+            .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
         .contextMenu {
