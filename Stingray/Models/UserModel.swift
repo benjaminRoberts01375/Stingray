@@ -152,6 +152,8 @@ public struct User: Codable, Identifiable, Hashable {
     public var loadMediaBackgroundArt: Bool
     /// A toggle for whether to display media logos or text
     public var replaceLogosWithText: Bool
+    /// What language the user prefers to read/speak
+    public var preferredLangauge: Locale?
     
     public init(
         serviceURL: URL,
@@ -167,7 +169,8 @@ public struct User: Codable, Identifiable, Hashable {
         playbackSpeed: PlaybackSpeed = .one,
         loadThumbnailArt: Bool = true,
         loadMediaBackgroundArt: Bool = true,
-        replaceLogosWithText: Bool = false
+        replaceLogosWithText: Bool = false,
+        preferredLanguage: Locale? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -183,6 +186,7 @@ public struct User: Codable, Identifiable, Hashable {
         self.loadThumbnailArt = loadThumbnailArt
         self.loadMediaBackgroundArt = loadMediaBackgroundArt
         self.replaceLogosWithText = replaceLogosWithText
+        self.preferredLangauge = preferredLanguage
     }
     
     /// Create a user from encoded JSON.
@@ -206,6 +210,7 @@ public struct User: Codable, Identifiable, Hashable {
             loadThumbnailArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadThumbnailArt)) ?? true
             loadMediaBackgroundArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadMediaBackgroundArt)) ?? true
             replaceLogosWithText = (try? container.decodeIfPresent(Bool.self, forKey: .replaceLogosWithText)) ?? false
+            preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {

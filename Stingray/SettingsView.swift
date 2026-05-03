@@ -119,6 +119,22 @@ public struct SettingsView: View {
             
             // MARK: Accessibility
             Section( header: Text("Accessibility").bold() ) {
+                DoubleMenu(label: "Language", sublabel: self.settings.langauge?.languageDisplayName ?? "System") {
+                    Button { self.settings.langauge = nil } // Use language from the Apple TV
+                    label: {
+                        if self.settings.langauge == nil { Label("System", systemImage: "checkmark") }
+                        else { Text("System") }
+                    }
+                    ForEach(SupportedLanguages.allCases, id: \.languageCode) { language in
+                        Button { self.settings.langauge = language.locale }
+                        label: {
+                            if self.settings.langauge?.language.languageCode?.identifier == language.languageCode {
+                                Label(language.name ?? "Unknown", systemImage: "checkmark")
+                            }
+                            else { Text(language.name ?? "Unknown") }
+                        }
+                    }
+                }
                 DoubleButton(label: "Load Poster Art", sublabel: self.settings.loadThumbnailArt ? "Enabled" : "Disabled") {
                     self.settings.loadThumbnailArt.toggle()
                 }
@@ -239,4 +255,23 @@ This can be annoying to some and triggers on things like Control Center.
         case .syncWithTVOS: return "Jellyfin accounts will be mapped to users on this Apple TV."
         }
     }
+}
+
+public enum SupportedLanguages: CaseIterable {
+    case english
+    case german
+    
+    /// The name of the language in the language it is
+    public var name: String? { self.locale.localizedString(forLanguageCode: self.languageCode) }
+    
+    /// Country code of the language
+    public var languageCode: String {
+        switch self {
+        case .english: return "en"
+        case .german: return "de"
+        }
+    }
+    
+    /// A locale object from this language
+    public var locale: Locale { Locale(identifier: self.languageCode) }
 }

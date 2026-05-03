@@ -119,6 +119,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.replaceLogosWithText = newValue }
     }
     
+    /// The language the user wants Stingray to render with
+    public var langauge: Locale? {
+        get { self.userModel.activeUser?.preferredLangauge }
+        set(newValue) { self.userModel.activeUser?.preferredLangauge = newValue }
+    }
+    
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - userModel: Storage location of users

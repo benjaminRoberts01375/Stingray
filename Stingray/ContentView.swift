@@ -31,6 +31,7 @@ public struct ContentView: View {
     
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     
     public init() throws(SetupErrors) {
         let defaultsStorage: DefaultsBasicStorage
@@ -96,6 +97,7 @@ public struct ContentView: View {
         .environment(self.settings)
         .environment(self.userModel)
         .environment(self.purchases)
+        .environment(\.locale, self.settings.langauge ?? self.locale)
         .onChange(of: self.colorScheme, initial: true) { self.settings.systemTheme = $1 }
         .onAppear {
             switch self.loginState {

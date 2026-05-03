@@ -105,6 +105,8 @@ Extensive content metadata.
   - [x] Added light-mode theme "Beach"..
   - [x] Added dark-mode theme "Void"
 - [x] Translation support.
+  - [x] Added translation picker & saving to user data.
+  - [x] Added German support.
 - [x] Adjustable playback speed.
 - [x] Enable the explicit access control SwiftLint rule.
 - [x] Sort users alphabetically on profile picker screen.
