@@ -117,7 +117,7 @@ public struct DetailMediaView: View {
                                     .font(.headline.bold())
                                     .lineLimit(2)
                                     .foregroundStyle(
-                                        self.focus == .overview ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
+                                        self.focus == .overview ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
                                     )
                                 Text(media.description)
                                     .multilineTextAlignment(.leading)
@@ -140,7 +140,7 @@ public struct DetailMediaView: View {
                                             .font(.headline.bold())
                                             .lineLimit(2)
                                             .foregroundStyle(
-                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
+                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
                                             )
                                         Text(media.genres.joined(separator: ", "))
                                             .multilineTextAlignment(.leading)
@@ -152,7 +152,7 @@ public struct DetailMediaView: View {
                                             .font(.headline.bold())
                                             .lineLimit(2)
                                             .foregroundStyle(
-                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
+                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
                                             )
                                         Text(String(Calendar.current.component(.year, from: releaseDate)))
                                             .lineLimit(1)
@@ -163,7 +163,7 @@ public struct DetailMediaView: View {
                                         .font(.headline.bold())
                                         .lineLimit(1)
                                         .foregroundStyle(
-                                            self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
+                                            self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
                                         )
                                     Text(maturity)
                                         .lineLimit(1)
@@ -192,7 +192,7 @@ public struct DetailMediaView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("People")
                         .font(.title3.bold())
-                        .foregroundStyle(self.theme.currentTheme.header1())
+                        .foregroundStyle(self.theme.currentTheme.header1)
                         .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
                 }
@@ -319,7 +319,7 @@ fileprivate struct MediaLogoView: View {
                 Text(self.media.title)
                     .font(.title)
                     .bold()
-                    .foregroundStyle(self.theme.currentTheme.header1())
+                    .foregroundStyle(self.theme.currentTheme.header1)
             }
             if !media.tagline.isEmpty {
                 Text(media.tagline)
@@ -797,7 +797,7 @@ fileprivate struct ArtView: View {
                 .font(.system(size: 35))
                 .bold()
                 .multilineTextAlignment(.center)
-                .foregroundStyle(self.theme.currentTheme.header2())
+                .foregroundStyle(self.theme.currentTheme.header2)
                 .padding(.horizontal)
         }
     }
@@ -826,7 +826,7 @@ public struct PeopleBrowserView: View {
                                 .multilineTextAlignment(.center)
                                 .font(.headline)
                                 .foregroundStyle(
-                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.theme.currentTheme.header2()
+                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
                                 )
                             Text(person.role)
                                 .multilineTextAlignment(.center)
@@ -908,7 +908,7 @@ public struct SpecialFeaturesRow: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(self.title)
                 .font(.title3.bold())
-                .foregroundStyle(self.theme.currentTheme.header1())
+                .foregroundStyle(self.theme.currentTheme.header1)
                 .padding(.top)
             ScrollView(.horizontal) {
                 LazyHStack {

@@ -24,13 +24,13 @@ public struct ThemeExampleView: View {
                     .fontWeight(.bold)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
-                    .foregroundStyle(self.theme.currentTheme.header1())
+                    .foregroundStyle(self.theme.currentTheme.header1)
                 Text("Ain't it great?")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundStyle(self.theme.currentTheme.header2())
+                    .foregroundStyle(self.theme.currentTheme.header2)
                 Text(self.theme.currentTheme.representation.description)
-                    .foregroundStyle(self.theme.currentTheme.labelPrimary())
+                    .foregroundStyle(self.theme.currentTheme.labelPrimary)
             }
             Spacer()
         }

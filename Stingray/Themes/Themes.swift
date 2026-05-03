@@ -17,100 +17,77 @@ public protocol ThemeProtocol {
     var colorScheme: ColorScheme { get }
     
     /// How the app's background should be rendered
-    func appBackground() -> AnyView
+    var appBackground: AnyView { get }
     
     /// The background color of a normal button or menu
-    func buttonBackground() -> AnyShapeStyle
+    var buttonBackground: AnyShapeStyle { get }
     
     /// When an option is active but not selected
-    func activeColor() -> Color
+    var activeColor: Color { get }
     
     /// View used when there is no default image on profiles
-    func defaultProfileImage() -> AnyShapeStyle
+    var defaultProfileImage: AnyShapeStyle { get }
     
     /// Color to use for shading the add profile icon
-    func addProfileStyle() -> AnyShapeStyle
+    var addProfileStyle: AnyShapeStyle { get }
     
     /// The normal color used on labels
-    func labelPrimary() -> AnyShapeStyle
+    var labelPrimary: AnyShapeStyle { get }
     
     /// If a button has a secondary element, shade it accordingly
-    func labelSecondary() -> AnyShapeStyle
+    var labelSecondary: AnyShapeStyle { get }
     
     /// Style to use for some of the largest text used
-    func header1() -> AnyShapeStyle
+    var header1: AnyShapeStyle { get }
     
     /// Style to use for slightly smaller than the largest text
-    func header2() -> AnyShapeStyle
+    var header2: AnyShapeStyle { get }
 }
 
 /// A dark blue color scheme, like deep in the ocean
 public final class ThemeDeepSeaDark: ThemeProtocol {
     public let representation: ThemeModel.Themes = .deepSea
-    
     public let colorScheme: ColorScheme = .dark
-    
-    public func appBackground() -> AnyView {
-        AnyView(
-            LinearGradient(
-                colors: [Color(red: 0, green: 0.145, blue: 0.223), Color(red: 0, green: 0.063, blue: 0.153)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+    public let appBackground: AnyView = AnyView(
+        LinearGradient(
+            colors: [Color(red: 0, green: 0.145, blue: 0.223), Color(red: 0, green: 0.063, blue: 0.153)],
+            startPoint: .top,
+            endPoint: .bottom
         )
-    }
-    
-    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.clear) }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func activeColor() -> Color { Color.white.opacity(0.25) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle {
-        AnyShapeStyle(
-            LinearGradient(
-                colors: [
-                    Color(red: 0, green: 0.729, blue: 1),
-                    Color(red: 0, green: 0.09, blue: 0.945)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+    )
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.clear)
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.white)
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let activeColor: Color = Color.white.opacity(0.25)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(
+        LinearGradient(
+            colors: [
+                Color(red: 0, green: 0.729, blue: 1),
+                Color(red: 0, green: 0.09, blue: 0.945)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
         )
-    }
-    
-    public func addProfileStyle() -> AnyShapeStyle { AnyShapeStyle(.white) }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
-    
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    )
+    public let addProfileStyle: AnyShapeStyle = AnyShapeStyle(.white)
+    public let header1: AnyShapeStyle = AnyShapeStyle(Color.white)
+    public let header2: AnyShapeStyle = AnyShapeStyle(Color.white)
 }
 
 /// A white theme and grayscale theme
 public final class ThemeNotesAppLight: ThemeProtocol {
     public let representation: ThemeModel.Themes = .notesApp
-    
     public let colorScheme: ColorScheme = .light
+    public let appBackground: AnyView = AnyView(Color.white)
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.gray.opacity(0.15))
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let activeColor: Color = Color.gray.opacity(0.15)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let header1: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let header2: AnyShapeStyle = AnyShapeStyle(Color.black)
     
-    public func appBackground() -> AnyView { AnyView(Color.white) }
-    
-    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.gray.opacity(0.15)) }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func activeColor() -> Color { Color.gray.opacity(0.15) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
 /// A light theme that has a white base with splashes of color that subtly move around
@@ -122,28 +99,16 @@ public final class ThemeFrostyLight: ThemeProtocol {
     )
     
     public let representation: ThemeModel.Themes = .frosty
-    
     public let colorScheme: ColorScheme = .light
-    
-    public func appBackground() -> AnyView {
-        AnyView( SlidingBubblesView() )
-    }
-    
-    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color.clear) }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.blue) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func activeColor() -> Color { Color.blue.opacity(0.15) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func addProfileStyle() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.blue) }
-    
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Self.darkPink) }
+    public let appBackground: AnyView = AnyView(SlidingBubblesView())
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.clear)
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.blue)
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let activeColor: Color = Color.blue.opacity(0.15)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let addProfileStyle: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let header1: AnyShapeStyle = AnyShapeStyle(Color.blue)
+    public var header2: AnyShapeStyle = AnyShapeStyle(ThemeFrostyLight.darkPink)
     
     /// Circles that slowly fade in and fade out with subtle movements
     public struct SlidingBubblesView: View {
@@ -260,64 +225,45 @@ public final class ThemeFrostyLight: ThemeProtocol {
 
 /// A light theme with a little splash of color in the background
 public final class ThemeBeachLight: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .beach
-    
-    public let colorScheme: ColorScheme = .light
     public static let tan = Color(red: 1, green: 0.973, blue: 0.863)
     
-    public func appBackground() -> AnyView {
-        AnyView(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.094, green: 0.635, blue: 0.996),
-                    Self.tan
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+    public let representation: ThemeModel.Themes = .beach
+    public let colorScheme: ColorScheme = .light
+    public let appBackground: AnyView = AnyView(
+        LinearGradient(
+            colors: [
+                Color(red: 0.094, green: 0.635, blue: 0.996),
+                ThemeBeachLight.tan
+            ],
+            startPoint: .top,
+            endPoint: .bottom
         )
-    }
+    )
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(.thinMaterial)
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let activeColor: Color = Color.white.opacity(0.5)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let header1: AnyShapeStyle = AnyShapeStyle(Color.black)
+    public let header2: AnyShapeStyle = AnyShapeStyle(Color.black)
     
-    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.thinMaterial) }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func activeColor() -> Color { Color.white.opacity(0.5) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
-    
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.black) }
+    public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
 /// A super dark theme
 public final class ThemeVoidDark: ThemeProtocol {
     public let representation: ThemeModel.Themes = .void
-    
     public let colorScheme: ColorScheme = .dark
+    public let appBackground: AnyView = AnyView(Color.black)
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1))
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.white.opacity(0.9))
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let activeColor: Color = Color.gray.opacity(0.15)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let header1: AnyShapeStyle = AnyShapeStyle(Color.white)
+    public let header2: AnyShapeStyle = AnyShapeStyle(Color.white)
     
-    public func appBackground() -> AnyView { AnyView(Color.black) }
-    
-    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1)) }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.white.opacity(0.9)) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func activeColor() -> Color { Color.gray.opacity(0.15) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
-    
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
+    public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
 // A theme based on the well-known Dracula theme https://draculatheme.com/spec
@@ -337,42 +283,49 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     public static let pink = Color(red: 1, green: 0.4745098039215686, blue: 0.7764705882352941)
     
     public let representation: ThemeModel.Themes = .spaceVampires
-    
     public let colorScheme: ColorScheme = .dark
-    
-    public func appBackground() -> AnyView {
-        AnyView(
-            ZStack {
-                // Shooting stars
-                ShootingStarView()
+    public let appBackground: AnyView = AnyView(
+        ZStack {
+            // Shooting stars
+            ShootingStarView()
+            
+            LinearGradient(colors: [ThemeSpaceVampiresDark.background, .clear], startPoint: .bottom, endPoint: .top)
+            
+            // Stars
+            Canvas { context, size in
+                let starCount = 50
+                let starRegionHeight = size.height / 3
                 
-                LinearGradient(colors: [Self.background, .clear], startPoint: .bottom, endPoint: .top)
-                
-                // Stars
-                Canvas { context, size in
-                    let starCount = 50
-                    let starRegionHeight = size.height / 3
+                for _ in 0..<starCount {
+                    let x = Double.random(in: 0..<size.width)
+                    let y = Double.random(in: 0..<size.height / 3)
+                    let radius = Double.random(in: 0.75..<2)
                     
-                    for _ in 0..<starCount {
-                        let x = Double.random(in: 0..<size.width)
-                        let y = Double.random(in: 0..<size.height / 3)
-                        let radius = Double.random(in: 0.75..<2)
-                        
-                        // Handle negative positions
-                        let finalX = x < 0 ? x + size.width : x
-                        let finalY = y < 0 ? y + starRegionHeight : y
-                        
-                        let star = Path(ellipseIn: CGRect(x: finalX, y: finalY, width: radius * 2, height: radius * 2))
-                        context.fill(star, with: .color(.white.opacity(0.8)))
-                    }
+                    // Handle negative positions
+                    let finalX = x < 0 ? x + size.width : x
+                    let finalY = y < 0 ? y + starRegionHeight : y
+                    
+                    let star = Path(ellipseIn: CGRect(x: finalX, y: finalY, width: radius * 2, height: radius * 2))
+                    context.fill(star, with: .color(.white.opacity(0.8)))
                 }
-                
-                // Rolling hills
-                RollingHillsView()
             }
-                .background(.black)
-        )
-    }
+            
+            // Rolling hills
+            RollingHillsView()
+        }
+            .background(.black)
+    )
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(
+        Color(red: 0.1568627450980392, green: 0.17254901960784313, blue: 0.23529411764705882)
+    )
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(ThemeSpaceVampiresDark.pink)
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(ThemeSpaceVampiresDark.yellow)
+    public let activeColor: Color = ThemeSpaceVampiresDark.foreground.opacity(0.15)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let header1: AnyShapeStyle = AnyShapeStyle(ThemeSpaceVampiresDark.pink)
+    public let header2: AnyShapeStyle = AnyShapeStyle(Color.yellow)
+    
+    public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
     
     public struct ShootingStarView: View {
         @State private var angle: Angle = .degrees(0)
@@ -533,24 +486,6 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
             }
         }
     }
-    
-    public func buttonBackground() -> AnyShapeStyle {
-        AnyShapeStyle(Color(red: 0.1568627450980392, green: 0.17254901960784313, blue: 0.23529411764705882))
-    }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Self.pink) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Self.yellow) }
-    
-    public func activeColor() -> Color { Self.foreground.opacity(0.15) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(Self.pink) }
-    
-    public func header2() -> AnyShapeStyle { AnyShapeStyle(Color.yellow) }
 }
 
 /// A beach with water coming in and out
@@ -558,33 +493,20 @@ public final class ThemeRetroMid: ThemeProtocol {
     public static let gridColor = Color(red: 0.7411764705882353, green: 0.17254901960784313, blue: 0.4823529411764706) // #BD2C7B
     
     public let representation: ThemeModel.Themes = .retro
-    
     public let colorScheme: ColorScheme = .dark
+    public let appBackground: AnyView = AnyView(RetroVibes())
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(.regularMaterial)
+    public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.white)
+    public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
+    public let activeColor: Color = RetroVibes.deepYellow.opacity(0.75)
+    public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(RetroVibes.deepPurple)
+    public let header1: AnyShapeStyle = AnyShapeStyle(RetroVibes.deepYellow)
+    public let header2: AnyShapeStyle = AnyShapeStyle(
+        Color.white
+            .shadow(.drop(radius: 5))
+    )
     
-    public func appBackground() -> AnyView {
-        AnyView(RetroVibes())
-    }
-    
-    public func buttonBackground() -> AnyShapeStyle { AnyShapeStyle(.regularMaterial) }
-    
-    public func labelPrimary() -> AnyShapeStyle { AnyShapeStyle(Color.white) }
-    
-    public func labelSecondary() -> AnyShapeStyle { AnyShapeStyle(Color.gray) }
-    
-    public func activeColor() -> Color { RetroVibes.deepYellow.opacity(0.75) }
-    
-    public func defaultProfileImage() -> AnyShapeStyle { AnyShapeStyle(RetroVibes.deepPurple) }
-    
-    public func addProfileStyle() -> AnyShapeStyle { self.defaultProfileImage() }
-    
-    public func header1() -> AnyShapeStyle { AnyShapeStyle(RetroVibes.deepYellow) }
-    
-    public func header2() -> AnyShapeStyle {
-        AnyShapeStyle(
-            Color.white
-                .shadow(.drop(radius: 5))
-        )
-    }
+    public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
     
     public struct RetroVibes: View {
         public static let deepPurple = Color(red: 0.11764705882352941, green: 0.011764705882352941, blue: 0.23529411764705882)
@@ -787,37 +709,37 @@ public final class ThemeRetroMid: ThemeProtocol {
 
 // MARK: Previews
 #Preview("Deep Sea") {
-    ThemeDeepSeaDark().appBackground()
+    ThemeDeepSeaDark().appBackground
         .ignoresSafeArea()
 }
 
 #Preview("Notes App") {
-    ThemeNotesAppLight().appBackground()
+    ThemeNotesAppLight().appBackground
         .ignoresSafeArea()
 }
 
 #Preview("Frosty") {
-    ThemeFrostyLight().appBackground()
+    ThemeFrostyLight().appBackground
         .ignoresSafeArea()
 }
 
 #Preview("Beach") {
-    ThemeBeachLight().appBackground()
+    ThemeBeachLight().appBackground
         .ignoresSafeArea()
 }
 
 #Preview("Void") {
-    ThemeVoidDark().appBackground()
+    ThemeVoidDark().appBackground
         .ignoresSafeArea()
 }
 
 #Preview("Space Vampires") {
-    ThemeSpaceVampiresDark().appBackground()
+    ThemeSpaceVampiresDark().appBackground
         .ignoresSafeArea()
 }
 
 #Preview("Retro") {
-    ThemeRetroMid().appBackground()
+    ThemeRetroMid().appBackground
         .ignoresSafeArea()
 }
 

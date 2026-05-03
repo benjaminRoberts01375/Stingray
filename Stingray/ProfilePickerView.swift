@@ -38,7 +38,7 @@ public struct ProfilePickerView: View {
                         .resizable()
                         .scaledToFit()
                         .accessibilityLabel("Person icon")
-                        .foregroundStyle(self.theme.currentTheme.addProfileStyle())
+                        .foregroundStyle(self.theme.currentTheme.addProfileStyle)
                         .padding(.top, 30)
                     Spacer()
                     Text("Add User")
@@ -142,7 +142,7 @@ fileprivate struct ProfilePickerUser: View {
                             Image(systemName: "person.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(self.theme.currentTheme.defaultProfileImage())
+                                .foregroundStyle(self.theme.currentTheme.defaultProfileImage)
                                 .accessibilityLabel("Icon for \(user.displayName)")
                                 .padding(50)
                         }
@@ -157,7 +157,7 @@ fileprivate struct ProfilePickerUser: View {
             .background { // Only show white background if the current user is this user
                 switch self.loginState {
                 case .loggedIn(let streamingService):
-                    streamingService.userID == user.id ? self.theme.currentTheme.activeColor() : .clear
+                    streamingService.userID == user.id ? self.theme.currentTheme.activeColor : .clear
                 default: Color.clear
                 }
             }

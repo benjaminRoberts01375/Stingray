@@ -109,7 +109,7 @@ fileprivate struct DashboardRow: View {
             default:
                 Text(self.rowType.name)
                     .font(.title2.bold())
-                    .foregroundStyle(self.theme.currentTheme.header1())
+                    .foregroundStyle(self.theme.currentTheme.header1)
                     .task {
                         // Check if we already have cached data
                         if let cachedMedia = cache[self.rowType.id] {
