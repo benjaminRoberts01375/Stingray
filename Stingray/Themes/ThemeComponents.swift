@@ -56,9 +56,9 @@ public struct StingrayFormButtonStyle: ButtonStyle {
 /// A button designed for a `Form` view that shows a label on the left, and some status or information on the right
 public struct DoubleButton: View {
     /// Primary label to show on left-hand side of button
-    public let label: String
+    public let label: LocalizedStringKey
     /// Secondary label to show on right-hand side of button
-    public let sublabel: String
+    public let sublabel: LocalizedStringKey
     /// The type of action the button may cause
     public let role: ButtonRole?
     /// Code to run when the button's pressed
@@ -68,7 +68,7 @@ public struct DoubleButton: View {
     
     @FocusState private var isFocused: Bool
     
-    public init(label: String, sublabel: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
+    public init(label: LocalizedStringKey, sublabel: LocalizedStringKey, role: ButtonRole? = nil, action: @escaping () -> Void) {
         self.label = label
         self.sublabel = sublabel
         self.action = action
@@ -99,9 +99,9 @@ public struct DoubleButton: View {
 /// A menu designed for a `Form` view that shows a label on the left, and some status or information on the right
 public struct DoubleMenu<Content: View>: View {
     /// Primary label to show on left-hand side of button
-    public let label: String
+    public let label: LocalizedStringKey
     /// Secondary label to show on right-hand side of button
-    public let sublabel: String
+    public let sublabel: LocalizedStringKey
     /// Content to show in the menu
     @ViewBuilder public let content: () -> Content
     

@@ -40,7 +40,7 @@ public struct SupportStingrayView: View {
                 VStack {
                     if self.purchases.boughtSupporter {
                         VStack {
-                            RainbowText(text: "Thanks!")
+                            RainbowText(text: String(localized: "Thanks!"))
                                 .font(.title3)
                                 .bold()
                             Text("""

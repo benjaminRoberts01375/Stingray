@@ -68,7 +68,7 @@ public final class ThemeModel: Identifiable {
         case void
         
         /// User facing name of the theme
-        public var displayName: String {
+        public var displayName: LocalizedStringKey {
             switch self {
             case .deepSea: return "Deep Sea"
             case .notesApp: return "Notes App"

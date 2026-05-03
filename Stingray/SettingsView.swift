@@ -28,7 +28,7 @@ public struct SettingsView: View {
         Form {
             // MARK: Profiles
             // Profile picker
-            Section(header: Text("Account").bold()) {
+            Section(header: Text(String(localized: "Account")).bold()) {
                 ProfilePickerView(loginState: $loginState)
                     .focusSection()
                 // PIN button
@@ -48,19 +48,23 @@ public struct SettingsView: View {
                 }
                 if let user = self.userModel.activeUser {
                     DoubleButton(label: "Logout...", sublabel: "", role: .destructive) { self.showLogoutAlert = true }
-                        .alert("Logout \(user.displayName)", isPresented: $showLogoutAlert) {
+                        .alert(
+                            Text(String(localized: "Logout \(user.displayName)")),
+                            isPresented: $showLogoutAlert
+                        ) {
                             Button("Logout", role: .destructive) {
                                 self.userModel.deleteUser(user.id)
                                 if self.userModel.userIDs.isEmpty { self.loginState = .loggedOut }
                                 else { self.loginState = .pickingUser }
                             }
-                        } message: { Text("Are you sure you want \(user.displayName) to logout?") }
+                        }
+                    message: { Text(String(localized: "Are you sure you want \(user.displayName) to logout?")) }
                 }
             }
             
             // Profile switching
             Section(
-                header: Text("Profile Switching").bold(),
+                header: Text(String(localized: "Profile Switching")).bold(),
                 footer: Text(self.settings.profileSwitchingMethod.description)
             ) {
                 Picker("Profile Switching", selection: $settings.profileSwitchingMethod) {
@@ -74,7 +78,7 @@ public struct SettingsView: View {
             .listRowBackground(Color.clear)
             
             // MARK: Playback settings
-            Section( header: Text("Playback Settings").bold() ) {
+            Section(header: Text(String(localized: "Playback Settings")).bold()) {
                 DoubleButton(label: "Autoplay Next Episode", sublabel: self.settings.autoplay ? "Enabled" : "Disabled") {
                     self.settings.autoplay.toggle()
                 }
@@ -92,7 +96,7 @@ public struct SettingsView: View {
                         }
                     }
                 }
-                DoubleMenu(label: "Playback Speed", sublabel: self.settings.playbackSpeed.name) {
+                DoubleMenu(label: "Playback Speed", sublabel: LocalizedStringKey(self.settings.playbackSpeed.name)) {
                     ForEach(PlaybackSpeed.allCases, id: \.value) { speed in
                         Button { settings.playbackSpeed = speed }
                         label: {
@@ -106,7 +110,7 @@ public struct SettingsView: View {
             }
             
             // MARK: Themes
-            Section( header: Text("Themes").bold() ) {
+            Section(header: Text(String(localized: "Themes")).bold()) {
                 // Light mode
                 DoubleMenu(label: "Light Mode", sublabel: self.settings.themeLight.displayName) {
                     ThemesListView(showSupportStingray: $showSupportStingray, themeType: .light)
@@ -118,8 +122,8 @@ public struct SettingsView: View {
             }
             
             // MARK: Accessibility
-            Section( header: Text("Accessibility").bold() ) {
-                DoubleMenu(label: "Language", sublabel: self.settings.langauge?.languageDisplayName ?? "System") {
+            Section(header: Text(String(localized: "Accessibility")).bold()) {
+                DoubleMenu(label: "Language", sublabel: self.settings.langauge?.languageDisplayName ?? LocalizedStringKey("System")) {
                     Button { self.settings.langauge = nil } // Use language from the Apple TV
                     label: {
                         if self.settings.langauge == nil { Label("System", systemImage: "checkmark") }
@@ -129,9 +133,9 @@ public struct SettingsView: View {
                         Button { self.settings.langauge = language.locale }
                         label: {
                             if self.settings.langauge?.language.languageCode?.identifier == language.languageCode {
-                                Label(language.name ?? "Unknown", systemImage: "checkmark")
+                                Label(language.name ?? String(localized: "Unknown"), systemImage: "checkmark")
                             }
-                            else { Text(language.name ?? "Unknown") }
+                            else { Text(language.name ?? String(localized: "Unknown")) }
                         }
                     }
                 }
@@ -147,14 +151,14 @@ public struct SettingsView: View {
             }
             
             // MARK: Supporting Stingray
-            Section( header: Text("Support Stingray").bold() ) {
+            Section(header: Text(String(localized: "Support Stingray")).bold()) {
                 DoubleButton(
                     label: "Support Stingray",
                     sublabel: {
                         switch self.purchases.products {
                         case .failed: return "Error loading products"
                         case .fetching, .waiting: return "Loading..."
-                        case .ready: 
+                        case .ready:
                             return self.purchases.boughtSupporter ? "Thanks for supporting Stingray!" : "Become a supporter..."
                         }
                     }(),
@@ -229,7 +233,7 @@ public struct ThemesListView: View {
 /// Readable versions of the profile switching options. Only used here so an extension was used.
 extension SettingsModel.ProfileSwitching {
     /// Picker display name
-    public var displayName: String {
+    public var displayName: LocalizedStringKey {
         switch self {
         case .askOnLaunch:
             return "Ask on Launch"
@@ -243,16 +247,19 @@ extension SettingsModel.ProfileSwitching {
     }
     
     /// More thorough description of the selected values.
-    public var description: String {
+    public var description: LocalizedStringKey {
         switch self {
         case .askOnResume:
             return """
-You'll be prompted for your choice of account when Jellyfin launches or opens from the background. 
-This can be annoying to some and triggers on things like Control Center.
-"""
-        case .askOnLaunch: return "You'll be prompted for your choice of account on each launch. Typical of most streaming services."
-        case .manual: return "Whoever was last signed in will remain signed in."
-        case .syncWithTVOS: return "Jellyfin accounts will be mapped to users on this Apple TV."
+            You'll be prompted for your choice of account when Jellyfin launches or opens from the background. \
+            This can be annoying to some and triggers on things like Control Center.
+            """
+        case .askOnLaunch:
+            return "You'll be prompted for your choice of account on each launch. Typical of most streaming services."
+        case .manual:
+            return "Whoever was last signed in will remain signed in."
+        case .syncWithTVOS:
+            return "Jellyfin accounts will be mapped to users on this Apple TV."
         }
     }
 }

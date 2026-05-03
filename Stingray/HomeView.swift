@@ -16,7 +16,7 @@ public struct HomeView: View {
     public var body: some View {
         VStack(alignment: .leading) {
             DashboardRow(
-                title: "Next Up",
+                rowType: .nextUp,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -26,7 +26,7 @@ public struct HomeView: View {
             .focusSection()
             
             DashboardRow(
-                title: "Recently Added",
+                rowType: .recentlyAdded,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -36,7 +36,7 @@ public struct HomeView: View {
             .focusSection()
             
             DashboardRow(
-                title: "Latest Movies",
+                rowType: .latestMovies,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -46,7 +46,7 @@ public struct HomeView: View {
             .focusSection()
             
             DashboardRow(
-                title: "Latest Shows",
+                rowType: .latestShows,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -65,8 +65,33 @@ public struct HomeView: View {
     }
 }
 
+fileprivate enum HomeRow: Identifiable {
+    case nextUp
+    case recentlyAdded
+    case latestMovies
+    case latestShows
+    
+    var id: String {
+        switch self {
+        case .nextUp: return "nextUp"
+        case .recentlyAdded: return "recentlyAdded"
+        case .latestMovies: return "latestMovies"
+        case .latestShows: return "latestShows"
+        }
+    }
+    
+    var name: LocalizedStringKey {
+        switch self {
+        case .nextUp: return "Next Up"
+        case .recentlyAdded: return "Recently Added"
+        case .latestMovies: return "Latest Movies"
+        case .latestShows: return "Latest Shows"
+        }
+    }
+}
+
 fileprivate struct DashboardRow: View {
-    let title: String
+    let rowType: HomeRow
     let streamingService: StreamingServiceProtocol
     @Binding var cache: [String: [SlimMedia]]
     @Binding var navigation: NavigationPath
@@ -82,19 +107,19 @@ fileprivate struct DashboardRow: View {
             case .empty:
                 EmptyView()
             default:
-                Text(title)
+                Text(self.rowType.name)
                     .font(.title2.bold())
                     .foregroundStyle(self.theme.currentTheme.header1())
                     .task {
                         // Check if we already have cached data
-                        if let cachedMedia = cache[title] {
+                        if let cachedMedia = cache[self.rowType.id] {
                             status = cachedMedia.isEmpty ? .empty : .complete(cachedMedia)
                             return
                         }
                         
                         // Only fetch if not cached
                         let response = await fetchMedia()
-                        cache[title] = response
+                        cache[self.rowType.id] = response
                         status = response.isEmpty ? .empty : .complete(response)
                     }
             }
@@ -245,17 +270,17 @@ public struct LibrariesInfoView: View {
     
     public var body: some View {
         switch self.streamingService.libraryStatus {
-        case .waiting: Text("Waiting to get libraries...")
-        case .retrieving: Text("Getting libraries...")
+        case .waiting: Text(String(localized: "Waiting to get libraries..."))
+        case .retrieving: Text(String(localized: "Getting libraries..."))
         case .available(let libraries), .complete(let libraries):
             let mediaCounts = countMedia(libraries: libraries)
             HStack(spacing: 0) {
                 if case .complete = self.streamingService.libraryStatus {
-                    Text("Libraries" + ": \(libraries.count)")
+                    Text(String(localized: "Libraries: \(libraries.count)"))
                         .foregroundStyle(.tertiary)
                 } else {
                     ProgressView()
-                    Text(" " + "Libraries" + ": \(libraries.count)")
+                    Text(" " + String(localized: "Libraries: \(libraries.count)"))
                         .foregroundStyle(.tertiary)
                 }
                 ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
