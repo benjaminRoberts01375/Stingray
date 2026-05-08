@@ -33,6 +33,7 @@ public struct SupportStingrayView: View {
                             .colorScheme(theme.currentTheme.colorScheme)
                             .environment(theme)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .shadow(radius: 15)
                     }
                 }
                 .frame(maxWidth: .infinity)
