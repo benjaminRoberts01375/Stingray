@@ -37,7 +37,8 @@ public struct MediaCard: View {
                             image
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: Self.cardSize.width, height: 285)
+                                .frame(width: Self.cardSize.width)
+                                .frame(minHeight: 0, idealHeight: 285, maxHeight: 285)
                                 .clipped()
                         } placeholder: {
                             if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
@@ -46,15 +47,14 @@ public struct MediaCard: View {
                                     .resizable()
                                     .scaledToFill()
                                     .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-                                    .frame(width: Self.cardSize.width, height: 285)
+                                    .frame(width: Self.cardSize.width)
+                                    .frame(minHeight: 0, idealHeight: 285, maxHeight: 285)
                                     .clipped()
-                            } else {
-                                MediaCardLoading()
                             }
+                            else { MediaCardLoading() }
                         }
-                    } else {
-                        MediaCardNoImage()
                     }
+                    else { MediaCardNoImage() }
                     Text(media.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)

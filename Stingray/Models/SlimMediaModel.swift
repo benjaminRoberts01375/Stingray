@@ -271,6 +271,6 @@ public final class ExampleMedia: SlimMediaProtocol {
         self.id = UUID().uuidString
         self.errors = nil
         self.imageBlurHashes = nil
-        self.imageTags = nil
+        self.imageTags = MediaImages(thumbnail: "Example", logo: "Example", primary: "Example")
     }
 }

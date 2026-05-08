@@ -35,6 +35,9 @@ public struct SupportStingrayView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                             .shadow(radius: 15)
                     }
+                    Text("Posters made by Blender Institute, and Studio")
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
                 

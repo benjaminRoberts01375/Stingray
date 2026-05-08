@@ -6,6 +6,7 @@
 //
 
 import AVKit
+import UIKit
 
 public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
@@ -700,5 +701,24 @@ public final class ExampleStreamingService: StreamingServiceProtocol {
     
     public func retrieveUpNext() async -> [SlimMedia] { return [] }
     
-    public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? { return nil }
+    public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
+        let poster: String = [
+            "Agent-poster",
+            "BBB-poster",
+            "Charge-poster",
+            "Coffee-poster",
+            "Cosmos-poster",
+            "Glass-poster",
+            "Hero-poster",
+            "Llama-poster",
+            "Llama3-poster",
+            "SF-poster",
+            "Sintel-poster",
+            "Spring-poster",
+            "TOS-poster",
+            "WingIt-poster"
+        ].randomElement() ?? "Agent-poster"
+        Log.warning(poster)
+        return Bundle.main.url(forResource: poster, withExtension: "jpg")
+    }
 }
