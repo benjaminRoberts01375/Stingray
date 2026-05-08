@@ -65,6 +65,7 @@ public struct DoubleButton: View {
     public let action: () -> Void
     
     @Environment(ThemeModel.self) private var theme
+    @Environment(\.colorSchemeContrast) private var contrast
     
     @FocusState private var isFocused: Bool
     
@@ -87,7 +88,13 @@ public struct DoubleButton: View {
                     }())
                 Spacer()
                 Text(sublabel)
-                    .foregroundStyle(self.theme.currentTheme.labelSecondary)
+                    .foregroundStyle({
+                        if self.isFocused {
+                            if case .increased = self.contrast { return AnyShapeStyle(Color.black) }
+                            return AnyShapeStyle(Color.gray)
+                        }
+                        return self.theme.currentTheme.labelSecondary
+                    }())
                     .fontWeight(.regular)
             }
         }
@@ -106,6 +113,7 @@ public struct DoubleMenu<Content: View>: View {
     @ViewBuilder public let content: () -> Content
     
     @Environment(ThemeModel.self) private var theme
+    @Environment(\.colorSchemeContrast) private var contrast
     
     @FocusState private var isFocused: Bool
     
@@ -117,7 +125,13 @@ public struct DoubleMenu<Content: View>: View {
                     .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : self.theme.currentTheme.labelPrimary)
                 Spacer()
                 Text(sublabel)
-                    .foregroundStyle(self.theme.currentTheme.labelSecondary)
+                    .foregroundStyle({
+                        if self.isFocused {
+                            if case .increased = self.contrast { return AnyShapeStyle(Color.black) }
+                            return AnyShapeStyle(Color.gray)
+                        }
+                        return self.theme.currentTheme.labelSecondary
+                    }())
                     .fontWeight(.regular)
             }
         }
