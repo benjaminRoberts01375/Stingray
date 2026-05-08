@@ -40,10 +40,12 @@ public struct SettingsView: View {
                         PINSetup()
                             .padding(64)
                             .stingrayBackground()
+                            .ignoresSafeArea()
                     } else {
                         PINDelete()
                             .padding(64)
                             .stingrayBackground()
+                            .ignoresSafeArea()
                     }
                 }
                 if let user = self.userModel.activeUser {
