@@ -15,7 +15,9 @@ public struct MediaCard: View {
     public let media: any SlimMediaProtocol
     public let url: URL?
     public let action: @MainActor () -> Void
+    
     @State private var showError: Bool = false
+    @State private var blurImage: UIImage?
     
     public static let cardSize = CGSize(width: 200, height: 370)
     
@@ -26,9 +28,7 @@ public struct MediaCard: View {
     }
     
     public var body: some View {
-        Button {
-            if self.media.errors == nil { action() }
-        }
+        Button { if self.media.errors == nil { action() } }
         label: {
             VStack(spacing: 0) {
                 if self.settings.loadThumbnailArt {
@@ -41,8 +41,7 @@ public struct MediaCard: View {
                                 .frame(minHeight: 0, idealHeight: 285, maxHeight: 285)
                                 .clipped()
                         } placeholder: {
-                            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
-                               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 32)) {
+                            if let blurImage {
                                 Image(uiImage: blurImage)
                                     .resizable()
                                     .scaledToFill()
@@ -55,7 +54,7 @@ public struct MediaCard: View {
                         }
                     }
                     else { MediaCardNoImage() }
-                    Text(media.title)
+                    Text(self.media.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .truncationMode(.tail)
@@ -66,7 +65,7 @@ public struct MediaCard: View {
                 }
                 else {
                     Spacer(minLength: 0)
-                    Text(media.title)
+                    Text(self.media.title)
                         .font(.system(size: 30))
                         .bold()
                         .multilineTextAlignment(.center)
@@ -96,6 +95,12 @@ public struct MediaCard: View {
             }
         }
         .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
+        .task(id: self.media.id) {
+            if let blurHash = self.media.imageBlurHashes?.getBlurHash(for: .primary),
+               let blurImage = UIImage(blurHash: blurHash, size: CGSize(width: 32, height: 32)) {
+                self.blurImage = blurImage
+            }
+        }
         .id(media.id) // Stabilize view identity
     }
 }
