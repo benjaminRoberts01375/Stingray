@@ -31,21 +31,7 @@ public struct ProfilePickerView: View {
             ForEach(users) { user in
                 ProfilePickerUser(loginState: $loginState, user: user)
             }
-            NavigationLink { AddServerView(loginState: $loginState) }
-            label: {
-                VStack(alignment: .center) {
-                    Image(systemName: "person.crop.circle.fill.badge.plus")
-                        .resizable()
-                        .scaledToFit()
-                        .accessibilityLabel("Person icon")
-                        .foregroundStyle(self.theme.currentTheme.addProfileStyle)
-                        .padding(.top, 30)
-                    Spacer()
-                    Text("Add User")
-                        .font(.callout.bold())
-                }
-            }
-            .buttonStyle(.plain)
+            AddProfile(loginState: $loginState)
             Spacer(minLength: 0)
         }
         .onAppear { self.users = userModel.getUsers().sorted { $0.displayName < $1.displayName } }
@@ -94,6 +80,33 @@ public struct ProfilePickerView: View {
     }
 }
 
+fileprivate struct AddProfile: View {
+    @Environment(ThemeModel.self) private var theme
+    @Binding public var loginState: LoginState
+    
+    /// Checks if add user button is selected
+    @FocusState private var isFocused: Bool
+    
+    var body: some View {
+        NavigationLink { AddServerView(loginState: $loginState) }
+        label: {
+            VStack(alignment: .center) {
+                Image(systemName: "person.crop.circle.fill.badge.plus")
+                    .resizable()
+                    .scaledToFit()
+                    .accessibilityLabel("Person icon")
+                    .foregroundStyle(self.isFocused ? AnyShapeStyle(Color.black) : self.theme.currentTheme.addProfileStyle)
+                    .padding(.top, 30)
+                Spacer()
+                Text("Add User")
+                    .font(.callout.bold())
+            }
+        }
+        .buttonStyle(.plain)
+        .focused($isFocused, equals: true)
+    }
+}
+
 fileprivate struct ProfilePickerUser: View {
     /// Functions and values regarding the users
     @Environment(UserModel.self) private var userModel: UserModel
@@ -106,6 +119,8 @@ fileprivate struct ProfilePickerUser: View {
 
     /// Controls showing the logout confirmation alert
     @State private var showLogoutAlert: Bool = false
+    /// Checks if the user's profile is selected
+    @FocusState private var isFocused: Bool
 
     /// User to display
     let user: User
@@ -142,7 +157,7 @@ fileprivate struct ProfilePickerUser: View {
                             Image(systemName: "person.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(self.theme.currentTheme.defaultProfileImage)
+                                .foregroundStyle(self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.defaultProfileImage)
                                 .accessibilityLabel("Icon for \(user.displayName)")
                                 .padding(50)
                         }
@@ -165,5 +180,6 @@ fileprivate struct ProfilePickerUser: View {
             .padding(.horizontal, -16)
         }
         .buttonStyle(.plain)
+        .focused($isFocused, equals: true)
     }
 }
