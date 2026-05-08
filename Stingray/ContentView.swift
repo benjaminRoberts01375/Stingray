@@ -119,6 +119,7 @@ public struct ContentView: View {
             case .askOnLaunch, .askOnResume:
                 Log.info("Showing profile picker")
                 self.loginState = .pickingUser
+                return
             default: break
             }
             
