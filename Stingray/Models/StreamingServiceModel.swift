@@ -292,20 +292,24 @@ public final class JellyfinModel: StreamingServiceProtocol {
     public func retrieveLibraries() async {
         let maxConcurrentLibraries = 2
         
-        self.libraryStatus = .retrieving
+        await MainActor.run { self.libraryStatus = .retrieving }
+        
         let libraries: [LibraryModel]
         do {
-            libraries =
-            try await networkAPI.getLibraries(accessToken: self.accessToken, userID: self.userID)
-                .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
+            libraries = try await networkAPI.getLibraries(
+                accessToken: self.accessToken,
+                userID: self.userID
+            )
+            .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
         } catch {
-            self.libraryStatus = .error(StreamingServiceErrors.librarySetupFailed(error))
+            await MainActor.run { self.libraryStatus = .error(StreamingServiceErrors.librarySetupFailed(error)) }
             return
         }
         
         if libraries.isEmpty { return }
         
-        self.libraryStatus = .available(libraries)
+        await MainActor.run { self.libraryStatus = .available(libraries) }
+        
         await withTaskGroup(of: Void.self) { group in
             var libraryIterator = libraries.makeIterator()
             var runningTasks = 0
@@ -336,9 +340,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
                     runningTasks += 1
                 }
             }
-            
-            self.libraryStatus = .complete(libraries)
         }
+        await MainActor.run { self.libraryStatus = .complete(libraries) }
     }
     
     /// Fetch a single library's media.
