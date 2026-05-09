@@ -8,27 +8,53 @@
 import BlurHashKit
 import SwiftUI
 
-public struct MediaCard: View {
+public struct MediaCard: View, Equatable {
+    public static func == (lhs: MediaCard, rhs: MediaCard) -> Bool { lhs.media.id == rhs.media.id }
+    
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
-    
-    public let media: any SlimMediaProtocol
-    public let url: URL?
-    public let action: @MainActor () -> Void
     
     @State private var showError: Bool = false
     @State private var blurImage: UIImage?
     
-    public static let cardSize = CGSize(width: 200, height: 370)
+    @Binding public var navigation: NavigationPath
     
-    public init(media: any SlimMediaProtocol, streamingService: StreamingServiceProtocol, action: @escaping @MainActor () -> Void) {
+    public static let cardSize = CGSize(width: 200, height: 370)
+    private static let imageHeight: CGFloat = MediaCard.cardSize.height + 15
+    
+    public let media: any SlimMediaProtocol
+    public let url: URL?
+    public let reserveTextSpace: Bool
+    
+    /// Creates a button based on the media's available art. This button navigates to the media's detail view
+    /// - Parameters:
+    ///   - media: Media to display and navigate on
+    ///   - streamingService: Streaming service to derrive URLs from
+    ///   - navigation: The app's `NavigationPath`
+    ///   - reserveTextSpace: Allow the MediaCard to reserve the maximum amount of space for text
+    /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
+    public init(
+        media: any SlimMediaProtocol,
+        streamingService: StreamingServiceProtocol,
+        navigation: Binding<NavigationPath>? = nil,
+        reserveTextSpace: Bool = true
+    ) {
         self.media = media
         self.url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 400)
-        self.action = action
+        self._navigation = navigation ?? .constant(NavigationPath())
+        self.reserveTextSpace = reserveTextSpace
     }
     
     public var body: some View {
-        Button { if self.media.errors == nil { action() } }
+        Button { if self.media.errors == nil {
+            if let media = self.media as? (any MediaProtocol) { // Shortcut
+                self.navigation.append(AnyMedia(media: media))
+                Log.info("Shortcut")
+                return
+            }
+            Log.info("Longcut")
+            self.navigation.append(self.media) }
+        }
         label: {
             VStack(spacing: 0) {
                 if self.settings.loadThumbnailArt {
@@ -37,30 +63,26 @@ public struct MediaCard: View {
                             image
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: Self.cardSize.width)
-                                .frame(minHeight: 0, idealHeight: 285, maxHeight: 285)
-                                .clipped()
                         } placeholder: {
                             if let blurImage {
                                 Image(uiImage: blurImage)
                                     .resizable()
                                     .scaledToFill()
                                     .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-                                    .frame(width: Self.cardSize.width)
-                                    .frame(minHeight: 0, idealHeight: 285, maxHeight: 285)
-                                    .clipped()
                             }
                             else { MediaCardLoading() }
                         }
+                        .frame(width: Self.cardSize.width)
+                        .frame(minHeight: 0, maxHeight: Self.imageHeight)
+                        .clipped()
                     }
                     else { MediaCardNoImage() }
                     Text(self.media.title)
                         .multilineTextAlignment(.center)
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: self.reserveTextSpace)
                         .truncationMode(.tail)
                         .foregroundStyle(self.theme.currentTheme.header2)
-                        .padding(.horizontal, 5)
-                        .padding(.top, 5)
+                        .padding(5)
                     Spacer(minLength: 0)
                 }
                 else {
@@ -95,13 +117,14 @@ public struct MediaCard: View {
             }
         }
         .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
-        .task(id: self.media.id) {
-            if let blurHash = self.media.imageBlurHashes?.getBlurHash(for: .primary),
-               let blurImage = UIImage(blurHash: blurHash, size: CGSize(width: 32, height: 32)) {
-                self.blurImage = blurImage
-            }
+        .task(id: self.media.id, priority: .background) {
+            guard let blurHash = self.media.imageBlurHashes?.getBlurHash(for: .primary)
+            else { return }
+            let decoded = await Task.detached(priority: .background) {
+                return UIImage(blurHash: blurHash, size: CGSize(width: 32, height: 32))
+            }.value
+            self.blurImage = decoded
         }
-        .id(media.id) // Stabilize view identity
     }
 }
 

@@ -47,15 +47,17 @@ public struct MediaGridView: View {
     
     @Binding public var navigation: NavigationPath
     
+    private static let columns = [
+        GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.height), spacing: Self.cardSpacing)
+    ]
+    
     public var body: some View {
-        let columns = [
-            GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.height), spacing: Self.cardSpacing)
-        ]
-        LazyVGrid(columns: columns, spacing: Self.cardSpacing) {
+        LazyVGrid(columns: Self.columns, spacing: Self.cardSpacing) {
             ForEach(allMedia, id: \.id) { media in
-                MediaCard(media: media, streamingService: streamingService) { navigation.append(AnyMedia(media: media)) }
+                MediaCard(media: media, streamingService: streamingService, navigation: $navigation)
             }
         }
+        .scrollTargetLayout()
     }
 }
 
