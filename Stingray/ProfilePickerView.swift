@@ -9,12 +9,15 @@ import SwiftUI
 
 public struct ProfilePickerView: View {
     /// List of all users who have at some point signed into Stingray
-    @State private var users: [User] = []
+    @State private var itemRows: [[PickerItem]] = []
     /// Login state for the entire app
     @Binding public var loginState: LoginState
     
     @Environment(UserModel.self) private var userModel
     @Environment(ThemeModel.self) private var theme
+    
+    public static let optionSize: CGSize = CGSize(width: 274, height: 335)
+    public static let spacing: CGSize = CGSize(width: 60, height: 45)
     
     // A simple way to derrive the streaming service from the login state
     public var streamingService: (any StreamingServiceProtocol)? {
@@ -25,16 +28,50 @@ public struct ProfilePickerView: View {
         }
     }
     
-    public var body: some View {
-        CenterWrappedRowsLayout(itemWidth: 250, itemHeight: 325, horizontalSpacing: 100, verticalSpacing: 100) {
-            Spacer(minLength: 0)
-            ForEach(users) { user in
-                ProfilePickerUser(loginState: $loginState, user: user)
+    /// Types of items available to show in the profile picker
+    public enum PickerItem: Hashable, Identifiable {
+        /// Display a user icon
+        case user(User)
+        /// Display the add user icon
+        case addProfile
+        
+        public var id: String {
+            switch self {
+            case .addProfile: return "addProfile"
+            case .user(let user): return user.id
             }
-            AddProfile(loginState: $loginState)
-            Spacer(minLength: 0)
         }
-        .onAppear { self.users = userModel.getUsers().sorted { $0.displayName < $1.displayName } }
+    }
+    
+    public var body: some View {
+        VStack(alignment: .center, spacing: Self.spacing.height) {
+            ForEach(self.itemRows, id: \.self) { itemRow in
+                HStack(spacing: Self.spacing.width) {
+                    ForEach(itemRow) { item in
+                        switch item {
+                        case .user(let user):
+                            ProfilePickerUser(loginState: $loginState, user: user)
+                                .frame(width: Self.optionSize.width, height: Self.optionSize.height)
+                        case .addProfile:
+                            AddProfile(loginState: $loginState)
+                                .frame(width: Self.optionSize.width, height: Self.optionSize.height)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .focusSection()
+            }
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width }
+        action: { width in
+            var rows: [PickerItem] = userModel
+                .getUsers()
+                .sorted { $0.displayName < $1.displayName }
+                .map { .user($0) }
+            rows += [.addProfile]
+            self.itemRows = rows.chunked(into: max(1, Int(width / (Self.optionSize.width + Self.spacing.width))))
+        }
+        .ignoresSafeArea()
     }
     
     /// Switch the current login state to a logged in user
@@ -168,7 +205,6 @@ fileprivate struct ProfilePickerUser: View {
                     .font(.callout.bold())
             }
             .padding(16)
-            .padding(.horizontal, 16)
             .background { // Only show white background if the current user is this user
                 switch self.loginState {
                 case .loggedIn(let streamingService):
@@ -177,7 +213,6 @@ fileprivate struct ProfilePickerUser: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 40))
-            .padding(.horizontal, -16)
         }
         .buttonStyle(.plain)
         .focused($isFocused, equals: true)
