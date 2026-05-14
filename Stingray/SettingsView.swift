@@ -131,6 +131,7 @@ public struct SettingsView: View {
                         if self.settings.langauge == nil { Label("System", systemImage: "checkmark") }
                         else { Text("System") }
                     }
+                    Divider()
                     ForEach(SupportedLanguages.allCases, id: \.languageCode) { language in
                         Button { self.settings.langauge = language.locale }
                         label: {
