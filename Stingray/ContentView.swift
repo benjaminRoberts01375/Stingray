@@ -83,10 +83,11 @@ public struct ContentView: View {
         }
         .onChange(of: self.scenePhase) { _, newPhase in
             if newPhase != .active { return } // Did we become active
-            if self.settings.profileSwitchingMethod != .askOnResume { return }  // Should we ask
+            if self.settings.profileSwitchingMethod != .askOnResume || self.userModel.getUsers().count <= 1 { return }  // Should we ask
             if case .loggedIn(let streamingService) = self.loginState, streamingService.playerProgress != nil { // Streaming something
                 return
             }
+            Log.info("Scene Phase caused profile picker")
             self.loginState = .pickingUser
         }
         .colorScheme(self.theme.currentTheme.colorScheme)
@@ -113,12 +114,14 @@ public struct ContentView: View {
             }
             
             // Asking user for prefered profile
-            switch self.settings.profileSwitchingMethod {
-            case .askOnLaunch, .askOnResume:
-                Log.info("Showing profile picker")
-                self.loginState = .pickingUser
-                return
-            default: break
+            if self.userModel.getUsers().count > 1 {
+                switch self.settings.profileSwitchingMethod {
+                case .askOnLaunch, .askOnResume:
+                    Log.info("Showing profile picker")
+                    self.loginState = .pickingUser
+                    return
+                default: break
+                }
             }
             
             // Check if the current Apple TV user has an associated account

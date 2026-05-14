@@ -66,10 +66,14 @@ public final class SettingsModel {
             case .askOnResume:
                 return """
                 You'll be prompted for your choice of account when Jellyfin launches or opens from the background. \
-                This can be annoying to some and triggers on things like Control Center.
+                This can be annoying to some and triggers on things like Control Center. \
+                If only one user is signed in, the user picker screen will be skipped.
                 """
             case .askOnLaunch:
-                return "You'll be prompted for your choice of account on each launch. Typical of most streaming services."
+                return """
+                You'll be prompted for your choice of account on each launch. Typical of most streaming services.
+                If only one user is signed in, the user picker screen will be skipped.
+                """
             case .manual:
                 return "Whoever was last signed in will remain signed in."
     //        case .syncWithTVOS:
