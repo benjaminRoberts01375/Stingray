@@ -383,65 +383,17 @@ public enum UserDefaultsErrors: RError {
 
 /// Errors for `DefaultsBasicStorage`
 public enum BasicStorageErrors: RError {
-    /// Failed to update an existing entry. The `String` value is the key used.
-    case updateFailed(OSStatus, String)
-    /// Failed to save a new entry. The `String` value is the key used.
-    case saveFailed(OSStatus, String)
-    /// Failed to encode provided type. The `String` value is the request key.
-    case encodingFailed(RError, String)
-    /// Failed to read data at the provided key. The `String` value is the request key.
-    case decodingFailed(RError, String)
-    /// Secure data returned an unexpected result. The `String` value is the request key.
-    case unexpectedData(String)
-    /// The requested data was not found in secure data. The `String` value is the request key.
-    case notFound(String)
-    /// An error occured when attempting to read from secure storage.
-    case readError(OSStatus, String)
-    /// Failed to delete data at the provided key
-    case deleteFailed(OSStatus, String)
-    /// Could not find the database's version
-    case unknownDBVersion(Error)
-    /// Could not set the version for the database
-    case unableToSetDBVersion(String, Error)
-    /// Unable to migrate the database from some version to another
-    case unableToMigrateDB(String?, String, RError?)
+    case userDefaultsSetup
     
     public var next: (any RError)? {
         switch self {
-        case .updateFailed, .saveFailed, .deleteFailed, .unexpectedData, .readError, .notFound: return nil
-        case .encodingFailed(let err, _), .decodingFailed(let err, _): return err
-        case .unknownDBVersion: return nil
-        case .unableToSetDBVersion: return nil
-        case .unableToMigrateDB(_, _, let err): return err
+        case .userDefaultsSetup: return nil
         }
     }
     
     public var errorDescription: String {
         switch self {
-        case .updateFailed(let osStatus, let key):
-            return "Failed to update secure data: \(SecCopyErrorMessageString(osStatus, nil) as String? ?? "Unknown") at '\(key)'"
-        case .saveFailed(let osStatus, let key):
-            return "Failed to save to secure data: \(SecCopyErrorMessageString(osStatus, nil) as String? ?? "Unknown") at '\(key)'"
-        case .encodingFailed(_, let key):
-            return "Failed to encode value for key '\(key)'"
-        case .decodingFailed(_, let key):
-            return "Failed decode value for key '\(key)'"
-        case .unexpectedData(let key):
-            return "Secure data returned something that was not of type Data at key '\(key)'"
-        case .readError(let osStatus, let key):
-            let message = SecCopyErrorMessageString(osStatus, nil) as String? ?? "of an unknown reason"
-            return "Failed to read secure data at key '\(key)' because \(message)"
-        case .notFound(let key):
-            return "Secure data could not find the value at key '\(key)'"
-        case .deleteFailed(let osStatus, let key):
-            let message = SecCopyErrorMessageString(osStatus, nil) as String? ?? "of an unknown reason"
-            return "Failed to delete secure data at key '\(key)' because \(message)"
-        case .unknownDBVersion(let err):
-            return "Unable to get the version of the database: \(err.localizedDescription)"
-        case .unableToSetDBVersion(let newVersion, let err):
-            return "Unable to set the version of the database to v\(newVersion): \(err.localizedDescription)"
-        case .unableToMigrateDB(let vStart, let vEnd, _):
-            return "Unable to migrate the database from v\(vStart ?? "Unknown"), to v\(vEnd)"
+        case .userDefaultsSetup: return "Failed to setup User Defaults with App Group"
         }
     }
 }

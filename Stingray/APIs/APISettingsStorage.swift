@@ -30,11 +30,11 @@ public final class SettingStorage: SettingsStorageProtocol {
     public init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
     
     public func setProfileSwitchingMethod(to method: SettingsModel.ProfileSwitching) {
-        try? self.basicStorage.setSecureData(.userSwitchingMethod, data: method) // TODO: Fails silently
+        self.basicStorage.setEnum(.userSwitchingMethod, value: method)
     }
     
     public func getProfileSwitchingMethod() -> SettingsModel.ProfileSwitching {
-        return (try? self.basicStorage.getSecureData(.userSwitchingMethod)) ?? .askOnLaunch
+        return self.basicStorage.getEnum(.userSwitchingMethod) ?? .askOnLaunch
     }
     
     public func getBitrateCap() -> Int? {

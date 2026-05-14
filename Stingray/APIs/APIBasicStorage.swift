@@ -1,5 +1,5 @@
 //
-//  BasicStorageProtocol.swift
+//  APIBasicStorage.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 11/13/25.
@@ -71,6 +71,15 @@ public protocol BasicStorageProtocol {
     ///   - key: The key where data is to be stored.
     ///   - value: Text to set
     func setString(_ key: StorageKeys, value: String)
+    /// Set a `[String]` into local storage
+    /// - Parameters:
+    ///   - key: The key where data is to be stored
+    ///   - value: Data to set
+    func setStringArray(_ key: StorageKeys, value: [String]?)
+    /// Get `[String]` from local storage
+    /// - Parameter key: Where to get the data from
+    /// - Returns: The available data
+    func getStringArray(_ key: StorageKeys) -> [String]?
     /// Set an `Int` into local storage. Returns 0 if the value does not exist in storage.
     /// - Parameter key: The key where data is to be stored
     /// - Returns: The found `Int`
@@ -85,6 +94,26 @@ public protocol BasicStorageProtocol {
     ///   - key: Key the string resides at.
     ///   - id: Unique ID for saving multiple versions of this value at this key.
     func deleteString(_ key: StorageKeys)
+    /// Set an enum type to local storage
+    /// - Parameters:
+    ///   - key: Where to store the enum
+    ///   - value: Value to store
+    func setEnum<T: RawRepresentable>(_ key: StorageKeys, value: T)
+    /// Get an enum type from local storage
+    /// - Parameter key: Where the data is stored
+    /// - Returns: Found value if available
+    func getEnum<T: RawRepresentable>(_ key: StorageKeys) -> T? where T.RawValue == String
+    /// Store any `Codable` object into local storage.
+    /// - Note: This is less performant due to the reliance on encoding and decoding, thus should be avoided if possible
+    /// - Parameters:
+    ///   - key: Location to store data
+    ///   - value: Data to store
+    func setObject<T: Codable>(_ key: StorageKeys, value: T)
+    /// Get any `Decodable` object from local storage
+    /// - Note: This is less performant due to the reliance on encoding and decoding, thus should be avoided if possible
+    /// - Parameter key: Location where the data may be stored
+    /// - Returns: Found value if available
+    func getObject<T: Decodable>(_ key: StorageKeys) -> T?
     /// Store data in a place compatible with the Top Shelf.
     /// - Parameters:
     ///   - key: The key where data is to be stored.
@@ -94,47 +123,16 @@ public protocol BasicStorageProtocol {
     /// - Parameter key: Where the value may be stored.
     /// - Returns: Found data if available
     func getTopShelfString(_ key: StorageKeys) -> String?
-    /// Sets or updates secured data via key/value pairs
-    /// - Parameters:
-    ///   - key: The key where the data is to be stored.
-    ///   - data: Data to store at the given key.
-    /// - Throws: Throws `BasicStorageErrors` if the data cannot be formatted, or the secure storage also throws an error.
-    func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors)
-    /// Reads secure data from storage. Data is automatically formatted via the generic.
-    /// - Parameter key: Data to lookup
-    /// - Returns: Formatted data
-    /// - Throws: Throws `BasicStorageErrors` if the data is not formatted correct, cannot be found, or other reasons.
-    func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D
-    /// Deletes a key/value pair from secure storage.
-    /// - Parameter key: Key to delete.
-    /// - Throws: Throws a `BasicStorageErrors` if the secure data method also throws an error.
-    func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors)
 }
 
 public final class DefaultsBasicStorage: BasicStorageProtocol {
     private let defaults: UserDefaults
-    private let topShelf: UserDefaults?
-    public static let dbVersion = "3"
+    public static let dbVersion = "2"
     
     public init() throws(BasicStorageErrors) {
-        self.defaults = UserDefaults.standard
-        self.topShelf = UserDefaults(suiteName: "group.com.benlab.stingray")
-        
-        // Migration from v1 data
-        if (try? getDBVersion(.keychain) ?? "") != Self.dbVersion {
-            Log.warning("Migrating DB to v\(Self.dbVersion)")
-            do {
-                let userIDs = self.topShelf?.stringArray(forKey: StorageKeys.userIDs.rawValue)
-                try self.setSecureData(.userIDs, data: userIDs)
-                try self.setDBVersion(to: Self.dbVersion)
-            }
-            catch let error as RError {
-                Log.critical("Failed to migrate DB to v\(Self.dbVersion): \(error.errorDescription)")
-                throw BasicStorageErrors.unableToMigrateDB(
-                    try? getDBVersion(.perTVOSUserDefaults), Self.dbVersion, error
-                )
-            }
-        }
+        guard let defaults = UserDefaults(suiteName: "group.com.benlab.stingray")
+        else { throw .userDefaultsSetup }
+        self.defaults = defaults
     }
     
     public func getString(_ key: StorageKeys) -> String? {
@@ -144,130 +142,61 @@ public final class DefaultsBasicStorage: BasicStorageProtocol {
     }
     
     public func setString(_ key: StorageKeys, value: String) {
-        defaults.set(value, forKey: key.rawValue)
+        self.defaults.set(value, forKey: key.rawValue)
+    }
+    
+    public func getStringArray(_ key: StorageKeys) -> [String]? {
+        return self.defaults.stringArray(forKey: key.rawValue)
+    }
+    
+    public func setStringArray(_ key: StorageKeys, value: [String]?) {
+        self.defaults.set(value, forKey: key.rawValue)
     }
     
     public func getInt(_ key: StorageKeys) -> Int {
-        return defaults.integer(forKey: key.rawValue)
+        return self.defaults.integer(forKey: key.rawValue)
     }
     
     public func setInt(_ key: StorageKeys, value: Int?) {
-        defaults.set(value, forKey: key.rawValue)
+        self.defaults.set(value, forKey: key.rawValue)
     }
     
     public func deleteString(_ key: StorageKeys) {
-        defaults.removeObject(forKey: key.rawValue)
+        self.defaults.removeObject(forKey: key.rawValue)
     }
     
     public func setTopShelfString(_ key: StorageKeys, value: String) {
-        self.topShelf?.set(value, forKey: key.rawValue)
+        self.defaults.set(value, forKey: key.rawValue)
     }
     
     public func getTopShelfString(_ key: StorageKeys) -> String? {
-        let foundData = self.topShelf?.string(forKey: key.rawValue)
+        let foundData = self.defaults.string(forKey: key.rawValue)
         if foundData == "" { return nil } // Little extra safety
         return foundData
     }
     
-    public func setSecureData<E: Codable>(_ key: StorageKeys, data: E) throws(BasicStorageErrors) {
-        let encodedData: Data
-        do { encodedData = try JSONEncoder().encode(data) }
-        catch { throw BasicStorageErrors.encodingFailed(JSONError.failedJSONEncode(key.rawValue), key.rawValue) }
-        
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrAccount: key.rawValue,
-            kSecValueData: encodedData,
-            kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: Self.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain: true,
-            kSecAttrSynchronizable: false
-        ]
-        
-        let status = SecItemAdd(query as CFDictionary, nil)
-        if status == errSecDuplicateItem { // Entry already exists at key, update it instead
-            let lookupQuery: [CFString: Any] = [
-                kSecClass: kSecClassGenericPassword,
-                kSecAttrAccount: key.rawValue,
-                kSecAttrService: "com.benlab.Stingray",
-                kSecAttrAccessGroup: Self.keychainAccessGroup(),
-                kSecUseUserIndependentKeychain: true,
-                kSecAttrSynchronizable: false
-            ]
-            let updatedData: [CFString: Any] = [kSecValueData: encodedData]
-            let updateStatus = SecItemUpdate(lookupQuery as CFDictionary, updatedData as CFDictionary)
-            if updateStatus != errSecSuccess { throw BasicStorageErrors.updateFailed(updateStatus, key.rawValue) } // Failed to save
-        }
-        else if status != errSecSuccess { throw BasicStorageErrors.saveFailed(status, key.rawValue) } // Entry failed to succeed
+    public func setEnum<T: RawRepresentable>(_ key: StorageKeys, value: T) {
+        guard let value = value.rawValue as? String
+        else { return }
+        self.setString(key, value: value)
     }
     
-    public func getSecureData<D: Decodable>(_ key: StorageKeys) throws(BasicStorageErrors) -> D {
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: Self.keychainAccessGroup(),
-            kSecAttrAccount: key.rawValue,
-            kSecReturnData: true,
-            kSecMatchLimit: kSecMatchLimitOne,
-            kSecUseUserIndependentKeychain: true
-        ]
-
-        var result: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        
-        if status == errSecItemNotFound { throw BasicStorageErrors.notFound(key.rawValue) }
-        else if status != errSecSuccess { throw BasicStorageErrors.readError(status, key.rawValue) }
-        
-        // Convert to Data type if possible
-        guard let data = result as? Data
-        else { throw BasicStorageErrors.unexpectedData(key.rawValue) }
-        // Decode Data into JSON
-        do { return try JSONDecoder().decode(D.self, from: data) }
-        catch { throw BasicStorageErrors.decodingFailed(JSONError.failedJSONDecode(key.rawValue, error), key.rawValue) }
+    public func getEnum<T: RawRepresentable>(_ key: StorageKeys) -> T? where T.RawValue == String {
+        guard let raw = self.getString(key)
+        else { return nil }
+        return T(rawValue: raw)
     }
     
-    public func deleteSecureData(_ key: StorageKeys) throws(BasicStorageErrors) {
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrAccount: key.rawValue,
-            kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: Self.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain: true
-        ]
-        
-        let status = SecItemDelete(query as CFDictionary)
-        if status != errSecSuccess && status != errSecItemNotFound {
-            throw BasicStorageErrors.deleteFailed(status, key.rawValue)
-        }
+    public func setObject<T: Codable>(_ key: StorageKeys, value: T) {
+        guard let data = try? JSONEncoder().encode(value).base64EncodedString()
+        else { return }
+        self.setString(key, value: data)
     }
     
-    public static func keychainAccessGroup() -> String {
-        guard let teamID = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String else {
-            fatalError("Could not read AppIdentifierPrefix from bundle")
-        }
-        // teamID already includes the trailing dot e.g. "XXXXXXXXXX."
-        return "\(teamID)com.benlab.stingray"
-    }
-    
-    private func getDBVersion(_ dbType: DBType) throws(BasicStorageErrors) -> String? {
-        switch dbType {
-        case .keychain:
-            do { return try self.getSecureData(.version) }
-            catch { throw BasicStorageErrors.unableToSetDBVersion(Self.dbVersion, error) }
-        case .perTVOSUserDefaults: return self.getString(.version)
-        case .topShelf: return self.getString(.version)
-        }
-    }
-    
-    private func setDBVersion(to version: String) throws(BasicStorageErrors) {
-        Log.info("Setting DB version...")
-        do { try self.setSecureData(.version, data: version) }
-        catch {
-            Log.critical("Failed set the DB version for the keychain")
-            throw BasicStorageErrors.unableToSetDBVersion(Self.dbVersion, error)
-        }
-        
-        self.setString(.version, value: version)
-        self.setTopShelfString(.version, value: version)
+    public func getObject<T: Decodable>(_ key: StorageKeys) -> T? {
+        guard let json = self.getString(key),
+              let data = Data(base64Encoded: json)
+        else { return nil }
+        return try? JSONDecoder().decode(T.self, from: data)
     }
 }

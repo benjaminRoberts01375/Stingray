@@ -19,7 +19,23 @@ public final class SettingsModel {
     [15_000_000, 10_000_000, 5_000_000, 1_500_000, 500_000, 100_000]
     
     /// Type for when Stingray will ask the user about switching profiles.
-    public enum ProfileSwitching: Codable, CaseIterable {
+    public enum ProfileSwitching: CaseIterable, RawRepresentable {
+        public init?(rawValue: String) {
+            if rawValue == ProfileSwitching.askOnLaunch.rawValue { self = .askOnLaunch }
+            else if rawValue == ProfileSwitching.askOnResume.rawValue { self = .askOnResume }
+//            else if rawValue == ProfileSwitching.askOnResume.syncWithTVOS { self = .syncWithTVOS }
+            else { self = .manual }
+        }
+        
+        public var rawValue: String {
+            switch self {
+            case .askOnResume: return "askOnResume"
+            case .askOnLaunch: return "askOnLaunch"
+//            case .syncWithTVOS return "syncWithTVOS"
+            case .manual: return "manual"
+            }
+        }
+        
         /// When Stingray becomes active, ask the user
         case askOnResume
         /// When Stingray first launches, ask the user - typical of most streaming services

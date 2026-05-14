@@ -60,21 +60,21 @@ public final class UserStorage: UserStorageProtocol {
     }
     
     public func getUserIDs() -> [String] {
-        return (try? self.basicStorage.getSecureData(.userIDs)) ?? [] // TODO: Silently fails
+        return self.basicStorage.getStringArray(.userIDs) ?? []
     }
     
     public func setUserIDs(_ userIDs: [String]) {
-        try? self.basicStorage.setSecureData(.userIDs, data: userIDs) // TODO: Silently fails
+        self.basicStorage.setStringArray(.userIDs, value: userIDs)
     }
     
     public func getActiveUserID() -> String? {
         if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? false {
             return self.basicStorage.getTopShelfString(.defaultStreamingUserID)
         }
-        let method: SettingsModel.ProfileSwitching = (try? self.basicStorage.getSecureData(.userSwitchingMethod)) ?? .askOnLaunch
+        let method: SettingsModel.ProfileSwitching = self.basicStorage.getEnum(.userSwitchingMethod) ?? .askOnLaunch
         switch method {
         case .manual:
-            let userID: String? = try? self.basicStorage.getSecureData(.defaultStreamingUserID) ?? nil // Fallback to ask
+            let userID: String? = self.basicStorage.getString(.defaultStreamingUserID) // Fallback to ask
             self.basicStorage.setString(.linkUser(localUserID), value: userID ?? "")
             self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: userID ?? "")
             return userID
@@ -82,23 +82,23 @@ public final class UserStorage: UserStorageProtocol {
             if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? false { // Top shelf reads from a different storage
                 return self.basicStorage.getTopShelfString(.defaultStreamingUserID)
             }
-            return try? self.basicStorage.getSecureData(.linkUser(localUserID))
+            return self.basicStorage.getString(.linkUser(localUserID))
         }
     }
     
     public func setActiveUserID(id serverUserID: String) {
         self.basicStorage.setTopShelfString(.defaultStreamingUserID, value: serverUserID) // Set Top Shelf user ID
-        try? self.basicStorage.setSecureData(.defaultStreamingUserID, data: serverUserID) // TODO: Silently fails
-        try? self.basicStorage.setSecureData(.linkUser(localUserID), data: serverUserID) // TODO: Silently fails
+        self.basicStorage.setString(.defaultStreamingUserID, value: serverUserID) // TODO: Silently fails
+        self.basicStorage.setString(.linkUser(localUserID), value: serverUserID) // TODO: Silently fails
         Log.info("Linking tvOS \(localUserID) -> Jellyfin \(serverUserID)")
     }
     
     public func upsertUser(user: User) {
-        try? self.basicStorage.setSecureData(.user(user.id), data: user)
+        self.basicStorage.setObject(.user(user.id), value: user)
     }
     
     public func getUser(userID: String) -> User? {
-        return try? self.basicStorage.getSecureData(.user(userID))
+        return self.basicStorage.getObject(.user(userID))
     }
     
     public func deleteUser(userID: String) {

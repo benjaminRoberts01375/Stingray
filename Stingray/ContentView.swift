@@ -105,8 +105,6 @@ public struct ContentView: View {
             default: break
             }
             
-            self.listKeychainEntries()
-            self.nukeKeychain()
             Log.info("Attempting to set up from storage")
             // Check if any users exist
             if self.userModel.getUsers().isEmpty {
@@ -196,73 +194,6 @@ public struct ContentView: View {
         
         // Create deep link request
         deepLinkRequest = DeepLinkRequest(mediaID: mediaID, parentID: parentID)
-    }
-    
-    /// Deletes all entries within the global keychain.
-    public func nukeKeychain() {
-        // Check for ResetKeychain argument
-        if !ProcessInfo.processInfo.arguments.contains("-ResetKeychain") {
-            Log.debug("Leaving Keychain alone.")
-            return
-        }
-        Log.info("Nuking Keychain...")
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrService: "com.benlab.Stingray",
-            kSecAttrAccessGroup: DefaultsBasicStorage.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain: true,
-            kSecAttrSynchronizable: kSecAttrSynchronizableAny
-        ]
-        let status = SecItemDelete(query as CFDictionary)
-        if status != errSecSuccess && status != errSecItemNotFound {
-            Log.debug("Keychain reset failed for class kSecClassGenericPassword: \(status)")
-            self.listKeychainEntries()
-            return
-        }
-        
-        Log.info("Keychain nuked.")
-        self.listKeychainEntries()
-    }
-    
-    public func listKeychainEntries() {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "com.benlab.Stingray",
-            kSecAttrAccessGroup as String: DefaultsBasicStorage.keychainAccessGroup(),
-            kSecUseUserIndependentKeychain as String: true,
-            kSecMatchLimit as String: kSecMatchLimitAll,
-            kSecReturnAttributes as String: true,
-            kSecReturnData as String: true
-        ]
-        
-        var result: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        
-        if status == errSecItemNotFound {
-            Log.debug("Keychain is empty.")
-            return
-        } else if status != errSecSuccess {
-            Log.debug("Keychain list failed: \(status)")
-            return
-        }
-        
-        guard let items = result as? [[String: Any]] else {
-            Log.debug("Keychain list: unexpected result format")
-            return
-        }
-        
-        Log.debug("--- Keychain (\(items.count) entries) ---")
-        for item in items {
-            let key = item[kSecAttrAccount as String] as? String ?? "unknown"
-            let value: String
-            if let data = item[kSecValueData as String] as? Data {
-                value = String(data: data, encoding: .utf8) ?? "<non-utf8 data>"
-            } else {
-                value = "<no data>"
-            }
-            Log.debug("\(key) : \(value)")
-        }
-        Log.debug("---")
     }
 }
 
