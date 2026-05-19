@@ -154,7 +154,7 @@ fileprivate struct PlayerStreamingStats: View {
     private let screenResolution: CGSize = UIScreen.main.nativeBounds.size
     
     var body: some View {
-        HStack(spacing: 20) {
+        HStack {
             VStack {
                 VStack(alignment: .leading) {
                     Text("Metadata")
@@ -171,8 +171,8 @@ fileprivate struct PlayerStreamingStats: View {
                     Text("Subtitle Stream" + ": ").bold() + Text(self.subtitleStreamID ?? "None")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
                 .availableGlass()
+                .padding(.bottom)
                 VStack(alignment: .leading) {
                     Text("Live Data")
                         .font(.title3.bold())
@@ -182,8 +182,8 @@ fileprivate struct PlayerStreamingStats: View {
                     Text("Buffer Duration" + ": ").bold() + Text("\(bufferDuration) seconds")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
                 .availableGlass()
+                .padding(.top)
             }
             VStack(alignment: .leading) {
                 Text("Playback Metadata")
@@ -195,7 +195,6 @@ fileprivate struct PlayerStreamingStats: View {
                 Text("Video Codec" + ": ").bold() + Text(videoCodec)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding()
             .availableGlass()
         }
         .task { // Update stats periodically
