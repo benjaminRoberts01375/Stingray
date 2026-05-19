@@ -15,14 +15,18 @@
 - Pick and choose your video streams, audio streams, and subtitles.
 - Compatible with movies and shows.
 - Switch episodes within the player.
-- PiP
+- PiP.
 - View content metadata like actors/directors, episode/series descriptions, and ratings.
 - Resume movies and episodes.
-- Multiple profiles.
+- Multiple servers & profiles.
+  - PIN Support.
+  - Per-profile theming
 - Integrates with optional loud noise reduction and voice boosting.
 - Content fuzzy searching.
   - Search movies, show titles, and episode titles.
-- Connect via HTTP or HTTPS
+- Connect via HTTP or HTTPS.
+- Quick Connect.
+- Strong Accessibility Support.
 
 This is an unofficial Jellyfin companion app to make watching your content easier on your Apple TV.
 To use Stingray, you must have a Jellyfin server setup either on your own network or in the cloud. Find out more at [jellyfin.org](https://jellyfin.org).
@@ -58,7 +62,7 @@ Configure Stingray to look and feel how you want it.
 
 ### Media Picker
 
-- [ ] Unwatched media gets a lighter blue background.
+- [ ] Unwatched media gets a marker.
 
 ### Detail Media View
 
@@ -75,7 +79,6 @@ Configure Stingray to look and feel how you want it.
 
 - [ ] Live TV.
 - [ ] Music Support.
-- [ ] Restart episode button in episode picker.
 - [ ] Trickplay.
 
 ### Code Quality
