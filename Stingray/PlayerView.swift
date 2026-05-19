@@ -283,6 +283,8 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
     public let onRestoreFromPiP: () -> Void
     public let onStopFromPiP: () -> Void
     
+    @Environment(ThemeModel.self) private var theme
+    
     public func makeCoordinator() -> Coordinator {
         let coordinator = Coordinator(
             id: self.vm.mediaSourceID,
@@ -329,6 +331,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         if !self.vm.media.people.isEmpty {
             let peopleTab = UIHostingController(
                 rootView: PlayerPeopleView(media: self.vm.media, streamingService: self.vm.streamingService)
+                    .environment(self.theme)
             )
             peopleTab.title = "People"
             peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
