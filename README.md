@@ -49,78 +49,12 @@ A clean view of the content art with quick access to content metadata.
 ![Media Details 2](https://github.com/user-attachments/assets/cf0954fb-7d0d-4a03-a412-3b0050f2d8a4)
 Extensive content metadata.
 
-## v1.2.0 TODO
+### Settings
+![Settings](https://github.com/user-attachments/assets/90a8dfb7-35ea-4bd3-bb44-acf37d9c754c)
 
-- [ ] Settings Page
-  - [x] Max bitrate
-  - [x] Auto play toggle
-  - [ ] Connection Info
-    - [x] User's name
-    - [ ] Server address
-    - [ ] Session ID
-    - [ ] User's ID
-    - [x] Server's name
-    - [x] Server's version
-    - [x] Stingray's version
-    - [x] Total number of movies
-    - [x] Total number of shows
-    - [x] Total number of libraries
-- [x] Streaming Stats in the player
-  - [x] Observed bitrate
-  - [x] Playback resolution
-  - [x] Screen resolution
-  - [x] Framerate
-  - [x] Codecs
-  - [x] Buffer's duration
-  - [x] Playback session ID
-  - [x] Media ID
-  - [x] Media Source ID
-  - [x] Video stream ID
-  - [x] Audio stream ID
-- [x] Profiles
-  - [x] Sync between Apple TV users and Jellyfin users.
-  - [x] Show all profiles on every Apple TV account, but remember last used profile.
-  - [x] Ask for profile choice on launch (like most streaming services).
-  - [x] Ask for profile whenever coming from background.
-  - [x] Set PINs for certain profiles
-- [x] Extend playback buffer
-- [x] Lower priority of downloading media
-- [x] Use the same view model across all player views
-- [x] Improve trailing slashes on URLs.
-- [x] Improve JSON decoding verbosity.
-- [x] Fix labels appearing black.
-- [x] Modernize Jellyfin token format [@darkweak](https://github.com/benjaminRoberts01375/Stingray/pull/75)
-- [x] Improve usage of the `AVPlayer` type, allowing `PlayerViewModel.player` to no longer be optional.
-  - [x] Slightly improve player loading speeds and massively improves reliability.
-  - [x] Fix audio continuing to play after tracks have been switched
-  - [x] Fix subtitle, audio, and video tracks randomly changing when changing a different track type
-  - [x] Prevent old AVPlayers getting stuck on async threads
-- [x] Extend the maximum configurable bitrate to 100 Mbps
-- [x] Add the number of items in each library at the bottom of a library
-- [x] Store the active user as an object in `UserModel.activeUser`.
-- [x] Fix the wrong user being deleted.
-- [x] Update security email.
-- [x] Added theming support.
-  - [x] Added light-mode theme "Notes App".
-  - [x] Added light-mode theme "Beach"..
-  - [x] Added dark-mode theme "Void"
-- [x] Translation support.
-  - [x] Added translation picker & saving to user data.
-  - [x] Added German support.
-- [x] Adjustable playback speed.
-- [x] Enable the explicit access control SwiftLint rule.
-- [x] Sort users alphabetically on profile picker screen.
-- [x] Allow account switching when libraries fail to load.
-- [x] Allow hiding poster art.
-- [x] Allow hiding media background art.
-- [x] Allow replacing media logos with text variants.
-- [x] Improve time code formatting. 0:00:59 -> 0:59, 00:01:23 -> 1:23, 00:15:00 -> 15:00
+Configure Stingray to look and feel how you want it.
 
-## Long-Term TODO List
-
-### Login
-
-- [ ] Support Jellyfin's Quick Connect feature.
+## TODO List
 
 ### Media Picker
 
@@ -131,9 +65,16 @@ Extensive content metadata.
 - [ ] Episode thumbnails where the thumbnail cannot fill the container should use the loaded thumbnail to blur background, instead of the unreliable blur hash.
 - [ ] Optionally blur unwatched TV episode thumbnails.
 
+### Libraries
+
+- [ ] Rework library structure to support more library types, like collections and group by actor.
+- [ ] Library filtering.
+- [ ] Manual library refresh.
+
 ### Playback
 
 - [ ] Live TV.
+- [ ] Music Support.
 - [ ] Restart episode button in episode picker.
 - [ ] Trickplay.
 
