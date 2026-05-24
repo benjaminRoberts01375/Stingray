@@ -2,9 +2,9 @@
 
 We appreciate every contribution, and we're happy about every new contributor. So please feel invited to continue making Stingray best in class!
 
-## Getting Started
+## Getting Started (Software Developers)
 
-1. Get a Mac and Apple TV. While an Apple TV is optional, it makes development significantly easier since the simulator doesn't support every feature an Apple TV does (Ex. PiP). One important note is that a developer account isn't needed to actually develop, though it can make life easier as it prolongs the amount of time an application (like Stingray) can be installed for. 1 Week -> 1 Year. Additionally, while Stingray doesn't require any of Apple's server APIs, if it one day does, an Apple Developer Account will be required.
+1. Get a Mac and Apple TV. While an Apple TV is optional, it makes development significantly easier since the simulator doesn't support every feature an Apple TV does (like PiP). One important note is that a developer account isn't needed to actually develop, though it can make life easier as it prolongs the amount of time an application (like Stingray) can be installed for (from 1 Week to 1 Year). Additionally, while Stingray doesn't require any of Apple's server APIs, if it one day does, an Apple Developer Account will be required.
 2. Download [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) for development, which will allow you to connect to physical devices and simulators. We do use a couple packages which are already set up with the included Xcode project file.
 3. Finally if you want to run Stingray on a physical device or simulator, you'll need to setup a team within Xcode:
     1. In Xcode, open settings by either going to `Xcode > Settings...` or using `Command + ,`
@@ -22,14 +22,34 @@ We appreciate every contribution, and we're happy about every new contributor. S
     4. Your Mac may start downloading debug symbols. This will take a little bit.
     5. Once setup, your Apple TV should appear as a run destination.
 
+## Getting Started (Translators)
+
+Translations are always welcome, and can be added easily via Xcode. Xcode can be downloaded freely via the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12). This is a large application at about 12 gigabytes when installed.
+
+### Adding a Language
+
+1. Adding a language can be done by open the project in Xcode.
+2. Click on the `Localizable` file.
+3. Press the `+` icon at the bottom. This will add the language to the project and provide the original English variants as a reference.
+
+### Contributing to an Existing Language
+
+1. Make sure to read the General section below, particularly about which branch to fork.
+2. Hit `Command + B` to build the project to ensure all the translations are up-to-date.
+3. Open the `Localizable` file.
+4. Select the language you wish to translate for, and find instances where a `Key` has a missing or incorrect translation.
+    1. You may notice symbols like `$l`, `%1$l`, or `%@`. These are dynamic strings that can have data loaded into them, like a person's name. Make sure they make it into the translations. Check the English language for strong examples.
+
 ## General
 
 1. Please try to keep pull requests as focused as possible. A PR should do exactly one thing and not bleed into other, unrelated areas. The smaller a PR, the fewer changes are likely needed, and the quicker it will likely be merged. For larger/more impactful PRs, please reach out to us first to discuss your plans. The best way to do this is through our [discussions](https://github.com/benjaminRoberts01375/Stingray/discussions/new?category=ideas).
 2. Please ensure all class/struct/enum variables and functions are commented. With Xcode, you can generate a comment template with `Option + Command + /`.
+3. When you fork Stingray to work on it, make sure to fork from the current version branch **NOT MAIN**. Main is the current release, what's out for users to use today, while a version branch is used to work on an upcoming release. This is done to allow for hot fixes without the patch getting tangled up in the upcoming release. Once you've completed your work, merge it back into the version branch.
+4. A TODO list is generally added to the bottom of the `README.md` during development. This outlines general goals for the version, but may change with time as features and improvements to be more or less feasible.
 
 ## Finding Work
   
-  Stingray is very young still, so feel free to tackle [open issues](https://github.com/benjaminRoberts01375/Stingray/issues).
+  Stingray is young still, so feel free to tackle [open issues](https://github.com/benjaminRoberts01375/Stingray/issues).
 
 ## Use of Generative AI
 

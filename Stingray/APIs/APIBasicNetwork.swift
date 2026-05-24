@@ -31,6 +31,11 @@ public protocol BasicNetworkProtocol {
     ///   - urlParams: URL params to add to URL
     /// - Returns: Formatted URL
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
+    
+    /// Builds an Authorization header value for the streaming service.
+    /// - Parameter accessToken: The access token to include.
+    /// - Returns: The formatted Authorization header value.
+    func buildAuthHeader(accessToken: String?) -> String
 }
 
 /// Basic descriptor for REST API verbs
@@ -47,9 +52,29 @@ public enum NetworkRequestType: String {
 
 /// A Jellyfin specific basic network struct for making network requests
 public final class JellyfinBasicNetwork: BasicNetworkProtocol {
-    var address: URL
+    /// Address of the Jellyfin server
+    public var address: URL
+    /// Unique identifier based on the device
+    private let deviceId: String
+    /// Human readable device name
+    private let deviceName: String
+    /// Current stingray version
+    private let appVersion: String
     
-    init(address: URL) { self.address = address }
+    public init(address: URL) {
+        self.address = address
+        self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        self.deviceName = UIDevice.current.name
+    }
+    
+    public func buildAuthHeader(accessToken: String?) -> String {
+        var headerValue = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
+        if let token = accessToken {
+            headerValue += ", Token=\"\(token)\""
+        }
+        return headerValue
+    }
     
     public func request<T: Decodable>(
         verb: NetworkRequestType,
@@ -63,21 +88,14 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
             throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
         }
         
-        print("Reaching out to \(url.absoluteString)")
+        Log.debug("Reaching out to \(url.absoluteString)")
         
         // Setup request
         var request = URLRequest(url: url)
         request.httpMethod = verb.rawValue
         
         // Jellyfin headers
-        let (deviceId, deviceName) = await MainActor.run {
-            let id = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
-            let name = UIDevice.current.name
-            return (id, name)
-        }
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        let authHeader = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
-        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue(buildAuthHeader(accessToken: headers?["X-MediaBrowser-Token"]), forHTTPHeaderField: "Authorization")
         // Only add custom headers if they are provided
         if let headers = headers {
             for header in headers {
@@ -102,9 +120,8 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         let response: URLResponse
         do {
             (responseData, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw NetworkError.requestFailedToSend(error)
         }
+        catch { throw NetworkError.requestFailedToSend(error) }
         
         // Verify not invalid status code
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -123,14 +140,8 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         do {
             let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
             return decodedResponse
-        } catch let jsonError as JSONError {
-            throw NetworkError.decodeJSONFailed(jsonError, url: url)
-        } catch let error as RError {
-            // Fallback for any non-JSONError decode failures
-            throw NetworkError.decodeJSONFailed(error, url: url)
-        } catch {
-            throw NetworkError.decodeJSONFailed(nil, url: nil)
         }
+        catch { throw NetworkError.decodeJSONFailed(error, url: url) } // Can decode errors
     }
     
     public func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {

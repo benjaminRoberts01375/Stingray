@@ -8,13 +8,13 @@
 import SwiftUI
 
 public struct LibraryView: View {
-    @State var library: any LibraryProtocol
+    @State public var library: any LibraryProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    let streamingService: StreamingServiceProtocol
-    let cardWidth = CGFloat(200)
-    let cardSpacing = CGFloat(50)
+    public let streamingService: StreamingServiceProtocol
+    public let cardWidth = CGFloat(200)
+    public let cardSpacing = CGFloat(50)
     
     public var body: some View {
         ScrollView {
@@ -26,11 +26,13 @@ public struct LibraryView: View {
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
                     MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
+                    LibraryInfoView(library: self.library)
+                        .padding(.top)
                 } else {
                     VStack(alignment: .center) {
                         Text("This library appears to be empty.")
-                        Text("Media type like collections, playlists, and music aren't yet supported.")
-                            .opacity(0.5)
+                        Text("Media types like collections, playlists, and music aren't yet supported.")
+                            .foregroundStyle(.tertiary)
                     }
                 }
             }
@@ -39,20 +41,43 @@ public struct LibraryView: View {
 }
 
 public struct MediaGridView: View {
-    static let cardSpacing = 50.0
-    let allMedia: [any MediaProtocol]
-    let streamingService: any StreamingServiceProtocol
+    public static let cardSpacing = 50.0
+    public let allMedia: [any MediaProtocol]
+    public let streamingService: any StreamingServiceProtocol
     
     @Binding public var navigation: NavigationPath
     
+    private static let columns = [
+        GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.height), spacing: Self.cardSpacing)
+    ]
+    
     public var body: some View {
-        let columns = [
-            GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.height), spacing: Self.cardSpacing)
-        ]
-        LazyVGrid(columns: columns, spacing: Self.cardSpacing) {
+        LazyVGrid(columns: Self.columns, spacing: Self.cardSpacing) {
             ForEach(allMedia, id: \.id) { media in
-                MediaCard(media: media, streamingService: streamingService) { navigation.append(AnyMedia(media: media)) }
+                MediaCard(media: media, streamingService: streamingService, navigation: $navigation)
             }
         }
+        .scrollTargetLayout()
+    }
+}
+
+/// Displays some high-level info about libraries.
+public struct LibraryInfoView: View {
+    /// Library to display info for.
+    public let library: any LibraryProtocol
+    
+    public var body: some View {
+        HStack(spacing: 0) {
+            switch self.library.media { // Only display a ProgressView while downloading content.
+            case .waiting, .unloaded, .available: ProgressView()
+            default: EmptyView()
+            }
+            
+            switch self.library.media {
+            case .available(let media), .complete(let media): Text("\(media.count) Items")
+            default: Text("0 Items")
+            }
+        }
+        .foregroundStyle(.tertiary)
     }
 }

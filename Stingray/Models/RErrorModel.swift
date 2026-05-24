@@ -5,7 +5,7 @@
 //  Created by Ben Roberts on 1/24/26.
 //
 
-import Foundation
+import StoreKit
 
 /// A "Recursive Error", allows for creating a linked list of errors to create a stack trace.
 public protocol RError: LocalizedError {
@@ -15,9 +15,9 @@ public protocol RError: LocalizedError {
     var errorDescription: String { get }
 }
 
-/// Extend RError to print recursive descriptions.
+/// Extend RError to log recursive descriptions.
 extension RError {
-    /// Recursive description. Prints this error's description and all subsequent ones.
+    /// Recursive description. Logs this error's description and all subsequent ones.
     /// - Returns: Formatted description.
     public func rDescription() -> String {
         var parts: [String] = [errorDescription]
@@ -28,7 +28,9 @@ extension RError {
             current = err.next
         }
         
-        return "\n\t→ \(parts.joined(separator: "\n\t→ "))"
+        let total = "\n\t→ \(parts.joined(separator: "\n\t→ "))"
+        Log.warning(total)
+        return total
     }
     
     /// Gets the last error in the chain of errors. Useful for writing summary error messages
@@ -44,12 +46,14 @@ extension RError {
 
 /// Extend arrays of `RError` to provide recursive descriptions formatted in a reasonable manner.
 extension [RError] {
-    /// Recursive description. Prints this error's description and all subsequent ones.
+    /// Recursive description. Logs this error's description and all subsequent ones.
     /// - Returns: Formatted description.
     public func rDescription() -> String {
-        return self.reduce("") { (result, error) -> String in
+        let total = self.reduce("") { (result, error) -> String in
             return result + "\n\t→ \(error.errorDescription)"
         }
+        Log.warning(total)
+        return total
     }
 }
 
@@ -65,13 +69,15 @@ public enum NetworkError: RError {
     /// Response was bad in some way
     case badResponse(responseCode: Int, response: String?)
     /// Could not decode the returned JSON
-    case decodeJSONFailed((any RError)?, url: URL?)
+    case decodeJSONFailed((any Error)?, url: URL?)
     /// An access token is needed
     case missingAccessToken
     
     public var next: (any RError)? {
         switch self {
-        case .decodeJSONFailed(let error, _): return error
+        case .decodeJSONFailed(let error, _):
+            if let rErr = error as? RError { return rErr }
+            return nil
         default: return nil
         }
     }
@@ -86,12 +92,52 @@ public enum NetworkError: RError {
             return "Request failed to send: \(err.localizedDescription)"
         case .badResponse(let code, let text):
             return "Received a bad response from the server - \(code) \(text ?? "")"
-        case .decodeJSONFailed(_, let url):
-            return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL")"
+        case .decodeJSONFailed(let error, let url):
+            if error as? RError == nil {
+                return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL")"
+            }
+            return "Failed to decode JSON from \(url?.absoluteString ?? "an unknown URL"). \(error?.localizedDescription ?? "")"
         case .missingAccessToken:
             return "An access token is needed"
         }
     }
+    
+    /// A function to override `NetworkError` messages with a more human readable option
+    /// - Parameters:
+    ///   - netErr: NetworkError that was thrown
+    ///   - httpProtocol: HTTP protocol used
+    /// - Returns: Formatted error
+    public static func overrideNetErrorMessage(netErr: NetworkError, httpProtocol: HttpProtocol) -> String {
+        switch netErr {
+        case .invalidURL:
+            switch httpProtocol {
+            case .http: return "Invalid HTTP URL. Check your hostname and port."
+            case .https: return "Invalid HTTPS URL. Check your URL."
+            }
+        case .encodeJSONFailed: return "Failed to send request to server. " +
+                "This may be because of some tricky characters in your username and password."
+        case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
+            switch httpProtocol {
+            case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
+            case .https: return "Could not find your Jellyfin server. Please check your URL."
+            }
+        case .badResponse(let responseCode, _):
+            switch responseCode {
+            case 401: return "Invalid username or password."
+            case 404:
+                switch httpProtocol {
+                case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
+                case .https: return "Could not find your Jellyfin server. Please check your URL."
+                }
+            default: return "An unexpected error occurred. Please make sure your login details are correct."
+            }
+        }
+    }
+}
+
+public enum HttpProtocol: String, CaseIterable {
+    case http = "http"
+    case https = "https"
 }
 
 /// Different ways JSON can have an error.
@@ -174,21 +220,39 @@ public enum MediaError: RError {
 }
 
 /// Different ways a `StreamingServiceProtocol` can error out.
-enum StreamingServiceErrors: RError {
+public enum StreamingServiceErrors: RError {
     /// Failed to get initial library data.
-    case LibrarySetupFailed(RError?)
+    case librarySetupFailed(RError?)
+    /// Failed to create a streaming service object
+    case initFailed(any Error)
+    /// Address to the server was bad
+    case badAddress
+    /// No server API token
+    case noToken
+    /// User failed to be made
+    case badDefaultUser(RError)
+    /// No user is available
+    case noDefaultUser
     
-    var errorDescription: String {
+    public var errorDescription: String {
         switch self {
-        case .LibrarySetupFailed:
-            "Failed to create library"
+        case .librarySetupFailed: return "Failed to get library data"
+        case .initFailed: return "Failed to create a library"
+        case .badAddress: return "Bad address to server"
+        case .noToken: return "No API token available"
+        case .badDefaultUser: return "Creation of a default user failed"
+        case .noDefaultUser: return "No default user is available"
         }
     }
     
-    var next: (any RError)? {
+    public var next: (any RError)? {
         switch self {
-        case .LibrarySetupFailed(let err):
-            return err
+        case .librarySetupFailed(let err): return err
+        case .initFailed(let err):
+            if let rError = err as? StreamingServiceErrors { return rError }
+            return nil
+        case .badAddress, .noDefaultUser, .noToken: return nil
+        case .badDefaultUser(let err): return err
         }
     }
 }
@@ -265,11 +329,14 @@ public enum AccountErrors: RError {
     case loginFailed(RError?)
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
-    
+    /// User already registered in Stingray
+    case userAlreadyExists
+
     public var next: (RError)? {
         switch self {
         case .loginFailed(let next): return next
         case .serverVersionFailed(let next): return next
+        case .userAlreadyExists: return nil
         }
     }
     
@@ -279,25 +346,133 @@ public enum AccountErrors: RError {
             return "Login failed"
         case .serverVersionFailed:
             return "Failed to get server version"
+        case .userAlreadyExists:
+            return "This person is already signed in"
         }
     }
 }
 
 /// Different ways the Jellyfin server can have an error.
-enum JellyfinNetworkErrors: RError {
+public enum JellyfinNetworkErrors: RError {
     /// Failed to update the playback position.
     case playbackUpdateFailed(RError)
     
-    var next: (any RError)? {
+    public var next: (any RError)? {
         switch self {
         case .playbackUpdateFailed(let err):
             return err
         }
     }
     
-    var errorDescription: String {
+    public var errorDescription: String {
         switch self {
         case .playbackUpdateFailed: return "Failed to update playback status"
+        }
+    }
+}
+
+/// `UserDefaults` errors
+public enum UserDefaultsErrors: RError {
+    /// Failed to create a UserDefaults object
+    case FailedSetup
+    
+    public var next: (any RError)? { nil }
+    
+    public var errorDescription: String { "Failed to setup user defaults with suiteName" }
+}
+
+/// Errors for `DefaultsBasicStorage`
+public enum BasicStorageErrors: RError {
+    case userDefaultsSetup
+    
+    public var next: (any RError)? {
+        switch self {
+        case .userDefaultsSetup: return nil
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .userDefaultsSetup: return "Failed to setup User Defaults with App Group"
+        }
+    }
+}
+
+/// Errors during app setup
+public enum SetupErrors: RError {
+    case databaseError(RError)
+    
+    public var next: (any RError)? {
+        switch self {
+        case .databaseError(let error): return error
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .databaseError: return "Failed to setup databases. Stingray may be able to continue, but this protects your data"
+        }
+    }
+}
+
+/// Errors relating to the Jellyfin Quick Connect feature
+public enum QuickConnectErrors: RError {
+    /// Could not connect to the Jellyfin server at all
+    case initialConnectionFailed(RError)
+    /// Failed to login user
+    case loginFailed(RError)
+    /// Failed to get Quick Connect codes
+    case quickConnectCodesFailed(RError)
+    /// Error checking Quick Connect code status with server
+    case authFailed(RError)
+    /// Failed to check if Quick Connect is enabled
+    case isEnabled(RError)
+    
+    case statusFailedtoFetch(RError)
+    
+    public var next: (any RError)? {
+        switch self {
+        case .initialConnectionFailed(let err): return err
+        case .loginFailed(let err): return err
+        case .authFailed(let err): return err
+        case .quickConnectCodesFailed(let err): return err
+        case .isEnabled(let err): return err
+        case .statusFailedtoFetch(let err): return err
+        }
+    }
+    
+    public var errorDescription: String {
+        switch self {
+        case .initialConnectionFailed: return "Failed to connect to the Jellyfin server"
+        case .loginFailed: return "Login failed despite good Quick Connect code"
+        case .authFailed: return "Failed to check if Quick Connect code was used"
+        case .quickConnectCodesFailed: return "Failed to get Quick Connect code"
+        case .isEnabled: return "Failed to check if Quick Connect is available"
+        case .statusFailedtoFetch: return "Failed to check if Quick Connect has been setup on the Jellyfin server"
+            
+        }
+    }
+}
+
+/// Errors for in app purchases
+public enum StoreErrors: RError {
+    case purchaseFailed(Product, Error)
+    case purchasesUpdated
+    case tamperedPurchase(Product, Error)
+    case productUnavailable
+    case productsUnavailable(Error)
+    case productsStillLoading
+    
+    public var next: (any RError)? { nil }
+    
+    public var errorDescription: String {
+        switch self {
+        case .purchaseFailed(let product, let err): return "Failed to purchase \(product.id): \(err.localizedDescription)"
+        case .purchasesUpdated: return "Apple changed the purchases API and added a case"
+        case .tamperedPurchase(let product, let err): return "Purchasing \(product.id) could not be verified: \(err.localizedDescription)"
+        case .productUnavailable: return "This product is unavailable"
+        case .productsUnavailable(let err): return "All products are unavailable: \(err.localizedDescription)"
+        case .productsStillLoading: return "Products are still loading"
         }
     }
 }

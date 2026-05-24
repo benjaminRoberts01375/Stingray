@@ -11,22 +11,20 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var networkAPI: TopShelfNetworkProtocol
     private var accessToken: String
     
-    init() throws {
-        guard let defaultUser = UserModel().getDefaultUser() else {
-            throw InitError.noDefaultUser
+    init(userModel: UserModel) throws(StreamingServiceErrors) {
+        let defaultUser: User
+        do {
+            if let maybeUser = userModel.activeUser { defaultUser = maybeUser }
+            else { throw StreamingServiceErrors.noDefaultUser }
         }
+        catch { throw StreamingServiceErrors.initFailed(error) }
+        
         switch defaultUser.serviceType {
         case .Jellyfin(let userJellyfin):
             let network = APINetwork(network: JellyfinBasicNetwork(address: defaultUser.serviceURL))
             self.networkAPI = network
             self.accessToken = userJellyfin.accessToken
         }
-    }
-    
-    enum InitError: Error {
-        case badAddress
-        case noToken
-        case noDefaultUser
     }
     
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {

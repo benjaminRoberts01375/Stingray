@@ -8,25 +8,30 @@
 import SwiftUI
 
 @main
-struct StingrayApp: App {
-    init() {
+public struct StingrayApp: App {
+    public init() {
         URLCache.shared = URLCache(
             memoryCapacity: 100 * 1024 * 1024, // 100 MB
             diskCapacity: 1024 * 1024 * 1024 // 1 GB
         )
     }
     
-    var body: some Scene {
+    public var body: some Scene {
         WindowGroup {
-            ContentView()
-                .background {
-                     LinearGradient(
-                        colors: [Color(red: 0, green: 0.145, blue: 0.223), Color(red: 0, green: 0.063, blue: 0.153)],
-                         startPoint: .top,
-                         endPoint: .bottom
-                     )
-                }
-                .ignoresSafeArea()
+            loadApp()
         }
+    }
+    
+    @ViewBuilder
+    public func loadApp() -> some View {
+        switch makeContentView() { // We can't use do/catch directly in the ViewBuilder function
+        case .success(let view): view
+        case .failure(let error): ErrorView(error: error, summary: "Failed to setup Stingray")
+        }
+    }
+    
+    public func makeContentView() -> Result<ContentView, SetupErrors> { // Cheating the type system a bit
+        do { return .success(try ContentView()) }
+        catch { return .failure(error) }
     }
 }

@@ -9,77 +9,66 @@ import Foundation
 
 /// Basic data to store about the user
 @Observable
-final class UserModel {
-    /// Shared instance to avoid repeated instantiation
-    static let shared = UserModel()
-    
+public final class UserModel {
     /// Storage device to permanently store user data
-    var storage: UserStorageProtocol
+    public var storage: UserStorageProtocol
+    
+    /// The signed in user
+    public var activeUser: User? {
+        didSet {
+            guard let userID = self.activeUser?.id else { return }
+            self.storage.setActiveUserID(id: userID)
+            guard let user = self.activeUser else { return }
+            self.storage.upsertUser(user: user)
+        }
+    }
     
     /// Array of user IDs that SwiftUI will observe for changes
-    private(set) var userIDs: [String] = []
+    public private(set) var userIDs: Set<String> = []
     
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
-    init(storage: UserStorageProtocol = UserStorage(basicStorage: DefaultsBasicStorage())) {
+    public init(storage: UserStorageProtocol) {
         self.storage = storage
-        self.userIDs = storage.getUserIDs()
+        self.userIDs = Set(self.storage.getUserIDs())
+        self.activeUser = nil
+        
+        guard let userID = self.storage.getActiveUserID() else { return }
+        self.activeUser = self.storage.getUser(userID: userID)
     }
     
     /// Adds a user to storage based on a `User` type
     /// - Parameter user: User to add
-    func addUser(_ user: User) {
-        userIDs.append(user.id)
-        storage.setUser(user: user)
-        storage.setUserIDs(userIDs)
-    }
-    
-    /// Gets a user based on a default userID
-    /// - Returns: The default user
-    func getDefaultUser() -> User? {
-        guard let defaultID = self.storage.getDefaultUserID() else { return nil }
-        return self.storage.getUser(userID: defaultID)
-    }
-    
-    /// Overwrites the existing default user
-    /// - Parameter userID: UserID of the new default user
-    func setDefaultUser(userID: String) {
-        self.storage.setDefaultUserID(id: userID)
+    public func addUser(_ user: User) {
+        userIDs.insert(user.id)
+        storage.upsertUser(user: user)
+        storage.setUserIDs(Array(userIDs))
     }
     
     /// Gets all users
-    func getUsers() -> [User] {
+    public func getUsers() -> [User] {
         return self.userIDs.compactMap { self.storage.getUser(userID: $0) }
-    }
-    
-    /// Updates a user's stored data
-    /// - Parameter user: Updated `User`
-    func updateUser(_ user: User) {
-        if !userIDs.contains(user.id) {
-            self.addUser(user)
-        } else {
-            self.storage.setUser(user: user)
-        }
     }
     
     /// Deletes a user based on their ID
     /// - Parameter userID: ID of the user to delete
-    func deleteUser(_ userID: String) {
-        userIDs.removeAll { $0 == userID }
-        storage.setUserIDs(userIDs)
+    public func deleteUser(_ userID: String) {
+        userIDs.remove(userID)
+        storage.setUserIDs(Array(userIDs))
         storage.deleteUser(userID: userID)
+        if userID == self.activeUser?.id { self.activeUser = nil }
     }
 }
 
 /// Jellyfin-specific userdata
-public struct UserJellyfin: Codable {
-    let accessToken: String
-    let sessionID: String
+public struct UserJellyfin: Codable, Hashable {
+    public let accessToken: String
+    public let sessionID: String
 }
 
 /// Types of streaming services
 /// Temporary name for compatibility until migration is complete
-public enum ServiceType: Codable {
+public enum ServiceType: Codable, Hashable {
     case Jellyfin(UserJellyfin)
     
     public var rawValue: String {
@@ -137,22 +126,51 @@ public enum ServiceType: Codable {
 }
 
 /// Basic structure for a user
-public struct User: Codable, Identifiable {
-    let serviceURL: URL
-    let serviceType: ServiceType
-    let serviceID: String
+public struct User: Codable, Identifiable, Hashable {
+    public let serviceURL: URL
+    public let serviceType: ServiceType
+    public let serviceID: String
     public let id: String
-    let displayName: String
-    var usesSubtitles: Bool // Set default as false
-    var bitrate: Int?
+    public let displayName: String
     
-    init(
+    // Settings
+    /// Track if the user wants subtitles
+    public var usesSubtitles: Bool
+    /// Quick password required for user sign-in
+    public var pin: String?
+    /// Play the next piece of content if available
+    public var autoplay: Bool
+    /// The user's dark theme choice
+    public var darkTheme: ThemeModel.Themes
+    /// The user's light theme choice
+    public  var lightTheme: ThemeModel.Themes
+    /// How fast the viewer wants the player to run
+    public var playbackSpeed: PlaybackSpeed
+    /// A toggle for whether to display posters
+    public var loadThumbnailArt: Bool
+    /// A toggle for whether to display art on the detail media view
+    public var loadMediaBackgroundArt: Bool
+    /// A toggle for whether to display media logos or text
+    public var replaceLogosWithText: Bool
+    /// What language the user prefers to read/speak
+    public var preferredLangauge: Locale?
+    
+    public init(
         serviceURL: URL,
         serviceType: ServiceType,
         serviceID: String,
         id: String,
         displayName: String,
-        usesSubtitles: Bool = false
+        usesSubtitles: Bool = false,
+        pin: String? = nil,
+        autplay: Bool = false,
+        darkTheme: ThemeModel.Themes = .deepSea,
+        lightTheme: ThemeModel.Themes = .beach,
+        playbackSpeed: PlaybackSpeed = .one,
+        loadThumbnailArt: Bool = true,
+        loadMediaBackgroundArt: Bool = true,
+        replaceLogosWithText: Bool = false,
+        preferredLanguage: Locale? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -160,6 +178,15 @@ public struct User: Codable, Identifiable {
         self.serviceType = serviceType
         self.serviceID = serviceID
         self.usesSubtitles = usesSubtitles
+        self.pin = pin
+        self.autoplay = autplay
+        self.darkTheme = darkTheme
+        self.lightTheme = lightTheme
+        self.playbackSpeed = playbackSpeed
+        self.loadThumbnailArt = loadThumbnailArt
+        self.loadMediaBackgroundArt = loadMediaBackgroundArt
+        self.replaceLogosWithText = replaceLogosWithText
+        self.preferredLangauge = preferredLanguage
     }
     
     /// Create a user from encoded JSON.
@@ -173,9 +200,17 @@ public struct User: Codable, Identifiable {
             serviceID = try container.decode(String.self, forKey: .serviceID)
             id = try container.decode(String.self, forKey: .id)
             displayName = try container.decode(String.self, forKey: .displayName)
-            
-            usesSubtitles = try container.decodeIfPresent(Bool.self, forKey: .usesSubtitles) ?? false
-            bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate)
+            // Settings
+            pin = try container.decodeIfPresent(String.self, forKey: .pin)
+            autoplay = (try? container.decodeIfPresent(Bool.self, forKey: .autoplay)) ?? false
+            usesSubtitles = (try? container.decodeIfPresent(Bool.self, forKey: .usesSubtitles)) ?? false
+            darkTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .darkTheme)) ?? .deepSea
+            lightTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .lightTheme)) ?? .beach
+            playbackSpeed = (try? container.decodeIfPresent(PlaybackSpeed.self, forKey: .playbackSpeed)) ?? .one
+            loadThumbnailArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadThumbnailArt)) ?? true
+            loadMediaBackgroundArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadMediaBackgroundArt)) ?? true
+            replaceLogosWithText = (try? container.decodeIfPresent(Bool.self, forKey: .replaceLogosWithText)) ?? false
+            preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -183,5 +218,44 @@ public struct User: Codable, Identifiable {
             else { throw JSONError.failedJSONDecode("User", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch { throw JSONError.failedJSONDecode("User", error) }
+    }
+}
+
+// This should go in PlayerViewModel.swift, but can't because of the TopShelf
+/// How fast the player can play content back.
+public enum PlaybackSpeed: CaseIterable, Codable {
+    /// 1/4 the speed of realtime
+    case quarter
+    /// 1/2 the speed of realtime
+    case half
+    /// Realtime
+    case one
+    /// 1.25x the speed of realtime
+    case oneAndQuarter
+    /// 1.5x the speed of realtime
+    case oneAndHalf
+    /// 2x the speed of realtime
+    case two
+    
+    public var value: Float {
+        switch self {
+        case .quarter: return 0.25
+        case .half: return 0.5
+        case .one: return 1
+        case .oneAndQuarter: return 1.25
+        case .oneAndHalf: return 1.5
+        case .two: return 2
+        }
+    }
+    
+    public var name: String {
+        switch self {
+        case .quarter: return "0.25x"
+        case .half: return "0.5x"
+        case .one: return "1x"
+        case .oneAndQuarter: return "1.25x"
+        case .oneAndHalf: return "1.5x"
+        case .two: return "2x"
+        }
     }
 }

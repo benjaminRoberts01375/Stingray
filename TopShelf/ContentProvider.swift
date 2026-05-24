@@ -11,21 +11,31 @@ class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
         let streamingModel: StreamingServiceBasicProtocol
+        let userModel: UserModel
         do {
-            streamingModel = try StreamingServiceBasicModel()
+            let defaults = try DefaultsBasicStorage()
+            let userStorage = UserStorage(basicStorage: defaults)
+            userModel = UserModel(storage: userStorage)
+        }
+        catch {
+            Log.error("Failed to initalize UserModel: \(error)")
+            return nil
+        }
+        do {
+            streamingModel = try StreamingServiceBasicModel(userModel: userModel)
         } catch {
-            print("TopShelf: Failed to initialize StreamingServiceBasicModel: \(error)")
+            Log.error("Failed to initialize StreamingServiceBasicModel: \(error)")
             return nil
         }
         
         // Fetch content concurrently
-        print("TopShelf: Loading content...")
+        Log.info("TopShelf: Loading content for \(userModel.activeUser?.displayName ?? "Unknown") - \(userModel.activeUser?.id ?? "Unknown ID")")
         async let upNextMedia = streamingModel.retrieveUpNext()
         async let recentlyAddedMedia = streamingModel.retrieveRecentlyAdded(.all)
         
         let (upNext, recentlyAdded) = await (upNextMedia, recentlyAddedMedia)
         
-        print("TopShelf: Retrieved \(upNext.count) up next items and \(recentlyAdded.count) recently added items")
+        Log.info("TopShelf: Retrieved \(upNext.count) up next items and \(recentlyAdded.count) recently added items")
         
         // Create sections
         var sections: [TVTopShelfItemCollection<TVTopShelfSectionedItem>] = []
@@ -57,11 +67,11 @@ class ContentProvider: TVTopShelfContentProvider {
         }
         
         guard !sections.isEmpty else {
-            print("TopShelf: No sections to display")
+            Log.warning("TopShelf: No sections to display")
             return nil
         }
         
-        print("TopShelf: Returning \(sections.count) sections with content")
+        Log.info("TopShelf: Returning \(sections.count) sections with content")
         let sectionedContent = TVTopShelfSectionedContent(sections: sections)
         return sectionedContent
     }

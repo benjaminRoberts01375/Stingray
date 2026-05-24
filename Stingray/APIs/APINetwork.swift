@@ -161,29 +161,29 @@ public enum LibraryMediaSortBy: String {
 }
 
 public struct APILoginResponse: Decodable {
-    let userName: String
-    let sessionId: String
-    let userId: String
-    let accessToken: String
-    let serverId: String
-    var serverVersion: String?
+    public let userName: String
+    public let sessionId: String
+    public let userId: String
+    public let accessToken: String
+    public let serverId: String
+    public var serverVersion: String?
     
-    var description: String {
+    public var description: String {
         return "User's name: \(userName), SessionID: \(sessionId), userID: \(userId), accessToken: \(accessToken), serverID: \(serverId)"
     }
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case user = "User"
         case sessionInfo = "SessionInfo"
         case accessToken = "AccessToken"
         case serverId = "ServerId"
     }
     
-    enum UserKeys: String, CodingKey {
+    public enum UserKeys: String, CodingKey {
         case name = "Name"
     }
     
-    enum SessionInfoKeys: String, CodingKey {
+    public enum SessionInfoKeys: String, CodingKey {
         case id = "Id"
         case userId = "UserId"
     }
@@ -216,17 +216,17 @@ public struct APILoginResponse: Decodable {
     }
 }
 
-final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
-    var network: BasicNetworkProtocol
+public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
+    public var network: BasicNetworkProtocol
     
-    init(network: BasicNetworkProtocol) {
+    public init(network: BasicNetworkProtocol) {
         self.network = network
     }
     
     /// Gets the current version of the Jellyfin server
     /// - Parameter accessToken: User's access token for the Jellyfin server.
     /// - Returns: The version of the server in this format: `xx.xx.xx` with no "v" at the start, and the name of the server.
-    func getServerVersion(accessToken: String) async throws(AccountErrors) -> (String, String) {
+    public func getServerVersion(accessToken: String) async throws(AccountErrors) -> (String, String) {
         struct Root: Decodable {
             let Version: String
             let ServerName: String
@@ -247,7 +247,123 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
-    func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
+    /// Gets the state of quick connect
+    /// - Returns: A boolean whether quick connect is available or not
+    /// - Throws: `QuickConnectErrors` based on network conditions
+    public func quickConnectAvailable() async throws(QuickConnectErrors) -> Bool {
+        do {
+            return try await network.request(
+                verb: .get,
+                path: "/QuickConnect/Enabled",
+                headers: nil,
+                urlParams: nil,
+                body: nil
+            )
+        }
+        catch { throw QuickConnectErrors.isEnabled(error) }
+    }
+    
+    /// Get the quick connect code and the secret
+    /// - Returns: A tuple with the quick connect code and secret which is used for checking if the user entered the code yet
+    /// - Throws: `QuickConnectErrors` based on network conditions and Jellyfin permissions
+    public func getQuickConnectCodes() async throws(QuickConnectErrors) -> (String, String) {
+        struct Root: Codable {
+            let Authenticated: Bool
+            let Secret: String
+            let Code: String
+            let DeviceId: String
+            let AppName: String
+            let AppVersion: String
+            let DateAdded: String
+        }
+        
+        do {
+            let root: Root = try await network.request(
+                verb: .post,
+                path: "/QuickConnect/Initiate",
+                headers: nil,
+                urlParams: nil,
+                body: nil
+            )
+            return (root.Code, root.Secret)
+        }
+        catch { throw QuickConnectErrors.quickConnectCodesFailed(error) }
+    }
+
+    /// Check if the user entered the provided quick connect code into Jellyfin
+    /// - Parameters:
+    ///   - secret: The secret returned by getQuickConnectCodes()
+    /// - Returns: A boolean - true if the code was entered by the user, false if the authentication is still pending
+    /// - Throws: A `QuickConnectError` when authentication fails
+    public func quickConnectAuthenticated(secret: String) async throws(QuickConnectErrors) -> Bool {
+        struct Root: Codable {
+            let Authenticated: Bool
+            let Secret: String
+            let Code: String
+            let DeviceId: String
+            let DeviceName: String
+            let AppName: String
+            let AppVersion: String
+            let DateAdded: String
+        }
+        let params : [URLQueryItem] = [
+            URLQueryItem(name: "secret", value: secret)
+        ]
+        
+        do {
+            let root: Root = try await network.request(
+                verb: .get,
+                path: "/QuickConnect/Connect",
+                headers: nil,
+                urlParams: params,
+                body: nil
+            )
+            return root.Authenticated
+        }
+        catch { throw QuickConnectErrors.authFailed(error) }
+    }
+    
+    /// Login using a quick connect secret retrieved earlier
+    /// - Parameters:
+    ///   - quickConnectSecret: The secret returned by getQuickConnectCodes()
+    /// - Returns: An authenticated APILoginResponse
+    public func login(quickConnectSecret: String) async throws(QuickConnectErrors) -> APILoginResponse {
+        struct Response: Codable {
+            let User: User
+            let SessionInfo: SessionInfo
+            let ServerId: String
+        }
+        
+        struct User: Codable {
+            let Name: String
+        }
+        
+        struct SessionInfo: Codable {
+            let Id: String
+            let UserId: String
+        }
+        
+        let requestBody: [String: String] = [
+            "Secret": quickConnectSecret
+        ]
+        do {
+            return try await network.request(
+                verb: .post,
+                path: "/Users/AuthenticateWithQuickConnect",
+                headers: nil,
+                urlParams: nil,
+                body: requestBody
+            )
+        } catch { throw QuickConnectErrors.loginFailed(error) }
+    }
+    
+    /// Login using a username and password
+    /// - Parameters:
+    ///   - username: Jellyfin Username
+    ///   - password: Jellyfin Password
+    /// - Returns: However successful logging in was
+    /// - Throws: Account errors based on Jellyfin permissions and network conditions
+    public func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
         struct Response: Codable {
             let User: User
             let SessionInfo: SessionInfo
@@ -277,12 +393,11 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 urlParams: nil,
                 body: requestBody
             )
-        } catch {
-            throw AccountErrors.loginFailed(error)
         }
+        catch { throw AccountErrors.loginFailed(error) }
     }
     
-    func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {
+    public func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {
         struct Root: Decodable {
             let items: [LibraryModel]
             
@@ -302,7 +417,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         } catch let error { throw LibraryErrors.gettingLibraries(error) }
     }
     
-    func getLibraryMedia(
+    public func getLibraryMedia(
         accessToken: String,
         libraryId: String,
         index: Int,
@@ -372,7 +487,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         catch { throw LibraryErrors.unknown(libraryId) }
     }
     
-    func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
+    public func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
         struct Root: Decodable {
             let items: [TVSeason]
             
@@ -401,7 +516,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         catch let error as RError { throw LibraryErrors.gettingSeason(error, seasonID) }
     }
     
-    func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
+    public func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "fillWidth", value: String(width)),
             URLQueryItem(name: "quality", value: "95")
@@ -410,7 +525,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return network.buildURL(path: "/Items/\(mediaID)/Images/\(imageType.rawValue)", urlParams: params)
     }
     
-    func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {
+    public func buildAVPlayerItem(path: String, urlParams: [URLQueryItem]?, headers: [String : String]?) -> AVPlayerItem? {
         guard let url = network.buildURL(path: path, urlParams: urlParams) else { return nil }
         // Configure asset options with proper HTTP headers
         var options: [String: Any] = [:]
@@ -422,7 +537,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         return AVPlayerItem(asset: asset)
     }
     
-    func getStreamingContent(
+    public func getStreamingContent(
         accessToken: String,
         contentID: String,
         bitrate: Int,
@@ -475,7 +590,8 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         guard let item = self.buildAVPlayerItem(
             path: "/Videos/\(contentID)/main.m3u8",
             urlParams: params,
-            headers: ["X-MediaBrowser-Token": accessToken]
+            // TODO: remove X-MediaBrowser-Token when the backward compatibility is no longer required
+            headers: ["X-MediaBrowser-Token": accessToken, "Authorization": network.buildAuthHeader(accessToken: accessToken)]
         ) else { return nil }
         
         // Set the title metadata
@@ -487,15 +603,20 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         // Set the subtitle/description metadata
         let subtitleMetadata = AVMutableMetadataItem()
         subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
-        subtitleMetadata.value = (subtitle ?? "") as NSString
+        subtitleMetadata.value = (subtitle ?? "") as NSString // Empty string for no subtitle
         subtitleMetadata.extendedLanguageTag = "und"
         
         item.externalMetadata = [titleMetadata, subtitleMetadata]
+        item.audioTimePitchAlgorithm = .spectral
+        
+        // Setup streaming buffering
+        item.preferredForwardBufferDuration = TimeInterval(600) // 10 minutes
+        item.canUseNetworkResourcesForLiveStreamingWhilePaused = true // Allow buffering while paused
         
         return item
     }
     
-    func updatePlaybackStatus(
+    public func updatePlaybackStatus(
         mediaSourceID: String,
         audioStreamIndex: String,
         subtitleStreamIndex: String?,
@@ -564,7 +685,10 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         } catch { throw JellyfinNetworkErrors.playbackUpdateFailed(error) }
     }
     
-    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
+    public func getRecentlyAdded(
+        contentType: RecentlyAddedMediaType,
+        accessToken: String
+    ) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
@@ -592,7 +716,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
-    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
+    public func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
         struct Root: Decodable {
             let Items: [SlimMedia]
         }
@@ -613,7 +737,7 @@ final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
-    func getUserImageURL(userID: String) -> URL? {
+    public func getUserImageURL(userID: String) -> URL? {
         let params: [URLQueryItem] = [
             URLQueryItem(name: "userID", value: userID)
         ]

@@ -48,6 +48,7 @@ opt_in_rules:
   - static_operator
   - toggle_bool
   - inclusive_language
+  - explicit_acl
 
 # Rules
 line_length:
@@ -77,3 +78,28 @@ disabled_rules:
   - redundant_string_enum_value
   - type_body_length
   - cyclomatic_complexity
+
+# Custom Rules:
+custom_rules:
+  only_log:
+    name: "Only Log"
+    message: "Use Log.[debug|info|warning|error|critical](_:) over print(_:)."
+    severity: warning # Warning so we can use print for debugging
+    regex: '\bprint\s*\(\s*' # Matches `print(`
+    match_kinds: # Help against comments and such
+      - identifier
+  theme_class_naming:
+    name: "Theme Class Naming"
+    regex: 'class\s+(?!Theme)\w+\s*:\s*[^{]*\bThemeProtocol\b'
+    message: "Themes must be prefixed with 'Theme'."
+    severity: error
+  no_internal_acl:
+    name: "No Internal ACL"
+    regex: "\\binternal\\b"
+    message: "Use of 'internal' is not allowed, and should likely be marked as public."
+    severity: error
+    match_kinds:
+      - keyword
+      - identifier
+      - typeidentifier
+      - attribute.builtin

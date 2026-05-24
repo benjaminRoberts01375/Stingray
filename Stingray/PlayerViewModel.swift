@@ -9,9 +9,9 @@ import AVKit
 import SwiftUI
 
 @Observable
-final class PlayerViewModel: Hashable {
+public final class PlayerViewModel: Hashable {
     /// Player with formatted URL already set
-    public var player: AVPlayer?
+    public var player: AVPlayer
     /// Media that contains the source to play
     public var media: any MediaProtocol
     /// Media source in play
@@ -39,10 +39,14 @@ final class PlayerViewModel: Hashable {
     /// Quickly get the media source from the media source ID
     public private(set) var mediaSource: any MediaSourceProtocol
     
+    public private(set) var settingsModel: SettingsModel
+    
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
+    /// Trigger to refresh transport bar items
+    public var transportBarNeedsUpdate: Bool = false
     
     /// Server to stream from
     @ObservationIgnored public let streamingService: any StreamingServiceProtocol
@@ -52,12 +56,12 @@ final class PlayerViewModel: Hashable {
     @ObservationIgnored public var navigationPath: NavigationPath?
     
     // Hashable Conformance
-    static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
+    public static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
         lhs.mediaSourceID == rhs.mediaSourceID &&
         lhs.startTime == rhs.startTime
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
         hasher.combine(startTime.seconds)
     }
@@ -68,9 +72,10 @@ final class PlayerViewModel: Hashable {
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
         streamingService: StreamingServiceProtocol,
-        seasons: [any TVSeasonProtocol]?
+        seasons: [any TVSeasonProtocol]?,
+        settingsModel: SettingsModel
     ) {
-        self.player = nil
+        self.player = AVPlayer()
         self.startTime = startTime ?? .zero
         self.streamingService = streamingService
         self.seasons = seasons
@@ -78,34 +83,36 @@ final class PlayerViewModel: Hashable {
         self.mediaSourceID = mediaSource.id
         self.mediaSource = mediaSource
         self.media = media
+        self.settingsModel = settingsModel
         
         var subtitleID: String?
-        var bitrate: Bitrate = .full
         
-        if let defaultUser = UserModel.shared.getDefaultUser() {
-            // Setup subtitles
-            if defaultUser.usesSubtitles {
-                subtitleID = self.mediaSource.subtitleStreams.first {
-                    $0.isDefault
-                }?.id ?? self.mediaSource.subtitleStreams.first?.id
-            }
-            // Setup bitrate
-            if let bitrateBits = defaultUser.bitrate {
-                bitrate = .limited(bitrateBits)
-            }
+        // Setup subtitles
+        if settingsModel.usesSubtitles {
+            subtitleID = self.mediaSource.subtitleStreams.first {
+                $0.isDefault
+            }?.id ?? self.mediaSource.subtitleStreams.first?.id
         }
         
         self.savePlaybackDate()
         self.newPlayer(
             startTime: self.startTime,
-            videoID: self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0"),
-            audioID: self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1"),
-            subtitleID: subtitleID,
-            bitrate: bitrate
+            videoID: .newID(self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0")),
+            audioID: .newID(self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1")),
+            subtitleID: .newID(subtitleID),
+            bitrate: settingsModel.bitrate
         )
-        
+        self.player.rate = self.settingsModel.playbackSpeed.value
     }
     
+    /// Dictates how the player should transition a particular stream
+    public enum StreamTransitionType {
+        /// Do not transition to a new stream
+        case keep
+        /// Update the current stream to a new ID. Nil for no stream.
+        case newID(String?)
+    }
+
     /// Creates a new player based on current state
     /// - Parameters:
     ///   - startTime: Where the video should start from
@@ -115,22 +122,17 @@ final class PlayerViewModel: Hashable {
     ///   - bitrate: The video's bitrate in bits per second
     public func newPlayer(
         startTime: CMTime,
-        videoID: String? = nil,
-        audioID: String? = nil,
-        subtitleID: String? = nil,
-        bitrate: Bitrate? = nil
+        videoID: StreamTransitionType = .keep,
+        audioID: StreamTransitionType = .keep,
+        subtitleID: StreamTransitionType = .keep,
+        bitrate: Int? = nil
     ) {
-        self.stopPlayer()
+        do { try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback) }
+        catch { Log.warning("Failed to configure audio session: \(error)") }
         
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-        } catch {
-            print("Failed to configure audio session: \(error)")
-        }
-        
+        // Setup title and possibly a subtitle (ex. "Season 1, Episode 1" or "The Super Duper Cut")
         var title = ""
         var subtitle = ""
-        
         switch self.media.mediaType {
         case .tv(let seasons):
             if let seasons = seasons { // TV Shows
@@ -151,32 +153,91 @@ final class PlayerViewModel: Hashable {
         default: title = self.media.title
         }
         
-        guard let player = streamingService.playbackStart(
-            mediaSource: self.mediaSource,
-            videoID: videoID ?? self.playerProgress?.videoID ?? "0",
-            audioID: audioID ?? self.playerProgress?.audioID ?? "1",
-            subtitleID: subtitleID ?? self.playerProgress?.subtitleID, // nil is no subtitles
-            bitrate: bitrate ?? self.playerProgress?.bitrate ?? .full,
-            title: title,
-            subtitle: subtitle
-        )
-        else { return }
+        // Setup stream IDs
+        let finalVideoID: String
+        let finalAudioID: String
+        let finalSubtitleID: String?
+        switch videoID {
+        case .keep: finalVideoID = self.playerProgress?.videoID ?? "0"
+        case .newID(let id): finalVideoID = id ?? "0"
+        }
+        switch audioID {
+        case .keep: finalAudioID = self.playerProgress?.audioID ?? "1"
+        case .newID(let id): finalAudioID = id ?? "1"
+        }
+        switch subtitleID { // No subtitles when self.playerProgress?.subtitleID is nil
+        case .keep: finalSubtitleID = self.playerProgress?.subtitleID
+        case .newID(let id): finalSubtitleID = id
+        }
         
-        self.player = player
+        // We're done reading from the running player
+        self.stopPlayer()
+        
+        // Create/update the player
+        self.streamingService.playbackStart(
+            mediaSource: self.mediaSource,
+            videoID: finalVideoID,
+            audioID: finalAudioID,
+            subtitleID: finalSubtitleID,
+            bitrate: bitrate ?? self.playerProgress?.bitrate,
+            title: title,
+            subtitle: subtitle,
+            player: self.player
+        )
+        
         self.playerProgress = streamingService.playerProgress // Sync to view model
-        self.player?.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        self.player?.play()
+        self.player.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
+        self.player.play()
         
         // Update user settings
-        guard var currentUser = UserModel.shared.getDefaultUser() else { return }
-        currentUser.usesSubtitles = self.playerProgress?.subtitleID != nil
-        switch bitrate {
-        case .full, .none:
-            currentUser.bitrate = nil
-        case .limited(let newBitrate):
-            currentUser.bitrate = newBitrate
+        self.settingsModel.usesSubtitles = self.playerProgress?.subtitleID != nil
+        
+        // Set up observer for when the current item finishes playing
+        if self.settingsModel.autoplay {
+            self.setupPlaybackEndObserver()
         }
-        UserModel.shared.updateUser(currentUser)
+    }
+    
+    /// Sets up an observer to detect when playback finishes and auto-advance to next episode
+    private func setupPlaybackEndObserver() {
+        // Remove any existing observers first
+        NotificationCenter.default.removeObserver(
+            self,
+            name: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem
+        )
+        
+        // Add observer for the current item
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handlePlaybackEnded()
+        }
+    }
+    
+    /// Called when the current video finishes playing
+    private func handlePlaybackEnded() {
+        guard let seasons = self.seasons else { return }
+        
+        let allEpisodes = seasons.flatMap(\.episodes)
+        guard let currentIndex = allEpisodes.firstIndex(where: { episode in
+            episode.mediaSources.first?.id == self.mediaSource.id
+        }),
+        currentIndex + 1 < allEpisodes.count else {
+            // No next episode, playback complete
+            return
+        }
+        
+        let nextEpisode = allEpisodes[currentIndex + 1]
+        
+        // Save the current episode's progress
+        self.savePlaybackDate()
+        
+        // Update to the next episode
+        self.mediaSourceID = nextEpisode.mediaSources.first?.id ?? self.mediaSourceID
+        self.newPlayer(episode: nextEpisode)
     }
     
     /// Creates a new player based on current state and new episode
@@ -191,17 +252,21 @@ final class PlayerViewModel: Hashable {
         if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { self.playerProgress?.subtitleID == $0.id }) {
             newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle)
         }
-        self.newPlayer(startTime: .zero, videoID: newVideoStream.id, audioID: newAudioStream.id, subtitleID: newSubtitleStream?.id)
+        self.newPlayer(
+            startTime: .zero,
+            videoID: .newID(newVideoStream.id),
+            audioID: .newID(newAudioStream.id),
+            subtitleID: .newID(newSubtitleStream?.id)
+        )
     }
     
-    func stopPlayer() {
-        player?.pause()
-        player = nil
+    public func stopPlayer() {
+        player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
     
-    func savePlaybackDate() {
+    public func savePlaybackDate() {
         switch self.media.mediaType {
         case .tv(let seasons):
             if var seasons = seasons {
@@ -214,8 +279,6 @@ final class PlayerViewModel: Hashable {
                                 self.mediaSource.startPoint < self.mediaSource.duration * 0.1 {
                                 self.mediaSource.startPoint = 0
                             }
-                            
-                            print(self.mediaSource.startPoint, self.mediaSource.duration * 0.1, self.mediaSource.duration * 0.9, )
                         }
                     }
                 }
@@ -224,8 +287,15 @@ final class PlayerViewModel: Hashable {
         }
     }
     
+    public func changeSpeed(_ speed: PlaybackSpeed) {
+        self.player.rate = speed.value
+        self.settingsModel.playbackSpeed = speed
+        self.transportBarNeedsUpdate.toggle() // Trigger UI update
+    }
+    
     deinit {
-        player?.pause()
+        NotificationCenter.default.removeObserver(self)
+        player.pause()
         streamingService.playbackEnd()
     }
 }

@@ -71,7 +71,7 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
     public var parentID: String?
     public var errors: [any RError]?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case seriesID = "SeriesId"
         case seriesTitle = "SeriesName"
@@ -167,7 +167,7 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
     public var logo: [String: String]?
     public var backdrop: [String: String]?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case primary = "Primary"
         case logo = "Logo"
         case backdrop = "Backdrop"
@@ -220,7 +220,7 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
     public var logo: String?
     public var primary: String?
     
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case thumbnail = "Thumb"
         case logo = "Logo"
         case primary = "Primary"
@@ -245,5 +245,32 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
             else { throw JSONError.failedJSONDecode("MediaImages", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch let error { throw JSONError.failedJSONDecode("MediaImages", error) }
+    }
+}
+
+/// Some media designed to be displayed as an example
+public final class ExampleMedia: SlimMediaProtocol {
+    public let id: String
+    
+    public let title: String
+    
+    public let errors: [any RError]?
+    
+    public let imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    
+    public let imageTags: (any MediaImagesProtocol)?
+    
+    public static func == (lhs: ExampleMedia, rhs: ExampleMedia) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    
+    public init(title: String) {
+        self.title = title
+        self.id = UUID().uuidString
+        self.errors = nil
+        self.imageBlurHashes = nil
+        self.imageTags = MediaImages(thumbnail: "Example", logo: "Example", primary: "Example")
     }
 }

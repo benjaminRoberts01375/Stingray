@@ -10,9 +10,9 @@ import SwiftUI
 /// Shows a simple error and can expand into a full verbose error log.
 public struct ErrorView: View {
     /// Recursive error thrown by Stingray
-    let error: RError
+    public let error: RError
     /// User-facing error to show before expanding
-    let summary: String
+    public let summary: String
     /// Tracks whether or not the error has been expanded
     @State private var isExpanded: Bool = false
     /// Tracks the current focus for changing colors
@@ -53,11 +53,11 @@ fileprivate struct ErrorSummaryView: View {
 /// Show a verbose version of an RError
 public struct ErrorExpandedView: View {
     /// Verbose error thrown by Stingray
-    let errorDesc: () -> String
+    public let errorDesc: () -> String
     
     public var body: some View {
         VStack(alignment: .leading) {
-            Text("Error:")
+            Text("Error" + ":")
             Text(errorDesc())
         }
         .padding(.horizontal, 50)

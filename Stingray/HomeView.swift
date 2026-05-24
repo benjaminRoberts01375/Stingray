@@ -7,16 +7,16 @@
 
 import SwiftUI
 
-struct HomeView: View {
-    let streamingService: StreamingServiceProtocol
+public struct HomeView: View {
+    public let streamingService: StreamingServiceProtocol
     
     @State private var dashboardCache: [String: [SlimMedia]] = [:]
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading) {
             DashboardRow(
-                title: "Next Up",
+                rowType: .nextUp,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -26,7 +26,7 @@ struct HomeView: View {
             .focusSection()
             
             DashboardRow(
-                title: "Recently Added",
+                rowType: .recentlyAdded,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -36,7 +36,7 @@ struct HomeView: View {
             .focusSection()
             
             DashboardRow(
-                title: "Latest Movies",
+                rowType: .latestMovies,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -46,7 +46,7 @@ struct HomeView: View {
             .focusSection()
             
             DashboardRow(
-                title: "Latest Shows",
+                rowType: .latestShows,
                 streamingService: streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
@@ -55,13 +55,43 @@ struct HomeView: View {
             }
             .focusSection()
             
-            SystemInfoView(streamingService: streamingService)
+            VStack {
+                SystemInfoView(streamingService: streamingService)
+                LibrariesInfoView(streamingService: streamingService)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top)
+        }
+    }
+}
+
+fileprivate enum HomeRow: Identifiable {
+    case nextUp
+    case recentlyAdded
+    case latestMovies
+    case latestShows
+    
+    var id: String {
+        switch self {
+        case .nextUp: return "nextUp"
+        case .recentlyAdded: return "recentlyAdded"
+        case .latestMovies: return "latestMovies"
+        case .latestShows: return "latestShows"
+        }
+    }
+    
+    var name: LocalizedStringKey {
+        switch self {
+        case .nextUp: return "Next Up"
+        case .recentlyAdded: return "Recently Added"
+        case .latestMovies: return "Latest Movies"
+        case .latestShows: return "Latest Shows"
         }
     }
 }
 
 fileprivate struct DashboardRow: View {
-    let title: String
+    let rowType: HomeRow
     let streamingService: StreamingServiceProtocol
     @Binding var cache: [String: [SlimMedia]]
     @Binding var navigation: NavigationPath
@@ -69,24 +99,27 @@ fileprivate struct DashboardRow: View {
     
     @State private var status: DashboardRowStatus = .unstarted
     
+    @Environment(ThemeModel.self) private var theme
+    
     var body: some View {
         VStack(alignment: .leading) {
             switch status {
             case .empty:
                 EmptyView()
             default:
-                Text(title)
+                Text(self.rowType.name)
                     .font(.title2.bold())
+                    .foregroundStyle(self.theme.currentTheme.header1)
                     .task {
                         // Check if we already have cached data
-                        if let cachedMedia = cache[title] {
+                        if let cachedMedia = cache[self.rowType.id] {
                             status = cachedMedia.isEmpty ? .empty : .complete(cachedMedia)
                             return
                         }
                         
                         // Only fetch if not cached
                         let response = await fetchMedia()
-                        cache[title] = response
+                        cache[self.rowType.id] = response
                         status = response.isEmpty ? .empty : .complete(response)
                     }
             }
@@ -122,30 +155,30 @@ fileprivate struct MediaPicker: View {
         ScrollView(.horizontal) {
             LazyHStack {
                 ForEach(pickerMedia) { media in
-                    MediaCard(media: media, streamingService: streamingService) { navigation.append(media) }
+                    MediaCard(media: media, streamingService: streamingService, navigation: $navigation)
                 }
             }
         }
     }
 }
 
-struct MediaDetailLoader: View {
-    let mediaID: String
-    let parentID: String?
-    let streamingService: StreamingServiceProtocol
+public struct MediaDetailLoader: View {
+    public let mediaID: String
+    public let parentID: String?
+    public let streamingService: StreamingServiceProtocol
     
-    @Binding var navigation: NavigationPath
+    @Binding public var navigation: NavigationPath
     
-    var body: some View {
+    public var body: some View {
         switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
         case .found(let foundMedia):
             DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
         case .temporarilyNotFound:
-            ProgressView("Loading Libraries...")
+            ProgressView("Loading libraries...")
         case .notFound:
             Text("Media Not Found")
             Text("It may not have been compatible with Stingray")
-                .opacity(0.5)
+                .foregroundStyle(.tertiary)
         }
     }
 }
@@ -164,10 +197,10 @@ fileprivate struct MediaNavigationLoadingPicker: View {
     }
 }
 
-fileprivate struct MediaNavigationLoadingCard: View {
+public struct MediaNavigationLoadingCard: View {
     private let randomWordCount = Int.random(in: 3...5)
     
-    var body: some View {
+    public var body: some View {
         Button {
             
         } label: {
@@ -192,10 +225,10 @@ fileprivate struct MediaNavigationLoadingCard: View {
     }
 }
 
-struct SystemInfoView: View {
-    let streamingService: any StreamingServiceProtocol
+public struct SystemInfoView: View {
+    public let streamingService: any StreamingServiceProtocol
     
-    var body: some View {
+    public var body: some View {
         // Display Stingray and Jellyfin server versions
         HStack(alignment: .center, spacing: 0) {
             if let stingrayVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {  // Stingray
@@ -203,15 +236,77 @@ struct SystemInfoView: View {
             }
             else { Text("Unknown Stingray Version") }
             // Jellyfin
-            Text(" • Jellyfin Server ")
+            Text(" • " + "Jellyfin Server ")
             if let name = self.streamingService.serverName { Text("\"\(name)\" ") }
             if let version = self.streamingService.serverVersion { Text("v\(version)") }
             // tvOS version
             let osVersion = ProcessInfo.processInfo.operatingSystemVersion
-            Text(" • tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
+            Text(" • " + "tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
+            // Apple TV model
+            if let model = getAppleTVModel() {
+                Text(" • " + model)
+            }
         }
-        .foregroundStyle(.gray.opacity(0.5))
-        .frame(maxWidth: .infinity)
-        .padding(.top)
+        .foregroundStyle(.tertiary)
+    }
+    
+    private func getAppleTVModel() -> String? {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        return identifier.isEmpty ? nil : identifier
+    }
+}
+
+public struct LibrariesInfoView: View {
+    /// Streaming service containing libraries
+    public let streamingService: any StreamingServiceProtocol
+    
+    @State private var movieCount: Int = 0
+    
+    public var body: some View {
+        switch self.streamingService.libraryStatus {
+        case .waiting: Text(String(localized: "Waiting to get libraries..."))
+        case .retrieving: Text(String(localized: "Getting libraries..."))
+        case .available(let libraries), .complete(let libraries):
+            let mediaCounts = countMedia(libraries: libraries)
+            HStack(spacing: 0) {
+                if case .complete = self.streamingService.libraryStatus {
+                    Text(String(localized: "Libraries: \(libraries.count)"))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    ProgressView()
+                    Text(" " + String(localized: "Libraries: \(libraries.count)"))
+                        .foregroundStyle(.tertiary)
+                }
+                ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
+                    Text(" • " + "\(key): \(mediaCounts[key] ?? 0)")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(height: 30)
+        case .error(let rError): ErrorView(error: rError, summary: "Failed to load libraries")
+        }
+    }
+    
+    /// Counts all the media for each type.
+    /// - Parameter libraries: Libraries to count with
+    /// - Returns: Found media types and their associated counts
+    public func countMedia(libraries: [LibraryModel]) -> [String : Int] {
+        var counters: [String : Int] = [:]
+        
+        for library in libraries {
+            switch library.media {
+            case .unloaded, .waiting, .error:
+                break
+            case .available(let media), .complete(let media):
+                counters[library.libraryType, default: 0] += media.count
+            }
+        }
+        return counters
     }
 }

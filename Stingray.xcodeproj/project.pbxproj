@@ -54,15 +54,22 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				APIs/APIBasicNetwork.swift,
-				APIs/APIStorage.swift,
+				APIs/APIBasicStorage.swift,
+				APIs/APISettingsStorage.swift,
 				APIs/APIUserStorage.swift,
 				Extensions/DecoderExtension.swift,
 				Extensions/TimeIntervalExtension.swift,
 				Extensions/URLExtension.swift,
+				Models/LoggerModel.swift,
+				Models/Purchases.storekit,
+				Models/PurchasesModel.swift,
 				Models/RErrorModel.swift,
+				Models/SettingsModel.swift,
 				Models/SlimMediaModel.swift,
 				Models/StreamingServiceBasicModel.swift,
 				Models/UserModel.swift,
+				Themes/ThemeModel.swift,
+				Themes/Themes.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};
@@ -342,6 +349,7 @@
 				SDKROOT = appletvos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 				TVOS_DEPLOYMENT_TARGET = 18.6;
@@ -401,6 +409,7 @@
 				SDKROOT = appletvos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TVOS_DEPLOYMENT_TARGET = 18.6;
 				VALIDATE_PRODUCT = YES;
@@ -427,7 +436,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -461,7 +470,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -486,12 +495,13 @@
 				INFOPLIST_FILE = TopShelf/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TopShelf;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = arm64;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray.TopShelf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -516,12 +526,13 @@
 				INFOPLIST_FILE = TopShelf/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TopShelf;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = arm64;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.1;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.benlab.Stingray.TopShelf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
