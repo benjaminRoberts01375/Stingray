@@ -49,15 +49,6 @@ public enum PreferenceKey: String {
     case pin
 }
 
-public enum DBType: String {
-    /// The global keychain
-    case keychain
-    /// The database meant to share data to the top shelf
-    case topShelf
-    /// The database that changes with the tvOS user
-    case perTVOSUserDefaults
-}
-
 /// A protocol for abstracting access to local storage via key-value pairs
 public protocol BasicStorageProtocol {
     /// Get a `String` from local storage

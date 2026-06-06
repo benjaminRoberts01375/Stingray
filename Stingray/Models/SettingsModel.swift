@@ -23,7 +23,6 @@ public final class SettingsModel {
         public init?(rawValue: String) {
             if rawValue == ProfileSwitching.askOnLaunch.rawValue { self = .askOnLaunch }
             else if rawValue == ProfileSwitching.askOnResume.rawValue { self = .askOnResume }
-//            else if rawValue == ProfileSwitching.askOnResume.syncWithTVOS { self = .syncWithTVOS }
             else { self = .manual }
         }
         
@@ -31,7 +30,6 @@ public final class SettingsModel {
             switch self {
             case .askOnResume: return "askOnResume"
             case .askOnLaunch: return "askOnLaunch"
-//            case .syncWithTVOS return "syncWithTVOS"
             case .manual: return "manual"
             }
         }
@@ -42,9 +40,6 @@ public final class SettingsModel {
         case askOnLaunch
         /// When Stingray launches, assume the last used profile - Stingray's behavior through v1.1.0
         case manual
-//        /// When Stingray launches, map the current tvOS user to a Jellyfin account.
-//        /// If an account isn't yet mapped, ask the user.
-//        case syncWithTVOS // Removed for v1.2.0 since Apple has not fixed the user switching bug in time for tvOS 26.5
         
         /// Picker display name
         public var displayName: LocalizedStringKey {
@@ -53,8 +48,6 @@ public final class SettingsModel {
                 return "Ask on Launch"
             case .manual:
                 return "Manual"
-    //        case .syncWithTVOS:
-    //            return "Sync with tvOS (WIP)"
             case .askOnResume:
                 return "Ask on Resume"
             }
@@ -76,8 +69,6 @@ public final class SettingsModel {
                 """
             case .manual:
                 return "Whoever was last signed in will remain signed in."
-    //        case .syncWithTVOS:
-    //            return "Jellyfin accounts will be mapped to users on this Apple TV."
             }
         }
     }
