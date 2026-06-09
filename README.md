@@ -59,8 +59,11 @@ Extensive content metadata.
 
 Configure Stingray to look and feel how you want it.
 
+## TO-DONE List
+
 - Support User Switching
     - The previous commented out option is now gone in favor of setting up future updates more effectively. This now means that user switching is used for all users all the time.
+- Store data in iCloud for device syncing.
 
 ## TODO List
 

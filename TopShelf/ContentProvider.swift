@@ -13,8 +13,8 @@ class ContentProvider: TVTopShelfContentProvider {
         let streamingModel: StreamingServiceBasicProtocol
         let userModel: UserModel
         do {
-            let defaults = try DefaultsBasicStorage()
-            let userStorage = UserStorage(basicStorage: defaults)
+            let storage = try HybridBasicStorage()
+            let userStorage = UserStorage(basicStorage: storage)
             userModel = UserModel(storage: userStorage)
         }
         catch {

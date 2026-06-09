@@ -34,8 +34,8 @@ public struct ContentView: View {
     @Environment(\.locale) private var locale
     
     public init() throws(SetupErrors) {
-        let defaultsStorage: DefaultsBasicStorage
-        do { defaultsStorage = try DefaultsBasicStorage() }
+        let defaultsStorage: HybridBasicStorage
+        do { defaultsStorage = try HybridBasicStorage() }
         catch { throw SetupErrors.databaseError(error) }
         let userStorage = UserStorage(basicStorage: defaultsStorage)
         let settingStorage = SettingStorage(basicStorage: defaultsStorage)
