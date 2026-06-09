@@ -23,6 +23,8 @@ public struct SettingsView: View {
     /// Controls the sheet to show the supporting Stingray screen
     @State private var showSupportStingray: Bool = false
     
+    public let streamingService: StreamingServiceProtocol
+    
     public var body: some View {
         @Bindable var settings = settings
         Form {
@@ -56,6 +58,7 @@ public struct SettingsView: View {
                         ) {
                             Button("Logout", role: .destructive) {
                                 self.userModel.deleteUser(user.id)
+                                Task { await self.streamingService.logout() }
                                 if self.userModel.userIDs.isEmpty { self.loginState = .loggedOut }
                                 else { self.loginState = .pickingUser }
                             }

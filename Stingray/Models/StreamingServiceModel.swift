@@ -62,6 +62,9 @@ public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     /// Fetch the special features for media.
     /// - Parameter media: Media to fetch for.
     func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
+    
+    /// Logout the current user
+    func logout() async
 }
 
 /// Describes the current setup status for a downloaded library
@@ -288,6 +291,10 @@ public final class JellyfinModel: StreamingServiceProtocol {
         return JellyfinModel(response: response, serviceURL: url)
     }
 
+    public func logout() async {
+        await self.networkAPI.logoutUser(accessToken: self.accessToken)
+    }
+    
     /// Fetch libraries and library media.
     public func retrieveLibraries() async {
         let maxConcurrentLibraries = 2
@@ -703,6 +710,8 @@ public final class ExampleStreamingService: StreamingServiceProtocol {
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] { return [] }
     
     public func retrieveUpNext() async -> [SlimMedia] { return [] }
+    
+    public func logout() async { }
     
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         let poster: String = [
