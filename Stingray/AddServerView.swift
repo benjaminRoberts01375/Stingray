@@ -206,6 +206,9 @@ public struct AddServerView: View {
                 self.error = error
                 self.setError()
                 return
+            } catch {
+                self.connected = false
+                return
             }
             self.loading = false
             
@@ -228,6 +231,7 @@ public struct AddServerView: View {
                     self.setError()
                     return
                 }
+                catch { return }
             }
         }
     }
@@ -261,6 +265,10 @@ public struct AddServerView: View {
                 self.error = AccountErrors.loginFailed(error)
                 self.setError()
                 // Do not dismiss on error, so return
+                return
+            } catch {
+                self.error = AccountErrors.loginFailed(nil)
+                self.setError()
                 return
             }
             self.loading = false

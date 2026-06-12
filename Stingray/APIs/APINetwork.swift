@@ -518,6 +518,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             return response.items
         }
         catch let error as RError { throw LibraryErrors.gettingSeason(error, seasonID) }
+        catch { throw LibraryErrors.unknown("Season ID: \(seasonID)") }
     }
     
     public func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {

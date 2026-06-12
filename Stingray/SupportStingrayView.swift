@@ -79,7 +79,7 @@ public struct SupportStingrayView: View {
                                     .padding(.vertical)
                                 
                                     Button {
-                                        Task {
+                                        _ = Task {
                                             do { try await self.purchases.purchase(product) }
                                             catch let error as RError { self.error = error }
                                         }
