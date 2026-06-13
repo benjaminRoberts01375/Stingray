@@ -132,6 +132,13 @@ public struct AddServerView: View {
             if let error = self.error {
                 ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
+                NavigationLink { AddServerView(loginState: $loggedIn) }
+                label: {
+                    Image(systemName: "person.2.arrow.trianglehead.counterclockwise")
+                        .resizable()
+                        .scaledToFit()
+                }
+                .accessibilityLabel("Login again")
             }
         }
         // Done separately so we can ue the @Environment, also helps against reloads
@@ -139,14 +146,12 @@ public struct AddServerView: View {
         .onDisappear { self.connected = false } // A small hacky fix to stop checking QuickConnect
     }
     
+    /// Autofills connection info, prefers the current user's login info
     public func loadExistingServerInfo() {
-        guard let serviceURL = userModel.activeUser?.serviceURL ?? userModel.getUsers().first?.serviceURL else {
-            return
-        }
+        guard let serviceURL = self.userModel.activeUser?.serviceURL ?? self.userModel.getUsers().first?.serviceURL
+        else { return }
+        if serviceURL.scheme == "https" { httpProcol = .https }
         
-        if serviceURL.scheme == "https" {
-            httpProcol = .https
-        }
         httpPort = String(serviceURL.port ?? 8096)
         httpHostname = serviceURL.host ?? ""
     }

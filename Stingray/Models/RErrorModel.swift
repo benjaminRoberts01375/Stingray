@@ -329,14 +329,11 @@ public enum AccountErrors: RError {
     case loginFailed(RError?)
     /// Failed to get the server's version,
     case serverVersionFailed(RError)
-    /// User already registered in Stingray
-    case userAlreadyExists
 
     public var next: (RError)? {
         switch self {
         case .loginFailed(let next): return next
         case .serverVersionFailed(let next): return next
-        case .userAlreadyExists: return nil
         }
     }
     
@@ -346,8 +343,6 @@ public enum AccountErrors: RError {
             return "Login failed"
         case .serverVersionFailed:
             return "Failed to get server version"
-        case .userAlreadyExists:
-            return "This person is already signed in"
         }
     }
 }
