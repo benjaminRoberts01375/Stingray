@@ -185,6 +185,7 @@ public final class PlayerViewModel: Hashable {
             player: self.player
         )
         
+        self.player.preventsDisplaySleepDuringVideoPlayback = true // Should be default, but oh well
         self.playerProgress = streamingService.playerProgress // Sync to view model
         self.player.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
         self.player.play()
