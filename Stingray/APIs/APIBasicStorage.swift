@@ -135,7 +135,7 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     
     /// Migrates the old v1 database to v2
     private func migrateToV2() {
-        if (Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? true) {
+        if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? true {
             Log.info("Top Shelf called, skipping migration")
             return
         }
@@ -144,11 +144,11 @@ public final class HybridBasicStorage: BasicStorageProtocol {
             return
         }
         
+        Log.critical("Migrating db to v2...")
         self.cloudStore.set(
             self.defaults.string(forKey: StorageKeys.defaultStreamingUserID.rawValue),
             forKey: StorageKeys.defaultStreamingUserID.rawValue
         )
-        Log.critical("Migrating db to v2...")
         self.cloudStore.set(self.defaults.stringArray(forKey: StorageKeys.userIDs.rawValue), forKey: StorageKeys.userIDs.rawValue)
         self.cloudStore.set(self.defaults.integer(forKey: StorageKeys.maxBitrate.rawValue), forKey: StorageKeys.maxBitrate.rawValue)
         
