@@ -15,7 +15,7 @@
   ],
   "products" : [
     {
-      "displayPrice" : "1.50",
+      "displayPrice" : "1.49",
       "familyShareable" : true,
       "internalID" : "F9212EDA",
       "localizations" : [
@@ -44,11 +44,17 @@
     ],
     "_timeRate" : 0
   },
+  "subscriptionBundleGroups" : [
+
+  ],
   "subscriptionGroups" : [
 
   ],
+  "subscriptionSuiteGroups" : [
+
+  ],
   "version" : {
-    "major" : 5,
-    "minor" : 0
+    "major" : 6,
+    "minor" : 3
   }
 }
