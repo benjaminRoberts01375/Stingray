@@ -18,14 +18,8 @@ public enum StorageKeys {
     case user(String)
     /// A setting for how/when users should be switched
     case userSwitchingMethod
-    /// Internal: Database version tracking
-    case version
-    /// A unique identifier for a tvOS user
-    case localUserID
     /// A unique ID for the maximum bitrate option
     case maxBitrate
-    /// Modifies a preference for a given UserID
-    case preference(PreferenceKey, String)
     
     /// A string representation of the enum
     public var rawValue: String {
@@ -34,16 +28,9 @@ public enum StorageKeys {
         case .userIDs: return "userIDs"
         case .user(let id): return "user\(id)"
         case .userSwitchingMethod: return "userSwitchingMethod"
-        case .version: return "db-version"
-        case .localUserID: return "localUserID"
         case .maxBitrate: return "maxBitrate"
-        case .preference(let preference, let userID): return "preference-\(preference.rawValue)-\(userID)"
         }
     }
-}
-
-public enum PreferenceKey: String {
-    case pin
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
@@ -119,6 +106,11 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     /// Data that remains local
     private let defaults: UserDefaults
     
+    /// Current major iteration of database storage
+    public static let dbVersion: Int8 = 2
+    /// Key to read the version from in self.cloudStore
+    private static let dbVersionKey: String = "dbVersion"
+    
     /// Sets up storage for local and cloud syncing
     public init() throws(BasicStorageErrors) {
         // Setup local storage
@@ -129,6 +121,45 @@ public final class HybridBasicStorage: BasicStorageProtocol {
         // Setup cloud storage
         self.cloudStore = NSUbiquitousKeyValueStore.default // Setup key-value store
         self.cloudStore.synchronize() // Get the latest data from iCloud
+        if CommandLine.arguments.contains("-ResetICloud") && !(Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? true) {
+            Log.critical("Resetting iCloud...")
+            for key in self.cloudStore.dictionaryRepresentation.keys {
+                self.cloudStore.removeObject(forKey: key)
+            }
+            self.cloudStore.synchronize()
+            self.defaults.synchronize()
+            Log.critical("Reset complete. DB Version: \(self.defaults.integer(forKey: Self.dbVersionKey))")
+        }
+        else { self.migrateToV2() }
+    }
+    
+    /// Migrates the old v1 database to v2
+    private func migrateToV2() {
+        if (Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? true) {
+            Log.info("Top Shelf called, skipping migration")
+            return
+        }
+        else if self.cloudStore.longLong(forKey: Self.dbVersionKey) >= Self.dbVersion {
+            Log.info("No migration required: \(self.defaults.integer(forKey: Self.dbVersionKey))")
+            return
+        }
+        
+        self.cloudStore.set(
+            self.defaults.string(forKey: StorageKeys.defaultStreamingUserID.rawValue),
+            forKey: StorageKeys.defaultStreamingUserID.rawValue
+        )
+        Log.critical("Migrating db to v2...")
+        self.cloudStore.set(self.defaults.stringArray(forKey: StorageKeys.userIDs.rawValue), forKey: StorageKeys.userIDs.rawValue)
+        self.cloudStore.set(self.defaults.integer(forKey: StorageKeys.maxBitrate.rawValue), forKey: StorageKeys.maxBitrate.rawValue)
+        
+        for key in self.defaults.dictionaryRepresentation().keys where key.hasPrefix("user") {
+            self.cloudStore.set(self.defaults.object(forKey: key), forKey: key)
+        }
+        self.defaults.set(Self.dbVersion, forKey: Self.dbVersionKey)
+        self.cloudStore.set(Self.dbVersion, forKey: Self.dbVersionKey)
+        self.cloudStore.synchronize()
+        self.defaults.synchronize()
+        Log.critical("Migration to db v2 is complete")
     }
     
     public func getKeyIsLocal(_ key: StorageKeys) -> Bool {
