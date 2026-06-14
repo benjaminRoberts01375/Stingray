@@ -608,11 +608,16 @@ public final class TVSeason: TVSeasonProtocol {
                 
                 let seasonTitle = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season"
                 if seasonTitle == "Specials" { // Episode is a special
-                    let newSeason = TVSeason(
-                        title: "Special",
-                        episodes: [episode]
-                    )
-                    tempSeasons.append(newSeason)
+                    if tempSeasons.last?.title == "Special" { // Coalesce consecutive specials into one Specials season
+                        tempSeasons.last?.episodes.append(episode)
+                    }
+                    else {
+                        let newSeason = TVSeason(
+                            title: "Special",
+                            episodes: [episode]
+                        )
+                        tempSeasons.append(newSeason)
+                    }
                 }
                 else if seasonID == lastSeasonID && tempSeasons.last?.title == "Special" { // Season was split by specials
                     lastSeasonID = seasonID
