@@ -174,10 +174,14 @@ public struct MediaDetailLoader: View {
         case .found(let foundMedia):
             switch foundMedia.mediaType {
             case .tv(let seasons): DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
-            case .movies(let movies): DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
+            case .movies(let movies): MovieDetailView(
+                media: foundMedia,
+                streamingService: streamingService,
+                mediaSources: movies,
+                navigation: $navigation
+            )
             default: DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
             }
-            DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
         case .temporarilyNotFound:
             ProgressView("Loading libraries...")
         case .notFound:
