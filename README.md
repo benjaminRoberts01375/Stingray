@@ -66,6 +66,7 @@ Configure Stingray to look and feel how you want it.
   - Have ErrorView be a component
   - Move all views into a Views folder
   - Move DetailMediaView into a dedicated Media Detail folder
+  - Move the player files into a dedicated "player" folder
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
