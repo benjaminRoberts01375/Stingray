@@ -51,7 +51,7 @@ fileprivate struct PlayerDescriptionView: View {
     
     var body: some View {
         VStack {
-            MediaMetadataView(media: media)
+            MediaMetadata(media: media)
                 .padding(.bottom)
                 .shadow(color: .black.opacity(1), radius: 10)
             

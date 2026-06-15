@@ -83,14 +83,14 @@ public struct MovieDetailView: View {
                 
                 // Metadata
                 HStack(alignment: .top) {
-                    Overview(media: self.media)
+                    MediaOverview(media: self.media)
                         .focused($focus, equals: .overview)
-                    Metadata(media: self.media)
+                    MediaMetadata(media: self.media)
                         .focused($focus, equals: .metadata)
                 }
                 
                 // Special features
-                SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
+                SpecialFeaturesView(navigation: self.$navigation, streamingService: self.streamingService, media: self.media)
                 
                 // People
                 VStack(alignment: .leading, spacing: 3) {
@@ -99,8 +99,8 @@ public struct MovieDetailView: View {
                         .foregroundStyle(self.theme.currentTheme.header1)
                         .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
+                        .focused($focus, equals: .actor)
                 }
-                
             }
             .scrollClipDisabled()
             .padding(32)
@@ -115,7 +115,7 @@ public struct MovieDetailView: View {
         }
         .onChange(of: focus) { _, newValue in
             switch newValue {
-            case .overview, .metadata:
+            case .overview, .metadata, .actor:
                 self.shouldBackgroundBlur = true
                 self.shouldRevealBottomShelf = true
             case .play:
@@ -129,89 +129,6 @@ public struct MovieDetailView: View {
             PlayerView(vm: vm, navigation: $navigation)
         }
         .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
-    }
-}
-
-// MARK: Background
-fileprivate struct MediaBackgroundView: View {
-    /// Preview for the background image
-    @State private var blurImage: UIImage?
-    /// Controls the loaded background opacity
-    @State private var fadeBackgroundIn: Double
-    /// Blurs the background
-    @Binding public var shouldBlurBackground: Bool
-
-    /// Media to pull background info from
-    let media: any MediaProtocol
-    /// URL to get the image from
-    let backgroundImageURL: URL?
-
-    /// Sets up an image that first shows a blurry background, then the loaded image
-    /// - Parameters:
-    ///   - media: Media to load blur from
-    ///   - backgroundImageURL: Image to load
-    ///   - shouldBlurBackground: Track if the loaded image should be blurred
-    init(media: any MediaProtocol, backgroundImageURL: URL?, shouldBlurBackground: Binding<Bool>) {
-        self.fadeBackgroundIn = 0
-        self._shouldBlurBackground = shouldBlurBackground
-        self.media = media
-        self.backgroundImageURL = backgroundImageURL
-    }
-
-    var body: some View {
-        ZStack {
-            AsyncBlurImage(
-                blurHash: self.media.imageBlurHashes?.backdrop,
-                blurSize: CGSize(width: 32, height: 18),
-                imageURL: backgroundImageURL
-            )
-            Color.clear // Blurry background
-                .background(.thinMaterial.opacity(self.shouldBlurBackground ? 1 : 0))
-                .animation(.smooth(duration: 0.5), value: self.shouldBlurBackground)
-        }
-        .allowsHitTesting(false)
-    }
-}
-
-// MARK: Movie logo and basics
-fileprivate struct MediaLogoView: View {
-    @Environment(SettingsModel.self) private var settings
-    @Environment(ThemeModel.self) private var theme
-    
-    @State private var logoOpacity: Double = 0
-    
-    let media: any MediaProtocol
-    let logoImageURL: URL?
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            if logoImageURL != nil && !self.settings.replaceLogosWithText {
-                AsyncImage(url: logoImageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .opacity(logoOpacity)
-                        .animation(.easeOut(duration: 0.5), value: logoOpacity)
-                        .onAppear { logoOpacity = 1 }
-                } placeholder: {
-                    EmptyView()
-                }
-                .frame(width: 400)
-            }
-            else {
-                Text(self.media.title)
-                    .font(.title)
-                    .bold()
-                    .foregroundStyle(self.theme.currentTheme.header1)
-            }
-            if !media.tagline.isEmpty {
-                Text(media.tagline)
-                    .italic()
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 800, alignment: .center)
-            }
-            MediaMetadataView(media: media)
-        }
     }
 }
 
@@ -337,128 +254,10 @@ fileprivate struct PlayNavigationView: View {
     }
 }
 
-/// Displays a synopsis of the provided media
-fileprivate struct Overview: View {
-    @Environment(ThemeModel.self) private var theme
-    @FocusState private var isFocused: Bool
-    
-    /// What to read the synopsis from
-    public let media: any MediaProtocol
-    
-    var body: some View {
-        Button {} label: {
-            VStack(alignment: .leading) {
-                if !media.description.isEmpty {
-                    Text("Overview")
-                        .font(.headline.bold())
-                        .lineLimit(2)
-                        .foregroundStyle(
-                            self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                        )
-                    Text(media.description)
-                        .multilineTextAlignment(.leading)
-                }
-                else {
-                    Text("No description available")
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .focused($isFocused, equals: true)
-    }
-}
-
-/// Displays data about the provided media
-fileprivate struct Metadata: View {
-    @Environment(ThemeModel.self) private var theme
-    @FocusState private var isFocused: Bool
-    
-    /// What to read metadata for
-    let media: any MediaProtocol
-    
-    var body: some View {
-        Button {} label: {
-            VStack(alignment: .leading, spacing: 16) {
-                if !media.genres.isEmpty || media.releaseDate != nil || media.maturity != nil {
-                    if !media.genres.isEmpty {
-                        VStack(alignment: .leading) {
-                            Text("Genres")
-                                .font(.headline.bold())
-                                .lineLimit(2)
-                                .foregroundStyle(
-                                    self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                )
-                            Text(media.genres.joined(separator: ", "))
-                                .multilineTextAlignment(.leading)
-                        }
-                    }
-                    if let releaseDate = media.releaseDate {
-                        VStack(alignment: .leading) {
-                            Text("Released")
-                                .font(.headline.bold())
-                                .lineLimit(2)
-                                .foregroundStyle(
-                                    self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                )
-                            Text(String(Calendar.current.component(.year, from: releaseDate)))
-                                .lineLimit(1)
-                        }
-                    }
-                    if let maturity = media.maturity {
-                        Text("Maturity")
-                            .font(.headline.bold())
-                            .lineLimit(1)
-                            .foregroundStyle(
-                                self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                            )
-                        Text(maturity)
-                            .lineLimit(1)
-                    }
-                }
-                else {
-                    Text("No metadata available")
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .focused($isFocused, equals: true)
-    }
-}
-
-// MARK: Actor Photo
-fileprivate struct ActorImage: View {
-    let media: any MediaProtocol
-    let streamingService: any StreamingServiceProtocol
-    let person: any MediaPersonProtocol
-    @State private var imageOpacity: Double = 0
-    
-    var body: some View {
-        ZStack {
-            if let blurHash = media.imageBlurHashes?.backdrop,
-               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 30, height: 45)) {
-                Image(uiImage: blurImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-            }
-            if let url = streamingService.getImageURL(imageType: .primary, mediaID: person.id, width: 0) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    EmptyView()
-                }
-            }
-        }
-    }
-}
-
 /// Types of buttons available on the `MovieDetailView`
 fileprivate enum ButtonType: Hashable {
     case play
     case overview
     case metadata
+    case actor
 }

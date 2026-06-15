@@ -131,17 +131,20 @@ public struct TVShowDetailView: View {
                     }
                 }
                 
-                
                 // Metadata
                 HStack(alignment: .top) {
-                    Overview(media: self.media)
+                    MediaOverview(media: self.media)
                         .focused($focus, equals: .overview)
-                    Metadata(media: self.media)
+                    MediaMetadata(media: self.media)
                         .focused($focus, equals: .metadata)
                 }
                 
                 // Special features
-                SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
+                SpecialFeaturesView(
+                    navigation: self.$navigation,
+                    streamingService: self.streamingService,
+                    media: self.media
+                )
                 
                 // People
                 VStack(alignment: .leading, spacing: 3) {
@@ -150,8 +153,8 @@ public struct TVShowDetailView: View {
                         .foregroundStyle(self.theme.currentTheme.header1)
                         .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
+                        .focused($focus, equals: .actor)
                 }
-                
             }
             .scrollClipDisabled()
             .padding(32)
@@ -166,7 +169,7 @@ public struct TVShowDetailView: View {
         }
         .onChange(of: focus) { _, newValue in
             switch newValue {
-            case .media, .season, .overview, .metadata:
+            case .media, .season, .overview, .metadata, .actor:
                 self.shouldBackgroundBlur = true
                 self.shouldRevealBottomShelf = true
             case .play:
@@ -180,108 +183,6 @@ public struct TVShowDetailView: View {
             PlayerView(vm: vm, navigation: $navigation)
         }
         .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
-    }
-}
-
-// MARK: Background
-fileprivate struct MediaBackgroundView: View {
-    /// Preview for the background image
-    @State private var blurImage: UIImage?
-    /// Controls the loaded background opacity
-    @State private var fadeBackgroundIn: Double
-    /// Blurs the background
-    @Binding public var shouldBlurBackground: Bool
-
-    /// Media to pull background info from
-    let media: any MediaProtocol
-    /// URL to get the image from
-    let backgroundImageURL: URL?
-
-    /// Sets up an image that first shows a blurry background, then the loaded image
-    /// - Parameters:
-    ///   - media: Media to load blur from
-    ///   - backgroundImageURL: Image to load
-    ///   - shouldBlurBackground: Track if the loaded image should be blurred
-    init(media: any MediaProtocol, backgroundImageURL: URL?, shouldBlurBackground: Binding<Bool>) {
-        self.fadeBackgroundIn = 0
-        self._shouldBlurBackground = shouldBlurBackground
-        self.media = media
-        self.backgroundImageURL = backgroundImageURL
-    }
-
-    var body: some View {
-        ZStack {
-            AsyncBlurImage(
-                blurHash: self.media.imageBlurHashes?.backdrop,
-                blurSize: CGSize(width: 32, height: 18),
-                imageURL: backgroundImageURL
-            )
-            Color.clear // Blurry background
-                .background(.thinMaterial.opacity(self.shouldBlurBackground ? 1 : 0))
-                .animation(.smooth(duration: 0.5), value: self.shouldBlurBackground)
-        }
-        .allowsHitTesting(false)
-    }
-}
-
-// MARK: Movie logo and basics
-fileprivate struct MediaLogoView: View {
-    @Environment(SettingsModel.self) private var settings
-    @Environment(ThemeModel.self) private var theme
-    
-    @State private var logoOpacity: Double = 0
-    
-    let media: any MediaProtocol
-    let logoImageURL: URL?
-    
-    var body: some View {
-        VStack(spacing: 15) {
-            if logoImageURL != nil && !self.settings.replaceLogosWithText {
-                AsyncImage(url: logoImageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .opacity(logoOpacity)
-                        .animation(.easeOut(duration: 0.5), value: logoOpacity)
-                        .onAppear { logoOpacity = 1 }
-                } placeholder: {
-                    EmptyView()
-                }
-                .frame(width: 400)
-            }
-            else {
-                Text(self.media.title)
-                    .font(.title)
-                    .bold()
-                    .foregroundStyle(self.theme.currentTheme.header1)
-            }
-            if !media.tagline.isEmpty {
-                Text(media.tagline)
-                    .italic()
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 800, alignment: .center)
-            }
-            MediaMetadataView(media: media)
-        }
-    }
-}
-
-// MARK: Movie metadata
-public struct MediaMetadataView: View {
-    /// Media to show metadata for
-    public let media: any MediaProtocol
-    
-    public var body: some View {
-        if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
-            let items: [String] = [
-                media.maturity,
-                media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                media.duration?.roundedTime()
-            ].compactMap { $0 }
-            
-            Text(items.joined(separator: " • "))
-        }
     }
 }
 
@@ -463,7 +364,7 @@ fileprivate struct SeasonSelectorView: View {
                     return !season.episodes.contains { $0.id == mediaID }
                 case nil:
                     return season.id != lastFocusedSeasonID
-                case .season:
+                case .season, .actor:
                     return false
                 }
             }())
@@ -632,7 +533,7 @@ fileprivate struct EpisodeNavigationView: View {
         } label: {
             VStack(spacing: 0) {
                 if !self.settings.loadThumbnailArt { Spacer(minLength: 0) }
-                ArtView(media: self.episode, streamingService: streamingService, title: self.episode.title)
+                MediaArtView(media: self.episode, streamingService: streamingService, title: self.episode.title)
                 if self.settings.loadThumbnailArt {
                     Spacer(minLength: 0)
                     Text(episode.title)
@@ -649,210 +550,6 @@ fileprivate struct EpisodeNavigationView: View {
     }
 }
 
-/// Displays a synopsis of the provided media
-fileprivate struct Overview: View {
-    @Environment(ThemeModel.self) private var theme
-    @FocusState private var isFocused: Bool
-    
-    /// What to read the synopsis from
-    public let media: any MediaProtocol
-    
-    var body: some View {
-        Button {} label: {
-            VStack(alignment: .leading) {
-                if !media.description.isEmpty {
-                    Text("Overview")
-                        .font(.headline.bold())
-                        .lineLimit(2)
-                        .foregroundStyle(
-                            self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                        )
-                    Text(media.description)
-                        .multilineTextAlignment(.leading)
-                }
-                else {
-                    Text("No description available")
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .focused($isFocused, equals: true)
-    }
-}
-
-/// Displays data about the provided media
-fileprivate struct Metadata: View {
-    @Environment(ThemeModel.self) private var theme
-    @FocusState private var isFocused: Bool
-    
-    /// What to read metadata for
-    let media: any MediaProtocol
-    
-    var body: some View {
-        Button {} label: {
-            VStack(alignment: .leading, spacing: 16) {
-                if !media.genres.isEmpty || media.releaseDate != nil || media.maturity != nil {
-                    if !media.genres.isEmpty {
-                        VStack(alignment: .leading) {
-                            Text("Genres")
-                                .font(.headline.bold())
-                                .lineLimit(2)
-                                .foregroundStyle(
-                                    self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                )
-                            Text(media.genres.joined(separator: ", "))
-                                .multilineTextAlignment(.leading)
-                        }
-                    }
-                    if let releaseDate = media.releaseDate {
-                        VStack(alignment: .leading) {
-                            Text("Released")
-                                .font(.headline.bold())
-                                .lineLimit(2)
-                                .foregroundStyle(
-                                    self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                )
-                            Text(String(Calendar.current.component(.year, from: releaseDate)))
-                                .lineLimit(1)
-                        }
-                    }
-                    if let maturity = media.maturity {
-                        Text("Maturity")
-                            .font(.headline.bold())
-                            .lineLimit(1)
-                            .foregroundStyle(
-                                self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                            )
-                        Text(maturity)
-                            .lineLimit(1)
-                    }
-                }
-                else {
-                    Text("No metadata available")
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .focused($isFocused, equals: true)
-    }
-}
-
-// MARK: Actor Photo
-fileprivate struct ActorImage: View {
-    let media: any MediaProtocol
-    let streamingService: any StreamingServiceProtocol
-    let person: any MediaPersonProtocol
-    @State private var imageOpacity: Double = 0
-    
-    var body: some View {
-        ZStack {
-            if let blurHash = media.imageBlurHashes?.backdrop,
-               let blurImage = UIImage(blurHash: blurHash, size: .init(width: 30, height: 45)) {
-                Image(uiImage: blurImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-            }
-            if let url = streamingService.getImageURL(imageType: .primary, mediaID: person.id, width: 0) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    EmptyView()
-                }
-            }
-        }
-    }
-}
-
-// MARK: Episode Art
-fileprivate struct ArtView: View {
-    let media: any Displayable
-    let streamingService: any StreamingServiceProtocol
-    let title: String
-    
-    @Environment(ThemeModel.self) private var theme
-    @Environment(SettingsModel.self) private var settings
-    @State private var imageOpacity: Double = 0
-    
-    var body: some View {
-        if self.settings.loadThumbnailArt {
-            ZStack {
-                if let blurHash = media.imageBlurHashes?.primary,
-                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
-                    Image(uiImage: blurImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .clipped()
-                        .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
-                }
-                if let url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800) {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .animation(.easeOut(duration: 0.5), value: imageOpacity)
-                            .onAppear { imageOpacity = 1 }
-                    } placeholder: {
-                        EmptyView()
-                    }
-                }
-            }
-        }
-        else {
-            Text(self.title)
-                .font(.system(size: 35))
-                .bold()
-                .multilineTextAlignment(.center)
-                .foregroundStyle(self.theme.currentTheme.header2)
-                .padding(.horizontal)
-        }
-    }
-}
-
-// MARK: Actor browser
-public struct PeopleBrowserView: View {
-    /// Media to pull people from
-    public let media: any MediaProtocol
-    public let streamingService: any StreamingServiceProtocol
-    
-    @Environment(ThemeModel.self) private var theme
-    
-    @FocusState private var focusedActor: String?
-    
-    public var body: some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(Array(media.people.enumerated()), id: \.offset) { _, person in
-                    Button { /* Temp Workaround */ } label: {
-                        VStack {
-                            ActorImage(media: media, streamingService: streamingService, person: person)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .frame(width: 300)
-                            Text(person.name)
-                                .multilineTextAlignment(.center)
-                                .font(.headline)
-                                .foregroundStyle(
-                                    self.focusedActor == person.id ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                )
-                            Text(person.role)
-                                .multilineTextAlignment(.center)
-                                .font(.caption)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .padding()
-                    .focused(self.$focusedActor, equals: person.id)
-                }
-            }
-        }
-        .scrollClipDisabled()
-    }
-}
-
 /// Types of buttons available on the `DetailMediaView`
 fileprivate enum ButtonType: Hashable {
     case play
@@ -860,103 +557,5 @@ fileprivate enum ButtonType: Hashable {
     case media(String)
     case overview
     case metadata
-}
-
-public struct SpecialFeaturesView: View {
-    public let streamingService: any StreamingServiceProtocol
-    public let media: any MediaProtocol
-    
-    @Binding public var navigation: NavigationPath
-    
-    public var body: some View {
-        VStack {
-            switch self.media.specialFeatures {
-            case .unloaded:
-                Color.clear
-                    .task {
-                        Log.info("Attempting to get special features for \(media.title)...")
-                        do { try await self.streamingService.getSpecialFeatures(for: self.media) }
-                        catch {}
-                    }
-            case .loading:
-                ProgressView("Loading special features...")
-            case .loaded(let rows):
-                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                    SpecialFeaturesRow(streamingService: streamingService, rowData: row, media: media, navigation: $navigation)
-                        .focusSection()
-                }
-            }
-        }
-    }
-}
-
-public struct SpecialFeaturesRow: View {
-    public let streamingService: any StreamingServiceProtocol
-    public let rowData: [any SpecialFeatureProtocol]
-    public let title: String
-    public let media: any MediaProtocol
-    
-    @Binding public var navigation: NavigationPath
-    
-    @Environment(SettingsModel.self) private var settings: SettingsModel
-    @Environment(ThemeModel.self) private var theme
-    
-    public init(
-        streamingService: any StreamingServiceProtocol,
-        rowData: [any SpecialFeatureProtocol],
-        media: any MediaProtocol,
-        navigation: Binding<NavigationPath>
-    ) {
-        self.streamingService = streamingService
-        self.rowData = rowData
-        self.media = media
-        self.title = rowData[0].featureType
-        self._navigation = navigation
-    }
-    
-    public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(self.title)
-                .font(.title3.bold())
-                .foregroundStyle(self.theme.currentTheme.header1)
-                .padding(.top)
-            ScrollView(.horizontal) {
-                LazyHStack {
-                    ForEach(rowData, id: \.id) { specialFeature in
-                        if let mediaSource = specialFeature.mediaSources.first {
-                            Button {
-                                navigation.append(
-                                    PlayerViewModel(
-                                        media: media,
-                                        mediaSource: mediaSource,
-                                        startTime: .zero,
-                                        streamingService: streamingService,
-                                        seasons: nil,
-                                        settingsModel: self.settings
-                                    )
-                                )
-                            } label: {
-                                VStack(spacing: 0) {
-                                    ArtView(media: specialFeature, streamingService: self.streamingService, title: mediaSource.name)
-                                        .frame(maxHeight: 250)
-                                    if self.settings.loadThumbnailArt {
-                                        Spacer(minLength: 0)
-                                        Text(mediaSource.name)
-                                            .lineLimit(2)
-                                            .multilineTextAlignment(.center)
-                                            .foregroundStyle(Color.white)
-                                            .padding(.horizontal, 10)
-                                        Spacer(minLength: 0)
-                                    }
-                                }
-                                .frame(width: 400, height: 325)
-                            }
-                            .buttonStyle(.card)
-                        }
-                    }
-                }
-            }
-            .scrollClipDisabled()
-        }
-    }
+    case actor
 }
