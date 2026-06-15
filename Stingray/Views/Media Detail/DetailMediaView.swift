@@ -112,26 +112,8 @@ public struct DetailMediaView: View {
                 // Metadata
                 // Overview
                 HStack(alignment: .top) {
-                    Button {} label: {
-                        VStack(alignment: .leading) {
-                            if !media.description.isEmpty {
-                                Text("Overview")
-                                    .font(.headline.bold())
-                                    .lineLimit(2)
-                                    .foregroundStyle(
-                                        self.focus == .overview ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                    )
-                                Text(media.description)
-                                    .multilineTextAlignment(.leading)
-                            }
-                            else {
-                                Text("No description available")
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    }
-                    .focused($focus, equals: .overview)
+                    Overview(media: self.media)
+                        .focused($focus, equals: .overview)
                     // Ratings
                     Button {} label: {
                         VStack(alignment: .leading, spacing: 16) {
@@ -727,6 +709,38 @@ fileprivate struct EpisodeNavigationView: View {
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
+    }
+}
+
+/// Displays a synopsis of the provided media
+fileprivate struct Overview: View {
+    @Environment(ThemeModel.self) private var theme
+    @FocusState private var isFocused: Bool
+    
+    /// What to read the synopsis from
+    public let media: any MediaProtocol
+    
+    var body: some View {
+        Button {} label: {
+            VStack(alignment: .leading) {
+                if !media.description.isEmpty {
+                    Text("Overview")
+                        .font(.headline.bold())
+                        .lineLimit(2)
+                        .foregroundStyle(
+                            self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
+                        )
+                    Text(media.description)
+                        .multilineTextAlignment(.leading)
+                }
+                else {
+                    Text("No description available")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .focused($isFocused, equals: true)
     }
 }
 
