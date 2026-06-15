@@ -100,6 +100,7 @@ public struct DetailMediaView: View {
                             }
                             .scrollClipDisabled()
                             .padding(.horizontal)
+                            .padding(.bottom)
                             .offset(y: shouldRevealBottomShelf ? 0 : -100)
                         }
                     }
@@ -116,12 +117,6 @@ public struct DetailMediaView: View {
                     Metadata(media: self.media)
                         .focused($focus, equals: .metadata)
                 }
-                .padding(.vertical, {
-                    switch self.media.mediaType {
-                    case .tv: 64
-                    default: 0
-                    }
-                }())
                 
                 // Special features
                 SpecialFeaturesView(streamingService: self.streamingService, media: self.media, navigation: self.$navigation)
@@ -139,26 +134,6 @@ public struct DetailMediaView: View {
             .scrollClipDisabled()
             .padding(32)
             .offset(y: shouldRevealBottomShelf ? 0 : 500)
-            .background(alignment: .bottom) { // Subtle black shadow
-                if self.settings.loadMediaBackgroundArt {
-                    let titleShadowSize = 800.0
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .black, location: 0),
-                                    .init(color: .black.opacity(0), location: 1)
-                                ]),
-                                center: UnitPoint(x: 0.5, y: 0.5),
-                                startRadius: 0,
-                                endRadius: titleShadowSize
-                            )
-                            .opacity(0.9)
-                        )
-                        .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
-                        .offset(y: titleShadowSize)
-                }
-            }
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
