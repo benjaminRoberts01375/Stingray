@@ -46,6 +46,26 @@ public struct DetailMediaView: View {
                         media: media,
                         logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
                     )
+                    .background(alignment: .bottom) { // Subtle black shadow
+                        if self.settings.loadMediaBackgroundArt {
+                            let titleShadowSize = 800.0
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        gradient: Gradient(stops: [
+                                            .init(color: .black, location: 0),
+                                            .init(color: .black.opacity(0), location: 1)
+                                        ]),
+                                        center: UnitPoint(x: 0.5, y: 0.5),
+                                        startRadius: 0,
+                                        endRadius: titleShadowSize
+                                    )
+                                    .opacity(0.9)
+                                )
+                                .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
+                                .offset(y: titleShadowSize)
+                        }
+                    }
                 }
                 .padding(.top)
                 .frame(height: 350)
