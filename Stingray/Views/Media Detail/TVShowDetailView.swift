@@ -10,11 +10,13 @@ import BlurHashKit
 import SwiftUI
 
 // MARK: Main view
-public struct DetailMediaView: View {
+public struct TVShowDetailView: View {
     /// Media that contains content to play
     public let media: any MediaProtocol
     /// Streaming service the user is using
     public let streamingService: any StreamingServiceProtocol
+    
+    public let seasons: [any TVSeasonProtocol]
     
     @Binding public var navigation: NavigationPath
     
@@ -71,7 +73,13 @@ public struct DetailMediaView: View {
                 .frame(height: 350)
                 
                 // Play buttons
-                PlayNavigationView(focus: $focus, navigation: $navigation, media: media, streamingService: streamingService)
+                PlayNavigationView(
+                    focus: $focus,
+                    navigation: $navigation,
+                    media: media,
+                    seasons: self.seasons,
+                    streamingService: streamingService
+                )
                 .disabled({
                     switch focus {
                     case .play, .overview, .season, .metadata, nil:
@@ -82,53 +90,47 @@ public struct DetailMediaView: View {
                 }())
                 
                 // TV Episodes
-                switch media.mediaType {
-                case .tv(let seasons):
-                    if let seasons, seasons.flatMap(\.episodes).count > 1 {
-                        // Season selector
-                        ScrollViewReader { svrProxy in
-                            ScrollView(.horizontal) {
-                                HStack {
-                                    SeasonSelectorView(
-                                        seasons: seasons,
-                                        streamingService: streamingService,
-                                        focus: $focus,
-                                        scrollProxy: svrProxy
-                                    )
-                                }
+                if seasons.flatMap(\.episodes).count > 1 {
+                    // Season selector
+                    ScrollViewReader { svrProxy in
+                        ScrollView(.horizontal) {
+                            HStack {
+                                SeasonSelectorView(
+                                    seasons: seasons,
+                                    streamingService: streamingService,
+                                    focus: $focus,
+                                    scrollProxy: svrProxy
+                                )
                             }
-                            .scrollClipDisabled()
-                            .padding(32)
-                            .opacity(shouldRevealBottomShelf ? 1 : 0)
-                            
-                            // Episode selector
-                            ScrollView(.horizontal) {
-                                LazyHStack {
-                                    EpisodeSelectorView(
-                                        media: media,
-                                        seasons: seasons,
-                                        streamingService: streamingService,
-                                        focus: $focus,
-                                        navigation: $navigation
-                                    )
-                                }
-                            }
-                            .task {
-                                if let nextEpisodeID = seasons.nextUp()?.id {
-                                    svrProxy.scrollTo(nextEpisodeID, anchor: .center)
-                                }
-                            }
-                            .scrollClipDisabled()
-                            .padding(.horizontal)
-                            .padding(.bottom)
-                            .offset(y: shouldRevealBottomShelf ? 0 : -100)
                         }
+                        .scrollClipDisabled()
+                        .padding(32)
+                        .opacity(shouldRevealBottomShelf ? 1 : 0)
+                        
+                        // Episode selector
+                        ScrollView(.horizontal) {
+                            LazyHStack {
+                                EpisodeSelectorView(
+                                    media: media,
+                                    seasons: seasons,
+                                    streamingService: streamingService,
+                                    focus: $focus,
+                                    navigation: $navigation
+                                )
+                            }
+                        }
+                        .task {
+                            if let nextEpisodeID = seasons.nextUp()?.id {
+                                svrProxy.scrollTo(nextEpisodeID, anchor: .center)
+                            }
+                        }
+                        .scrollClipDisabled()
+                        .padding(.horizontal)
+                        .padding(.bottom)
+                        .offset(y: shouldRevealBottomShelf ? 0 : -100)
                     }
-                    
-                default:
-                    EmptyView()
-                        .focusable(false)
                 }
+                
                 
                 // Metadata
                 HStack(alignment: .top) {
@@ -289,7 +291,7 @@ fileprivate struct PlayNavigationView: View {
     private let streamingService: any StreamingServiceProtocol
     private var title: String
     private let mediaSources: [any MediaSourceProtocol]
-    private let seasons: [any TVSeasonProtocol]?
+    private let seasons: [any TVSeasonProtocol]
     
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
@@ -300,36 +302,22 @@ fileprivate struct PlayNavigationView: View {
         focus: FocusState<ButtonType?>.Binding,
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
+        seasons: [any TVSeasonProtocol],
         streamingService: any StreamingServiceProtocol
     ) {
         self._focus = focus
         self._navigation = navigation
         self.media = media
         self.streamingService = streamingService
-        switch media.mediaType {
-        case .movies(let sources):
-            self.title = media.title
-            self.mediaSources = sources
-            self.seasons = nil
-            
-        case .tv(let seasons):
-            guard let seasons = seasons,
-                  let nextEpisode = seasons.nextUp()
-            else {
-                self.title = "Error"
-                self.mediaSources = []
-                self.seasons = nil
-                break
-            }
-            self.title = nextEpisode.title
-            self.mediaSources = nextEpisode.mediaSources
-            self.seasons = seasons
-            
-        default: // Collections
-            self.title = "Unsupported"
+        self.seasons = seasons
+        guard let nextEpisode = seasons.nextUp()
+        else {
+            self.title = "Error"
             self.mediaSources = []
-            self.seasons = nil
+            return
         }
+        self.title = nextEpisode.title
+        self.mediaSources = nextEpisode.mediaSources
     }
     
     var body: some View {

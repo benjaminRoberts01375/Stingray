@@ -173,14 +173,24 @@ public struct MediaDetailLoader: View {
         switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
         case .found(let foundMedia):
             switch foundMedia.mediaType {
-            case .tv(let seasons): DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
+            case .tv(let seasons): TVShowDetailView(
+                media: foundMedia,
+                streamingService: streamingService,
+                seasons: seasons ?? [],
+                navigation: $navigation
+            )
             case .movies(let movies): MovieDetailView(
                 media: foundMedia,
                 streamingService: streamingService,
                 mediaSources: movies,
                 navigation: $navigation
             )
-            default: DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
+            default:
+                VStack {
+                    Text("Media type is incompatible with Stingray")
+                    Text("You may need to regenerate this library in Jellyfin if it is old or corrupted.")
+                        .foregroundStyle(.tertiary)
+                }
             }
         case .temporarilyNotFound:
             ProgressView("Loading libraries...")

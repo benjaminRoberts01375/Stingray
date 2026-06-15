@@ -79,9 +79,9 @@ public struct DashboardView: View {
                 navigation: $navigationPath
             )
         }
-        .navigationDestination(for: AnyMedia.self) { anyMedia in
-            DetailMediaView(media: anyMedia.media, streamingService: streamingService, navigation: $navigationPath)
-        }
+//        .navigationDestination(for: AnyMedia.self) { anyMedia in
+//            DetailMediaView(media: anyMedia.media, streamingService: streamingService, navigation: $navigationPath)
+//        }
         .onChange(of: deepLinkRequest) { _, newValue in
             guard let request = newValue else { return }
             navigationPath.append(request) // Navigate to requested media
