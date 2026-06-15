@@ -110,57 +110,11 @@ public struct DetailMediaView: View {
                 }
                 
                 // Metadata
-                // Overview
                 HStack(alignment: .top) {
                     Overview(media: self.media)
                         .focused($focus, equals: .overview)
-                    // Ratings
-                    Button {} label: {
-                        VStack(alignment: .leading, spacing: 16) {
-                            if !media.genres.isEmpty || media.releaseDate != nil || media.maturity != nil {
-                                if !media.genres.isEmpty {
-                                    VStack(alignment: .leading) {
-                                        Text("Genres")
-                                            .font(.headline.bold())
-                                            .lineLimit(2)
-                                            .foregroundStyle(
-                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                            )
-                                        Text(media.genres.joined(separator: ", "))
-                                            .multilineTextAlignment(.leading)
-                                    }
-                                }
-                                if let releaseDate = media.releaseDate {
-                                    VStack(alignment: .leading) {
-                                        Text("Released")
-                                            .font(.headline.bold())
-                                            .lineLimit(2)
-                                            .foregroundStyle(
-                                                self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                            )
-                                        Text(String(Calendar.current.component(.year, from: releaseDate)))
-                                            .lineLimit(1)
-                                    }
-                                }
-                                if let maturity = media.maturity {
-                                    Text("Maturity")
-                                        .font(.headline.bold())
-                                        .lineLimit(1)
-                                        .foregroundStyle(
-                                            self.focus == .metadata ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
-                                        )
-                                    Text(maturity)
-                                        .lineLimit(1)
-                                }
-                            }
-                            else {
-                                Text("No metadata available")
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    }
-                    .focused($focus, equals: .metadata)
+                    Metadata(media: self.media)
+                        .focused($focus, equals: .metadata)
                 }
                 .padding(.vertical, {
                     switch self.media.mediaType {
@@ -735,6 +689,64 @@ fileprivate struct Overview: View {
                 }
                 else {
                     Text("No description available")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .focused($isFocused, equals: true)
+    }
+}
+
+/// Displays data about the provided media
+fileprivate struct Metadata: View {
+    @Environment(ThemeModel.self) private var theme
+    @FocusState private var isFocused: Bool
+    
+    /// What to read metadata for
+    let media: any MediaProtocol
+    
+    var body: some View {
+        Button {} label: {
+            VStack(alignment: .leading, spacing: 16) {
+                if !media.genres.isEmpty || media.releaseDate != nil || media.maturity != nil {
+                    if !media.genres.isEmpty {
+                        VStack(alignment: .leading) {
+                            Text("Genres")
+                                .font(.headline.bold())
+                                .lineLimit(2)
+                                .foregroundStyle(
+                                    self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
+                                )
+                            Text(media.genres.joined(separator: ", "))
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                    if let releaseDate = media.releaseDate {
+                        VStack(alignment: .leading) {
+                            Text("Released")
+                                .font(.headline.bold())
+                                .lineLimit(2)
+                                .foregroundStyle(
+                                    self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
+                                )
+                            Text(String(Calendar.current.component(.year, from: releaseDate)))
+                                .lineLimit(1)
+                        }
+                    }
+                    if let maturity = media.maturity {
+                        Text("Maturity")
+                            .font(.headline.bold())
+                            .lineLimit(1)
+                            .foregroundStyle(
+                                self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
+                            )
+                        Text(maturity)
+                            .lineLimit(1)
+                    }
+                }
+                else {
+                    Text("No metadata available")
                         .foregroundStyle(.tertiary)
                 }
             }

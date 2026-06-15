@@ -67,6 +67,7 @@ Configure Stingray to look and feel how you want it.
   - Move all views into a Views folder
   - Move DetailMediaView into a dedicated Media Detail folder
   - Move the player files into a dedicated "player" folder
+  - Abstract metadata and overview to their own views
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
