@@ -63,6 +63,7 @@ Configure Stingray to look and feel how you want it.
 
 - Specify do not sleep while playing video
 - Only store first blur hash for each type
+- Rename "Other-Assets" to "Other Assets"
 
 ## TODO List
 
