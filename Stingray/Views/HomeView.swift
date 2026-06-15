@@ -172,6 +172,11 @@ public struct MediaDetailLoader: View {
     public var body: some View {
         switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
         case .found(let foundMedia):
+            switch foundMedia.mediaType {
+            case .tv(let seasons): DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
+            case .movies(let movies): DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
+            default: DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
+            }
             DetailMediaView(media: foundMedia, streamingService: streamingService, navigation: $navigation)
         case .temporarilyNotFound:
             ProgressView("Loading libraries...")
