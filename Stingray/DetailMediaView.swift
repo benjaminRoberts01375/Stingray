@@ -29,11 +29,13 @@ public struct DetailMediaView: View {
     public var body: some View {
         ZStack(alignment: .bottom) {
             // Background
-            MediaBackgroundView(
-                media: media,
-                backgroundImageURL: streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0),
-                shouldBlurBackground: $shouldBackgroundBlur
-            )
+            if self.settings.loadMediaBackgroundArt {
+                MediaBackgroundView(
+                    media: media,
+                    backgroundImageURL: streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0),
+                    shouldBlurBackground: $shouldBackgroundBlur
+                )
+            }
             
             // Content
             ScrollView {
@@ -250,43 +252,42 @@ public struct DetailMediaView: View {
 
 // MARK: Background
 fileprivate struct MediaBackgroundView: View {
+    /// Preview for the background image
+    @State private var blurImage: UIImage?
+    /// Controls the loaded background opacity
+    @State private var fadeBackgroundIn: Double
+    /// Blurs the background
+    @Binding public var shouldBlurBackground: Bool
+
+    /// Media to pull background info from
     let media: any MediaProtocol
+    /// URL to get the image from
     let backgroundImageURL: URL?
-    @State private var backgroundOpacity: Double = 0
-    @Binding var shouldBlurBackground: Bool
-    @Environment(SettingsModel.self) private var settings
-    
+
+    /// Sets up an image that first shows a blurry background, then the loaded image
+    /// - Parameters:
+    ///   - media: Media to load blur from
+    ///   - backgroundImageURL: Image to load
+    ///   - shouldBlurBackground: Track if the loaded image should be blurred
+    init(media: any MediaProtocol, backgroundImageURL: URL?, shouldBlurBackground: Binding<Bool>) {
+        self.fadeBackgroundIn = 0
+        self._shouldBlurBackground = shouldBlurBackground
+        self.media = media
+        self.backgroundImageURL = backgroundImageURL
+    }
+
     var body: some View {
-        if self.settings.loadMediaBackgroundArt {
-            GeometryReader { geo in
-                // Background image
-                if let blurHash = media.imageBlurHashes?.backdrop,
-                   let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
-                    Image(uiImage: blurImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-                        .clipped()
-                        .accessibilityHint("Placeholder image", isEnabled: false)
-                }
-                if backgroundImageURL != nil {
-                    AsyncImage(url: backgroundImageURL) { image in
-                        image
-                            .resizable()
-                            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-                            .opacity(backgroundOpacity)
-                            .animation(.spring(.smooth), value: backgroundOpacity)
-                            .onAppear { backgroundOpacity = 1 }
-                    } placeholder: {
-                        EmptyView()
-                    }
-                }
-                // Blurry background
-                Color.clear
-                    .background(.thinMaterial.opacity(shouldBlurBackground ? 1 : 0))
-                    .animation(.smooth(duration: 0.5), value: shouldBlurBackground)
-            }
+        ZStack {
+            AsyncBlurImage(
+                blurHash: self.media.imageBlurHashes?.backdrop,
+                blurSize: CGSize(width: 32, height: 18),
+                imageURL: backgroundImageURL
+            )
+            Color.clear // Blurry background
+                .background(.thinMaterial.opacity(self.shouldBlurBackground ? 1 : 0))
+                .animation(.smooth(duration: 0.5), value: self.shouldBlurBackground)
         }
+        .allowsHitTesting(false)
     }
 }
 
