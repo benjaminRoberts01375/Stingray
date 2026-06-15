@@ -54,7 +54,7 @@ public struct DetailMediaView: View {
                 PlayNavigationView(focus: $focus, navigation: $navigation, media: media, streamingService: streamingService)
                 .disabled({
                     switch focus {
-                    case .play, .overview, .season, nil:
+                    case .play, .overview, .season, .metadata, nil:
                         return false
                     default:
                         return true
