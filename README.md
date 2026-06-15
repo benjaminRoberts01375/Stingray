@@ -61,10 +61,8 @@ Configure Stingray to look and feel how you want it.
 
 ## TO-DONE List
 
-- Use the logout endpoint
-- Support User Switching
-  - The previous commented out option is now gone in favor of setting up future updates more effectively. This now means that user switching is used for all users all the time.
-- Store data in iCloud for device syncing.
+- Specify do not sleep while playing video
+- Only store first blur hash for each type
 
 ## TODO List
 

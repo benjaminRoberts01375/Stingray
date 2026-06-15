@@ -260,7 +260,7 @@ fileprivate struct MediaBackgroundView: View {
         if self.settings.loadMediaBackgroundArt {
             GeometryReader { geo in
                 // Background image
-                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+                if let blurHash = media.imageBlurHashes?.backdrop,
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 32, height: 18)) {
                     Image(uiImage: blurImage)
                         .resizable()
@@ -738,7 +738,7 @@ fileprivate struct ActorImage: View {
     
     var body: some View {
         ZStack {
-            if let blurHash = media.imageBlurHashes?.getBlurHash(for: .backdrop),
+            if let blurHash = media.imageBlurHashes?.backdrop,
                let blurImage = UIImage(blurHash: blurHash, size: .init(width: 30, height: 45)) {
                 Image(uiImage: blurImage)
                     .resizable()
@@ -771,7 +771,7 @@ fileprivate struct ArtView: View {
     var body: some View {
         if self.settings.loadThumbnailArt {
             ZStack {
-                if let blurHash = media.imageBlurHashes?.getBlurHash(for: .primary),
+                if let blurHash = media.imageBlurHashes?.primary,
                    let blurImage = UIImage(blurHash: blurHash, size: .init(width: 48, height: 27)) {
                     Image(uiImage: blurImage)
                         .resizable()

@@ -40,14 +40,11 @@ public protocol MediaImagesProtocol {
 /// Track image hashes for displaying previews
 public protocol MediaImageBlurHashesProtocol {
     /// Primary hashes
-    var primary: [String: String]? { get }
+    var primary: String? { get }
     /// Logo hashes
-    var logo: [String: String]? { get }
+    var logo: String? { get }
     /// Backdrop hashes
-    var backdrop: [String: String]? { get }
-    
-    /// Request a type of blur hash
-    func getBlurHash(for key: MediaImageType) -> String?
+    var backdrop: String? { get }
 }
 
 /// Denotes the type of image desired. Ex. a horizontal vs vertical movie poster image.
@@ -163,9 +160,9 @@ public final class SlimMedia: SlimMediaProtocol, Decodable {
 /// Holds hashes used to generate preview images.
 @Observable
 public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesProtocol {
-    public var primary: [String: String]?
-    public var logo: [String: String]?
-    public var backdrop: [String: String]?
+    public var primary: String?
+    public var logo: String?
+    public var backdrop: String?
     
     public enum CodingKeys: String, CodingKey {
         case primary = "Primary"
@@ -182,9 +179,9 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)
-            self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)
-            self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)
+            self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)?.values.first
+            self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)?.values.first
+            self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)?.values.first
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Image Blur Hash") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -192,17 +189,6 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
             else { throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
-    }
-    
-    public func getBlurHash(for key: MediaImageType) -> String? {
-        switch key {
-        case .primary:
-            return primary?.values.first
-        case .logo:
-            return logo?.values.first
-        case .backdrop:
-            return backdrop?.values.first
-        }
     }
 }
 

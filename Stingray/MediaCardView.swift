@@ -118,7 +118,7 @@ public struct MediaCard: View, Equatable {
         }
         .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
         .task(id: self.media.id, priority: .background) {
-            guard let blurHash = self.media.imageBlurHashes?.getBlurHash(for: .primary)
+            guard let blurHash = self.media.imageBlurHashes?.primary
             else { return }
             let decoded = await Task.detached(priority: .background) {
                 return UIImage(blurHash: blurHash, size: CGSize(width: 32, height: 32))
