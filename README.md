@@ -61,10 +61,14 @@ Configure Stingray to look and feel how you want it.
 
 ## TO-DONE List
 
-- Specify do not sleep while playing video
-- Only store first blur hash for each type
-- Allow moving from media metadata to play button
-- Rename "Other-Assets" to "Other Assets"
+- Repo Organization
+  - Rename "Other-Assets" to "Other Assets"
+  - Have ErrorView be a component
+- Bug Fixes
+  - Specify do not sleep while playing video
+  - Allow moving from media metadata to play button
+- Performance
+  - Only store first blur hash for each type
 
 ## TODO List
 
