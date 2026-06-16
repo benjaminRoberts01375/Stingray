@@ -77,6 +77,9 @@ Configure Stingray to look and feel how you want it.
   - Allow moving from media metadata to play button
 - Performance
   - Only store first blur hash for each type
+    - Improves speed to opening detail media views
+    - Massively improves scrolling performance in busy detail media views
+    - Improves library loading performance
 
 ## TODO List
 
