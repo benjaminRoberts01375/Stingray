@@ -37,14 +37,13 @@ public struct AsyncBlurImage: View {
             if let blurImage {
                 Image(uiImage: blurImage)
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .accessibilityHint("Placeholder image", isEnabled: false)
             }
             if let imageURL {
                 AsyncImage(url: imageURL) { image in
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
                         .opacity(self.fadeIn)
                         .animation(.smooth(duration: 0.5), value: self.fadeIn)
                         .onAppear { self.fadeIn = 1 }
