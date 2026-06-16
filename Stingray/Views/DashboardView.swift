@@ -79,9 +79,28 @@ public struct DashboardView: View {
                 navigation: $navigationPath
             )
         }
-//        .navigationDestination(for: AnyMedia.self) { anyMedia in
-//            DetailMediaView(media: anyMedia.media, streamingService: streamingService, navigation: $navigationPath)
-//        }
+        .navigationDestination(for: AnyMedia.self) { anyMedia in
+            switch anyMedia.media.mediaType {
+            case .tv(let seasons): TVShowDetailView(
+                media: anyMedia.media,
+                streamingService: streamingService,
+                seasons: seasons ?? [],
+                navigation: $navigationPath
+            )
+            case .movies(let movies): MovieDetailView(
+                media: anyMedia.media,
+                streamingService: streamingService,
+                mediaSources: movies,
+                navigation: $navigationPath
+            )
+            default:
+                VStack {
+                    Text("Media type is incompatible with Stingray")
+                    Text("You may need to regenerate this library in Jellyfin if it is old or corrupted.")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
         .onChange(of: deepLinkRequest) { _, newValue in
             guard let request = newValue else { return }
             navigationPath.append(request) // Navigate to requested media
