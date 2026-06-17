@@ -135,78 +135,76 @@ fileprivate struct PlayNavigationView: View {
     }
     
     var body: some View {
-        Group {
-            // Single source button and menu
-            if mediaSources.count == 1 {
-                let mediaSource = self.mediaSources[0]
-                // Single item that's unwatched - show button
-                if mediaSource.startPoint == 0 {
-                    Button {
-                        self.navigation.append(
-                            PlayerViewModel(
-                                media: media,
-                                mediaSource: mediaSource,
-                                startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
-                                streamingService: self.streamingService,
-                                seasons: [], // TODO: Placeholder
-                                settingsModel: self.settings,
-                            )
+        // Single source button and menu
+        if mediaSources.count == 1 {
+            let mediaSource = self.mediaSources[0]
+            // Single item that's unwatched - show button
+            if mediaSource.startPoint == 0 {
+                Button {
+                    self.navigation.append(
+                        PlayerViewModel(
+                            media: media,
+                            mediaSource: mediaSource,
+                            startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
+                            streamingService: self.streamingService,
+                            seasons: [], // TODO: Placeholder
+                            settingsModel: self.settings,
                         )
-                    } label: { Label(self.title, systemImage: "play.fill") }
-                        .accessibilityLabel("Play button")
-                }
-                // Single item that's partially watched - show streamlined menu
-                else {
-                    Menu("\(Image(systemName: "play")) \(title)") {
-                        Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
-                        label: {
-                            Label("Resume \(media.title)", systemImage: "play.fill")
-                            Text("Continue from \(String(duration: mediaSource.startPoint))")
-                        }
-                        Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
-                        label: { Label("Restart \(media.title)", systemImage: "memories") }
-                    }
-                    .accessibilityLabel("Play button menu")
-                }
+                    )
+                } label: { Label(self.title, systemImage: "play.fill") }
+                    .accessibilityLabel("Play button")
             }
-            // Multiple media sources
+            // Single item that's partially watched - show streamlined menu
             else {
-                // If there are multiple sources but all unwatched, show only "play" options that start from beginning
-                if (mediaSources.allSatisfy { $0.startPoint == 0 }) {
-                    Menu("\(Image(systemName: "play")) \(title)") {
+                Menu("\(Image(systemName: "play")) \(title)") {
+                    Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
+                    label: {
+                        Label("Resume \(media.title)", systemImage: "play.fill")
+                        Text("Continue from \(String(duration: mediaSource.startPoint))")
+                    }
+                    Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
+                    label: { Label("Restart \(media.title)", systemImage: "memories") }
+                }
+                .accessibilityLabel("Play button menu")
+            }
+        }
+        // Multiple media sources
+        else {
+            // If there are multiple sources but all unwatched, show only "play" options that start from beginning
+            if (mediaSources.allSatisfy { $0.startPoint == 0 }) {
+                Menu("\(Image(systemName: "play")) \(title)") {
+                    ForEach(mediaSources, id: \.id) { mediaSource in
+                        Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
+                        label: { Label(mediaSource.name, systemImage: "play.fill") }
+                            .id(mediaSource.id)
+                    }
+                }
+                .accessibilityLabel("Play button menu")
+            }
+            // If there's any that are somewhat played, present options to restart
+            else {
+                Menu("\(Image(systemName: "play")) \(title)") {
+                    Section("Resume") {
                         ForEach(mediaSources, id: \.id) { mediaSource in
-                            Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
-                            label: { Label(mediaSource.name, systemImage: "play.fill") }
+                            if mediaSource.startPoint != 0 {
+                                Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint)
+                                } label: {
+                                    Label(mediaSource.name, systemImage: "play.fill")
+                                    Text("Continue from \(String(duration: mediaSource.startPoint))")
+                                }
+                                .id(mediaSource.id)
+                            }
+                        }
+                    }
+                    Section("Restart") {
+                        ForEach(mediaSources, id: \.id) { mediaSource in
+                            Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
+                            label: { Label(mediaSource.name, systemImage: "memories") }
                                 .id(mediaSource.id)
                         }
                     }
-                    .accessibilityLabel("Play button menu")
                 }
-                // If there's any that are somewhat played, present options to restart
-                else {
-                    Menu("\(Image(systemName: "play")) \(title)") {
-                        Section("Resume") {
-                            ForEach(mediaSources, id: \.id) { mediaSource in
-                                if mediaSource.startPoint != 0 {
-                                    Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint)
-                                    } label: {
-                                        Label(mediaSource.name, systemImage: "play.fill")
-                                        Text("Continue from \(String(duration: mediaSource.startPoint))")
-                                    }
-                                    .id(mediaSource.id)
-                                }
-                            }
-                        }
-                        Section("Restart") {
-                            ForEach(mediaSources, id: \.id) { mediaSource in
-                                Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
-                                label: { Label(mediaSource.name, systemImage: "memories") }
-                                    .id(mediaSource.id)
-                            }
-                        }
-                    }
-                    .accessibilityLabel("Play button menu")
-                }
+                .accessibilityLabel("Play button menu")
             }
         }
     }
