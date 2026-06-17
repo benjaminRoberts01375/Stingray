@@ -23,7 +23,6 @@ public struct MovieDetailView: View {
     @State private var shouldBackgroundBlur: Bool = false
     @State private var shouldRevealBottomShelf: Bool = false
     @State private var shouldShowMetaData: Bool = false
-    @FocusState private var focus: ButtonType?
     
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
@@ -74,7 +73,6 @@ public struct MovieDetailView: View {
                 
                 // Play buttons
                 PlayNavigationView(
-                    focus: $focus,
                     navigation: $navigation,
                     media: media,
                     mediaSources: self.mediaSources,
@@ -84,9 +82,7 @@ public struct MovieDetailView: View {
                 // Metadata
                 HStack(alignment: .top) {
                     MediaOverview(media: self.media)
-                        .focused($focus, equals: .overview)
                     MediaMetadata(media: self.media)
-                        .focused($focus, equals: .metadata)
                 }
                 
                 // Special features
@@ -99,7 +95,6 @@ public struct MovieDetailView: View {
                         .foregroundStyle(self.theme.currentTheme.header1)
                         .padding(.top)
                     PeopleBrowserView(media: media, streamingService: streamingService)
-                        .focused($focus, equals: .actor)
                 }
             }
             .scrollClipDisabled()
@@ -108,23 +103,6 @@ public struct MovieDetailView: View {
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
-        .task { // Yep. I hate it too. Apple TVs are having issues selecting the play button if it changes type.
-            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
-                self.focus = .play
-            }
-        }
-        .onChange(of: focus) { _, newValue in
-            switch newValue {
-            case .overview, .metadata, .actor:
-                self.shouldBackgroundBlur = true
-                self.shouldRevealBottomShelf = true
-            case .play:
-                self.shouldBackgroundBlur = false
-                self.shouldRevealBottomShelf = false
-            case nil:
-                break
-            }
-        }
         .navigationDestination(for: PlayerViewModel.self) { vm in
             PlayerView(vm: vm, navigation: $navigation)
         }
@@ -139,19 +117,16 @@ fileprivate struct PlayNavigationView: View {
     private var title: String
     private let mediaSources: [any MediaSourceProtocol]
     
-    @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
     
     @Environment(SettingsModel.self) var settings: SettingsModel
     
     init(
-        focus: FocusState<ButtonType?>.Binding,
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
         mediaSources: [any MediaSourceProtocol],
         streamingService: any StreamingServiceProtocol
     ) {
-        self._focus = focus
         self._navigation = navigation
         self.media = media
         self.streamingService = streamingService
@@ -234,10 +209,6 @@ fileprivate struct PlayNavigationView: View {
                 }
             }
         }
-        .onAppear { self.focus = .play }
-        .focused($focus, equals: .play)
-        .id("Play-button")
-        .defaultFocus($focus, .play, priority: .userInitiated)
     }
     
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
@@ -252,12 +223,4 @@ fileprivate struct PlayNavigationView: View {
             )
         )
     }
-}
-
-/// Types of buttons available on the `MovieDetailView`
-fileprivate enum ButtonType: Hashable {
-    case play
-    case overview
-    case metadata
-    case actor
 }
