@@ -72,6 +72,8 @@ Configure Stingray to look and feel how you want it.
   - Rebrand the DetailMediaView to TVShowDetailView
 - UI
   - Have the background around the title art only on the title
+  - Collect all people from episodes and display them for the season
+    - Not sure what Jellyfin was collecting prior to this, but this is more correct
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button

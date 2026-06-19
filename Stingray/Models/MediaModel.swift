@@ -28,7 +28,7 @@ public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
     /// Estimated runtime of the movie or per-episode.
     var duration: Duration? { get }
     /// People involved in the creation of this media.
-    var people: [MediaPersonProtocol] { get }
+    var people: [any MediaPersonProtocol] { get }
     /// Tracks if the special features have been fetched. If they have been successfully fetched, they'll available through this variable.
     var specialFeatures: SpecialFeaturesStatus { get set }
     
@@ -149,6 +149,8 @@ public protocol TVEpisodeProtocol: Displayable {
     var lastPlayed: Date? { get set }
     /// Longer description of the episode. Nil if none is provided.
     var overview: String? { get }
+    /// People who were a part of this episode
+    var people: [any MediaPersonProtocol] { get }
 }
 
 // MARK: Concrete types
@@ -557,6 +559,7 @@ public final class TVSeason: TVSeasonProtocol {
             case blurHashes = "ImageBlurHashes"
             case mediaSources = "MediaSources"
             case userData = "UserData"
+            case people = "People"
             
             case seasonID = "SeasonId" // The actual season ID
             case seasonTitle = "SeasonName" // The actual season name
@@ -595,7 +598,8 @@ public final class TVSeason: TVSeasonProtocol {
                         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                         return formatter.date(from: dateString)
                     }(),
-                    overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview)
+                    overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
+                    people: try episodeContainer.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []
                 )
                 let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
                 episodeContainer.decode(String.self, forKey: .seriesID)
@@ -662,6 +666,7 @@ public final class TVEpisode: TVEpisodeProtocol {
     public var mediaSources: [any MediaSourceProtocol]
     public var lastPlayed: Date?
     public var overview: String?
+    public let people: [any MediaPersonProtocol]
     
     public init(
         id: String,
@@ -670,7 +675,8 @@ public final class TVEpisode: TVEpisodeProtocol {
         episodeNumber: Int,
         mediaSources: [any MediaSourceProtocol],
         lastPlayed: Date? = nil,
-        overview: String? = nil
+        overview: String? = nil,
+        people: [any MediaPersonProtocol]
     ) {
         self.id = id
         self.imageBlurHashes = blurHashes
@@ -679,6 +685,7 @@ public final class TVEpisode: TVEpisodeProtocol {
         self.mediaSources = mediaSources
         self.lastPlayed = lastPlayed
         self.overview = overview
+        self.people = people
     }
 }
 

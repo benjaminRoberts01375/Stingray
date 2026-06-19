@@ -485,7 +485,24 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     }
                 } catch let error as RError { throw LibraryErrors.gettingSeasons(error, libraryId) }
             }
-            return response.items
+            let medias: [MediaModel] = response.items.map { media in
+                switch media.mediaType {
+                case .tv(let seasons):
+                    var people: [any MediaPersonProtocol] = media.people
+                    for season in seasons ?? [] {
+                        for episode in season.episodes {
+                            for person in episode.people where !people.contains(where: { $0.id == person.id }) {
+                                people.append(person)
+                            }
+                        }
+                    }
+                    media.people = people
+                    return media
+                default: return media
+                }
+            }
+            
+            return medias // Several library shows, movies, etc. that partially make a library
         }
         catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
         catch { throw LibraryErrors.unknown(libraryId) }
@@ -505,6 +522,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "enableImages", value: "true"),
             URLQueryItem(name: "fields", value: "MediaSources"),
             URLQueryItem(name: "fields", value: "Overview"),
+            URLQueryItem(name: "fields", value: "People"),
             URLQueryItem(name: "sortBy", value: "AiredEpisodeOrder")
         ]
         do {
