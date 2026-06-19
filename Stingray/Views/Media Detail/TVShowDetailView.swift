@@ -153,7 +153,7 @@ public struct TVShowDetailView: View {
                             .font(.title3.bold())
                             .foregroundStyle(self.theme.currentTheme.header1)
                             .padding(.top)
-                        PeopleBrowserView(media: media, streamingService: streamingService)
+                        PeopleBrowserView(people: self.media.people, streamingService: streamingService)
                             .focused($focus, equals: .actor)
                     }
                 }

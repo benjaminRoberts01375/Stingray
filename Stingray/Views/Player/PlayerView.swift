@@ -103,11 +103,11 @@ fileprivate struct PlayerDescriptionView: View {
 
 // MARK: People Tab
 fileprivate struct PlayerPeopleView: View {
-    let media: any MediaProtocol
+    let people: [any MediaPersonProtocol]
     let streamingService: any StreamingServiceProtocol
     
     var body: some View {
-        PeopleBrowserView(media: self.media, streamingService: self.streamingService)
+        PeopleBrowserView(people: self.people, streamingService: self.streamingService)
             .padding()
             .padding(.horizontal, 24)
             .availableGlass()
@@ -320,7 +320,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         if !self.vm.media.description.isEmpty {
             // Series & episode description
             let descTab = UIHostingController(
-                rootView: PlayerDescriptionView(media: self.vm.media, mediaSource: self.vm.mediaSource)
+                rootView: PlayerDescriptionView(media: self.vm.media, mediaSource: self.vm.mediaSource).environment(self.theme)
             )
             descTab.title = "Description"
             descTab.preferredContentSize = CGSize(width: 0, height: 350)
@@ -328,13 +328,33 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         }
         
         if !self.vm.media.people.isEmpty {
-            let peopleTab = UIHostingController(
-                rootView: PlayerPeopleView(media: self.vm.media, streamingService: self.vm.streamingService)
-                    .environment(self.theme)
-            )
-            peopleTab.title = "People"
-            peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
-            playerTabs.append(peopleTab)
+            switch self.vm.media.mediaType {
+            case .movies:
+                let peopleTab = UIHostingController(
+                    rootView: PlayerPeopleView(people: self.vm.media.people, streamingService: self.vm.streamingService)
+                        .environment(self.theme)
+                )
+                peopleTab.title = "People"
+                peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+                playerTabs.append(peopleTab)
+            case .tv(let seasons):
+                guard let seasons = seasons else { break }
+                for season in seasons {
+                    for episode in season.episodes {
+                        if let mediaSource = episode.mediaSources.first, mediaSource.id == self.vm.mediaSourceID {
+                            let peopleTab = UIHostingController(
+                                rootView: PlayerPeopleView(people: episode.people, streamingService: self.vm.streamingService)
+                                    .environment(self.theme)
+                            )
+                            peopleTab.title = "People"
+                            peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+                            playerTabs.append(peopleTab)
+                            break
+                        }
+                    }
+                }
+            default: break
+            }
         }
         
         let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(vm: self.vm))
