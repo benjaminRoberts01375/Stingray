@@ -110,6 +110,7 @@ fileprivate struct PlayerPeopleView: View {
         PeopleBrowserView(people: self.people, streamingService: self.streamingService)
             .padding()
             .padding(.horizontal, 24)
+            .clipped()
             .availableGlass()
     }
 }
