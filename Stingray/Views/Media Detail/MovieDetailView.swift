@@ -89,12 +89,14 @@ public struct MovieDetailView: View {
                 SpecialFeaturesView(navigation: self.$navigation, streamingService: self.streamingService, media: self.media)
                 
                 // People
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("People")
-                        .font(.title3.bold())
-                        .foregroundStyle(self.theme.currentTheme.header1)
-                        .padding(.top)
-                    PeopleBrowserView(media: media, streamingService: streamingService)
+                if !self.media.people.isEmpty {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("People")
+                            .font(.title3.bold())
+                            .foregroundStyle(self.theme.currentTheme.header1)
+                            .padding(.top)
+                        PeopleBrowserView(media: media, streamingService: streamingService)
+                    }
                 }
             }
             .scrollClipDisabled()
