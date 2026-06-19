@@ -42,16 +42,27 @@ public struct MediaLogoView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 800, alignment: .center)
             }
-            if media.maturity != nil || media.releaseDate != nil || !media.genres.isEmpty || media.duration != nil {
-                let items: [String] = [
-                    media.maturity,
-                    media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                    media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                    media.duration?.roundedTime()
-                ].compactMap { $0 }
-                
-                Text(items.joined(separator: " • "))
-            }
+            MediaLogoHeader(media: self.media)
         }
+    }
+}
+
+/// Shows very basic metadata 
+public struct MediaLogoHeader: View {
+    /// Media to display info about
+    public let media: any MediaProtocol
+    
+    public var body: some View {
+        if self.media.maturity != nil || self.media.releaseDate != nil || !self.media.genres.isEmpty || self.media.duration != nil {
+            let items: [String] = [
+                media.maturity,
+                media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
+                media.duration?.roundedTime()
+            ].compactMap { $0 }
+            
+            Text(items.joined(separator: " • "))
+        }
+        else { EmptyView() }
     }
 }

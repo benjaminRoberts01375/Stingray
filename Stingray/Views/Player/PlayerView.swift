@@ -51,7 +51,7 @@ fileprivate struct PlayerDescriptionView: View {
     
     var body: some View {
         VStack {
-            MediaMetadata(media: media)
+            MediaLogoHeader(media: self.media)
                 .padding(.bottom)
                 .shadow(color: .black.opacity(1), radius: 10)
             
@@ -320,7 +320,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         if !self.vm.media.description.isEmpty {
             // Series & episode description
             let descTab = UIHostingController(
-                rootView: PlayerDescriptionView(media: self.vm.media, mediaSource: self.vm.mediaSource).environment(self.theme)
+                rootView: PlayerDescriptionView(media: self.vm.media, mediaSource: self.vm.mediaSource)
             )
             descTab.title = "Description"
             descTab.preferredContentSize = CGSize(width: 0, height: 350)
