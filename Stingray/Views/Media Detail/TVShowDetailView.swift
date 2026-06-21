@@ -448,9 +448,8 @@ fileprivate struct EpisodeView: View {
                 }
             }
             
-            Button {
-                self.showDetails = episode.overview != nil
-            } label: {
+            Button { self.showDetails = episode.overview != nil }
+            label: {
                 VStack(alignment: .leading) {
                     // Season and episode number
                     HStack(spacing: 0) {
