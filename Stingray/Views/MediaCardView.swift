@@ -8,9 +8,7 @@
 import BlurHashKit
 import SwiftUI
 
-public struct MediaCard: View, Equatable {
-    public static func == (lhs: MediaCard, rhs: MediaCard) -> Bool { lhs.media.id == rhs.media.id }
-    
+public struct MediaCard: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
     
