@@ -526,18 +526,17 @@ fileprivate struct EpisodeNavigationView: View {
                     media: media,
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
-                    streamingService: streamingService,
+                    streamingService: self.streamingService,
                     seasons: seasons,
                     settingsModel: self.settings
                 )
             )
         } label: {
             VStack(spacing: 0) {
-                if !self.settings.loadThumbnailArt { Spacer(minLength: 0) }
-                MediaArtView(media: self.episode, streamingService: streamingService, title: self.episode.title)
+                MediaArtView(media: self.episode, streamingService: self.streamingService, title: self.episode.title)
+                    .clipped()
                 if self.settings.loadThumbnailArt {
-                    Spacer(minLength: 0)
-                    Text(episode.title)
+                    Text(self.episode.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .padding()

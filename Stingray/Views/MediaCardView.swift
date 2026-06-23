@@ -13,12 +13,10 @@ public struct MediaCard: View {
     @Environment(ThemeModel.self) private var theme
     
     @State private var showError: Bool = false
-    @State private var blurImage: UIImage?
-    
+
     @Binding public var navigation: NavigationPath
     
     public static let cardSize = CGSize(width: 200, height: 370)
-    private static let imageHeight: CGFloat = MediaCard.cardSize.height + 15
     
     public let media: any SlimMediaProtocol
     public let url: URL?
@@ -57,22 +55,18 @@ public struct MediaCard: View {
             VStack(spacing: 0) {
                 if self.settings.loadThumbnailArt {
                     if media.imageTags?.primary != nil {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        } placeholder: {
-                            if let blurImage {
-                                Image(uiImage: blurImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .accessibilityHint("Temporary placeholder for missing image", isEnabled: false)
+                        Color.clear
+                            .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                            .overlay {
+                                AsyncBlurImage(
+                                    blurHash: self.media.imageBlurHashes?.primary,
+                                    blurSize: CGSize(width: 20, height: 30),
+                                    imageURL: self.url,
+                                    scaleType: .fill
+                                )
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
-                            else { MediaCardLoading() }
-                        }
-                        .frame(width: Self.cardSize.width)
-                        .frame(minHeight: 0, maxHeight: Self.imageHeight)
-                        .clipped()
+                            .clipped()
                     }
                     else { MediaCardNoImage() }
                     Text(self.media.title)
@@ -81,7 +75,6 @@ public struct MediaCard: View {
                         .truncationMode(.tail)
                         .foregroundStyle(self.theme.currentTheme.header2)
                         .padding(5)
-                    Spacer(minLength: 0)
                 }
                 else {
                     Spacer(minLength: 0)
@@ -115,26 +108,6 @@ public struct MediaCard: View {
             }
         }
         .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
-        .task(id: self.media.id, priority: .background) {
-            guard let blurHash = self.media.imageBlurHashes?.primary
-            else { return }
-            let decoded = await Task.detached(priority: .background) {
-                return UIImage(blurHash: blurHash, size: CGSize(width: 32, height: 32))
-            }.value
-            self.blurImage = decoded
-        }
-    }
-}
-
-public struct MediaCardLoading: View {
-    public var body: some View {
-        ZStack {
-            Color.gray.opacity(0.2)
-            VStack {
-                ProgressView()
-                Text("Getting thumbnail...")
-            }
-        }
     }
 }
 

@@ -28,7 +28,12 @@ public struct MediaArtView: View {
     
     public var body: some View {
         if self.settings.loadThumbnailArt {
-            AsyncBlurImage(blurHash: self.media.imageBlurHashes?.primary, blurSize: CGSize(width: 48, height: 27), imageURL: self.imageURL)
+            AsyncBlurImage(
+                blurHash: self.media.imageBlurHashes?.primary,
+                blurSize: CGSize(width: 48, height: 27),
+                imageURL: self.imageURL,
+                scaleType: .fit
+            )
         }
         else {
             Text(self.title)

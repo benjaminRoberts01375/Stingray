@@ -16,7 +16,7 @@ public struct ThemeExampleView: View {
     public var body: some View {
         HStack(alignment: .center, spacing: 20) {
             MediaCard(media: self.exampleMedia, streamingService: self.exampleService, reserveTextSpace: false)
-                .frame(width: MediaCard.cardSize.width, height: 225)
+                .frame(width: 150, height: 225)
                 .padding(.horizontal, 20)
             VStack(alignment: .leading) {
                 Text(self.theme.currentTheme.representation.displayName)

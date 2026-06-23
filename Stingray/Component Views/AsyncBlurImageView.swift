@@ -20,16 +20,20 @@ public struct AsyncBlurImage: View {
     private let blurSize: CGSize
     /// Image to download the full resolution image
     private let imageURL: URL?
-    
+    /// Describes the scaling of just the image
+    private let scaleType: ContentMode
+
     /// Async load an image with a blur hash placeholder
     /// - Parameters:
     ///   - blurHash: Hash to display preview with
     ///   - blurSize: Resolution of the preview to show
     ///   - imageURL: URL to get the base image from
-    public init(blurHash: String?, blurSize: CGSize, imageURL: URL?) {
+    ///   - scaleType: Describes the scaling of just the image, not the blur
+    public init(blurHash: String?, blurSize: CGSize, imageURL: URL?, scaleType: ContentMode = .fill) {
         self.blurHash = blurHash
         self.imageURL = imageURL
         self.blurSize = blurSize
+        self.scaleType = scaleType
     }
     
     public var body: some View {
@@ -44,6 +48,7 @@ public struct AsyncBlurImage: View {
                 AsyncImage(url: imageURL) { image in
                     image
                         .resizable()
+                        .aspectRatio(contentMode: self.scaleType)
                         .opacity(self.fadeIn)
                         .animation(.smooth(duration: 0.5), value: self.fadeIn)
                         .onAppear { self.fadeIn = 1 }
