@@ -11,7 +11,7 @@ import SwiftUI
 /// How a theme needs to be built
 public protocol ThemeProtocol {
     /// A light-weight stand-in for this theme that holds basic info like the name and description
-    var representation: ThemeModel.Themes { get }
+    var representation: Themes { get }
     
     /// Prefer dark mode or light mode SwiftUI rendering
     var colorScheme: ColorScheme { get }
@@ -46,7 +46,7 @@ public protocol ThemeProtocol {
 
 /// A dark blue color scheme, like deep in the ocean
 public final class ThemeDeepSeaDark: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .deepSea
+    public let representation: Themes = .deepSea
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(
         LinearGradient(
@@ -76,7 +76,7 @@ public final class ThemeDeepSeaDark: ThemeProtocol {
 
 /// A white theme and grayscale theme
 public final class ThemeNotesAppLight: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .notesApp
+    public let representation: Themes = .notesApp
     public let colorScheme: ColorScheme = .light
     public let appBackground: AnyView = AnyView(Color.white)
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.gray.opacity(0.15))
@@ -98,7 +98,7 @@ public final class ThemeFrostyLight: ThemeProtocol {
         blue: 0.17647058823529413
     )
     
-    public let representation: ThemeModel.Themes = .frosty
+    public let representation: Themes = .frosty
     public let colorScheme: ColorScheme = .light
     public let appBackground: AnyView = AnyView(SlidingBubblesView())
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.clear)
@@ -227,7 +227,7 @@ public final class ThemeFrostyLight: ThemeProtocol {
 public final class ThemeBeachLight: ThemeProtocol {
     public static let tan = Color(red: 1, green: 0.973, blue: 0.863)
     
-    public let representation: ThemeModel.Themes = .beach
+    public let representation: Themes = .beach
     public let colorScheme: ColorScheme = .light
     public let appBackground: AnyView = AnyView(
         LinearGradient(
@@ -252,7 +252,7 @@ public final class ThemeBeachLight: ThemeProtocol {
 
 /// A super dark theme
 public final class ThemeVoidDark: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .void
+    public let representation: Themes = .void
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(Color.black)
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1))
@@ -282,7 +282,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     public static let purple = Color(red: 0.7411764705882353, green: 0.5764705882352941, blue: 0.9764705882352941)
     public static let pink = Color(red: 1, green: 0.4745098039215686, blue: 0.7764705882352941)
     
-    public let representation: ThemeModel.Themes = .spaceVampires
+    public let representation: Themes = .spaceVampires
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(
         ZStack {
@@ -492,7 +492,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
 public final class ThemeRetroMid: ThemeProtocol {
     public static let gridColor = Color(red: 0.7411764705882353, green: 0.17254901960784313, blue: 0.4823529411764706) // #BD2C7B
     
-    public let representation: ThemeModel.Themes = .retro
+    public let representation: Themes = .retro
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(RetroVibes())
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(.regularMaterial)

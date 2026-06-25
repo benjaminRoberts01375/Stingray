@@ -120,7 +120,7 @@ public final class SettingsModel {
     }
     
     /// The desired dark theme for the user
-    public var themeDark: ThemeModel.Themes {
+    public var themeDark: Themes {
         get { self.theme.dark }
         set(newValue) {
             self.theme.dark = newValue
@@ -129,7 +129,7 @@ public final class SettingsModel {
     }
 
     /// The desired light theme for the user
-    public var themeLight: ThemeModel.Themes {
+    public var themeLight: Themes {
         get { self.theme.light }
         set(newValue) {
             self.theme.light = newValue

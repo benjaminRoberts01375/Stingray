@@ -154,9 +154,9 @@ public struct User: Codable, Identifiable, Hashable {
     /// Play the next piece of content if available
     public var autoplay: Bool
     /// The user's dark theme choice
-    public var darkTheme: ThemeModel.Themes
+    public var darkTheme: Themes
     /// The user's light theme choice
-    public  var lightTheme: ThemeModel.Themes
+    public  var lightTheme: Themes
     /// How fast the viewer wants the player to run
     public var playbackSpeed: PlaybackSpeed
     /// A toggle for whether to display posters
@@ -177,8 +177,8 @@ public struct User: Codable, Identifiable, Hashable {
         usesSubtitles: Bool = false,
         pin: String? = nil,
         autplay: Bool = false,
-        darkTheme: ThemeModel.Themes = .deepSea,
-        lightTheme: ThemeModel.Themes = .beach,
+        darkTheme: Themes = .deepSea,
+        lightTheme: Themes = .beach,
         playbackSpeed: PlaybackSpeed = .one,
         loadThumbnailArt: Bool = true,
         loadMediaBackgroundArt: Bool = true,
@@ -217,8 +217,8 @@ public struct User: Codable, Identifiable, Hashable {
             pin = try container.decodeIfPresent(String.self, forKey: .pin)
             autoplay = (try? container.decodeIfPresent(Bool.self, forKey: .autoplay)) ?? false
             usesSubtitles = (try? container.decodeIfPresent(Bool.self, forKey: .usesSubtitles)) ?? false
-            darkTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .darkTheme)) ?? .deepSea
-            lightTheme = (try? container.decodeIfPresent(ThemeModel.Themes.self, forKey: .lightTheme)) ?? .beach
+            darkTheme = (try? container.decodeIfPresent(Themes.self, forKey: .darkTheme)) ?? .deepSea
+            lightTheme = (try? container.decodeIfPresent(Themes.self, forKey: .lightTheme)) ?? .beach
             playbackSpeed = (try? container.decodeIfPresent(PlaybackSpeed.self, forKey: .playbackSpeed)) ?? .one
             loadThumbnailArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadThumbnailArt)) ?? true
             loadMediaBackgroundArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadMediaBackgroundArt)) ?? true

@@ -209,7 +209,7 @@ public struct ThemesListView: View {
     public let themeType: ColorScheme
     
     public var body: some View {
-        ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
+        ForEach(Themes.allCases, id: \.self) { option in
             Button {
                 if !self.purchases.boughtSupporter && option.requiresSupporter {
                     self.showSupportStingray = true
