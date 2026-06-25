@@ -7,13 +7,30 @@
 
 import Foundation
 
+/// Modifies and stores multiple users' data
+public protocol UserModelProtocol {
+    /// The signed in user
+    var activeUser: User? { get set }
+    /// Array of user IDs that SwiftUI will observe for changes
+    var userIDs: Set<String> { get }
+
+    /// Adds a user to storage based on a `User` type. If the user already exists, update its access
+    /// - Parameter user: User to add or update access for
+    /// - Returns: User with correct access
+    func addUser(_ user: User) -> User
+    /// Gets all users
+    func getUsers() -> [User]
+    /// Deletes a user based on their ID
+    /// - Parameter userID: ID of the user to delete
+    func deleteUser(_ userID: String)
+}
+
 /// Basic data to store about the user
 @Observable
-public final class UserModel {
+public final class UserModel: UserModelProtocol {
     /// Storage device to permanently store user data
-    public var storage: UserStorageProtocol
-    
-    /// The signed in user
+    private var storage: UserStorageProtocol
+
     public var activeUser: User? {
         didSet {
             guard let userID = self.activeUser?.id else { return }
@@ -23,7 +40,6 @@ public final class UserModel {
         }
     }
     
-    /// Array of user IDs that SwiftUI will observe for changes
     public private(set) var userIDs: Set<String> = []
     
     /// Create the model based on a storage medium
@@ -36,10 +52,7 @@ public final class UserModel {
         guard let userID = self.storage.getActiveUserID() else { return }
         self.activeUser = self.storage.getUser(userID: userID)
     }
-    
-    /// Adds a user to storage based on a `User` type. If the user already exists, update its access
-    /// - Parameter user: User to add or update access for
-    /// - Returns: User with correct access
+
     public func addUser(_ user: User) -> User {
         var updatedUser = user
         // Check if user exists already, and update only the access token
@@ -57,14 +70,11 @@ public final class UserModel {
         self.storage.setUserIDs(Array(userIDs))
         return updatedUser
     }
-    
-    /// Gets all users
+
     public func getUsers() -> [User] {
         return self.userIDs.compactMap { self.storage.getUser(userID: $0) }
     }
-    
-    /// Deletes a user based on their ID
-    /// - Parameter userID: ID of the user to delete
+
     public func deleteUser(_ userID: String) {
         userIDs.remove(userID)
         storage.setUserIDs(Array(userIDs))
