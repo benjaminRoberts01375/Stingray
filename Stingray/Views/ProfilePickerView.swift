@@ -82,7 +82,7 @@ public struct ProfilePickerView: View {
     ///   - settingsModel: Location of settings and themes
     /// - Returns: Updated `LoginState`
     public static func switchUser(
-        user: User,
+        user: any UserProtocol,
         userModel: UserModel,
         currentLoginState: LoginState,
         settingsModel: SettingsModel

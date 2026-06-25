@@ -17,7 +17,7 @@ public enum LoginState {
     /// There are accounts signed in, but the current user needs to be picked
     case pickingUser
     /// User is signed in, but requires a PIN
-    case requiresPIN(User)
+    case requiresPIN(any UserProtocol)
 }
 
 public struct ContentView: View {

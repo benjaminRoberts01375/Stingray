@@ -62,7 +62,7 @@ public struct PINEntry: View {
     /// Not read, only set to successfully login or switch users
     @Binding public var loginState: LoginState
     /// User the PIN is meant for
-    public let user: User
+    public let user: any UserProtocol
     /// PIN attempt
     @State private var pinEntry: String = ""
     /// Reason to not allow sign-in

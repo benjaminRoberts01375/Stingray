@@ -12,7 +12,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
     private var accessToken: String
     
     init(userModel: UserModel) throws(StreamingServiceErrors) {
-        let defaultUser: User
+        let defaultUser: any UserProtocol
         do {
             if let maybeUser = userModel.activeUser { defaultUser = maybeUser }
             else { throw StreamingServiceErrors.noDefaultUser }

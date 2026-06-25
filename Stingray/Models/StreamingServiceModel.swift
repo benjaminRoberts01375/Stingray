@@ -242,20 +242,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         do { response = try await networkAPI.login(username: username, password: password) }
         catch { throw AccountErrors.loginFailed(error) }
         
-        var newUser = User(
-            serviceURL: url,
-            serviceType: .Jellyfin(
-                UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-            ),
-            serviceID: response.serverId,
-            id: response.userId,
-            displayName: response.userName
-        )
-        Log.critical("\(response.userId) in \(userModel.userIDs)")
-        
-        newUser = userModel.addUser(newUser)
-        userModel.activeUser = newUser
-        return JellyfinModel(response: response, serviceURL: url)
+        return Self.baseLogin(userModel: userModel, response: response, url: url)
     }
     
     /// Log into a Jellyfin server using the quick connect feature
@@ -269,19 +256,35 @@ public final class JellyfinModel: StreamingServiceProtocol {
         
         do { response = try await networkAPI.login(quickConnectSecret: quickConnectSecret) }
         catch { throw QuickConnectErrors.loginFailed(error) }
-        
-        var newUser = User(
-            serviceURL: url,
-            serviceType: .Jellyfin(
-                UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
-            ),
-            serviceID: response.serverId,
-            id: response.userId,
-            displayName: response.userName
-        )
-        
-        newUser = userModel.addUser(newUser)
-        userModel.activeUser = newUser
+
+        return Self.baseLogin(userModel: userModel, response: response, url: url)
+    }
+    
+    /// Handles the business logic of setting up new/existing users
+    /// - Parameters:
+    ///   - userModel: Location to store the user
+    ///   - response: Server response for this user
+    ///   - url: Location of the server
+    /// - Returns: Setup login instance
+    private static func baseLogin(userModel: UserModel, response: APILoginResponse, url: URL) -> JellyfinModel {
+        if var existingUser = userModel.getUser(id: response.userId) { // User already exists, just update access
+            existingUser.serviceType = .Jellyfin(UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId))
+            userModel.addUser(existingUser)
+        }
+        else { // User doesn't exist, setup from scratch
+            let newUser = User(
+                serviceURL: url,
+                serviceType: .Jellyfin(
+                    UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
+                ),
+                serviceID: response.serverId,
+                id: response.userId,
+                displayName: response.userName
+            )
+
+            userModel.addUser(newUser)
+            userModel.activeUser = newUser
+        }
         return JellyfinModel(response: response, serviceURL: url)
     }
 

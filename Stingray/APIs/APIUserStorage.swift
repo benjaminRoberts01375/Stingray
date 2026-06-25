@@ -23,7 +23,7 @@ public protocol UserStorageProtocol {
     /// Save a `User` into storage
     /// - Parameters:
     ///   - user: User to save
-    func upsertUser(user: User)
+    func upsertUser(user: any UserProtocol)
     /// Get a `User` from storage
     /// - Parameter userID: ID of the user to find
     /// - Returns: The formatted `User`
@@ -54,7 +54,7 @@ public final class UserStorage: UserStorageProtocol {
         self.basicStorage.setString(.defaultStreamingUserID, value: serverUserID) // Set Top Shelf user ID
     }
     
-    public func upsertUser(user: User) {
+    public func upsertUser(user: any UserProtocol) {
         self.basicStorage.setObject(.user(user.id), value: user)
     }
     
