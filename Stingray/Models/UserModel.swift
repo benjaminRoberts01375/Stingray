@@ -95,9 +95,8 @@ public final class UserModel: UserModelProtocol {
 
     public func addUser(_ user: any UserProtocol) {
         self.storage.upsertUser(user: user)
-        if !userIDs.contains(where: { $0 == user.id }) {
-            self.storage.setUserIDs(Array(userIDs))
-        }
+        self.userIDs.insert(user.id)
+        self.storage.setUserIDs(Array(self.userIDs))
     }
 
     public func getUsers() -> [User] {
