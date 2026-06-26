@@ -61,9 +61,6 @@ Configure Stingray to look and feel how you want it.
 
 ## TO-DONE List
 
-- Features
-  - People associated with any episode in a series are now shown in the detail view
-  - Only show people associated with a particular episode in the player "People" tab
 - UI
   - Apply the media title shadow directly to the media title
   - Collect all people from episodes and display them for the season
@@ -74,23 +71,24 @@ Configure Stingray to look and feel how you want it.
     - Rename "Other-Assets" to "Other Assets"
     - Have ErrorView be a component
     - Move all views into a Views folder
-    - Move DetailMediaView into a dedicated Media Detail folder
+    - Move `DetailMediaView` into a dedicated Media Detail folder
     - Move the player files into a dedicated "player" folder
-    - Abstract metadata and overview in the DetailMediaView to their own views
+    - Abstract metadata and overview in the `DetailMediaView` to their own views
     - Abstract the MovieDetailView into a separate view
-    - Rebrand the DetailMediaView to TVShowDetailView
-  - Remove unused Equatable conformance from MediaCard
+    - Rebrand the `DetailMediaView` to `TVShowDetailView`
+  - Remove unused Equatable conformance from `MediaCard`
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
   - Opening the player description should no longer crash
+  - Fix infinite loading when user signs in the same user multiple times
 - Performance
   - Only calculate blur hash once and store it
     - Improves speed to opening detail media views
     - Massively improves scrolling performance in busy detail media views
     - Improves library loading performance
-  - Only calculate blur hashes in AsyncBlurImage
-    - Media Card now uses AsyncBlurImage
+  - Only calculate blur hashes in `AsyncBlurImage`
+    - Media Card now uses `AsyncBlurImage`
       - This does change the appearance slightly, particularly for 4:3 thumbnails
 
 ## TODO List

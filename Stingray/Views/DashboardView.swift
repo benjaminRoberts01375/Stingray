@@ -114,6 +114,12 @@ public struct DashboardView: View {
                 Task { await self.streamingService.retrieveLibraries() }
             }
         }
+        .task { // Handles case where the user might re-signin
+            guard case .waiting = self.streamingService.libraryStatus
+            else { return }
+            self.selectedTab = "home"
+            await self.streamingService.retrieveLibraries()
+        }
     }
 }
 
