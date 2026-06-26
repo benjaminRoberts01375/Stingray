@@ -14,7 +14,6 @@ public struct ProfilePickerView: View {
     @Binding public var loginState: LoginState
     
     @Environment(UserModel.self) private var userModel
-    @Environment(ThemeModel.self) private var theme
     
     public static let optionSize: CGSize = CGSize(width: 274, height: 335)
     public static let spacing: CGSize = CGSize(width: 60, height: 45)
