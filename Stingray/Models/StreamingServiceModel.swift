@@ -234,7 +234,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
         url: URL,
         username: String,
         password: String,
-        userModel: UserModel
+        userModel: UserModel,
+        settingsModel: SettingsModel
     ) async throws(AccountErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
         let response: APILoginResponse
@@ -242,7 +243,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         do { response = try await networkAPI.login(username: username, password: password) }
         catch { throw AccountErrors.loginFailed(error) }
         
-        return Self.baseLogin(userModel: userModel, response: response, url: url)
+        return Self.baseLogin(userModel: userModel, settingsModel: settingsModel, response: response, url: url)
     }
     
     /// Log into a Jellyfin server using the quick connect feature
@@ -250,23 +251,34 @@ public final class JellyfinModel: StreamingServiceProtocol {
     ///   - url: Base URL.
     ///   - quickConnectSecret: The quick connect secret retrieved by the server
     /// - Returns: The configured Jellyfin model.
-    public static func login(url: URL, quickConnectSecret: String, userModel: UserModel) async throws(QuickConnectErrors) -> JellyfinModel {
+    public static func login(
+        url: URL,
+        quickConnectSecret: String,
+        userModel: UserModel,
+        settingsModel: SettingsModel
+    ) async throws(QuickConnectErrors) -> JellyfinModel {
         let networkAPI = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: url))
         let response: APILoginResponse
         
         do { response = try await networkAPI.login(quickConnectSecret: quickConnectSecret) }
         catch { throw QuickConnectErrors.loginFailed(error) }
 
-        return Self.baseLogin(userModel: userModel, response: response, url: url)
+        return Self.baseLogin(userModel: userModel, settingsModel: settingsModel, response: response, url: url)
     }
     
     /// Handles the business logic of setting up new/existing users
     /// - Parameters:
     ///   - userModel: Location to store the user
+    ///   - settingsModel: Settings to sync to the newly active user
     ///   - response: Server response for this user
     ///   - url: Location of the server
     /// - Returns: Setup login instance
-    private static func baseLogin(userModel: UserModel, response: APILoginResponse, url: URL) -> JellyfinModel {
+    private static func baseLogin(
+        userModel: UserModel,
+        settingsModel: SettingsModel,
+        response: APILoginResponse,
+        url: URL
+    ) -> JellyfinModel {
         if var existingUser = userModel.getUser(id: response.userId) { // User already exists, just update access
             existingUser.serviceType = .Jellyfin(UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId))
             userModel.addUser(existingUser)
@@ -284,6 +296,9 @@ public final class JellyfinModel: StreamingServiceProtocol {
 
             userModel.addUser(newUser)
             userModel.activeUser = newUser
+            // Sync the theme cache to the newly active user so we don't keep showing the previous user's theme
+            settingsModel.themeDark = newUser.darkTheme
+            settingsModel.themeLight = newUser.lightTheme
         }
         return JellyfinModel(response: response, serviceURL: url)
     }

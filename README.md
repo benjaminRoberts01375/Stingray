@@ -93,6 +93,7 @@ Configure Stingray to look and feel how you want it.
 
 ## TODO List
 
+- Rework models to be more modular by using protocols
 ### Media Picker
 
 - [ ] Unwatched media gets a marker.

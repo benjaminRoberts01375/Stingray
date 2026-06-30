@@ -26,6 +26,7 @@ public struct AddServerView: View {
     @State private var jellyfinURL: URL?
     
     @Environment(UserModel.self) public var userModel: UserModel
+    @Environment(SettingsModel.self) public var settings: SettingsModel
     @Environment(\.dismiss) public var dismiss
     
     public init(loginState: Binding<LoginState>) {
@@ -255,14 +256,21 @@ public struct AddServerView: View {
                 // Login using Quick Connect
                 if let quickConnectSecret = quickConnectSecret {
                     let streamingService = try await JellyfinModel.login(
-                        url: jellyfinURL, quickConnectSecret: quickConnectSecret, userModel: self.userModel
+                        url: jellyfinURL,
+                        quickConnectSecret: quickConnectSecret,
+                        userModel: self.userModel,
+                        settingsModel: self.settings
                     )
                     self.loggedIn = .loggedIn(streamingService)
                 }
                 // Login using normal credentials
                 else {
                     let streamingService = try await JellyfinModel.login(
-                        url: jellyfinURL, username: username, password: password, userModel: self.userModel
+                        url: jellyfinURL,
+                        username: username,
+                        password: password,
+                        userModel: self.userModel,
+                        settingsModel: self.settings
                     )
                     self.loggedIn = .loggedIn(streamingService)
                 }
