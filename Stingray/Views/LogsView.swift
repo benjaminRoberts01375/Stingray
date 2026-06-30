@@ -37,7 +37,7 @@ public struct LogsView: View {
                                         Text(log.level.localized)
                                             .foregroundColor({
                                                 switch log.level {
-                                                case .debug: Color.white
+                                                case .debug: nil
                                                 case .info: Color.blue
                                                 case .warning: Color.yellow
                                                 case .error: Color.orange
