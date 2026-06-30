@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 3/11/26.
 //
 
+import Foundation
 import OSLog
 
 /// A nice wrapper around the `Logger` type.
@@ -71,7 +72,9 @@ public final class Log {
 }
 
 /// A single logged value
-public final class LogEntry: Encodable {
+public final class LogEntry: Encodable, Identifiable {
+    /// Stable identity for use in SwiftUI lists.
+    public let id = UUID()
     /// What the log actually says
     public let message: String
     /// The importance of the log
@@ -98,4 +101,26 @@ public enum LogLevel: String, Encodable, CaseIterable {
     case warning = "Warning"
     case error = "Error"
     case critical = "Critical"
+
+    /// A localized, user-facing name for the log level.
+    public var localized: String {
+        switch self {
+        case .debug: return String(localized: "Debug")
+        case .info: return String(localized: "Info")
+        case .warning: return String(localized: "Warning")
+        case .error: return String(localized: "Error")
+        case .critical: return String(localized: "Critical")
+        }
+    }
+
+    /// Importance of the log relative to each other
+    public var severity: Int {
+        switch self {
+        case .debug: return 0
+        case .info: return 1
+        case .warning: return 2
+        case .error: return 3
+        case .critical: return 4
+        }
+    }
 }

@@ -22,7 +22,9 @@ public struct SettingsView: View {
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
     /// Controls the sheet to show the supporting Stingray screen
     @State private var showSupportStingray: Bool = false
-    
+    /// Controlls the sheet to show the current session's logs
+    @State private var showLogs: Bool = false
+
     public let streamingService: StreamingServiceProtocol
     
     public var body: some View {
@@ -184,6 +186,12 @@ public struct SettingsView: View {
                 )
                 .fullScreenCover(isPresented: $showSupportStingray) {
                     SupportStingrayView()
+                        .stingrayBackground()
+                        .ignoresSafeArea()
+                }
+                DoubleButton(label: "Logs", sublabel: "Open Logs...") { self.showLogs = true }
+                .fullScreenCover(isPresented: $showLogs) {
+                    LogsView()
                         .stingrayBackground()
                         .ignoresSafeArea()
                 }
