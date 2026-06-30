@@ -79,6 +79,8 @@ public final class LogEntry: Encodable, Identifiable {
     public let message: String
     /// The importance of the log
     public let level: LogLevel
+
+    public let timestamp: Date
     /// The next log message
     public fileprivate(set) var next: LogEntry?
 
@@ -91,6 +93,7 @@ public final class LogEntry: Encodable, Identifiable {
         self.message = message
         self.level = level
         self.next = next
+        self.timestamp = Date()
     }
 }
 

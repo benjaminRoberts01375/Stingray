@@ -32,7 +32,8 @@ public struct LogsView: View {
                         LazyVStack(alignment: .leading) {
                             ForEach(logEntries) { log in
                                 Button {} label: {
-                                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 16) {
+                                        Text(log.timestamp.formatted(date: .omitted, time: .standard))
                                         Text(log.level.localized)
                                             .foregroundColor({
                                                 switch log.level {
@@ -43,7 +44,7 @@ public struct LogsView: View {
                                                 case .critical: Color.red
                                                 }
                                             }())
-                                            .frame(width: 125, alignment: .leading)
+                                            .frame(width: 125, alignment: .center)
                                         Text(log.message)
                                             .multilineTextAlignment(.leading)
                                         Spacer(minLength: 0)
