@@ -15,6 +15,9 @@ public final class Log {
     /// Hook into system logging
     private let logger: Logger
     
+    /// The most recent log entry
+    public private(set) static var lastLogEntry: LogEntry?
+
     /// Private due to singleton.
     private init() {
         self.logger = Logger(subsystem: "com.benlab.Stingray", category: "StingrayLogging")
@@ -27,6 +30,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func debug(_ message: String) {
         Log.shared.logger.debug("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .debug, next: Log.lastLogEntry)
     }
     
     /// Useful runtime info and app flow - stored briefly.
@@ -35,6 +39,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func info(_ message: String) {
         Log.shared.logger.info("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .info, next: Log.lastLogEntry)
     }
     
     /// Unexpected but recoverable issue cropped up.
@@ -43,6 +48,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func warning(_ message: String) {
         Log.shared.logger.warning("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .warning, next: Log.lastLogEntry)
     }
     
     /// Something failed, but the lights are still on.
@@ -51,6 +57,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func error(_ message: String) {
         Log.shared.logger.error("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .error, next: Log.lastLogEntry)
     }
     
     /// The app can no longer function. Use sparingly.
@@ -59,5 +66,36 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func critical(_ message: String) {
         Log.shared.logger.critical("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .critical, next: Log.lastLogEntry)
     }
+}
+
+/// A single logged value
+public final class LogEntry: Encodable {
+    /// What the log actually says
+    public let message: String
+    /// The importance of the log
+    public let level: LogLevel
+    /// The next log message
+    public fileprivate(set) var next: LogEntry?
+
+    /// Creates a single log entry
+    /// - Parameters:
+    ///   - message: Message to display
+    ///   - level: Importance of the log
+    ///   - next: Next log in the list
+    public init(message: String, level: LogLevel, next: LogEntry?) {
+        self.message = message
+        self.level = level
+        self.next = next
+    }
+}
+
+/// Denotes how important a log is
+public enum LogLevel: String, Encodable, CaseIterable {
+    case debug = "Debug"
+    case info = "Info"
+    case warning = "Warning"
+    case error = "Error"
+    case critical = "Critical"
 }
