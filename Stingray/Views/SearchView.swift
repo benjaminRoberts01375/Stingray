@@ -9,11 +9,13 @@ import SwiftUI
 
 public struct SearchView: View {
     public var streamingService: StreamingServiceProtocol
-    
+
+    @Environment(SettingsModel.self) private var settings: SettingsModel
+
     @State private var searchText: String = ""
     @State private var searchResults: SearchStatus = .empty
     @Binding public var navigation: NavigationPath
-    
+
     public var body: some View {
         ScrollView {
             switch searchResults {
@@ -22,13 +24,13 @@ public struct SearchView: View {
             case .temporarilyNotFound:
                 ProgressView("Not found yet, but we're still getting your media...")
             case .notFound:
-                Text("No results for \"\(searchText)\"")
+                Text("No results for \"\(self.searchText)\"")
             case .empty:
                 EmptyView()
             }
         }
         .searchable(text: $searchText)
-        .onChange(of: searchText) {
+        .onChange(of: self.searchText) {
             self.searchResults = search()
         }
     }
@@ -46,7 +48,7 @@ public struct SearchView: View {
     }
     
     public func search() -> SearchStatus {
-        if searchText.isEmpty { return .empty }
+        if self.searchText.isEmpty { return .empty }
         var scoredMedia: [MediaScore] = []
         
         switch streamingService.libraryStatus {
@@ -63,15 +65,17 @@ public struct SearchView: View {
                         .map {
                             var score: Int
                             var sortTitle = $0.title
-                            if $0.title.lowercased().contains(searchText.lowercased()) { score = 0 }
-                            else { score = $0.title.slidingLevenshteinDistance(to: searchText) }
-                            if score != 0 { // If it's not already a perfect match, search the episodes if there are any
+                            if $0.title.lowercased().contains(self.searchText.lowercased()) { score = 0 }
+                            else { score = $0.title.slidingLevenshteinDistance(to: self.searchText) }
+
+                            // If it's not already a perfect match, search the episodes if there are any
+                            if score != 0 && self.settings.searchEpisodeTitles {
                                 switch $0.mediaType {
                                 case .tv(let seasons):
                                     guard let seasons = seasons else { return MediaScore(media: $0, score: score, sortTitle: $0.title)}
                                     for season in seasons {
                                         for episode in season.episodes {
-                                            score = min(score, episode.title.slidingLevenshteinDistance(to: searchText))
+                                            score = min(score, episode.title.slidingLevenshteinDistance(to: self.searchText))
                                             sortTitle = episode.title
                                             if score == 0 { break }// If it's not already a perfect match, search more episodes
                                         }
@@ -82,7 +86,7 @@ public struct SearchView: View {
                             }
                             return MediaScore(media: $0, score: score, sortTitle: sortTitle)
                         }
-                        .filter { $0.score <= 2 && $0.sortTitle.count >= searchText.count }
+                        .filter { $0.score <= 2 && $0.sortTitle.count >= self.searchText.count }
                 default: break
                 }
             }

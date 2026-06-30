@@ -113,6 +113,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.playbackSpeed = newValue }
     }
     
+    /// Allow searching to look at episode titles to surface relevant results
+    public var searchEpisodeTitles: Bool {
+        get { self.userModel.activeUser?.searchEpisodeTitles ?? false }
+        set(newValue) { self.userModel.activeUser?.searchEpisodeTitles = newValue }
+    }
+
     /// A short password required to show the users's content
     public var pin: String? {
         get { self.userModel.activeUser?.pin }

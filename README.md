@@ -61,11 +61,14 @@ Configure Stingray to look and feel how you want it.
 
 ## TO-DONE List
 
-- UI
-  - Apply the media title shadow directly to the media title
-  - Collect all people from episodes and display them for the season
-    - Not sure what Jellyfin was collecting prior to this, but this is more correct
-  - Don't display people segment if people are unavailable
+- Features
+  - Settings
+    - A new toggle to allow the search tab to search through TV episode titles
+  - UI
+    - Apply the media title shadow directly to the media title
+    - Collect all people from episodes and display them for the season
+      - Not sure what Jellyfin was collecting prior to this, but this is more correct
+    - Don't display people segment if people are unavailable
 - Cleanups
   - Repo Organization
     - Rename "Other-Assets" to "Other Assets"
@@ -94,6 +97,7 @@ Configure Stingray to look and feel how you want it.
 ## TODO List
 
 - Rework models to be more modular by using protocols
+
 ### Media Picker
 
 - [ ] Unwatched media gets a marker.

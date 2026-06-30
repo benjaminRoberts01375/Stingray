@@ -63,6 +63,8 @@ public protocol UserProtocol: Codable {
     var replaceLogosWithText: Bool { get set}
     /// What language the user prefers to read/speak
     var preferredLangauge: Locale? { get set}
+    /// Allow searching to look at episode titles to surface relevant results
+    var searchEpisodeTitles: Bool { get set }
 }
 
 /// Basic data to store about the user
@@ -128,13 +130,14 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
     public var pin: String?
     public var autoplay: Bool
     public var darkTheme: Themes
-    public  var lightTheme: Themes
+    public var lightTheme: Themes
     public var playbackSpeed: PlaybackSpeed
     public var loadThumbnailArt: Bool
     public var loadMediaBackgroundArt: Bool
     public var replaceLogosWithText: Bool
     public var preferredLangauge: Locale?
-    
+    public var searchEpisodeTitles: Bool
+
     public init(
         serviceURL: URL,
         serviceType: ServiceType,
@@ -150,7 +153,8 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         loadThumbnailArt: Bool = true,
         loadMediaBackgroundArt: Bool = true,
         replaceLogosWithText: Bool = false,
-        preferredLanguage: Locale? = nil
+        preferredLanguage: Locale? = nil,
+        searchEpisodeTitles: Bool = false
     ) {
         self.id = id
         self.displayName = displayName
@@ -167,6 +171,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         self.loadMediaBackgroundArt = loadMediaBackgroundArt
         self.replaceLogosWithText = replaceLogosWithText
         self.preferredLangauge = preferredLanguage
+        self.searchEpisodeTitles = searchEpisodeTitles
     }
     
     /// Create a user from encoded JSON.
@@ -191,6 +196,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
             loadMediaBackgroundArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadMediaBackgroundArt)) ?? true
             replaceLogosWithText = (try? container.decodeIfPresent(Bool.self, forKey: .replaceLogosWithText)) ?? false
             preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
+            searchEpisodeTitles = (try? container.decodeIfPresent(Bool.self, forKey: .searchEpisodeTitles)) ?? false
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
