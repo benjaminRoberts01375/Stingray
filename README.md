@@ -69,6 +69,7 @@ Configure Stingray to look and feel how you want it.
     - Collect all people from episodes and display them for the season
       - Not sure what Jellyfin was collecting prior to this, but this is more correct
     - Don't display people segment if people are unavailable
+    - Access to Stingray's logs
 - Cleanups
   - Repo Organization
     - Rename "Other-Assets" to "Other Assets"
