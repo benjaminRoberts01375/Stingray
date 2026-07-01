@@ -29,7 +29,7 @@ public struct LogsView: View {
                 }
                 else {
                     ScrollView(.vertical) {
-                        LazyVStack(alignment: .leading) {
+                        LazyVStack(alignment: .leading, spacing: 8) {
                             ForEach(logEntries) { log in
                                 Button {} label: {
                                     HStack(alignment: .firstTextBaseline, spacing: 16) {
