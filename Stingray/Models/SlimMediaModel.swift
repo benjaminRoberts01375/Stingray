@@ -47,16 +47,6 @@ public protocol MediaImageBlurHashesProtocol {
     var backdrop: String? { get }
 }
 
-/// Denotes the type of image desired. Ex. a horizontal vs vertical movie poster image.
-public enum MediaImageType: String {
-    /// Fancy text of the media's name.
-    case logo = "Logo"
-    /// The most frequently used media image type. A vertical movie poster
-    case primary = "Primary"
-    /// A more action-packed horizontal image of the media
-    case backdrop = "Backdrop"
-}
-
 /// A slimmed down version of the `MediaModel` for faster loading.
 @Observable
 public final class SlimMedia: SlimMediaProtocol, Decodable {

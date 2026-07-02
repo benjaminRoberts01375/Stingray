@@ -31,7 +31,7 @@ public struct MediaCard: View {
     /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
     public init(
         media: any SlimMediaProtocol,
-        streamingService: StreamingServiceProtocol,
+        streamingService: MediaImageProviding,
         navigation: Binding<NavigationPath>? = nil,
         reserveTextSpace: Bool = true
     ) {

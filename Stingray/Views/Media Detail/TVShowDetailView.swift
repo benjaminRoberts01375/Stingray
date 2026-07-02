@@ -33,8 +33,8 @@ public struct TVShowDetailView: View {
             // Background
             if self.settings.loadMediaBackgroundArt {
                 MediaBackgroundView(
-                    media: media,
-                    backgroundImageURL: streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0),
+                    media: self.media,
+                    streamingService: self.streamingService,
                     shouldBlurBackground: $shouldBackgroundBlur
                 )
             }
@@ -44,10 +44,7 @@ public struct TVShowDetailView: View {
                 // Logo and basic metadata
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
-                    MediaLogoView(
-                        media: media,
-                        logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
-                    )
+                    MediaLogoView(media: media, streamingService: self.streamingService)
                     .background(alignment: .bottom) { // Subtle black shadow
                         if self.settings.loadMediaBackgroundArt {
                             let titleShadowSize = 800.0
@@ -474,10 +471,7 @@ fileprivate struct EpisodeView: View {
                         .sheet(isPresented: $showDetails) {
                             VStack {
                                 Spacer()
-                                MediaLogoView(
-                                    media: media,
-                                    logoImageURL: streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
-                                )
+                                MediaLogoView(media: media, streamingService: self.streamingService)
                                 .padding()
                                 Spacer()
                                 Text(overview)

@@ -23,13 +23,13 @@ public struct MediaBackgroundView: View {
     /// Sets up an image that first shows a blurry background, then the loaded image
     /// - Parameters:
     ///   - media: Media to load blur from
-    ///   - backgroundImageURL: Image to load
+    ///   - streamingService: Location to load the image from
     ///   - shouldBlurBackground: Track if the loaded image should be blurred
-    public init(media: any MediaProtocol, backgroundImageURL: URL?, shouldBlurBackground: Binding<Bool>) {
+    public init(media: any MediaProtocol, streamingService: MediaImageProviding, shouldBlurBackground: Binding<Bool>) {
         self.fadeBackgroundIn = 0
         self._shouldBlurBackground = shouldBlurBackground
         self.media = media
-        self.backgroundImageURL = backgroundImageURL
+        self.backgroundImageURL = streamingService.getImageURL(imageType: .backdrop, mediaID: media.id, width: 0)
     }
 
     public var body: some View {

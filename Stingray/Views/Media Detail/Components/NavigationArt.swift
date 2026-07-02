@@ -11,7 +11,6 @@ import SwiftUI
 // MARK: Episode Art
 public struct MediaArtView: View {
     private let media: any Displayable
-    private let streamingService: any StreamingServiceProtocol
     private let title: String
     private let imageURL: URL?
     
@@ -19,9 +18,8 @@ public struct MediaArtView: View {
     @Environment(SettingsModel.self) private var settings
     @State private var imageOpacity: Double = 0
     
-    public init(media: any Displayable, streamingService: any StreamingServiceProtocol, title: String) {
+    public init(media: any Displayable, streamingService: any MediaImageProviding, title: String) {
         self.media = media
-        self.streamingService = streamingService
         self.title = title
         self.imageURL = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800)
     }

@@ -8,7 +8,7 @@
 import Foundation
 
 /// A basic protocol for must-have streaming-service related content
-public protocol StreamingServiceBasicProtocol {
+public protocol StreamingServiceBasicProtocol: MediaImageProviding {
     /// Retrieves a list of recently added media
     /// - Parameter contentType: The type of media to retrieve
     /// - Returns: All slim versions of media found
@@ -17,14 +17,6 @@ public protocol StreamingServiceBasicProtocol {
     /// Retrieves a list of the media slated for up next
     /// - Returns: All slim versions of media found
     func retrieveUpNext() async -> [SlimMedia]
-    
-    /// Formats a URL based on a piece of media
-    /// - Parameters:
-    ///   - imageType: Shape of image
-    ///   - mediaID: The mediaID of the media to get the image for
-    ///   - width: Target width of hte image
-    /// - Returns: A formatted URL to the image
-    func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL?
 }
 
 /// Denotes types of desired media for recently added content
@@ -35,4 +27,25 @@ public enum RecentlyAddedMediaType {
     case tv
     /// Get a list of all recently added content
     case all
+}
+
+/// Requires this type to be able to request an image
+public protocol MediaImageProviding {
+    /// Formats a URL based on a piece of media
+    /// - Parameters:
+    ///   - imageType: Shape of image
+    ///   - mediaID: The mediaID of the media to get the image for
+    ///   - width: Target width of hte image
+    /// - Returns: A formatted URL to the image
+    func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL?
+}
+
+/// Denotes the type of image desired. Ex. a horizontal vs vertical movie poster image.
+public enum MediaImageType: String {
+    /// Fancy text of the media's name.
+    case logo = "Logo"
+    /// The most frequently used media image type. A vertical movie poster
+    case primary = "Primary"
+    /// A more action-packed horizontal image of the media
+    case backdrop = "Backdrop"
 }

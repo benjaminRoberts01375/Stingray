@@ -10,12 +10,21 @@ import SwiftUI
 public struct PeopleBrowserView: View {
     /// Media to pull people from
     public let people: [any MediaPersonProtocol]
-    public let streamingService: any StreamingServiceProtocol
-    
+    public let streamingService: MediaImageProviding
+
     @Environment(ThemeModel.self) private var theme
     
     @FocusState private var focusedActor: String?
     
+    /// Displays a list of people's photos, names, and roles
+    /// - Parameters:
+    ///   - people: People to render
+    ///   - streamingService: Location to load media from
+    init(people: [any MediaPersonProtocol], streamingService: MediaImageProviding) {
+        self.people = people
+        self.streamingService = streamingService
+    }
+
     public var body: some View {
         ScrollView(.horizontal) {
             LazyHStack {
@@ -25,7 +34,7 @@ public struct PeopleBrowserView: View {
                             AsyncBlurImage(
                                 blurHash: person.imageHashes?.primary,
                                 blurSize: CGSize(width: 30, height: 45),
-                                imageURL: streamingService.getImageURL(imageType: .primary, mediaID: person.id, width: 600)
+                                imageURL: self.streamingService.getImageURL(imageType: .primary, mediaID: person.id, width: 600)
                             )
                             .frame(width: 350, height: 600)
                             .clipShape(RoundedRectangle(cornerRadius: 16))

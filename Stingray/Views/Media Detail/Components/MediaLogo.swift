@@ -11,11 +11,21 @@ public struct MediaLogoView: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
     
-    @State private var logoOpacity: Double = 0
+    @State private var logoOpacity: Double
     
     public let media: any MediaProtocol
     public let logoImageURL: URL?
     
+    /// Displays the logo for some media type
+    /// - Parameters:
+    ///   - media: Media to display the logo for
+    ///   - streamingService: Streaming service to load image from
+    public init(media: any MediaProtocol, streamingService: MediaImageProviding) {
+        self.logoOpacity = 0
+        self.media = media
+        self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
+    }
+
     public var body: some View {
         VStack(spacing: 15) {
             if logoImageURL != nil && !self.settings.replaceLogosWithText {
