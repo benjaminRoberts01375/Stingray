@@ -38,3 +38,27 @@ public struct ThemeExampleView: View {
         .focusable(false)
     }
 }
+
+/// Load example art work
+fileprivate final class ExampleStreamingService: MediaImageProviding {
+    public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
+        let poster: String = [
+            "Agent-poster",
+            "BBB-poster",
+            "Charge-poster",
+            "Coffee-poster",
+            "Cosmos-poster",
+            "Glass-poster",
+            "Hero-poster",
+            "Llama-poster",
+            "Llama3-poster",
+            "SF-poster",
+            "Sintel-poster",
+            "Spring-poster",
+            "TOS-poster",
+            "WingIt-poster"
+        ].randomElement() ?? "Agent-poster"
+        Log.debug("Loaded poster: \(poster)")
+        return Bundle.main.url(forResource: poster, withExtension: "jpg")
+    }
+}
