@@ -8,38 +8,11 @@
 import AVKit
 import UIKit
 
-public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol, SystemInfoProviding, LibraryProviding {
+public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol, SystemInfoProviding, LibraryProviding, PlayerProviding {
     /// The name of the user.
     var usersName: String { get }
     /// The server ID of the user.
     var userID: String { get }
-    /// Track the current playback progress.
-    var playerProgress: PlayerProtocol? { get }
-    
-    /// Setup playback, informs the server about playback status
-    /// - Parameters:
-    ///   - mediaSource: Media source being watched.
-    ///   - videoID: Video stream ID.
-    ///   - audioID: Audio stream ID.
-    ///   - subtitleID: Subtitle stream ID. Nil = no subtitles.
-    ///   - bitrate: Target video bitrate of the stream. Nil = unlimited bitrate
-    ///   - title: Title of the media to put on the player.
-    ///   - subtitle: Subtitle, if available, to put on the player.
-    ///   - player: An AVPlayer instance to update and use.
-    /// - Returns: Playback device.
-    func playbackStart(
-        mediaSource: any MediaSourceProtocol,
-        videoID: String,
-        audioID: String,
-        subtitleID: String?,
-        bitrate: Int?,
-        title: String,
-        subtitle: String?,
-        player: AVPlayer
-    )
-    
-    /// Inform the server that playback has ended
-    func playbackEnd()
     
     /// Link a media ID to a `MediaModel`.
     /// - Parameters:
@@ -87,6 +60,37 @@ public enum LibraryStatus {
     case complete([LibraryModel])
     /// The library has errored out
     case error(RError)
+}
+
+/// Holds info about media currently playing
+public protocol PlayerProviding {
+    /// Track the current playback progress.
+    var playerProgress: PlayerProtocol? { get }
+
+    /// Setup playback, informs the server about playback status
+    /// - Parameters:
+    ///   - mediaSource: Media source being watched.
+    ///   - videoID: Video stream ID.
+    ///   - audioID: Audio stream ID.
+    ///   - subtitleID: Subtitle stream ID. Nil = no subtitles.
+    ///   - bitrate: Target video bitrate of the stream. Nil = unlimited bitrate
+    ///   - title: Title of the media to put on the player.
+    ///   - subtitle: Subtitle, if available, to put on the player.
+    ///   - player: An AVPlayer instance to update and use.
+    /// - Returns: Playback device.
+    func playbackStart(
+        mediaSource: any MediaSourceProtocol,
+        videoID: String,
+        audioID: String,
+        subtitleID: String?,
+        bitrate: Int?,
+        title: String,
+        subtitle: String?,
+        player: AVPlayer
+    )
+
+    /// Inform the server that playback has ended
+    func playbackEnd()
 }
 
 /// Denotes the availablity of a piece of media

@@ -104,8 +104,8 @@ fileprivate struct PlayerDescriptionView: View {
 // MARK: People Tab
 fileprivate struct PlayerPeopleView: View {
     let people: [any MediaPersonProtocol]
-    let streamingService: any StreamingServiceProtocol
-    
+    let streamingService: MediaImageProviding
+
     var body: some View {
         PeopleBrowserView(people: self.people, streamingService: self.streamingService)
             .padding()
@@ -340,7 +340,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 playerTabs.append(peopleTab)
             case .tv(let seasons):
                 guard let seasons = seasons else { break }
-                for season in seasons {
+                for season in seasons { // Find this episode's people
                     for episode in season.episodes {
                         if let mediaSource = episode.mediaSources.first, mediaSource.id == self.vm.mediaSourceID {
                             let peopleTab = UIHostingController(

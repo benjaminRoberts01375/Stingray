@@ -49,7 +49,7 @@ public final class PlayerViewModel: Hashable {
     public var transportBarNeedsUpdate: Bool = false
     
     /// Server to stream from
-    @ObservationIgnored public let streamingService: any StreamingServiceProtocol
+    @ObservationIgnored public let streamingService: PlayerProviding & MediaImageProviding
     /// Seasons of a TV show if available (may be a movie)
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
     /// Store and restore the current navigation path
