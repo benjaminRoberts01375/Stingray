@@ -20,7 +20,7 @@ public struct PeopleBrowserView: View {
     /// - Parameters:
     ///   - people: People to render
     ///   - streamingService: Location to load media from
-    init(people: [any MediaPersonProtocol], streamingService: MediaImageProviding) {
+    public init(people: [any MediaPersonProtocol], streamingService: MediaImageProviding) {
         self.people = people
         self.streamingService = streamingService
     }

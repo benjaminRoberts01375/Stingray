@@ -8,8 +8,8 @@
 import SwiftUI
 
 public struct HomeView: View {
-    public let streamingService: StreamingServiceProtocol
-    
+    public let streamingService: RecommendationProviding & MediaImageProviding & SystemInfoProviding & LibraryProviding
+
     @State private var dashboardCache: [String: [SlimMedia]] = [:]
     @Binding public var navigation: NavigationPath
     
@@ -17,47 +17,47 @@ public struct HomeView: View {
         VStack(alignment: .leading) {
             DashboardRow(
                 rowType: .nextUp,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
             ) {
-                await streamingService.retrieveUpNext()
+                await self.streamingService.retrieveUpNext()
             }
             .focusSection()
             
             DashboardRow(
                 rowType: .recentlyAdded,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
             ) {
-                await streamingService.retrieveRecentlyAdded(.all)
+                await self.streamingService.retrieveRecentlyAdded(.all)
             }
             .focusSection()
             
             DashboardRow(
                 rowType: .latestMovies,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
             ) {
-                await streamingService.retrieveRecentlyAdded(.movie)
+                await self.streamingService.retrieveRecentlyAdded(.movie)
             }
             .focusSection()
             
             DashboardRow(
                 rowType: .latestShows,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 cache: $dashboardCache,
                 navigation: $navigation
             ) {
-                await streamingService.retrieveRecentlyAdded(.tv)
+                await self.streamingService.retrieveRecentlyAdded(.tv)
             }
             .focusSection()
             
             VStack {
-                SystemInfoView(streamingService: streamingService)
-                LibrariesInfoView(streamingService: streamingService)
+                SystemInfoView(streamingService: self.streamingService)
+                LibrariesInfoView(streamingService: self.streamingService)
             }
             .frame(maxWidth: .infinity)
             .padding(.top)
@@ -92,7 +92,7 @@ fileprivate enum HomeRow: Identifiable {
 
 fileprivate struct DashboardRow: View {
     let rowType: HomeRow
-    let streamingService: StreamingServiceProtocol
+    let streamingService: RecommendationProviding & MediaImageProviding
     @Binding var cache: [String: [SlimMedia]]
     @Binding var navigation: NavigationPath
     let fetchMedia: () async -> [SlimMedia]
@@ -128,7 +128,7 @@ fileprivate struct DashboardRow: View {
             case .unstarted, .retrieving:
                 MediaNavigationLoadingPicker()
             case .complete(let newMedia):
-                MediaPicker(streamingService: streamingService, pickerMedia: newMedia, navigation: $navigation)
+                MediaPicker(streamingService: self.streamingService, pickerMedia: newMedia, navigation: $navigation)
             case .empty:
                 EmptyView()
             }
@@ -146,7 +146,7 @@ fileprivate struct DashboardRow: View {
 }
 
 fileprivate struct MediaPicker: View {
-    var streamingService: StreamingServiceProtocol
+    var streamingService: MediaImageProviding
     let pickerMedia: [SlimMedia]
     
     @Binding var navigation: NavigationPath
@@ -155,7 +155,7 @@ fileprivate struct MediaPicker: View {
         ScrollView(.horizontal) {
             LazyHStack {
                 ForEach(pickerMedia) { media in
-                    MediaCard(media: media, streamingService: streamingService, navigation: $navigation)
+                    MediaCard(media: media, streamingService: self.streamingService, navigation: $navigation)
                 }
             }
         }
@@ -245,8 +245,8 @@ public struct MediaNavigationLoadingCard: View {
 }
 
 public struct SystemInfoView: View {
-    public let streamingService: any StreamingServiceProtocol
-    
+    public let streamingService: any SystemInfoProviding
+
     public var body: some View {
         // Display Stingray and Jellyfin server versions
         HStack(alignment: .center, spacing: 0) {
@@ -283,8 +283,8 @@ public struct SystemInfoView: View {
 
 public struct LibrariesInfoView: View {
     /// Streaming service containing libraries
-    public let streamingService: any StreamingServiceProtocol
-    
+    public let streamingService: LibraryProviding
+
     @State private var movieCount: Int = 0
     
     public var body: some View {

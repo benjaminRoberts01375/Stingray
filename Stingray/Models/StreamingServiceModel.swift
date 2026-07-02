@@ -8,24 +8,13 @@
 import AVKit
 import UIKit
 
-public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
-    /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
-    var libraryStatus: LibraryStatus { get }
+public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol, SystemInfoProviding, LibraryProviding {
     /// The name of the user.
     var usersName: String { get }
     /// The server ID of the user.
     var userID: String { get }
-    /// The name of the server.
-    var serverName: String? { get }
-    /// The server's version. Ex. 10.2.1
-    var serverVersion: String? { get }
-    /// Base path of the service.
-    var serviceURL: URL { get }
     /// Track the current playback progress.
     var playerProgress: PlayerProtocol? { get }
-    
-    /// Download library data.
-    func retrieveLibraries() async
     
     /// Setup playback, informs the server about playback status
     /// - Parameters:
@@ -65,6 +54,25 @@ public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     
     /// Logout the current user
     func logout() async
+}
+
+/// Basic information about the connected server
+public protocol SystemInfoProviding {
+    /// Name of the server
+    var serverName: String? { get }
+    /// Version of software the server is running
+    var serverVersion: String? { get }
+    /// Base path of the service.
+    var serviceURL: URL { get }
+}
+
+/// Holds information about the available libraries
+public protocol LibraryProviding {
+    /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
+    var libraryStatus: LibraryStatus { get }
+
+    /// Download library data.
+    func retrieveLibraries() async
 }
 
 /// Describes the current setup status for a downloaded library
