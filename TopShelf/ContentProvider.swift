@@ -81,7 +81,7 @@ class ContentProvider: TVTopShelfContentProvider {
         case poster     // For vertical/portrait images (Recently Added)
     }
     
-    private func createTopShelfItem(from media: SlimMedia, streamingModel: StreamingServiceBasicProtocol, imageStyle: ImageStyle) -> TVTopShelfSectionedItem? {
+    private func createTopShelfItem(from media: MediaModelRepresentable, streamingModel: StreamingServiceBasicProtocol, imageStyle: ImageStyle) -> TVTopShelfSectionedItem? {
         // Create the content identifier for deep linking into your app
         let mediaID = media.id
         

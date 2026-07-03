@@ -108,7 +108,7 @@ public protocol AdvancedNetworkProtocol {
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
-    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia]
+    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable]
     /// Generates a URL to get the user's profile image
     /// - Parameters:
     ///   - userID: ID of the user
@@ -711,7 +711,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     public func getRecentlyAdded(
         contentType: RecentlyAddedMediaType,
         accessToken: String
-    ) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
+    ) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable] {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
@@ -739,9 +739,9 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
-    public func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia] {
+    public func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable] {
         struct Root: Decodable {
-            let Items: [SlimMedia]
+            let Items: [MediaModelRepresentable]
         }
         
         let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]

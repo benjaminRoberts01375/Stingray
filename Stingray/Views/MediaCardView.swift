@@ -18,7 +18,7 @@ public struct MediaCard: View {
     
     public static let cardSize = CGSize(width: 200, height: 370)
     
-    public let media: any SlimMediaProtocol
+    public let media: any MediaRepresentableProtocol
     public let url: URL?
     public let reserveTextSpace: Bool
     
@@ -30,7 +30,7 @@ public struct MediaCard: View {
     ///   - reserveTextSpace: Allow the MediaCard to reserve the maximum amount of space for text
     /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
     public init(
-        media: any SlimMediaProtocol,
+        media: any MediaRepresentableProtocol,
         streamingService: MediaImageProviding,
         navigation: Binding<NavigationPath>? = nil,
         reserveTextSpace: Bool = true
@@ -45,10 +45,8 @@ public struct MediaCard: View {
         Button { if self.media.errors == nil {
             if let media = self.media as? (any MediaProtocol) { // Shortcut
                 self.navigation.append(AnyMedia(media: media))
-                Log.info("Shortcut")
                 return
             }
-            Log.info("Longcut")
             self.navigation.append(self.media) }
         }
         label: {

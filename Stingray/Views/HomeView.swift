@@ -10,7 +10,7 @@ import SwiftUI
 public struct HomeView: View {
     public let streamingService: RecommendationProviding & MediaImageProviding & SystemInfoProviding & LibraryProviding
 
-    @State private var dashboardCache: [String: [SlimMedia]] = [:]
+    @State private var dashboardCache: [String: [MediaModelRepresentable]] = [:]
     @Binding public var navigation: NavigationPath
     
     public var body: some View {
@@ -93,10 +93,10 @@ fileprivate enum HomeRow: Identifiable {
 fileprivate struct DashboardRow: View {
     let rowType: HomeRow
     let streamingService: RecommendationProviding & MediaImageProviding
-    @Binding var cache: [String: [SlimMedia]]
+    @Binding var cache: [String: [MediaModelRepresentable]]
     @Binding var navigation: NavigationPath
-    let fetchMedia: () async -> [SlimMedia]
-    
+    let fetchMedia: () async -> [MediaModelRepresentable]
+
     @State private var status: DashboardRowStatus = .unstarted
     
     @Environment(ThemeModel.self) private var theme
@@ -140,14 +140,14 @@ fileprivate struct DashboardRow: View {
     enum DashboardRowStatus {
         case unstarted
         case retrieving
-        case complete([SlimMedia])
+        case complete([MediaModelRepresentable])
         case empty
     }
 }
 
 fileprivate struct MediaPicker: View {
     var streamingService: MediaImageProviding
-    let pickerMedia: [SlimMedia]
+    let pickerMedia: [MediaModelRepresentable]
     
     @Binding var navigation: NavigationPath
     

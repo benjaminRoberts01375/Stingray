@@ -27,7 +27,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
         }
     }
     
-    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable] {
         do {
             return try await networkAPI.getRecentlyAdded(accessToken: accessToken)
         } catch {
@@ -35,7 +35,7 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
         }
     }
     
-    public func retrieveUpNext() async -> [SlimMedia] {
+    public func retrieveUpNext() async -> [MediaModelRepresentable] {
         do {
             guard let upNext = try await networkAPI.getUpNext(accessToken: accessToken).first else { return [] }
             return [upNext]

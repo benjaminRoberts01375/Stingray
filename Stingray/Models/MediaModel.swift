@@ -10,7 +10,7 @@ import Foundation
 // MARK: Protocols
 
 /// Define the shape of a piece of media
-public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
+public protocol MediaProtocol: Identifiable, MediaRepresentableProtocol, Hashable {
     /// Short descriptor of the media.
     var tagline: String { get }
     /// Long descriptor of the media.

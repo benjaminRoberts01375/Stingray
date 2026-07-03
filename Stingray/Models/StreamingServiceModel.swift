@@ -421,13 +421,13 @@ public final class JellyfinModel: StreamingServiceProtocol {
         }
     }
     
-    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable] {
         do {
             return try await networkAPI.getRecentlyAdded(contentType: contentType, accessToken: accessToken)
         } catch { return [] }
     }
     
-    public func retrieveUpNext() async -> [SlimMedia] {
+    public func retrieveUpNext() async -> [MediaModelRepresentable] {
         do {
             return try await networkAPI.getUpNext(accessToken: accessToken)
         } catch {

@@ -71,10 +71,10 @@ public struct DashboardView: View {
                 navigation: $navigationPath
             )
         }
-        .navigationDestination(for: SlimMedia.self) { slimMedia in
+        .navigationDestination(for: MediaModelRepresentable.self) { representableMedia in
             MediaDetailLoader(
-                mediaID: slimMedia.id,
-                parentID: slimMedia.parentID,
+                mediaID: representableMedia.id,
+                parentID: representableMedia.parentID,
                 streamingService: streamingService,
                 navigation: $navigationPath
             )
