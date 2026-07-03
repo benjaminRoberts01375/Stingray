@@ -71,15 +71,17 @@ public final class MediaModelRepresentable: MediaRepresentableProtocol, Decodabl
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? (
-            (try? container.decodeIfPresent(String.self, forKey: .seriesID)) ??
+        // Prefer the series identity when present (e.g. NextUp returns episodes, but we
+        // want the containing show). Fallback to the actual ID
+        self.id = (try? container.decodeIfPresent(String.self, forKey: .seriesID)) ?? (
+            (try? container.decodeIfPresent(String.self, forKey: .id)) ??
             UUID().uuidString
         )
 
         self.parentID = try? container.decodeIfPresent(String.self, forKey: .parentID)
 
-        self.title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? (
-            (try? container.decodeIfPresent(String.self, forKey: .seriesTitle))
+        self.title = (try? container.decodeIfPresent(String.self, forKey: .seriesTitle)) ?? (
+            (try? container.decodeIfPresent(String.self, forKey: .title))
             ?? "Unknown Title"
         )
 
