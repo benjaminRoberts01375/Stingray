@@ -185,12 +185,6 @@ public struct MediaDetailLoader: View {
                 mediaSources: movies,
                 navigation: $navigation
             )
-            default:
-                VStack {
-                    Text("Media type is incompatible with Stingray")
-                    Text("You may need to regenerate this library in Jellyfin if it is old or corrupted.")
-                        .foregroundStyle(.tertiary)
-                }
             }
         case .temporarilyNotFound:
             ProgressView("Loading libraries...")

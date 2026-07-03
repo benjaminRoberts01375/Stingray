@@ -103,8 +103,11 @@ public protocol AdvancedNetworkProtocol {
     ///   - contentType: Type of media to retrieve
     ///   - accessToken: Access token for the server
     /// - Returns: A silm verion of the media type
-    func getRecentlyAdded(contentType: RecentlyAddedMediaType, accessToken: String) async throws(AdvancedNetworkErrors) -> [SlimMedia]
-    
+    func getRecentlyAdded(
+        contentType: RecentlyAddedMediaType,
+        accessToken: String
+    ) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable]
+
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
@@ -435,6 +438,11 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             
             enum CodingKeys: String, CodingKey {
                 case items = "Items"
+            }
+
+            init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.items = container.decodeAllAvailable([MediaModel].self, forKey: .items)
             }
         }
         var params : [URLQueryItem] = [

@@ -7,38 +7,28 @@
 
 import Foundation
 
-/// An extension to offer safer alternatives to decoding
-extension KeyedDecodingContainer {
-    /// Decoding made safe.
+/// Enable fail-safe array decoding
+public extension KeyedDecodingContainer {
+    /// Decodes an array, skipping any elements that fail to decode instead of
+    /// throwing for the whole array. Returns an empty array if the key is
+    /// missing or the container itself can't be found.
     /// - Parameters:
-    ///   - type: Type to decode to
-    ///   - key: JSON key to decode
-    ///   - defaultValue: Fallback value to use if unable to decode
-    ///   - errBucket: Bucket to append errors to
-    ///   - errLabel: Label denoting the object which owns this key
-    ///   - required: The field is a required field, and will add an error if missing. Default is true
-    /// - Returns: The decoded value for the given key, if possible
-    public func decodeFieldSafely<T: Decodable>(
-        _ type: T.Type,
-        forKey key: Key,
-        default defaultValue: T,
-        errBucket: inout [RError],
-        errLabel: String,
-        required: Bool = true,
-    ) -> T {
-        do {
-            return try decodeIfPresent(type, forKey: key) ?? {
-                if required { throw JSONError.missingKey(key.description, errLabel) }
-                return defaultValue
-            }()
-        }
-        catch let error as JSONError { // Missing key
-            errBucket.append(error)
-            return defaultValue
-        }
-        catch { // Generic JSON decode error
-            errBucket.append(JSONError.failedJSONDecode(key.description, error))
-            return defaultValue
+    ///   - type: The element type to decode.
+    ///   - key: The key containing the array.
+    /// - Returns: Successfully decoded elements; failures are dropped.
+    func decodeAllAvailable<T: Decodable>(_ type: [T].Type, forKey key: Key) -> [T] {
+        guard let wrapped = try? decode([LossyElement<T>].self, forKey: key)
+        else { return [] }
+        return wrapped.compactMap { $0.value }
+    }
+
+    /// Wraps a decode attempt for a single element, capturing failure instead of propagating it.
+    private struct LossyElement<T: Decodable>: Decodable {
+        let value: T?
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            self.value = try? container.decode(T.self)
         }
     }
 }

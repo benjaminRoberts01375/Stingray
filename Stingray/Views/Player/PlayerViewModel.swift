@@ -18,8 +18,6 @@ public final class PlayerViewModel: Hashable {
     public var mediaSourceID: String {
         didSet {
             switch self.media.mediaType {
-            case .unknown:
-                break
             case .movies(let mediaSources):
                 self.mediaSource = mediaSources.first { $0.id == self.mediaSourceID } ?? self.mediaSource
                 return
@@ -150,7 +148,6 @@ public final class PlayerViewModel: Hashable {
         case .movies(let sources):
             title = self.media.title
             if sources.count > 1 { subtitle = self.mediaSource.name }
-        default: title = self.media.title
         }
         
         // Setup stream IDs

@@ -42,12 +42,12 @@ public struct MediaCard: View {
     }
     
     public var body: some View {
-        Button { if self.media.errors == nil {
+        Button {
             if let media = self.media as? (any MediaProtocol) { // Shortcut
                 self.navigation.append(AnyMedia(media: media))
                 return
             }
-            self.navigation.append(self.media) }
+            self.navigation.append(self.media)
         }
         label: {
             VStack(spacing: 0) {
@@ -87,24 +87,9 @@ public struct MediaCard: View {
                     Spacer(minLength: 0)
                 }
             }
-            .background {
-                if !(self.media.errors?.isEmpty ?? true) {
-                    Color.red.opacity(0.25)
-                }
-            }
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
-        .contextMenu {
-            if self.media.errors != nil {
-                Button("Show Error", systemImage: "exclamationmark.octagon", role: .destructive) { self.showError = true }
-            }
-        }
-        .sheet(isPresented: $showError) {
-            if let errors = self.media.errors {
-                ErrorExpandedView(errorDesc: errors.rDescription)
-            }
-        }
         .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
     }
 }

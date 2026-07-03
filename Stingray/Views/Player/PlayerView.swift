@@ -77,8 +77,7 @@ fileprivate struct PlayerDescriptionView: View {
                 .availableGlass()
                 
                 switch media.mediaType {
-                case .movies, .unknown:
-                    EmptyView()
+                case .movies: EmptyView()
                 case .tv(let seasons):
                     if let seasons = seasons,
                        let episode = (seasons.flatMap(\.episodes).first { $0.mediaSources.first?.id == self.mediaSource.id }),
@@ -354,7 +353,6 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                         }
                     }
                 }
-            default: break
             }
         }
         
