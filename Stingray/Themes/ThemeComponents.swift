@@ -39,7 +39,11 @@ public struct StingrayFormButtonStyle: ButtonStyle {
                 .padding(.vertical, 15)
                 .frame(maxWidth: .infinity)
                 .background {
-                    Capsule()
+                    let shape: AnyShape = {
+                        if SystemInfoView.tvModel == "AppleTV5,3" || SystemInfoView.tvModel == "AppleTV6,2" { AnyShape(RoundedRectangle(cornerRadius: 12)) }
+                        else { AnyShape(Capsule()) }
+                    }()
+                    shape
                         .fill(isFocused ? AnyShapeStyle(Color.white) : self.theme.currentTheme.buttonBackground)
                         .shadow(color: .black.opacity(isFocused ? 0.45 : 0), radius: isFocused ? 15 : 0, y: isFocused ? 16 : 0)
                 }

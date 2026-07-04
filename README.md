@@ -70,6 +70,7 @@ Configure Stingray to look and feel how you want it.
       - Not sure what Jellyfin was collecting prior to this, but this is more correct
     - Don't display people segment if people are unavailable
     - Access to Stingray's logs
+    - Change roundness of buttons in the settings menu based on the Apple TV model
 - Cleanups
   - Repo Organization
     - Rename "Other-Assets" to "Other Assets"
@@ -99,6 +100,7 @@ Configure Stingray to look and feel how you want it.
     - Media Card now uses `AsyncBlurImage`
       - This does change the appearance slightly, particularly for 4:3 thumbnails
   - Only calculate profile images once per load
+  - Only calculate Apple TV model once and cache it
 
 ## TODO List
 
