@@ -483,8 +483,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                             let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
                             return (index, seasons)
                         }
-                    default:
-                        break
+                    default: break
                     }
                 }
                 do {
@@ -496,15 +495,11 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             let medias: [MediaModel] = response.items.map { media in
                 switch media.mediaType {
                 case .tv(let seasons):
-                    var people: [any MediaPersonProtocol] = media.people
-                    for season in seasons ?? [] {
-                        for episode in season.episodes {
-                            for person in episode.people where !people.contains(where: { $0.id == person.id }) {
-                                people.append(person)
-                            }
-                        }
-                    }
-                    media.people = people
+                    // Check all episodes for all people and combine it with existing people
+                    let allPeople = media.people + (seasons ?? []).flatMap(\.episodes).flatMap(\.people)
+                    // If we can combine it into the seenPersonIDs, add it to the people list
+                    var seenPersonIDs = Set<String>()
+                    media.people = allPeople.filter { seenPersonIDs.insert($0.id).inserted }
                     return media
                 default: return media
                 }
