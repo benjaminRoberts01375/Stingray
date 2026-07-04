@@ -42,9 +42,9 @@ public struct LibraryView: View {
 
 public struct MediaGridView: View {
     public static let cardSpacing = 50.0
-    public let allMedia: [any MediaProtocol]
-    public let streamingService: any StreamingServiceProtocol
-    
+    public let allMedia: [any MediaRepresentableProtocol]
+    public let streamingService: any MediaImageProviding
+
     @Binding public var navigation: NavigationPath
     
     private static let columns = [
