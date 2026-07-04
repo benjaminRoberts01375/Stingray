@@ -14,7 +14,7 @@ public struct MovieDetailView: View {
     /// Media that contains content to play
     public let media: any MediaProtocol
     /// Streaming service the user is using
-    public let streamingService: any StreamingServiceProtocol
+    public let streamingService: MediaImageProviding & PlayerProviding & MediaProviding
     /// All available content sources for this movie and its various versions
     public let mediaSources: [any MediaSourceProtocol]
     
@@ -112,7 +112,7 @@ public struct MovieDetailView: View {
 // MARK: Play button
 fileprivate struct PlayNavigationView: View {
     private let media: any MediaProtocol
-    private let streamingService: any StreamingServiceProtocol
+    private let streamingService: PlayerProviding & MediaImageProviding
     private var title: String
     private let mediaSources: [any MediaSourceProtocol]
     
@@ -124,7 +124,7 @@ fileprivate struct PlayNavigationView: View {
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
         mediaSources: [any MediaSourceProtocol],
-        streamingService: any StreamingServiceProtocol
+        streamingService: PlayerProviding & MediaImageProviding
     ) {
         self._navigation = navigation
         self.media = media

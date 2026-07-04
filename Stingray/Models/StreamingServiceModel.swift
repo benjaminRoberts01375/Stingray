@@ -8,20 +8,6 @@
 import AVKit
 import UIKit
 
-public protocol StreamingServiceProtocol:
-    StreamingServiceBasicProtocol, SystemInfoProviding, LibraryProviding, PlayerProviding, UserProviding {
-    /// Link a media ID to a `MediaModel`.
-    /// - Parameters:
-    ///   - mediaID: Media ID to search for.
-    ///   - parentID: Parent the Media ID is a part of (if available).
-    /// - Returns: The found media, noting if the library is not yet finished fetching.
-    func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
-    
-    /// Fetch the special features for media.
-    /// - Parameter media: Media to fetch for.
-    func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
-}
-
 /// Basic information about the connected server
 public protocol SystemInfoProviding {
     /// Name of the server
@@ -97,6 +83,20 @@ public protocol UserProviding {
     func logout() async
 }
 
+/// Loading media functions
+public protocol MediaProviding {
+    /// Link a media ID to a `MediaModel`.
+    /// - Parameters:
+    ///   - mediaID: Media ID to search for.
+    ///   - parentID: Parent the Media ID is a part of (if available).
+    /// - Returns: The found media, noting if the library is not yet finished fetching.
+    func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
+
+    /// Fetch the special features for media.
+    /// - Parameter media: Media to fetch for.
+    func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
+}
+
 /// Denotes the availablity of a piece of media
 public enum MediaLookupStatus {
     /// The requested media was found
@@ -163,7 +163,8 @@ public final class JellyfinQuickConnectModel {
 
 /// A harness for connecting to Jellyfin.
 @Observable
-public final class JellyfinModel: StreamingServiceProtocol {
+public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerProviding, UserProviding, MediaProviding,
+                                    MediaImageProviding, RecommendationProviding {
     /// Network used to connect to Jellyfin
     public var networkAPI: AdvancedNetworkProtocol
     /// Status for downloading the library.

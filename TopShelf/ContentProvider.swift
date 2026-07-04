@@ -10,7 +10,7 @@ import TVServices
 class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
-        let streamingModel: StreamingServiceBasicProtocol
+        let streamingModel: MediaImageProviding & RecommendationProviding
         let userModel: UserModel
         do {
             let storage = try HybridBasicStorage()
@@ -21,9 +21,8 @@ class ContentProvider: TVTopShelfContentProvider {
             Log.error("Failed to initalize UserModel: \(error)")
             return nil
         }
-        do {
-            streamingModel = try StreamingServiceBasicModel(userModel: userModel)
-        } catch {
+        do { streamingModel = try StreamingServiceBasicModel(userModel: userModel) }
+        catch {
             Log.error("Failed to initialize StreamingServiceBasicModel: \(error)")
             return nil
         }
@@ -81,7 +80,11 @@ class ContentProvider: TVTopShelfContentProvider {
         case poster     // For vertical/portrait images (Recently Added)
     }
     
-    private func createTopShelfItem(from media: MediaModelRepresentable, streamingModel: StreamingServiceBasicProtocol, imageStyle: ImageStyle) -> TVTopShelfSectionedItem? {
+    private func createTopShelfItem(
+        from media: MediaModelRepresentable,
+        streamingModel: MediaImageProviding & RecommendationProviding,
+        imageStyle: ImageStyle
+    ) -> TVTopShelfSectionedItem? {
         // Create the content identifier for deep linking into your app
         let mediaID = media.id
         

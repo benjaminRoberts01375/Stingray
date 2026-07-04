@@ -165,8 +165,8 @@ fileprivate struct MediaPicker: View {
 public struct MediaDetailLoader: View {
     public let mediaID: String
     public let parentID: String?
-    public let streamingService: StreamingServiceProtocol
-    
+    public let streamingService: MediaImageProviding & MediaProviding & PlayerProviding
+
     @Binding public var navigation: NavigationPath
     
     public var body: some View {

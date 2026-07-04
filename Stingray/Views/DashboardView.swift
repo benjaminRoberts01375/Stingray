@@ -8,7 +8,8 @@
 import SwiftUI
 
 public struct DashboardView: View {
-    public var streamingService: StreamingServiceProtocol
+    public var streamingService: UserProviding & LibraryProviding & SystemInfoProviding & MediaImageProviding & MediaProviding &
+    PlayerProviding & RecommendationProviding
     @State private var selectedTab: String = "home"
     @State private var lastLoadedUserID: String?
     @Binding public var navigationPath: NavigationPath
@@ -17,7 +18,7 @@ public struct DashboardView: View {
     
     public var body: some View {
         VStack {
-            switch streamingService.libraryStatus {
+            switch self.streamingService.libraryStatus {
             case .waiting, .retrieving: ProgressView()
             case .error(let err):
                 VStack {
@@ -29,7 +30,7 @@ public struct DashboardView: View {
                         .padding(.vertical)
                     ErrorView(error: err, summary: "The server formatted the library's metadata unexpectedly.")
                         .padding(.vertical)
-                    SystemInfoView(streamingService: streamingService)
+                    SystemInfoView(streamingService: self.streamingService)
                     Spacer()
                 }
             case .available(let libraries), .complete(let libraries):
@@ -37,17 +38,17 @@ public struct DashboardView: View {
                     Tab(value: "users") {
                         SettingsView(loginState: $loggedIn, streamingService: self.streamingService)
                     } label: {
-                        Text(streamingService.usersName)
+                        Text(self.streamingService.usersName)
                     }
                     
                     Tab(value: "search") {
-                        SearchView(streamingService: streamingService, navigation: $navigationPath)
+                        SearchView(streamingService: self.streamingService, navigation: $navigationPath)
                     } label: {
                         Text("Search")
                     }
                     Tab(value: "home") {
                         ScrollView {
-                            HomeView(streamingService: streamingService, navigation: $navigationPath)
+                            HomeView(streamingService: self.streamingService, navigation: $navigationPath)
                                 .scrollClipDisabled()
                         }
                     } label: {
@@ -55,7 +56,7 @@ public struct DashboardView: View {
                     }
                     ForEach(libraries.indices, id: \.self) { index in
                         Tab(value: libraries[index].id) {
-                            LibraryView(library: libraries[index], navigation: $navigationPath, streamingService: streamingService)
+                            LibraryView(library: libraries[index], navigation: $navigationPath, streamingService: self.streamingService)
                         } label: {
                             Text(libraries[index].title)
                         }
@@ -67,7 +68,7 @@ public struct DashboardView: View {
             MediaDetailLoader(
                 mediaID: request.mediaID,
                 parentID: request.parentID,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 navigation: $navigationPath
             )
         }
@@ -75,24 +76,26 @@ public struct DashboardView: View {
             MediaDetailLoader(
                 mediaID: representableMedia.id,
                 parentID: representableMedia.parentID,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 navigation: $navigationPath
             )
         }
         .navigationDestination(for: AnyMedia.self) { anyMedia in
             switch anyMedia.media.mediaType {
-            case .tv(let seasons): TVShowDetailView(
-                media: anyMedia.media,
-                streamingService: streamingService,
-                seasons: seasons ?? [],
-                navigation: $navigationPath
-            )
-            case .movies(let movies): MovieDetailView(
-                media: anyMedia.media,
-                streamingService: streamingService,
-                mediaSources: movies,
-                navigation: $navigationPath
-            )
+            case .tv(let seasons):
+                TVShowDetailView(
+                    media: anyMedia.media,
+                    streamingService: self.streamingService,
+                    seasons: seasons ?? [],
+                    navigation: $navigationPath
+                )
+            case .movies(let movies):
+                MovieDetailView(
+                    media: anyMedia.media,
+                    streamingService: self.streamingService,
+                    mediaSources: movies,
+                    navigation: $navigationPath
+                )
             }
         }
         .onChange(of: deepLinkRequest) { _, newValue in

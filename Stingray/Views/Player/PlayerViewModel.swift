@@ -69,7 +69,7 @@ public final class PlayerViewModel: Hashable {
         media: any MediaProtocol,
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
-        streamingService: StreamingServiceProtocol,
+        streamingService: PlayerProviding & MediaImageProviding,
         seasons: [any TVSeasonProtocol]?,
         settingsModel: SettingsModel
     ) {

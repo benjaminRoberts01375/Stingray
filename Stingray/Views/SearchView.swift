@@ -8,7 +8,7 @@
 import SwiftUI
 
 public struct SearchView: View {
-    public var streamingService: StreamingServiceProtocol
+    public var streamingService: LibraryProviding & MediaImageProviding
 
     @Environment(SettingsModel.self) private var settings: SettingsModel
 
@@ -20,7 +20,7 @@ public struct SearchView: View {
         ScrollView {
             switch searchResults {
             case .found(let allMedia):
-                MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
+                MediaGridView(allMedia: allMedia, streamingService: self.streamingService, navigation: $navigation)
             case .temporarilyNotFound:
                 ProgressView("Not found yet, but we're still getting your media...")
             case .notFound:
@@ -51,7 +51,7 @@ public struct SearchView: View {
         if self.searchText.isEmpty { return .empty }
         var scoredMedia: [MediaScore] = []
         
-        switch streamingService.libraryStatus {
+        switch self.streamingService.libraryStatus {
         case .error:
             return .notFound
         case .waiting, .retrieving:
@@ -92,10 +92,8 @@ public struct SearchView: View {
             }
         }
         
-        if scoredMedia.isEmpty {
-            return .notFound
-        }
-        
+        if scoredMedia.isEmpty { return .notFound }
+
         let finalMedia = scoredMedia
             .sorted { $0.score < $1.score }
             .map { $0.media }

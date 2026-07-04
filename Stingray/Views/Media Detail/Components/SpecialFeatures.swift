@@ -12,7 +12,7 @@ import SwiftUI
 public struct SpecialFeaturesView: View {
     @Binding public var navigation: NavigationPath
     
-    public let streamingService: any StreamingServiceProtocol
+    public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
     public let media: any MediaProtocol
     
     public var body: some View {
@@ -21,7 +21,7 @@ public struct SpecialFeaturesView: View {
             case .unloaded:
                 Color.clear
                     .task {
-                        Log.info("Attempting to get special features for \(media.title)...")
+                        Log.info("Attempting to get special features for \(self.media.title)...")
                         do { try await self.streamingService.getSpecialFeatures(for: self.media) }
                         catch {}
                     }
@@ -29,7 +29,7 @@ public struct SpecialFeaturesView: View {
                 ProgressView("Loading special features...")
             case .loaded(let rows):
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                    SpecialFeaturesRow(streamingService: streamingService, rowData: row, media: media, navigation: $navigation)
+                    SpecialFeaturesRow(streamingService: self.streamingService, rowData: row, media: self.media, navigation: $navigation)
                         .focusSection()
                 }
             }
@@ -37,8 +37,8 @@ public struct SpecialFeaturesView: View {
     }
 }
 
-public struct SpecialFeaturesRow: View {
-    public let streamingService: any StreamingServiceProtocol
+fileprivate struct SpecialFeaturesRow: View {
+    public let streamingService: MediaProviding & MediaImageProviding & PlayerProviding
     public let rowData: [any SpecialFeatureProtocol]
     public let title: String
     public let media: any MediaProtocol
@@ -49,7 +49,7 @@ public struct SpecialFeaturesRow: View {
     @Environment(ThemeModel.self) private var theme
     
     public init(
-        streamingService: any StreamingServiceProtocol,
+        streamingService: MediaProviding & MediaImageProviding & PlayerProviding,
         rowData: [any SpecialFeatureProtocol],
         media: any MediaProtocol,
         navigation: Binding<NavigationPath>

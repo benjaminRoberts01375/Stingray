@@ -13,7 +13,8 @@ public enum LoginState {
     /// All users are logged out
     case loggedOut
     /// There is at least one user signed in
-    case loggedIn(any StreamingServiceProtocol)
+    case loggedIn(SystemInfoProviding & LibraryProviding & PlayerProviding & UserProviding & MediaImageProviding & MediaProviding &
+                   RecommendationProviding)
     /// There are accounts signed in, but the current user needs to be picked
     case pickingUser
     /// User is signed in, but requires a PIN

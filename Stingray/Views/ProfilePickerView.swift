@@ -18,15 +18,6 @@ public struct ProfilePickerView: View {
     public static let optionSize: CGSize = CGSize(width: 274, height: 335)
     public static let spacing: CGSize = CGSize(width: 60, height: 45)
     
-    // A simple way to derrive the streaming service from the login state
-    public var streamingService: (any StreamingServiceProtocol)? {
-        switch loginState {
-        case .loggedIn(let streamingServiceProtocol):
-            return streamingServiceProtocol
-        default: return nil
-        }
-    }
-    
     /// Types of items available to show in the profile picker
     public enum PickerItem: Hashable, Identifiable {
         /// Display a user icon

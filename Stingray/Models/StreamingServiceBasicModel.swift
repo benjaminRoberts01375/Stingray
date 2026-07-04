@@ -7,9 +7,6 @@
 
 import Foundation
 
-/// A basic protocol for must-have streaming-service related content
-public protocol StreamingServiceBasicProtocol: MediaImageProviding, RecommendationProviding { }
-
 /// Requires this type to be able to request an image
 public protocol MediaImageProviding {
     /// Formats a URL based on a piece of media

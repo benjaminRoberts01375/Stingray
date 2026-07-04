@@ -14,8 +14,8 @@ public struct TVShowDetailView: View {
     /// Media that contains content to play
     public let media: any MediaProtocol
     /// Streaming service the user is using
-    public let streamingService: any StreamingServiceProtocol
-    
+    public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
+
     public let seasons: [any TVSeasonProtocol]
     
     @Binding public var navigation: NavigationPath
@@ -94,7 +94,6 @@ public struct TVShowDetailView: View {
                             HStack {
                                 SeasonSelectorView(
                                     seasons: seasons,
-                                    streamingService: streamingService,
                                     focus: $focus,
                                     scrollProxy: svrProxy
                                 )
@@ -188,7 +187,7 @@ public struct TVShowDetailView: View {
 // MARK: Play button
 fileprivate struct PlayNavigationView: View {
     private let media: any MediaProtocol
-    private let streamingService: any StreamingServiceProtocol
+    private let streamingService: PlayerProviding & MediaImageProviding
     private var title: String
     private let mediaSources: [any MediaSourceProtocol]
     private let seasons: [any TVSeasonProtocol]
@@ -203,7 +202,7 @@ fileprivate struct PlayNavigationView: View {
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
         seasons: [any TVSeasonProtocol],
-        streamingService: any StreamingServiceProtocol
+        streamingService: PlayerProviding & MediaImageProviding
     ) {
         self._focus = focus
         self._navigation = navigation
@@ -318,8 +317,7 @@ fileprivate struct PlayNavigationView: View {
 // MARK: Season selector
 fileprivate struct SeasonSelectorView: View {
     let seasons: [any TVSeasonProtocol]
-    let streamingService: any StreamingServiceProtocol
-    
+
     @FocusState.Binding var focus: ButtonType?
     @State private var lastFocusedSeasonID: String?
     let scrollProxy: ScrollViewProxy
@@ -344,9 +342,8 @@ fileprivate struct SeasonSelectorView: View {
                 if season.id == lastFocusedSeasonID {
                     Capsule()
                         .opacity(0.25)
-                } else {
-                    EmptyView()
                 }
+                else { EmptyView() }
             }
             .padding(-16)
             .padding(.horizontal)
@@ -386,8 +383,8 @@ fileprivate struct SeasonSelectorView: View {
 fileprivate struct EpisodeSelectorView: View {
     let media: any MediaProtocol
     let seasons: [any TVSeasonProtocol]
-    let streamingService: any StreamingServiceProtocol
-    
+    let streamingService: PlayerProviding & MediaImageProviding
+
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
     
@@ -414,7 +411,7 @@ fileprivate struct EpisodeSelectorView: View {
 fileprivate struct EpisodeView: View {
     let media: any MediaProtocol
     let source: any MediaSourceProtocol
-    let streamingService: any StreamingServiceProtocol
+    let streamingService: PlayerProviding & MediaImageProviding
     let seasons: [any TVSeasonProtocol]
     let episode: any TVEpisodeProtocol
     
@@ -504,7 +501,7 @@ fileprivate struct EpisodeView: View {
 fileprivate struct EpisodeNavigationView: View {
     let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
-    let streamingService: any StreamingServiceProtocol
+    let streamingService: PlayerProviding & MediaImageProviding
     let seasons: [any TVSeasonProtocol]
     let episode: any TVEpisodeProtocol
     

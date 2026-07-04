@@ -81,6 +81,7 @@ Configure Stingray to look and feel how you want it.
     - Abstract the MovieDetailView into a separate view
     - Rebrand the `DetailMediaView` to `TVShowDetailView`
   - Remove unused Equatable conformance from `MediaCard`
+  - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button

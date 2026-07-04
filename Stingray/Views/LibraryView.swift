@@ -12,7 +12,7 @@ public struct LibraryView: View {
     
     @Binding public var navigation: NavigationPath
     
-    public let streamingService: StreamingServiceProtocol
+    public let streamingService: MediaImageProviding
     public let cardWidth = CGFloat(200)
     public let cardSpacing = CGFloat(50)
     
@@ -25,7 +25,7 @@ public struct LibraryView: View {
                 ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
-                    MediaGridView(allMedia: allMedia, streamingService: streamingService, navigation: $navigation)
+                    MediaGridView(allMedia: allMedia, streamingService: self.streamingService, navigation: $navigation)
                     LibraryInfoView(library: self.library)
                         .padding(.top)
                 } else {
@@ -54,7 +54,7 @@ public struct MediaGridView: View {
     public var body: some View {
         LazyVGrid(columns: Self.columns, spacing: Self.cardSpacing) {
             ForEach(allMedia, id: \.id) { media in
-                MediaCard(media: media, streamingService: streamingService, navigation: $navigation)
+                MediaCard(media: media, streamingService: self.streamingService, navigation: $navigation)
             }
         }
         .scrollTargetLayout()
