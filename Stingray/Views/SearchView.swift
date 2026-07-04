@@ -77,7 +77,7 @@ public struct SearchView: View {
                                         for episode in season.episodes {
                                             score = min(score, episode.title.slidingLevenshteinDistance(to: self.searchText))
                                             sortTitle = episode.title
-                                            if score == 0 { break }// If it's not already a perfect match, search more episodes
+                                            if score == 0 { break } // If it's not already a perfect match, search more episodes
                                         }
                                         if score == 0 { break } // If it's not already a perfect match, search more episodes
                                     }
@@ -103,12 +103,39 @@ public struct SearchView: View {
 }
 
 /// Extend the String type to include a slidingLevenshteinDistance calculator
-extension String {
-    /// A sliding Levenshtein Distance calculator, designed to give long names no disadvantage. For example searching for "Assass"
-    /// will have a perfect result against "Assassination Classroom" since the full title is truncated to the length of the original search
-    /// term. 0 = a perfect match, >0 = an imperfect match.
+fileprivate extension String {
+    /// A sliding Levenshtein Distance calculator, designed to give long names no disadvantage.
+    ///
+    /// For example, searching for "Assass" will have a perfect result against "Assassination Classroom" since the full title is truncated
+    /// to the length of the original search term.
+    /// `0` = a perfect match, `>0` = an imperfect match.
+    ///
+    /// ## Example
+    /// Comparing "TASE" against "BACK":
+    /// ```
+    ///     B A C K
+    ///   0 1 2 3 4
+    /// T 1 1 2 3 4
+    /// A 2 2 1 2 3
+    /// S 3 3 2 2 3
+    /// E 4 4 3 3 3
+    /// ```
+    ///
+    /// 1. The grid is first populated with numbers 0-4 across the first row and column.
+    /// 2. Work rows then go down a column.
+    /// 3. Compare T vs B at (1,1). Take the minimum value from the surroundings (0, 1, 1), and add 1 since T and B differ. Thus 0 + 1 = 1.
+    /// 4. Compare T vs A at (1,2). Take the minimum value from the surroundings (1, 1, 2), and add 1 since T and A differ. Thus 1 + 1 = 2.
+    /// 5. Skipping ahead, compare A vs A at (2,2). Since the characters match, pull directly from the diagonal (1) with no added cost.
+    /// 6. Once the matrix is filled out, the bottom-right value is the score, where lower indicates greater similarity.
+    ///
+    /// ## Notes
+    /// - Diagonal: same character (match, cost 0) or different character (substitution, cost 1).
+    /// - Taking from above indicates a deletion.
+    /// - Taking from the left indicates an insertion.
+    ///
     /// - Parameter structuredTarget: String to compare against. The `structuredTarget` string dictates the length to check against.
-    public func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
+    /// - Returns: The edit distance score. Lower values indicate greater similarity; `0` is a perfect match.
+    func slidingLevenshteinDistance(to structuredTarget: String) -> Int {
         // Normalize both strings
         let selfLower = self.lowercased()
         let targetLower = structuredTarget.lowercased()
@@ -117,7 +144,7 @@ extension String {
         if selfLower == targetLower { return 0 }
         
         let targetChars = Array(targetLower)
-        let sourceChars = Array(selfLower.prefix(targetChars.count))
+        let sourceChars = Array(selfLower.prefix(targetChars.count)) // Shorten string to be the same length as compared string
         let length = min(sourceChars.count, targetChars.count)
         
         // Short circuit if the search term is blank

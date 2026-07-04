@@ -82,6 +82,7 @@ Configure Stingray to look and feel how you want it.
     - Rebrand the `DetailMediaView` to `TVShowDetailView`
   - Remove unused Equatable conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
+  - Massively improve documentation around the `slidingLevenshteinDistance` function
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
