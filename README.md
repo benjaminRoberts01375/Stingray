@@ -84,10 +84,11 @@ Configure Stingray to look and feel how you want it.
     - Abstract player transport bar items to a dedicated class
     - Separate out SwiftUI Player tabs into their own structs
     - Move `AVPlayerViewControllerRepresentable.Coordinator` to a separate file
-  - Remove unused Equatable conformance from `MediaCard`
+  - Remove unused `Equatable` conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
   - Massively improve documentation around the `slidingLevenshteinDistance` function
   - Update all Swift files to use Xcode 27's reworked auto-indent formatting
+  - Remove unused `Equatable` conformance from `MediaSource`
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button

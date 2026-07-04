@@ -293,7 +293,7 @@ public final class MediaModel: MediaProtocol, Decodable {
 
 /// Holds information about all of a media's sources.
 @Observable
-public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
+public final class MediaSource: Decodable, MediaSourceProtocol {
     public var id: String
     public var name: String
     public var videoStreams: [any MediaStreamProtocol]
