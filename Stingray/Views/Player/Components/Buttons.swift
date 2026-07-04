@@ -75,29 +75,29 @@ public final class PlayerButtons {
                 action.state = vm.playerProgress?.subtitleID == nil ? .on : .off
                 return action
             }()
-        ] + vm.mediaSource.subtitleStreams.map({ subtitleStream in
+        ] + vm.mediaSource.subtitleStreams.map { subtitleStream in
             let action = UIAction(title: subtitleStream.title) { _ in
                 vm.newPlayer(startTime: vm.player.currentTime(), subtitleID: .newID(subtitleStream.id))
             }
             action.state = vm.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
             return action
-        }))
+        })
     }
 
     /// A menu for choosing the active audio stream.
     /// - Parameter vm: View model containing the playing content
     /// - Returns: Formatted menu
-   public static func audioStreamPicker(vm: PlayerViewModel) -> UIMenu {
+    public static func audioStreamPicker(vm: PlayerViewModel) -> UIMenu {
         UIMenu(
             title: "Audio",
             image: UIImage(systemName: "speaker.wave.2"),
-            children: vm.mediaSource.audioStreams.map({ audioStream in
+            children: vm.mediaSource.audioStreams.map { audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
                     vm.newPlayer(startTime: vm.player.currentTime(), audioID: .newID(audioStream.id))
                 }
                 action.state = vm.playerProgress?.audioID == audioStream.id ? .on : .off
                 return action
-            })
+            }
         )
     }
 
@@ -190,5 +190,37 @@ public final class PlayerButtons {
             image: UIImage(systemName: "gauge.with.dots.needle.33percent"),
             children: playbackSpeeds
         )
+    }
+
+    /// Bulk create transport bar items for typical audio & visual players
+    /// - Parameter vm: Player's view model
+    public static func AVPlayerTransportBarItems(vm: PlayerViewModel) -> [UIMenuElement] {
+        var items: [UIMenuElement] = []
+
+        // Add Subtitles menu only if there are subtitle tracks available
+        if !vm.mediaSource.subtitleStreams.isEmpty {
+            items.append(PlayerButtons.subtitleStreamPicker(vm: vm))
+        }
+
+        // Add Audio menu only if there's more than one option
+        if vm.mediaSource.audioStreams.count > 1 {
+            items.append(PlayerButtons.audioStreamPicker(vm: vm))
+        }
+
+        // Add Video menu only if there's more than one option
+        if vm.mediaSource.videoStreams.count > 1 {
+            items.append(PlayerButtons.videoStreamPicker(vm: vm))
+        }
+
+        // Bitrate choices
+        if let videoStream = (vm.mediaSource.videoStreams.first { vm.playerProgress?.videoID == $0.id }),
+           videoStream.bitrate > 1_500_000 {
+            items.append(PlayerButtons.bitratePicker(vm: vm, videoStream: videoStream))
+        }
+
+        // Playback speed picker
+        items.append(PlayerButtons.playbackSpeedPicker(vm: vm))
+
+        return items
     }
 }

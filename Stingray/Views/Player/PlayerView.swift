@@ -371,34 +371,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
 
     private func makeTransportBarItems() -> [UIMenuElement] {
         // Typical buttons
-        var items: [UIMenuElement] = []
-
-        // MARK: Subtitle stream choices
-        // Add Subtitles menu only if there are subtitle tracks available
-        if !self.vm.mediaSource.subtitleStreams.isEmpty {
-            items.append(PlayerButtons.subtitleStreamPicker(vm: self.vm))
-        }
-
-        // MARK: Audio stream choices
-        // Add Audio menu only if there's more than one option
-        if self.vm.mediaSource.audioStreams.count > 1 {
-            items.append(PlayerButtons.audioStreamPicker(vm: self.vm))
-        }
-
-        // MARK: Video stream choices
-        // Add Video menu only if there's more than one option
-        if self.vm.mediaSource.videoStreams.count > 1 {
-            items.append(PlayerButtons.videoStreamPicker(vm: self.vm))
-        }
-
-        // MARK: Bitrate choices
-        if let videoStream = (self.vm.mediaSource.videoStreams.first { self.vm.playerProgress?.videoID == $0.id }),
-           videoStream.bitrate > 1_500_000 {
-            items.append(PlayerButtons.bitratePicker(vm: self.vm, videoStream: videoStream))
-        }
-
-        // MARK: Playback speed picker
-        items.append(PlayerButtons.playbackSpeedPicker(vm: self.vm))
+        var items = PlayerButtons.AVPlayerTransportBarItems(vm: self.vm)
 
         // MARK: Episode picker
         // TV Season-related buttons
@@ -419,7 +392,9 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
 
                 // Previous episode
                 if currentEpisodeIndex - 1 >= 0 {
-                    items.insert(PlayerButtons.previousEpisodeButton(vm: self.vm, previousEpisode: allEpisodes[currentEpisodeIndex - 1]), at: 0)
+                    items.insert(
+                        PlayerButtons.previousEpisodeButton(vm: self.vm, previousEpisode: allEpisodes[currentEpisodeIndex - 1]), at: 0
+                    )
                     setPreviousEpisode = true
                 }
             }
