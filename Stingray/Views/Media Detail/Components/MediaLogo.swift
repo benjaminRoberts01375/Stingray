@@ -25,7 +25,7 @@ public struct MediaLogoView: View {
         self.media = media
         self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
     }
-
+    
     public var body: some View {
         VStack(spacing: 15) {
             if logoImageURL != nil && !self.settings.replaceLogosWithText {

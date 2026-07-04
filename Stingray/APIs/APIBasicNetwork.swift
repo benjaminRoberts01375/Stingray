@@ -24,14 +24,14 @@ public protocol BasicNetworkProtocol {
         urlParams: [URLQueryItem]?,
         body: (any Encodable)?
     ) async throws(NetworkError) -> T
-    
+
     /// Allows simple URL building using the URL type.
     /// - Parameters:
     ///   - path: Path to a particular resource without the hostname, leading slashes, or URL params
     ///   - urlParams: URL params to add to URL
     /// - Returns: Formatted URL
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
-    
+
     /// Builds an Authorization header value for the streaming service.
     /// - Parameter accessToken: The access token to include.
     /// - Returns: The formatted Authorization header value.
@@ -71,7 +71,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         self.deviceName = UIDevice.current.name
     }
-    
+
     public func buildAuthHeader(accessToken: String?) -> String {
         var headerValue = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
         if let token = accessToken {
@@ -79,7 +79,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         }
         return headerValue
     }
-    
+
     public func request<T: Decodable>(
         verb: NetworkRequestType,
         path: String,
@@ -91,13 +91,13 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
             throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
         }
-        
+
         Log.debug("Reaching out to \(url.absoluteString)")
-        
+
         // Setup request
         var request = URLRequest(url: url)
         request.httpMethod = verb.rawValue
-        
+
         // Jellyfin headers
         request.setValue(buildAuthHeader(accessToken: headers?["X-MediaBrowser-Token"]), forHTTPHeaderField: "Authorization")
         // Only add custom headers if they are provided
@@ -106,7 +106,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
                 request.setValue(header.1, forHTTPHeaderField: header.0)
             }
         }
-        
+
         // Only encode body if one is provided
         if let body = body {
             let jsonData: Data
@@ -118,7 +118,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
                 throw NetworkError.encodeJSONFailed(error)
             }
         }
-        
+
         // Send the request
         let responseData: Data
         let response: URLResponse
@@ -126,12 +126,12 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
             (responseData, response) = try await URLSession.shared.data(for: request)
         }
         catch { throw NetworkError.requestFailedToSend(error) }
-        
+
         // Verify not invalid status code
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.badResponse(responseCode: 0, response: "Not an HTTP response")
         }
-        
+
         // Verify non-bad status code
         if !(200...299).contains(httpResponse.statusCode) {
             throw NetworkError.badResponse(
@@ -139,7 +139,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
                 response: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
             )
         }
-        
+
         // Decode the JSON response
         do {
             let decodedResponse = try Self.jsonDecoder.decode(T.self, from: responseData)
@@ -147,7 +147,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         }
         catch { throw NetworkError.decodeJSONFailed(error, url: url) } // Can decode errors
     }
-    
+
     public func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {
         return self.address.buildURL(path: path, urlParams: urlParams)
     }

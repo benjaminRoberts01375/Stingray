@@ -17,17 +17,17 @@ public struct TVShowDetailView: View {
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
 
     public let seasons: [any TVSeasonProtocol]
-    
+
     @Binding public var navigation: NavigationPath
-    
+
     @State private var shouldBackgroundBlur: Bool = false
     @State private var shouldRevealBottomShelf: Bool = false
     @State private var shouldShowMetaData: Bool = false
     @FocusState private var focus: ButtonType?
-    
+
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
-    
+
     public var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -38,37 +38,37 @@ public struct TVShowDetailView: View {
                     shouldBlurBackground: $shouldBackgroundBlur
                 )
             }
-            
+
             // Content
             ScrollView {
                 // Logo and basic metadata
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
                     MediaLogoView(media: media, streamingService: self.streamingService)
-                    .background(alignment: .bottom) { // Subtle black shadow
-                        if self.settings.loadMediaBackgroundArt {
-                            let titleShadowSize = 800.0
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        gradient: Gradient(stops: [
-                                            .init(color: .black, location: 0),
-                                            .init(color: .black.opacity(0), location: 1)
-                                        ]),
-                                        center: UnitPoint(x: 0.5, y: 0.5),
-                                        startRadius: 0,
-                                        endRadius: titleShadowSize
+                        .background(alignment: .bottom) { // Subtle black shadow
+                            if self.settings.loadMediaBackgroundArt {
+                                let titleShadowSize = 800.0
+                                Circle()
+                                    .fill(
+                                        RadialGradient(
+                                            gradient: Gradient(stops: [
+                                                .init(color: .black, location: 0),
+                                                .init(color: .black.opacity(0), location: 1)
+                                            ]),
+                                            center: UnitPoint(x: 0.5, y: 0.5),
+                                            startRadius: 0,
+                                            endRadius: titleShadowSize
+                                        )
+                                        .opacity(0.9)
                                     )
-                                    .opacity(0.9)
-                                )
-                                .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
-                                .offset(y: titleShadowSize)
+                                    .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
+                                    .offset(y: titleShadowSize)
+                            }
                         }
-                    }
                 }
                 .padding(.top)
                 .frame(height: 350)
-                
+
                 // Play buttons
                 PlayNavigationView(
                     focus: $focus,
@@ -85,7 +85,7 @@ public struct TVShowDetailView: View {
                         return true
                     }
                 }())
-                
+
                 // TV Episodes
                 if seasons.flatMap(\.episodes).count > 1 {
                     // Season selector
@@ -102,7 +102,7 @@ public struct TVShowDetailView: View {
                         .scrollClipDisabled()
                         .padding(32)
                         .opacity(shouldRevealBottomShelf ? 1 : 0)
-                        
+
                         // Episode selector
                         ScrollView(.horizontal) {
                             LazyHStack {
@@ -126,7 +126,7 @@ public struct TVShowDetailView: View {
                         .offset(y: shouldRevealBottomShelf ? 0 : -100)
                     }
                 }
-                
+
                 // Metadata
                 HStack(alignment: .top) {
                     MediaOverview(media: self.media)
@@ -134,14 +134,14 @@ public struct TVShowDetailView: View {
                     MediaMetadata(media: self.media)
                         .focused($focus, equals: .metadata)
                 }
-                
+
                 // Special features
                 SpecialFeaturesView(
                     navigation: self.$navigation,
                     streamingService: self.streamingService,
                     media: self.media
                 )
-                
+
                 // People
                 if !self.media.people.isEmpty {
                     VStack(alignment: .leading, spacing: 3) {
@@ -191,12 +191,12 @@ fileprivate struct PlayNavigationView: View {
     private var title: String
     private let mediaSources: [any MediaSourceProtocol]
     private let seasons: [any TVSeasonProtocol]
-    
+
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
-    
+
     @Environment(SettingsModel.self) var settings: SettingsModel
-    
+
     init(
         focus: FocusState<ButtonType?>.Binding,
         navigation: Binding<NavigationPath>,
@@ -218,7 +218,7 @@ fileprivate struct PlayNavigationView: View {
         self.title = nextEpisode.title
         self.mediaSources = nextEpisode.mediaSources
     }
-    
+
     var body: some View {
         Group {
             // Single source button and menu
@@ -299,7 +299,7 @@ fileprivate struct PlayNavigationView: View {
         .id("Play-button")
         .defaultFocus($focus, .play, priority: .userInitiated)
     }
-    
+
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
             PlayerViewModel(
@@ -321,7 +321,7 @@ fileprivate struct SeasonSelectorView: View {
     @FocusState.Binding var focus: ButtonType?
     @State private var lastFocusedSeasonID: String?
     let scrollProxy: ScrollViewProxy
-    
+
     var body: some View {
         ForEach(seasons, id: \.id) { season in
             Button {
@@ -337,33 +337,33 @@ fileprivate struct SeasonSelectorView: View {
                 }
             }
             label: { Text(season.title) }
-            .padding(16)
-            .background {
-                if season.id == lastFocusedSeasonID {
-                    Capsule()
-                        .opacity(0.25)
+                .padding(16)
+                .background {
+                    if season.id == lastFocusedSeasonID {
+                        Capsule()
+                            .opacity(0.25)
+                    }
+                    else { EmptyView() }
                 }
-                else { EmptyView() }
-            }
-            .padding(-16)
-            .padding(.horizontal)
-            .buttonStyle(.plain)
-            .onMoveCommand { direction in
-                if direction == .up { self.focus = .play }
-            }
-            .focused($focus, equals: .season(season.id))
-            .disabled({
-                switch focus {
-                case .play, .overview, .metadata:
-                    return true
-                case .media(let mediaID):
-                    return !season.episodes.contains { $0.id == mediaID }
-                case nil:
-                    return season.id != lastFocusedSeasonID
-                case .season, .actor:
-                    return false
+                .padding(-16)
+                .padding(.horizontal)
+                .buttonStyle(.plain)
+                .onMoveCommand { direction in
+                    if direction == .up { self.focus = .play }
                 }
-            }())
+                .focused($focus, equals: .season(season.id))
+                .disabled({
+                    switch focus {
+                    case .play, .overview, .metadata:
+                        return true
+                    case .media(let mediaID):
+                        return !season.episodes.contains { $0.id == mediaID }
+                    case nil:
+                        return season.id != lastFocusedSeasonID
+                    case .season, .actor:
+                        return false
+                    }
+                }())
         }
         .onChange(of: focus) { _, newValue in
             // Track which season is active when focus changes
@@ -387,7 +387,7 @@ fileprivate struct EpisodeSelectorView: View {
 
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
-    
+
     var body: some View {
         ForEach(seasons, id: \.id) { season in
             ForEach(season.episodes, id: \.id) { episode in
@@ -414,13 +414,13 @@ fileprivate struct EpisodeView: View {
     let streamingService: PlayerProviding & MediaImageProviding
     let seasons: [any TVSeasonProtocol]
     let episode: any TVEpisodeProtocol
-    
+
     @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
-    
+
     @FocusState private var isFocused: Bool
     @State var showDetails = false
-    
+
     var body: some View {
         VStack {
             // Episode thumbnail with navigation capabilities
@@ -441,7 +441,7 @@ fileprivate struct EpisodeView: View {
                     self.focus = .season(seasonID)
                 }
             }
-            
+
             Button { self.showDetails = episode.overview != nil }
             label: {
                 VStack(alignment: .leading) {
@@ -456,7 +456,7 @@ fileprivate struct EpisodeView: View {
                     .lineLimit(2)
                     .truncationMode(.middle)
                     .opacity(episode.overview != nil ? 0.5 : 1)
-                    
+
                     if let overview = episode.overview {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(overview)
@@ -469,7 +469,7 @@ fileprivate struct EpisodeView: View {
                             VStack {
                                 Spacer()
                                 MediaLogoView(media: media, streamingService: self.streamingService)
-                                .padding()
+                                    .padding()
                                 Spacer()
                                 Text(overview)
                                     .padding()
@@ -504,12 +504,12 @@ fileprivate struct EpisodeNavigationView: View {
     let streamingService: PlayerProviding & MediaImageProviding
     let seasons: [any TVSeasonProtocol]
     let episode: any TVEpisodeProtocol
-    
+
     @Binding var navigation: NavigationPath
-    
+
     @Environment(ThemeModel.self) var theme
     @Environment(SettingsModel.self) var settings: SettingsModel
-    
+
     var body: some View {
         Button {
             navigation.append(

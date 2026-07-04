@@ -18,7 +18,7 @@ public final class Log {
     
     /// The most recent log entry
     public private(set) static var lastLogEntry: LogEntry?
-
+    
     /// Private due to singleton.
     private init() {
         self.logger = Logger(subsystem: "com.benlab.Stingray", category: "StingrayLogging")
@@ -79,11 +79,11 @@ public final class LogEntry: Encodable, Identifiable {
     public let message: String
     /// The importance of the log
     public let level: LogLevel
-
+    
     public let timestamp: Date
     /// The next log message
     public fileprivate(set) var next: LogEntry?
-
+    
     /// Creates a single log entry
     /// - Parameters:
     ///   - message: Message to display
@@ -104,7 +104,7 @@ public enum LogLevel: String, Encodable, CaseIterable {
     case warning = "Warning"
     case error = "Error"
     case critical = "Critical"
-
+    
     /// A localized, user-facing name for the log level.
     public var localized: String {
         switch self {
@@ -115,7 +115,7 @@ public enum LogLevel: String, Encodable, CaseIterable {
         case .critical: return String(localized: "Critical")
         }
     }
-
+    
     /// Importance of the log relative to each other
     public var severity: Int {
         switch self {

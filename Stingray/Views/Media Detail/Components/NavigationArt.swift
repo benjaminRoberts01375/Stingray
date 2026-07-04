@@ -13,17 +13,17 @@ public struct MediaArtView: View {
     private let media: any Displayable
     private let title: String
     private let imageURL: URL?
-    
+
     @Environment(ThemeModel.self) private var theme
     @Environment(SettingsModel.self) private var settings
     @State private var imageOpacity: Double = 0
-    
+
     public init(media: any Displayable, streamingService: any MediaImageProviding, title: String) {
         self.media = media
         self.title = title
         self.imageURL = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 800)
     }
-    
+
     public var body: some View {
         if self.settings.loadThumbnailArt {
             AsyncBlurImage(

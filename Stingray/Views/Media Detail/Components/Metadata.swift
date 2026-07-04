@@ -11,10 +11,10 @@ import SwiftUI
 public struct MediaOverview: View {
     @Environment(ThemeModel.self) private var theme
     @FocusState private var isFocused: Bool
-    
+
     /// What to read the synopsis from
     public let media: any MediaProtocol
-    
+
     public var body: some View {
         Button {} label: {
             VStack(alignment: .leading) {
@@ -43,10 +43,10 @@ public struct MediaOverview: View {
 public struct MediaMetadata: View {
     @Environment(ThemeModel.self) private var theme
     @FocusState private var isFocused: Bool
-    
+
     /// What to read metadata for
     public let media: any MediaProtocol
-    
+
     public var body: some View {
         Button {} label: {
             VStack(alignment: .leading, spacing: 16) {

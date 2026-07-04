@@ -11,13 +11,13 @@ import SwiftUI
 public struct SupportStingrayView: View {
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
     @State private var error: RError?
-    
+
     private let exampleThemes: [ThemeModel] = [
         ThemeModel(darkTheme: .frosty, lightTheme: .frosty, colorScheme: .light),
         ThemeModel(darkTheme: .retro, lightTheme: .retro, colorScheme: .dark),
         ThemeModel(darkTheme: .spaceVampires, lightTheme: .spaceVampires, colorScheme: .dark)
     ]
-    
+
     public var body: some View {
         VStack {
             Text("Supporting Stingray")
@@ -40,7 +40,7 @@ public struct SupportStingrayView: View {
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                
+
                 VStack {
                     if self.purchases.boughtSupporter {
                         VStack {
@@ -77,7 +77,7 @@ public struct SupportStingrayView: View {
                                     """)
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical)
-                                
+
                                     Button {
                                         _ = Task {
                                             do { try await self.purchases.purchase(product) }

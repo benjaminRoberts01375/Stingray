@@ -22,7 +22,7 @@ public struct AsyncBlurImage: View {
     private let imageURL: URL?
     /// Describes the scaling of just the image
     private let scaleType: ContentMode
-
+    
     /// Async load an image with a blur hash placeholder
     /// - Parameters:
     ///   - blurHash: Hash to display preview with
@@ -70,7 +70,7 @@ public struct AsyncBlurImage: View {
 private actor BlurHashImageCache {
     /// Cache to pull `UIImage`s from
     static let shared = BlurHashImageCache()
-
+    
     /// A thread-safe, memory-pressure-aware cache of decoded placeholder images keyed by hash + size.
     /// Since a large library may have a couple thousand images, we have to work by approximate image size otherwise we'll just be
     /// clearling the cache left right and center
@@ -78,7 +78,7 @@ private actor BlurHashImageCache {
     
     /// Singleton setup for allowed memory usage
     private init() { self.cache.totalCostLimit = 16 * 1024 * 1024 }
-
+    
     /// Returns the decoded placeholder for the given hash, decoding (and caching) off the main actor on a miss.
     /// - Parameters:
     ///   - hash: The blur hash to decode. A `nil` hash yields a `nil` image.
@@ -86,10 +86,10 @@ private actor BlurHashImageCache {
     /// - Returns: The decoded image, or `nil` if there is no hash or decoding fails.
     func image(hash: String?, size: CGSize) -> UIImage? {
         guard let hash else { return nil }
-
+        
         let key = "\(hash)|\(Int(size.width))x\(Int(size.height))" as NSString
         if let cached = self.cache.object(forKey: key) { return cached }
-
+        
         guard let decoded = UIImage(blurHash: hash, size: size)
         else { return nil }
         // Cost = decoded RGBA pixel bytes, so the cache evicts based on real memory footprint.

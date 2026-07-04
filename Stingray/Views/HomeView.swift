@@ -12,7 +12,7 @@ public struct HomeView: View {
 
     @State private var dashboardCache: [String: [MediaModelRepresentable]] = [:]
     @Binding public var navigation: NavigationPath
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             DashboardRow(
@@ -24,7 +24,7 @@ public struct HomeView: View {
                 await self.streamingService.retrieveUpNext()
             }
             .focusSection()
-            
+
             DashboardRow(
                 rowType: .recentlyAdded,
                 streamingService: self.streamingService,
@@ -34,7 +34,7 @@ public struct HomeView: View {
                 await self.streamingService.retrieveRecentlyAdded(.all)
             }
             .focusSection()
-            
+
             DashboardRow(
                 rowType: .latestMovies,
                 streamingService: self.streamingService,
@@ -44,7 +44,7 @@ public struct HomeView: View {
                 await self.streamingService.retrieveRecentlyAdded(.movie)
             }
             .focusSection()
-            
+
             DashboardRow(
                 rowType: .latestShows,
                 streamingService: self.streamingService,
@@ -54,7 +54,7 @@ public struct HomeView: View {
                 await self.streamingService.retrieveRecentlyAdded(.tv)
             }
             .focusSection()
-            
+
             VStack {
                 SystemInfoView(streamingService: self.streamingService)
                 LibrariesInfoView(streamingService: self.streamingService)
@@ -70,7 +70,7 @@ fileprivate enum HomeRow: Identifiable {
     case recentlyAdded
     case latestMovies
     case latestShows
-    
+
     var id: String {
         switch self {
         case .nextUp: return "nextUp"
@@ -79,7 +79,7 @@ fileprivate enum HomeRow: Identifiable {
         case .latestShows: return "latestShows"
         }
     }
-    
+
     var name: LocalizedStringKey {
         switch self {
         case .nextUp: return "Next Up"
@@ -98,9 +98,9 @@ fileprivate struct DashboardRow: View {
     let fetchMedia: () async -> [MediaModelRepresentable]
 
     @State private var status: DashboardRowStatus = .unstarted
-    
+
     @Environment(ThemeModel.self) private var theme
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             switch status {
@@ -116,14 +116,14 @@ fileprivate struct DashboardRow: View {
                             status = cachedMedia.isEmpty ? .empty : .complete(cachedMedia)
                             return
                         }
-                        
+
                         // Only fetch if not cached
                         let response = await fetchMedia()
                         cache[self.rowType.id] = response
                         status = response.isEmpty ? .empty : .complete(response)
                     }
             }
-                
+
             switch status {
             case .unstarted, .retrieving:
                 MediaNavigationLoadingPicker()
@@ -136,7 +136,7 @@ fileprivate struct DashboardRow: View {
         .padding(.vertical)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
+
     enum DashboardRowStatus {
         case unstarted
         case retrieving
@@ -148,9 +148,9 @@ fileprivate struct DashboardRow: View {
 fileprivate struct MediaPicker: View {
     var streamingService: MediaImageProviding
     let pickerMedia: [MediaModelRepresentable]
-    
+
     @Binding var navigation: NavigationPath
-    
+
     var body: some View {
         ScrollView(.horizontal) {
             LazyHStack {
@@ -168,7 +168,7 @@ public struct MediaDetailLoader: View {
     public let streamingService: MediaImageProviding & MediaProviding & PlayerProviding
 
     @Binding public var navigation: NavigationPath
-    
+
     public var body: some View {
         switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
         case .found(let foundMedia):
@@ -212,10 +212,10 @@ fileprivate struct MediaNavigationLoadingPicker: View {
 
 public struct MediaNavigationLoadingCard: View {
     private let randomWordCount = Int.random(in: 3...5)
-    
+
     public var body: some View {
         Button {
-            
+
         } label: {
             VStack {
                 ZStack {
@@ -281,7 +281,7 @@ public struct LibrariesInfoView: View {
     public let streamingService: LibraryProviding
 
     @State private var movieCount: Int = 0
-    
+
     public var body: some View {
         switch self.streamingService.libraryStatus {
         case .waiting: Text(String(localized: "Waiting to get libraries..."))
@@ -306,13 +306,13 @@ public struct LibrariesInfoView: View {
         case .error(let rError): ErrorView(error: rError, summary: "Failed to load libraries")
         }
     }
-    
+
     /// Counts all the media for each type.
     /// - Parameter libraries: Libraries to count with
     /// - Returns: Found media types and their associated counts
     public func countMedia(libraries: [LibraryModel]) -> [String : Int] {
         var counters: [String : Int] = [:]
-        
+
         for library in libraries {
             switch library.media {
             case .unloaded, .waiting, .error:

@@ -34,7 +34,7 @@ public struct SearchView: View {
             self.searchResults = search()
         }
     }
-    
+
     /// Search results
     public enum SearchStatus {
         /// Found search results
@@ -46,11 +46,11 @@ public struct SearchView: View {
         /// No search attempt has been made
         case empty
     }
-    
+
     public func search() -> SearchStatus {
         if self.searchText.isEmpty { return .empty }
         var scoredMedia: [MediaScore] = []
-        
+
         switch self.streamingService.libraryStatus {
         case .error:
             return .notFound
@@ -91,13 +91,13 @@ public struct SearchView: View {
                 }
             }
         }
-        
+
         if scoredMedia.isEmpty { return .notFound }
 
         let finalMedia = scoredMedia
             .sorted { $0.score < $1.score }
             .map { $0.media }
-        
+
         return .found(finalMedia)
     }
 }
@@ -139,24 +139,24 @@ fileprivate extension String {
         // Normalize both strings
         let selfLower = self.lowercased()
         let targetLower = structuredTarget.lowercased()
-        
+
         // Short circuit if they're identical
         if selfLower == targetLower { return 0 }
-        
+
         let targetChars = Array(targetLower)
         let sourceChars = Array(selfLower.prefix(targetChars.count)) // Shorten string to be the same length as compared string
         let length = min(sourceChars.count, targetChars.count)
-        
+
         // Short circuit if the search term is blank
         if length == 0 { return 0 }
-        
+
         // This Levenshtein Distance calculator is heavily optimized to only keep two rows of the matrix in memory at a time
         var previousRow = Array(0...length)
         var currentRow = Array(repeating: 0, count: length + 1)
-        
+
         for i in 1...length {
             currentRow[0] = i
-            
+
             for j in 1...length {
                 let cost = sourceChars[j - 1] == targetChars[i - 1] ? 0 : 1
                 currentRow[j] = Swift.min(
@@ -165,10 +165,10 @@ fileprivate extension String {
                     previousRow[j - 1] + cost
                 )
             }
-            
+
             swap(&previousRow, &currentRow)
         }
-        
+
         return previousRow[length]
     }
 }

@@ -13,9 +13,9 @@ public struct PeopleBrowserView: View {
     public let streamingService: MediaImageProviding
 
     @Environment(ThemeModel.self) private var theme
-    
+
     @FocusState private var focusedActor: String?
-    
+
     /// Displays a list of people's photos, names, and roles
     /// - Parameters:
     ///   - people: People to render

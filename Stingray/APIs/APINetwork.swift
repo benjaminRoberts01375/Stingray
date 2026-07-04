@@ -107,7 +107,7 @@ public protocol AdvancedNetworkProtocol {
         contentType: RecentlyAddedMediaType,
         accessToken: String
     ) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable]
-
+    
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
@@ -296,7 +296,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         catch { throw QuickConnectErrors.quickConnectCodesFailed(error) }
     }
-
+    
     /// Check if the user entered the provided quick connect code into Jellyfin
     /// - Parameters:
     ///   - secret: The secret returned by getQuickConnectCodes()
@@ -439,7 +439,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             enum CodingKeys: String, CodingKey {
                 case items = "Items"
             }
-
+            
             init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self.items = container.decodeAllAvailable([MediaModel].self, forKey: .items)

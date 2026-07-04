@@ -84,6 +84,7 @@ Configure Stingray to look and feel how you want it.
   - Remove unused Equatable conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
   - Massively improve documentation around the `slidingLevenshteinDistance` function
+  - Update all Swift files to use Xcode 27's reworked auto-indent formatting
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button

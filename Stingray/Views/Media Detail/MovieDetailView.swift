@@ -17,16 +17,16 @@ public struct MovieDetailView: View {
     public let streamingService: MediaImageProviding & PlayerProviding & MediaProviding
     /// All available content sources for this movie and its various versions
     public let mediaSources: [any MediaSourceProtocol]
-    
+
     @Binding public var navigation: NavigationPath
-    
+
     @State private var shouldBackgroundBlur: Bool = false
     @State private var shouldRevealBottomShelf: Bool = false
     @State private var shouldShowMetaData: Bool = false
-    
+
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
-    
+
     public var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -37,37 +37,37 @@ public struct MovieDetailView: View {
                     shouldBlurBackground: $shouldBackgroundBlur
                 )
             }
-            
+
             // Content
             ScrollView {
                 // Logo and basic metadata
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
                     MediaLogoView(media: self.media, streamingService: self.streamingService)
-                    .background(alignment: .bottom) { // Subtle black shadow
-                        if self.settings.loadMediaBackgroundArt {
-                            let titleShadowSize = 800.0
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        gradient: Gradient(stops: [
-                                            .init(color: .black, location: 0),
-                                            .init(color: .black.opacity(0), location: 1)
-                                        ]),
-                                        center: UnitPoint(x: 0.5, y: 0.5),
-                                        startRadius: 0,
-                                        endRadius: titleShadowSize
+                        .background(alignment: .bottom) { // Subtle black shadow
+                            if self.settings.loadMediaBackgroundArt {
+                                let titleShadowSize = 800.0
+                                Circle()
+                                    .fill(
+                                        RadialGradient(
+                                            gradient: Gradient(stops: [
+                                                .init(color: .black, location: 0),
+                                                .init(color: .black.opacity(0), location: 1)
+                                            ]),
+                                            center: UnitPoint(x: 0.5, y: 0.5),
+                                            startRadius: 0,
+                                            endRadius: titleShadowSize
+                                        )
+                                        .opacity(0.9)
                                     )
-                                    .opacity(0.9)
-                                )
-                                .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
-                                .offset(y: titleShadowSize)
+                                    .frame(width: titleShadowSize * 2, height: titleShadowSize * 2)
+                                    .offset(y: titleShadowSize)
+                            }
                         }
-                    }
                 }
                 .padding(.top)
                 .frame(height: 350)
-                
+
                 // Play buttons
                 PlayNavigationView(
                     navigation: $navigation,
@@ -75,16 +75,16 @@ public struct MovieDetailView: View {
                     mediaSources: self.mediaSources,
                     streamingService: self.streamingService
                 )
-                
+
                 // Metadata
                 HStack(alignment: .top) {
                     MediaOverview(media: self.media)
                     MediaMetadata(media: self.media)
                 }
-                
+
                 // Special features
                 SpecialFeaturesView(navigation: self.$navigation, streamingService: self.streamingService, media: self.media)
-                
+
                 // People
                 if !self.media.people.isEmpty {
                     VStack(alignment: .leading, spacing: 3) {
@@ -115,11 +115,11 @@ fileprivate struct PlayNavigationView: View {
     private let streamingService: PlayerProviding & MediaImageProviding
     private var title: String
     private let mediaSources: [any MediaSourceProtocol]
-    
+
     @Binding var navigation: NavigationPath
-    
+
     @Environment(SettingsModel.self) var settings: SettingsModel
-    
+
     init(
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
@@ -132,7 +132,7 @@ fileprivate struct PlayNavigationView: View {
         self.title = media.title
         self.mediaSources = mediaSources
     }
-    
+
     var body: some View {
         // Single source button and menu
         if mediaSources.count == 1 {
@@ -207,7 +207,7 @@ fileprivate struct PlayNavigationView: View {
             }
         }
     }
-    
+
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
             PlayerViewModel(

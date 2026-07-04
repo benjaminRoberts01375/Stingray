@@ -21,11 +21,11 @@ public extension KeyedDecodingContainer {
         else { return [] }
         return wrapped.compactMap { $0.value }
     }
-
+    
     /// Wraps a decode attempt for a single element, capturing failure instead of propagating it.
     private struct LossyElement<T: Decodable>: Decodable {
         let value: T?
-
+        
         init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             self.value = try? container.decode(T.self)

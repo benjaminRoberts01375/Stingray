@@ -16,9 +16,9 @@ public struct SettingsView: View {
     @State private var showPinSetup: Bool = false
     /// Controls when to show a dialog box for logging out
     @State private var showLogoutAlert: Bool = false
-    
+
     @Environment(UserModel.self) private var userModel: UserModel
-    
+
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
     /// Controls the sheet to show the supporting Stingray screen
     @State private var showSupportStingray: Bool = false
@@ -26,7 +26,7 @@ public struct SettingsView: View {
     @State private var showLogs: Bool = false
 
     public let streamingService: UserProviding
-    
+
     public var body: some View {
         @Bindable var settings = settings
         Form {
@@ -68,7 +68,7 @@ public struct SettingsView: View {
                     message: { Text(String(localized: "Are you sure you want \(user.displayName) to logout?")) }
                 }
             }
-            
+
             // Profile switching
             Section(
                 header: Text(String(localized: "Profile Switching")).bold(),
@@ -83,7 +83,7 @@ public struct SettingsView: View {
                 .focusSection()
             }
             .listRowBackground(Color.clear)
-            
+
             // MARK: Playback settings
             Section(header: Text(String(localized: "Playback Settings")).bold()) {
                 DoubleButton(label: "Autoplay Next Episode", sublabel: self.settings.autoplay ? "Enabled" : "Disabled") {
@@ -134,7 +134,7 @@ public struct SettingsView: View {
                     ThemesListView(showSupportStingray: $showSupportStingray, themeType: .dark)
                 }
             }
-            
+
             // MARK: Accessibility
             Section(header: Text(String(localized: "Accessibility")).bold()) {
                 DoubleMenu(label: "Language", sublabel: self.settings.langauge?.languageDisplayName ?? LocalizedStringKey("System")) {
@@ -164,7 +164,7 @@ public struct SettingsView: View {
                     self.settings.replaceLogosWithText.toggle()
                 }
             }
-            
+
             // MARK: Supporting Stingray
             Section(header: Text(String(localized: "Support Stingray")).bold()) {
                 DoubleButton(
@@ -190,13 +190,13 @@ public struct SettingsView: View {
                         .ignoresSafeArea()
                 }
                 DoubleButton(label: "Logs", sublabel: "Open Logs...") { self.showLogs = true }
-                .fullScreenCover(isPresented: $showLogs) {
-                    LogsView()
-                        .stingrayBackground()
-                        .ignoresSafeArea()
-                }
+                    .fullScreenCover(isPresented: $showLogs) {
+                        LogsView()
+                            .stingrayBackground()
+                            .ignoresSafeArea()
+                    }
             }
-            
+
             // MARK: Connection info
             Section {
                 switch loginState {
@@ -219,10 +219,10 @@ public struct ThemesListView: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(PurchasesModel.self) private var purchases
     @Binding public var showSupportStingray: Bool
-    
+
     /// Is the list meant to set dark or light mode themes
     public let themeType: ColorScheme
-    
+
     public var body: some View {
         ForEach(Themes.allCases, id: \.self) { option in
             Button {
@@ -254,10 +254,10 @@ public struct ThemesListView: View {
 public enum SupportedLanguages: CaseIterable {
     case english
     case german
-    
+
     /// The name of the language in the language it is
     public var name: String? { self.locale.localizedString(forLanguageCode: self.languageCode) }
-    
+
     /// Country code of the language
     public var languageCode: String {
         switch self {
@@ -265,7 +265,7 @@ public enum SupportedLanguages: CaseIterable {
         case .german: return "de"
         }
     }
-    
+
     /// A locale object from this language
     public var locale: Locale { Locale(identifier: self.languageCode) }
 }

@@ -15,7 +15,7 @@ public struct DashboardView: View {
     @Binding public var navigationPath: NavigationPath
     @Binding public var deepLinkRequest: DeepLinkRequest?
     @Binding public var loggedIn: LoginState
-    
+
     public var body: some View {
         VStack {
             switch self.streamingService.libraryStatus {
@@ -40,7 +40,7 @@ public struct DashboardView: View {
                     } label: {
                         Text(self.streamingService.usersName)
                     }
-                    
+
                     Tab(value: "search") {
                         SearchView(streamingService: self.streamingService, navigation: $navigationPath)
                     } label: {
@@ -123,11 +123,11 @@ public struct DashboardView: View {
 /// A type-erased wrapper for MediaProtocol that conforms to Hashable
 public struct AnyMedia: Hashable {
     public let media: any MediaProtocol
-    
+
     public static func == (lhs: AnyMedia, rhs: AnyMedia) -> Bool {
         lhs.media.id == rhs.media.id
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
     }

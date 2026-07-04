@@ -11,10 +11,10 @@ import SwiftUI
 /// Displays each of the special feature types for the given media
 public struct SpecialFeaturesView: View {
     @Binding public var navigation: NavigationPath
-    
+
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
     public let media: any MediaProtocol
-    
+
     public var body: some View {
         VStack {
             switch self.media.specialFeatures {
@@ -42,12 +42,12 @@ fileprivate struct SpecialFeaturesRow: View {
     public let rowData: [any SpecialFeatureProtocol]
     public let title: String
     public let media: any MediaProtocol
-    
+
     @Binding public var navigation: NavigationPath
-    
+
     @Environment(SettingsModel.self) private var settings: SettingsModel
     @Environment(ThemeModel.self) private var theme
-    
+
     public init(
         streamingService: MediaProviding & MediaImageProviding & PlayerProviding,
         rowData: [any SpecialFeatureProtocol],
@@ -60,7 +60,7 @@ fileprivate struct SpecialFeaturesRow: View {
         self.title = rowData[0].featureType
         self._navigation = navigation
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(self.title)

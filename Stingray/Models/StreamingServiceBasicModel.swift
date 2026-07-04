@@ -34,7 +34,7 @@ public protocol RecommendationProviding {
     /// - Parameter contentType: The type of media to retrieve
     /// - Returns: All slim versions of media found
     func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable]
-
+    
     /// Retrieves a list of the media slated for up next
     /// - Returns: All slim versions of media found
     func retrieveUpNext() async -> [MediaModelRepresentable]

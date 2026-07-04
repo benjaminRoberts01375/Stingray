@@ -218,15 +218,15 @@ public final class MediaModel: MediaProtocol, Decodable {
         self.genres = (try? container.decodeIfPresent([String].self, forKey: .genres)) ?? []
         self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
         self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
-
+        
         // Harder to decode stuff
         guard let mediaType = try? container.decode(MediaType.self, forKey: .mediaType)
         else { throw JSONError.missingKey("Media Type", "Media Model") }
-
+        
         switch mediaType {
         case .movies:
             let movieSources = (try? container.decodeIfPresent([MediaSource].self, forKey: .mediaSources)) ?? []
-
+            
             struct UserData: Decodable {
                 let playbackPositionTicks: Int
                 let mediaItemID: String
@@ -239,7 +239,7 @@ public final class MediaModel: MediaProtocol, Decodable {
             
             let userDataContainer = (try? container.decodeIfPresent(UserData.self, forKey: .userData)) ??
             UserData(playbackPositionTicks: .zero, mediaItemID: UUID().uuidString)
-
+            
             if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
                 movieSources[defaultIndex].startPoint = TimeInterval(ticks: userDataContainer.playbackPositionTicks)
             }
@@ -247,12 +247,12 @@ public final class MediaModel: MediaProtocol, Decodable {
         default:
             self.mediaType = mediaType
         }
-
+        
         // Runtime ticks need conversion
         if let runtimeTicks = try? container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {
             self.duration = .nanoseconds(100 * runtimeTicks)
         }
-
+        
         // Date needs to be interpreted
         if let dateString = try? container.decodeIfPresent(String.self, forKey: .releaseDate) {
             self.releaseDate = ISO8601DateFormatter.jellyfin.date(from: dateString)
@@ -370,7 +370,7 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-
+            
             let rawType = try container.decodeIfPresent(String.self, forKey: .type) ?? ""
             type = StreamType(rawValue: rawType) ?? .unknown
             

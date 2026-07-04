@@ -11,17 +11,17 @@ import SwiftUI
 public struct MediaCard: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
-    
+
     @State private var showError: Bool = false
 
     @Binding public var navigation: NavigationPath
-    
+
     public static let cardSize = CGSize(width: 200, height: 370)
-    
+
     public let media: any MediaRepresentableProtocol
     public let url: URL?
     public let reserveTextSpace: Bool
-    
+
     /// Creates a button based on the media's available art. This button navigates to the media's detail view
     /// - Parameters:
     ///   - media: Media to display and navigate on
@@ -40,7 +40,7 @@ public struct MediaCard: View {
         self._navigation = navigation ?? .constant(NavigationPath())
         self.reserveTextSpace = reserveTextSpace
     }
-    
+
     public var body: some View {
         Button {
             if let media = self.media as? (any MediaProtocol) { // Shortcut

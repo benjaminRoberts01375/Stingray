@@ -12,10 +12,10 @@ public struct PINSetup: View {
     @State private var pinConfirmation: String = ""
     @State private var contentIsFilled: Bool = false // Both the desired and confirmation fields have data
     @State private var error: String = ""
-    
+
     @Environment(UserModel.self) private var userModel: UserModel
     @Environment(\.dismiss) private var dismiss
-    
+
     public var body: some View {
         VStack {
             Text("Enter PIN")
@@ -39,14 +39,14 @@ public struct PINSetup: View {
                 self.userModel.activeUser?.pin = self.desiredPIN
                 self.dismiss()
             }
-                .disabled(!self.contentIsFilled || !self.error.isEmpty)
+            .disabled(!self.contentIsFilled || !self.error.isEmpty)
             Text(self.error)
                 .foregroundStyle(.red)
                 .opacity(self.error.isEmpty ? 0 : 1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
     /// Check the provided info, show an error if there's an issue
     public func checkPIN() {
         if desiredPIN != pinConfirmation { self.error = "PINs do not match." }
@@ -58,7 +58,7 @@ public struct PINEntry: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(UserModel.self) private var userModel: UserModel
     @Environment(SettingsModel.self) private var settings
-    
+
     /// Not read, only set to successfully login or switch users
     @Binding public var loginState: LoginState
     /// User the PIN is meant for
@@ -67,7 +67,7 @@ public struct PINEntry: View {
     @State private var pinEntry: String = ""
     /// Reason to not allow sign-in
     @State private var error: String = ""
-    
+
     public var body: some View {
         VStack {
             Text("Enter PIN for \(self.user.displayName)")
@@ -107,7 +107,7 @@ public struct PINDelete: View {
     @State private var pinEntry: String = ""
     /// Reason to not allow sign-in
     @State private var error: String = ""
-    
+
     public var body: some View {
         VStack {
             Text("Delete PIN for \(self.userModel.activeUser?.displayName ?? "Nobody")")

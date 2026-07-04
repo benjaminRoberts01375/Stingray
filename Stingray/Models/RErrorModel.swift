@@ -22,17 +22,16 @@ extension RError {
     public func rDescription() -> String {
         var parts: [String] = [errorDescription]
         var current = next
-        
+
         while let err = current {
             parts.append(err.errorDescription)
             current = err.next
         }
-        
+
         let total = "\n\t→ \(parts.joined(separator: "\n\t→ "))"
-        Log.warning(total)
         return total
     }
-    
+
     /// Gets the last error in the chain of errors. Useful for writing summary error messages
     /// - Returns: The last error in the chain
     public func last() -> (any RError) {
@@ -52,7 +51,6 @@ extension [RError] {
         let total = self.reduce("") { (result, error) -> String in
             return result + "\n\t→ \(error.errorDescription)"
         }
-        Log.warning(total)
         return total
     }
 }
@@ -72,7 +70,7 @@ public enum NetworkError: RError {
     case decodeJSONFailed((any Error)?, url: URL?)
     /// An access token is needed
     case missingAccessToken
-    
+
     public var next: (any RError)? {
         switch self {
         case .decodeJSONFailed(let error, _):
@@ -81,7 +79,7 @@ public enum NetworkError: RError {
         default: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .invalidURL(let description):
@@ -101,7 +99,7 @@ public enum NetworkError: RError {
             return "An access token is needed"
         }
     }
-    
+
     /// A function to override `NetworkError` messages with a more human readable option
     /// - Parameters:
     ///   - netErr: NetworkError that was thrown
@@ -115,7 +113,7 @@ public enum NetworkError: RError {
             case .https: return "Invalid HTTPS URL. Check your URL."
             }
         case .encodeJSONFailed: return "Failed to send request to server. " +
-                "This may be because of some tricky characters in your username and password."
+            "This may be because of some tricky characters in your username and password."
         case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
             switch httpProtocol {
             case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
@@ -153,7 +151,7 @@ public enum JSONError: RError {
     case failedJSONEncode(String)
     /// The unwrapped key is an unexpected value.
     case unexpectedKey(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .unexpectedKey(let err): return err
@@ -163,7 +161,7 @@ public enum JSONError: RError {
         default: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .missingKey(let key, let objectName):
@@ -208,14 +206,14 @@ public enum JSONError: RError {
 public enum MediaError: RError {
     /// The media is an unknown type. The `String` value is the type attempted to be made
     case unknownMediaType(String)
-    
+
     public var errorDescription: String {
         switch self {
         case .unknownMediaType(let mediaType):
             return "Unknown media type \"\(mediaType)\""
         }
     }
-    
+
     public var next: (any RError)? { nil }
 }
 
@@ -233,7 +231,7 @@ public enum StreamingServiceErrors: RError {
     case badDefaultUser(RError)
     /// No user is available
     case noDefaultUser
-    
+
     public var errorDescription: String {
         switch self {
         case .librarySetupFailed: return "Failed to get library data"
@@ -244,7 +242,7 @@ public enum StreamingServiceErrors: RError {
         case .noDefaultUser: return "No default user is available"
         }
     }
-    
+
     public var next: (any RError)? {
         switch self {
         case .librarySetupFailed(let err): return err
@@ -265,14 +263,14 @@ public enum AdvancedNetworkErrors: RError {
     case failedUpNext(RError)
     /// Failed to get special features for a particular `MediaModelProtocol`.
     case failedSpecialFeatures(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .failedRecentlyAdded(let err), .failedUpNext(let err), .failedSpecialFeatures(let err):
             return err
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .failedRecentlyAdded: return "Failed to get recently added list"
@@ -298,7 +296,7 @@ public enum LibraryErrors: RError {
     case specialFeaturesFailed(RError, String)
     /// The library failed for some unknown reason.
     case unknown(String)
-    
+
     public var next: (RError)? {
         switch self {
         case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
@@ -309,7 +307,7 @@ public enum LibraryErrors: RError {
             return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .gettingLibraries: return "Failed to get library data"
@@ -336,7 +334,7 @@ public enum AccountErrors: RError {
         case .serverVersionFailed(let next): return next
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .loginFailed:
@@ -351,14 +349,14 @@ public enum AccountErrors: RError {
 public enum JellyfinNetworkErrors: RError {
     /// Failed to update the playback position.
     case playbackUpdateFailed(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .playbackUpdateFailed(let err):
             return err
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .playbackUpdateFailed: return "Failed to update playback status"
@@ -370,22 +368,22 @@ public enum JellyfinNetworkErrors: RError {
 public enum UserDefaultsErrors: RError {
     /// Failed to create a UserDefaults object
     case FailedSetup
-    
+
     public var next: (any RError)? { nil }
-    
+
     public var errorDescription: String { "Failed to setup user defaults with suiteName" }
 }
 
 /// Errors for `DefaultsBasicStorage`
 public enum BasicStorageErrors: RError {
     case userDefaultsSetup
-    
+
     public var next: (any RError)? {
         switch self {
         case .userDefaultsSetup: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .userDefaultsSetup: return "Failed to setup User Defaults with App Group"
@@ -396,13 +394,13 @@ public enum BasicStorageErrors: RError {
 /// Errors during app setup
 public enum SetupErrors: RError {
     case databaseError(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .databaseError(let error): return error
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .databaseError: return "Failed to setup databases. Stingray may be able to continue, but this protects your data"
@@ -422,9 +420,9 @@ public enum QuickConnectErrors: RError {
     case authFailed(RError)
     /// Failed to check if Quick Connect is enabled
     case isEnabled(RError)
-    
+
     case statusFailedtoFetch(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .initialConnectionFailed(let err): return err
@@ -435,7 +433,7 @@ public enum QuickConnectErrors: RError {
         case .statusFailedtoFetch(let err): return err
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .initialConnectionFailed: return "Failed to connect to the Jellyfin server"
@@ -444,7 +442,7 @@ public enum QuickConnectErrors: RError {
         case .quickConnectCodesFailed: return "Failed to get Quick Connect code"
         case .isEnabled: return "Failed to check if Quick Connect is available"
         case .statusFailedtoFetch: return "Failed to check if Quick Connect has been setup on the Jellyfin server"
-            
+
         }
     }
 }
@@ -457,9 +455,9 @@ public enum StoreErrors: RError {
     case productUnavailable
     case productsUnavailable(Error)
     case productsStillLoading
-    
+
     public var next: (any RError)? { nil }
-    
+
     public var errorDescription: String {
         switch self {
         case .purchaseFailed(let product, let err): return "Failed to purchase \(product.id): \(err.localizedDescription)"

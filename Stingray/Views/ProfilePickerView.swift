@@ -12,19 +12,19 @@ public struct ProfilePickerView: View {
     @State private var itemRows: [[PickerItem]] = []
     /// Login state for the entire app
     @Binding public var loginState: LoginState
-    
+
     @Environment(UserModel.self) private var userModel
-    
+
     public static let optionSize: CGSize = CGSize(width: 274, height: 335)
     public static let spacing: CGSize = CGSize(width: 60, height: 45)
-    
+
     /// Types of items available to show in the profile picker
     public enum PickerItem: Hashable, Identifiable {
         /// Display a user icon
         case user(User)
         /// Display the add user icon
         case addProfile
-        
+
         public var id: String {
             switch self {
             case .addProfile: return "addProfile"
@@ -32,7 +32,7 @@ public struct ProfilePickerView: View {
             }
         }
     }
-    
+
     public var body: some View {
         VStack(alignment: .center, spacing: Self.spacing.height) {
             ForEach(self.itemRows, id: \.self) { itemRow in
@@ -65,7 +65,7 @@ public struct ProfilePickerView: View {
         }
         .ignoresSafeArea()
     }
-    
+
     /// Switch the current login state to a logged in user
     /// - Parameters:
     ///   - user: User to sign in with
@@ -82,7 +82,7 @@ public struct ProfilePickerView: View {
         userModel.activeUser = user
         settingsModel.themeDark = user.darkTheme
         settingsModel.themeLight = user.lightTheme
-        
+
         // If we're already logged in as this user, reuse the existing streaming service instance
         if case .loggedIn(let existingService) = currentLoginState {
             if existingService.userID == user.id { return currentLoginState } // Return the same state to avoid recreating the service
@@ -91,7 +91,7 @@ public struct ProfilePickerView: View {
         if case .pickingUser = currentLoginState {
             if user.pin != nil { return .requiresPIN(user) } // May require a PIN when switching users
         }
-        
+
         // Otherwise, create a new streaming service instance
         switch user.serviceType {
         case .Jellyfin(let jellyfinData):
@@ -112,10 +112,10 @@ public struct ProfilePickerView: View {
 fileprivate struct AddProfile: View {
     @Environment(ThemeModel.self) private var theme
     @Binding public var loginState: LoginState
-    
+
     /// Checks if add user button is selected
     @FocusState private var isFocused: Bool
-    
+
     var body: some View {
         NavigationLink { AddServerView(loginState: $loginState) }
         label: {

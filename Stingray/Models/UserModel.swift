@@ -83,14 +83,14 @@ public final class UserModel: UserModelProtocol {
     }
 
     public private(set) var userIDs: Set<String> = []
-    
+
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
     public init(storage: UserStorageProtocol) {
         self.storage = storage
         self.userIDs = Set(self.storage.getUserIDs())
         self.activeUser = nil
-        
+
         guard let userID = self.storage.getActiveUserID() else { return }
         self.activeUser = self.storage.getUser(userID: userID)
     }
@@ -124,7 +124,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
     public let serviceID: String
     public let id: String
     public let displayName: String
-    
+
     // Settings
     public var usesSubtitles: Bool
     public var pin: String?
@@ -173,13 +173,13 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         self.preferredLangauge = preferredLanguage
         self.searchEpisodeTitles = searchEpisodeTitles
     }
-    
+
     /// Create a user from encoded JSON.
     /// - Parameter decoder: JSON Decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            
+
             serviceURL = try container.decode(URL.self, forKey: .serviceURL)
             serviceType = try container.decode(ServiceType.self, forKey: .serviceType)
             serviceID = try container.decode(String.self, forKey: .serviceID)
@@ -222,7 +222,7 @@ public enum PlaybackSpeed: CaseIterable, Codable {
     case oneAndHalf
     /// 2x the speed of realtime
     case two
-    
+
     public var value: Float {
         switch self {
         case .quarter: return 0.25
@@ -233,7 +233,7 @@ public enum PlaybackSpeed: CaseIterable, Codable {
         case .two: return 2
         }
     }
-    
+
     public var name: String {
         switch self {
         case .quarter: return "0.25x"

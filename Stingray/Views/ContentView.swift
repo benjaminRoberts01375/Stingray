@@ -14,7 +14,7 @@ public enum LoginState {
     case loggedOut
     /// There is at least one user signed in
     case loggedIn(SystemInfoProviding & LibraryProviding & PlayerProviding & UserProviding & MediaImageProviding & MediaProviding &
-                   RecommendationProviding)
+                  RecommendationProviding)
     /// There are accounts signed in, but the current user needs to be picked
     case pickingUser
     /// User is signed in, but requires a PIN
@@ -29,18 +29,18 @@ public struct ContentView: View {
     @State private var theme: ThemeModel
     @State private var userModel: UserModel
     @State private var purchases: PurchasesModel
-    
+
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
-    
+
     public init() throws(SetupErrors) {
         let defaultsStorage: HybridBasicStorage
         do { defaultsStorage = try HybridBasicStorage() }
         catch { throw SetupErrors.databaseError(error) }
         let userStorage = UserStorage(basicStorage: defaultsStorage)
         let settingStorage = SettingStorage(basicStorage: defaultsStorage)
-        
+
         let userModel = UserModel(storage: userStorage)
         self.userModel = userModel
         self.navigationPath = NavigationPath()
@@ -54,7 +54,7 @@ public struct ContentView: View {
         self.purchases = purchases
         self.settings = SettingsModel(userModel: userModel, storage: settingStorage, theme: themeModel)
     }
-    
+
     public var body: some View {
         NavigationStack(path: $navigationPath) {
             switch loginState {
@@ -71,7 +71,7 @@ public struct ContentView: View {
                 .padding(128)
             case .requiresPIN(let user):
                 PINEntry(loginState: $loginState, user: user)
-                
+
             case .loggedIn(let streamingService):
                 DashboardView(
                     streamingService: streamingService,
@@ -106,14 +106,14 @@ public struct ContentView: View {
             case .loggedIn: return
             default: break
             }
-            
+
             Log.info("Attempting to set up from storage")
             // Check if any users exist
             if self.userModel.getUsers().isEmpty {
                 Log.info("No users have been signed up, showing login screen")
                 return
             }
-            
+
             // Asking user for prefered profile
             if self.userModel.getUsers().count > 1 {
                 switch self.settings.profileSwitchingMethod {
@@ -124,7 +124,7 @@ public struct ContentView: View {
                 default: break
                 }
             }
-            
+
             // Check if the current Apple TV user has an associated account
             guard let defaultUser = self.userModel.activeUser
             else {
@@ -132,13 +132,13 @@ public struct ContentView: View {
                 self.loginState = .pickingUser
                 return
             }
-            
+
             // User requires PIN
             if defaultUser.pin != nil {
                 self.loginState = .requiresPIN(defaultUser)
                 return
             }
-            
+
             switch defaultUser.serviceType {
             case .Jellyfin(let userJellyfin):
                 Log.info("Signing in as user \(defaultUser.displayName) - \(defaultUser.id)")
@@ -156,7 +156,7 @@ public struct ContentView: View {
         }
         .task {
             await self.purchases.setupProducts()
-            
+
             // Listening for new purchases
             for await result in StoreKit.Transaction.updates {
                 if case .verified(let transaction) = result {
@@ -168,24 +168,24 @@ public struct ContentView: View {
             }
         }
     }
-    
+
     private func handleDeepLink(url: URL) {
         Log.info("Deep link received: \(url.absoluteString)")
-        
+
         // Make sure URL scheme is good
         guard url.scheme == "stingray",
               url.host == "media" else {
             Log.warning("Invalid deep link scheme or host")
             return
         }
-        
+
         // Parse query parameters
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
             Log.warning("Failed to parse URL components")
             return
         }
-        
+
         // Get mediaID and its parent for lookup later
         let mediaID = queryItems.first(where: { $0.name == "id" })?.value
         let parentID = queryItems.first(where: { $0.name == "parentID" })?.value
@@ -193,9 +193,9 @@ public struct ContentView: View {
             Log.warning("Missing required parameters: mediaID or parentID")
             return
         }
-        
+
         Log.info("Parsed deep link - mediaID: \(mediaID), parentID: \(parentID)")
-        
+
         // Create deep link request
         deepLinkRequest = DeepLinkRequest(mediaID: mediaID, parentID: parentID)
     }

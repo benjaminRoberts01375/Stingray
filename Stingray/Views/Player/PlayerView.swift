@@ -13,7 +13,7 @@ public struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @State public var vm: PlayerViewModel
     @Binding public var navigation: NavigationPath
-    
+
     public var body: some View {
         VStack {
             AVPlayerViewControllerRepresentable(vm: self.vm) {
@@ -48,13 +48,13 @@ public struct PlayerView: View {
 fileprivate struct PlayerDescriptionView: View {
     let media: any MediaProtocol
     let mediaSource: any MediaSourceProtocol
-    
+
     var body: some View {
         VStack {
             MediaLogoHeader(media: self.media)
                 .padding(.bottom)
                 .shadow(color: .black.opacity(1), radius: 10)
-            
+
             HStack(alignment: .top) {
                 VStack(alignment: .leading) {
                     let isTVSeries = {
@@ -75,7 +75,7 @@ fileprivate struct PlayerDescriptionView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding()
                 .availableGlass()
-                
+
                 switch media.mediaType {
                 case .movies: EmptyView()
                 case .tv(let seasons):
@@ -118,7 +118,7 @@ fileprivate struct PlayerPeopleView: View {
 fileprivate struct PlayerStreamingStats: View {
     /// All data regarding current playback
     public var vm: PlayerViewModel
-    
+
     init(vm: PlayerViewModel) {
         self.mediaSourceID = vm.playerProgress?.mediaSource.id ?? "Unknown"
         self.mediaSourceTitle = vm.playerProgress?.mediaSource.name ?? "Untitled"
@@ -127,7 +127,7 @@ fileprivate struct PlayerStreamingStats: View {
         self.subtitleStreamID = vm.playerProgress?.subtitleID
         self.vm = vm
     }
-    
+
     /// Network usage
     @State private var networkThroughput: Int = 0
     /// Video bitrate of the playing content
@@ -152,7 +152,7 @@ fileprivate struct PlayerStreamingStats: View {
     private let subtitleStreamID: String?
     /// Screen resolution
     private let screenResolution: CGSize = UIScreen.main.nativeBounds.size
-    
+
     var body: some View {
         HStack {
             VStack {
@@ -204,7 +204,7 @@ fileprivate struct PlayerStreamingStats: View {
             }
         }
     }
-    
+
     /// Updates the real-time stats
     private func updateStats() async {
         guard let currentItem = self.vm.player.currentItem,
@@ -212,18 +212,18 @@ fileprivate struct PlayerStreamingStats: View {
               let accessLog = currentItem.accessLog(),
               let lastEvent = accessLog.events.last
         else { return }
-        
+
         // Bits per second
         self.networkThroughput = Int(lastEvent.observedBitrate) // Represents network usage
         self.bitrate = Int(lastEvent.averageVideoBitrate) // Represents typical video bitrate
-        
+
         // Get presentation size (actual displayed resolution)
         self.resolution = currentItem.presentationSize
-        
+
         // Get real frame rate and playback resolution
         self.resolution = currentItem.presentationSize
         self.frameRate = track.currentVideoFrameRate
-        
+
         // Get codec and profile
         if let assetTrack = track.assetTrack,
            let formatDescription = try? await assetTrack.load(.formatDescriptions).first {
@@ -233,27 +233,27 @@ fileprivate struct PlayerStreamingStats: View {
             else if fourCC.hasPrefix("avc") { self.videoCodec = getH264Profile(from: formatDescription) ?? "H.264" }
             else { self.videoCodec = fourCC }
         }
-        
+
         // Calculate buffer duration in seconds
         if let timeRange = currentItem.loadedTimeRanges.first?.timeRangeValue {
             let bufferedStart = CMTimeGetSeconds(timeRange.start)
             let bufferedDuration = CMTimeGetSeconds(timeRange.duration)
             let currentTime = CMTimeGetSeconds(currentItem.currentTime())
-            
+
             // Calculate how many seconds ahead are buffered from current position
             let bufferEnd = bufferedStart + bufferedDuration
             self.bufferDuration = max(0, Int(bufferEnd - currentTime))
         }
         else { self.bufferDuration = 0 }
     }
-    
+
     func getH264Profile(from formatDescription: CMFormatDescription) -> String? {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
               let avcC = atoms["avcC"] as? Data,
               avcC.count > 1
         else { return nil }
-        
+
         switch avcC[1] {
         case 66:  return "H.264 Baseline"
         case 77:  return "H.264 Main"
@@ -261,14 +261,14 @@ fileprivate struct PlayerStreamingStats: View {
         default:  return "H.264"
         }
     }
-    
+
     func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
               let hvcC = atoms["hvcC"] as? Data,
               hvcC.count > 1
         else { return nil }
-        
+
         return hvcC[1] == 2 ? "HEVC Main10" : "HEVC Main"
     }
 }
@@ -276,14 +276,14 @@ fileprivate struct PlayerStreamingStats: View {
 // MARK: UIKit Player
 public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
     public let vm: PlayerViewModel
-    
+
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
     public let onStartPiP: () -> Void
     public let onRestoreFromPiP: () -> Void
     public let onStopFromPiP: () -> Void
-    
+
     @Environment(ThemeModel.self) private var theme
-    
+
     public func makeCoordinator() -> Coordinator {
         let coordinator = Coordinator(
             id: self.vm.mediaSourceID,
@@ -291,7 +291,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
             onRestoreFromPiP: self.onRestoreFromPiP,
             onStopFromPiP: self.onStopFromPiP,
         )
-        
+
         // Should we kill the current PiP stream because the user is now watching something new?
         if Self.Coordinator.activePiPCoordinator?.id != nil && self.vm.mediaSource.id != Self.Coordinator.activePiPCoordinator?.id {
             Log.info("Killing PiP Coordinator")
@@ -301,7 +301,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         }
         return coordinator
     }
-    
+
     public func makeUIViewController(context: Context) -> AVPlayerViewController {
         Log.info("Loading player...")
         let controller = AVPlayerViewController()
@@ -312,11 +312,11 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         controller.allowsPictureInPicturePlayback = true
         controller.allowedSubtitleOptionLanguages = .init(["nerd"])
         controller.delegate = context.coordinator
-        
+
         context.coordinator.playerViewController = controller
-        
+
         var playerTabs: [UIViewController] = []
-        
+
         if !self.vm.media.description.isEmpty {
             // Series & episode description
             let descTab = UIHostingController(
@@ -326,7 +326,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
             descTab.preferredContentSize = CGSize(width: 0, height: 350)
             playerTabs.append(descTab)
         }
-        
+
         if !self.vm.media.people.isEmpty {
             switch self.vm.media.mediaType {
             case .movies:
@@ -355,24 +355,24 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 }
             }
         }
-        
+
         let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(vm: self.vm))
         streamingStatsTab.title = "Stats"
         playerTabs.append(streamingStatsTab)
-        
+
         controller.customInfoViewControllers = playerTabs
         return controller
     }
-    
+
     public func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
         uiViewController.player = self.vm.player
         uiViewController.transportBarCustomMenuItems = makeTransportBarItems()
     }
-    
+
     private func makeTransportBarItems() -> [UIMenuElement] {
         // Typical buttons
         var items: [UIMenuElement] = []
-        
+
         // MARK: Subtitle stream choices
         // Add Subtitles menu only if there are subtitle tracks available
         if !self.vm.mediaSource.subtitleStreams.isEmpty {
@@ -392,7 +392,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 return action
             })))
         }
-        
+
         // MARK: Audio stream choices
         // Add Audio menu only if there's more than one option
         if self.vm.mediaSource.audioStreams.count > 1 {
@@ -410,7 +410,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 )
             )
         }
-        
+
         // MARK: Video stream choices
         // Add Video menu only if there's more than one option
         if self.vm.mediaSource.videoStreams.count > 1 {
@@ -428,13 +428,13 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 )
             )
         }
-        
+
         // MARK: Bitrate choices
         if let videoStream = (self.vm.mediaSource.videoStreams.first { self.vm.playerProgress?.videoID == $0.id }),
            videoStream.bitrate > 1_500_000 {
             let numberFormatter = NumberFormatter()
             numberFormatter.numberStyle = .decimal
-            
+
             let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
             ?? "\(videoStream.bitrate)"
             let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
@@ -447,7 +447,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 return .on
             }()
             var bitrateOptions: [UIAction] = [fullBitrate]
-            
+
             // Helper function to create a bitrate action
             func makeBitrateAction(bitrate: Int) -> UIAction {
                 let action = UIAction(title: Int.formatMegabitsPerSec(bitrate)) { _ in
@@ -462,19 +462,19 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 }()
                 return action
             }
-            
+
             // Add bitrate options if applicable
             for bitrate in SettingsModel.bitrateOptions where videoStream.bitrate > bitrate {
                 bitrateOptions.append(makeBitrateAction(bitrate: bitrate))
             }
-            
+
             let bitrateIcon: String = {
                 if SettingsModel.bitrateOptions.contains(self.vm.playerProgress?.bitrate ?? -1) {
                     return "wifi.badge.lock"
                 }
                 return "wifi"
             }()
-            
+
             items.append(
                 UIMenu(
                     title: "Target Bitrate",
@@ -483,7 +483,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 )
             )
         }
-        
+
         // MARK: Playback speed picker
         var playbackSpeeds: [UIAction] = []
         for speed in PlaybackSpeed.allCases {
@@ -493,7 +493,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
             action.state = vm.player.rate == speed.value ? .on : .off
             playbackSpeeds.append(action)
         }
-        
+
         items.append(
             UIMenu(
                 title: "Playback Speed",
@@ -501,13 +501,13 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                 children: playbackSpeeds
             )
         )
-        
+
         // MARK: Episode picker
         // TV Season-related buttons
         if let seasons = self.vm.seasons {
             let allEpisodes = seasons.flatMap(\.episodes)
             var setPreviousEpisode: Bool = false
-            
+
             if let index = allEpisodes.firstIndex(where: { episode in
                 for mediaSource in episode.mediaSources {
                     return mediaSource.id == self.vm.mediaSource.id
@@ -523,7 +523,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                         self.vm.newPlayer(episode: episode)
                     }), at: 0)
                 }
-                
+
                 // Previous episode
                 if index - 1 >= 0 {
                     let episode = allEpisodes[index - 1]
@@ -535,7 +535,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                     setPreviousEpisode = true
                 }
             }
-            
+
             // Episode selector
             let seasonItems = seasons.map { season in
                 let episodeActions = season.episodes.map { episode in
@@ -547,7 +547,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
                     action.state = self.vm.mediaSource.id == episode.mediaSources.first?.id ? .on : .off
                     return action
                 }
-                
+
                 // Awful limitation by Apple to only support menus one level deep here
                 return UIMenu(title: season.title, options: .displayInline, children: episodeActions)
             }
@@ -561,22 +561,22 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         }
         return items
     }
-    
+
     public class Coordinator: NSObject, AVPlayerViewControllerDelegate {
         public let onStartPiP: () -> Void
         public let onRestoreFromPiP: () -> Void
         public let onStopFromPiP: () -> Void
         /// Used for PiP identification
         public let id: String
-        
+
         // Maintain a reference to a PiP instance
         public weak var playerViewController: AVPlayerViewController?
         // Maintain a reference to this Coordinator while PiP is active
         public static var activePiPCoordinator: Coordinator?
-        
+
         // Track whether we're restoring vs closing
         private var isRestoringFromPiP = false
-        
+
         public init(
             id: String,
             onStartPiP: @escaping () -> Void,
@@ -588,29 +588,29 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
             self.onRestoreFromPiP = onRestoreFromPiP
             self.onStopFromPiP = onStopFromPiP
         }
-        
+
         public func stopPlayer() {
             // On tvOS, stopping the player will end PiP automatically
             playerViewController?.player?.pause()
             playerViewController?.player?.replaceCurrentItem(with: nil)
         }
-        
+
         public func playerViewControllerWillStartPictureInPicture(_ playerViewController: AVPlayerViewController) {
             Log.info("PiP starting")
             self.onStartPiP()
             Self.activePiPCoordinator = self // Keep self alive
         }
-        
+
         public func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
             Log.info("PiP stopped")
             if !isRestoringFromPiP {
                 onStopFromPiP()
             }
-            
+
             isRestoringFromPiP = false // Reset for next time
             Self.activePiPCoordinator = nil
         }
-        
+
         public func playerViewController(
             _ playerViewController: AVPlayerViewController,
             failedToStartPictureInPictureWithError error: Error
@@ -618,13 +618,13 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
             Log.warning("PiP failed to start: \(error)")
             Self.activePiPCoordinator = nil
         }
-        
+
         public func playerViewControllerShouldAutomaticallyDismissAtPictureInPictureStart(
             _ playerViewController: AVPlayerViewController
         ) -> Bool {
             true
         }
-        
+
         public func playerViewController(
             _ playerViewController: AVPlayerViewController,
             restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void

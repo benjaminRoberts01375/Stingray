@@ -36,34 +36,34 @@ public final class PlayerViewModel: Hashable {
     }
     /// Quickly get the media source from the media source ID
     public private(set) var mediaSource: any MediaSourceProtocol
-    
+
     public private(set) var settingsModel: SettingsModel
-    
+
     /// Time to start the player at
     public var startTime: CMTime
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
     /// Trigger to refresh transport bar items
     public var transportBarNeedsUpdate: Bool = false
-    
+
     /// Server to stream from
     @ObservationIgnored public let streamingService: PlayerProviding & MediaImageProviding
     /// Seasons of a TV show if available (may be a movie)
     @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
     /// Store and restore the current navigation path
     @ObservationIgnored public var navigationPath: NavigationPath?
-    
+
     // Hashable Conformance
     public static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
         lhs.mediaSourceID == rhs.mediaSourceID &&
         lhs.startTime == rhs.startTime
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
         hasher.combine(startTime.seconds)
     }
-    
+
     /// Normal init for setting up a player
     public init(
         media: any MediaProtocol,
@@ -82,16 +82,16 @@ public final class PlayerViewModel: Hashable {
         self.mediaSource = mediaSource
         self.media = media
         self.settingsModel = settingsModel
-        
+
         var subtitleID: String?
-        
+
         // Setup subtitles
         if settingsModel.usesSubtitles {
             subtitleID = self.mediaSource.subtitleStreams.first {
                 $0.isDefault
             }?.id ?? self.mediaSource.subtitleStreams.first?.id
         }
-        
+
         self.savePlaybackDate()
         self.newPlayer(
             startTime: self.startTime,
@@ -102,7 +102,7 @@ public final class PlayerViewModel: Hashable {
         )
         self.player.rate = self.settingsModel.playbackSpeed.value
     }
-    
+
     /// Dictates how the player should transition a particular stream
     public enum StreamTransitionType {
         /// Do not transition to a new stream
@@ -127,7 +127,7 @@ public final class PlayerViewModel: Hashable {
     ) {
         do { try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback) }
         catch { Log.warning("Failed to configure audio session: \(error)") }
-        
+
         // Setup title and possibly a subtitle (ex. "Season 1, Episode 1" or "The Super Duper Cut")
         var title = ""
         var subtitle = ""
@@ -149,7 +149,7 @@ public final class PlayerViewModel: Hashable {
             title = self.media.title
             if sources.count > 1 { subtitle = self.mediaSource.name }
         }
-        
+
         // Setup stream IDs
         let finalVideoID: String
         let finalAudioID: String
@@ -166,10 +166,10 @@ public final class PlayerViewModel: Hashable {
         case .keep: finalSubtitleID = self.playerProgress?.subtitleID
         case .newID(let id): finalSubtitleID = id
         }
-        
+
         // We're done reading from the running player
         self.stopPlayer()
-        
+
         // Create/update the player
         self.streamingService.playbackStart(
             mediaSource: self.mediaSource,
@@ -181,21 +181,21 @@ public final class PlayerViewModel: Hashable {
             subtitle: subtitle,
             player: self.player
         )
-        
+
         self.player.preventsDisplaySleepDuringVideoPlayback = true // Should be default, but oh well
         self.playerProgress = streamingService.playerProgress // Sync to view model
         self.player.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
         self.player.play()
-        
+
         // Update user settings
         self.settingsModel.usesSubtitles = self.playerProgress?.subtitleID != nil
-        
+
         // Set up observer for when the current item finishes playing
         if self.settingsModel.autoplay {
             self.setupPlaybackEndObserver()
         }
     }
-    
+
     /// Sets up an observer to detect when playback finishes and auto-advance to next episode
     private func setupPlaybackEndObserver() {
         // Remove any existing observers first
@@ -204,7 +204,7 @@ public final class PlayerViewModel: Hashable {
             name: .AVPlayerItemDidPlayToEndTime,
             object: player.currentItem
         )
-        
+
         // Add observer for the current item
         NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -214,30 +214,30 @@ public final class PlayerViewModel: Hashable {
             self?.handlePlaybackEnded()
         }
     }
-    
+
     /// Called when the current video finishes playing
     private func handlePlaybackEnded() {
         guard let seasons = self.seasons else { return }
-        
+
         let allEpisodes = seasons.flatMap(\.episodes)
         guard let currentIndex = allEpisodes.firstIndex(where: { episode in
             episode.mediaSources.first?.id == self.mediaSource.id
         }),
-        currentIndex + 1 < allEpisodes.count else {
+              currentIndex + 1 < allEpisodes.count else {
             // No next episode, playback complete
             return
         }
-        
+
         let nextEpisode = allEpisodes[currentIndex + 1]
-        
+
         // Save the current episode's progress
         self.savePlaybackDate()
-        
+
         // Update to the next episode
         self.mediaSourceID = nextEpisode.mediaSources.first?.id ?? self.mediaSourceID
         self.newPlayer(episode: nextEpisode)
     }
-    
+
     /// Creates a new player based on current state and new episode
     /// - Parameter episode: Episode to transition into
     public func newPlayer(episode: any TVEpisodeProtocol) {
@@ -257,13 +257,13 @@ public final class PlayerViewModel: Hashable {
             subtitleID: .newID(newSubtitleStream?.id)
         )
     }
-    
+
     public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
-    
+
     public func savePlaybackDate() {
         switch self.media.mediaType {
         case .tv(let seasons):
@@ -284,13 +284,13 @@ public final class PlayerViewModel: Hashable {
         default: break
         }
     }
-    
+
     public func changeSpeed(_ speed: PlaybackSpeed) {
         self.player.rate = speed.value
         self.settingsModel.playbackSpeed = speed
         self.transportBarNeedsUpdate.toggle() // Trigger UI update
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
         player.pause()

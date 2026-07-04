@@ -12,28 +12,28 @@ import StoreKit
 public final class PurchasesModel {
     /// Products from AppStore Connect
     public private(set) var products: ProductDownloadStatus
-    
+
     /// Actually bought the supporter tier
     public var boughtSupporter: Bool
-    
+
     /// A simple string that contains the ID for the supporter tier
     public enum ProductID: String, CaseIterable {
         case supporter = "com.benlab.Stingray.Supporter"
     }
-    
+
     /// Setup purchases with AppStore Connect
     public init() {
         self.products = .waiting
         self.boughtSupporter = false
     }
-    
+
     /// This needs to be called to get the available products and restore purchases
     public func setupProducts() async {
         // Get all available products
         self.products = .fetching
         do { self.products = .ready(try await Product.products(for: [ProductID.supporter.rawValue])) }
         catch { self.products = .failed(StoreErrors.productsUnavailable(error)) }
-        
+
         // Check to see if the user bought any previously
         for await result in Transaction.currentEntitlements {
             switch result {
@@ -46,7 +46,7 @@ public final class PurchasesModel {
             }
         }
     }
-    
+
     /// Tracks if the products were able to be synced
     public enum ProductDownloadStatus {
         /// Products have yet to be fetched
@@ -58,7 +58,7 @@ public final class PurchasesModel {
         /// Products failed to fetch
         case failed(RError)
     }
-    
+
     /// Purchase a product from StoreKit
     /// - Parameter product: Product to buy
     /// - Throws: If there was an issue buying the product, either from buying or tampering
@@ -68,7 +68,7 @@ public final class PurchasesModel {
         let result: Product.PurchaseResult
         do { result = try await product.purchase() }
         catch { throw .purchaseFailed(product, error) }
-        
+
         switch result {
         case .pending: return
         case .userCancelled: return

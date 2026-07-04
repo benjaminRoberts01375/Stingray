@@ -70,21 +70,21 @@ public final class MediaModelRepresentable: MediaRepresentableProtocol, Decodabl
     /// - Parameter decoder: JSON Decoder.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-
+        
         // Prefer the series identity when present (e.g. NextUp returns episodes, but we
         // want the containing show). Fallback to the actual ID
         self.id = (try? container.decodeIfPresent(String.self, forKey: .seriesID)) ?? (
             (try? container.decodeIfPresent(String.self, forKey: .id)) ??
             UUID().uuidString
         )
-
+        
         self.parentID = try? container.decodeIfPresent(String.self, forKey: .parentID)
-
+        
         self.title = (try? container.decodeIfPresent(String.self, forKey: .seriesTitle)) ?? (
             (try? container.decodeIfPresent(String.self, forKey: .title))
             ?? "Unknown Title"
         )
-
+        
         self.imageBlurHashes = try? container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
         self.imageTags = try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)
