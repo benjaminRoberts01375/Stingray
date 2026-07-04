@@ -7,6 +7,17 @@
 
 import Foundation
 
+/// Shared date formatter for Jellyfin's ISO-8601 timestamps.
+private extension ISO8601DateFormatter {
+    /// Reused across decodes; allocating an `ISO8601DateFormatter` is expensive and `date(from:)` is
+    /// thread-safe once the format options are configured.
+    static let jellyfin: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+}
+
 // MARK: Protocols
 
 /// Define the shape of a piece of media
@@ -244,9 +255,7 @@ public final class MediaModel: MediaProtocol, Decodable {
 
         // Date needs to be interpreted
         if let dateString = try? container.decodeIfPresent(String.self, forKey: .releaseDate) {
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            self.releaseDate = formatter.date(from: dateString)
+            self.releaseDate = ISO8601DateFormatter.jellyfin.date(from: dateString)
         }
     }
     
@@ -497,9 +506,7 @@ public final class TVSeason: TVSeasonProtocol {
                             String.self,
                             forKey: .lastPlayedDate
                         ) else { return nil }
-                        let formatter = ISO8601DateFormatter()
-                        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                        return formatter.date(from: dateString)
+                        return ISO8601DateFormatter.jellyfin.date(from: dateString)
                     }(),
                     overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
                     people: try episodeContainer.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []

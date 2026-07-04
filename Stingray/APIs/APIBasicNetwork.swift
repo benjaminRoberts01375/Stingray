@@ -60,7 +60,11 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     private let deviceName: String
     /// Current stingray version
     private let appVersion: String
-    
+    /// Reused JSON encoder. Allocating a fresh coder per request is wasteful
+    private static let jsonEncoder = JSONEncoder()
+    /// Reused JSON decoder. Allocating a fresh coder per request is still wasteful
+    private static let jsonDecoder = JSONDecoder()
+
     public init(address: URL) {
         self.address = address
         self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
@@ -107,7 +111,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         if let body = body {
             let jsonData: Data
             do {
-                jsonData = try JSONEncoder().encode(body)
+                jsonData = try Self.jsonEncoder.encode(body)
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type") // Set JSON as content type
                 request.httpBody = jsonData
             } catch {
@@ -138,7 +142,7 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         
         // Decode the JSON response
         do {
-            let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
+            let decodedResponse = try Self.jsonDecoder.decode(T.self, from: responseData)
             return decodedResponse
         }
         catch { throw NetworkError.decodeJSONFailed(error, url: url) } // Can decode errors

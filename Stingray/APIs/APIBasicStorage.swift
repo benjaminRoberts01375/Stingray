@@ -110,6 +110,10 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     public static let dbVersion: Int8 = 2
     /// Key to read the version from in self.cloudStore
     private static let dbVersionKey: String = "dbVersion"
+    /// Reused JSON encoder. Allocating a fresh coder per request is wasteful
+    private static let jsonEncoder = JSONEncoder()
+    /// Reused JSON decoder. Allocating a fresh coder per request is still wasteful
+    private static let jsonDecoder = JSONDecoder()
     
     /// Sets up storage for local and cloud syncing
     public init() throws(BasicStorageErrors) {
@@ -194,7 +198,7 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     public func setRepresentable<T: RawRepresentable>(_ key: StorageKeys, value: T) { self.simpleSet(key, value: value.rawValue) }
     
     public func setObject<T: Codable>(_ key: StorageKeys, value: T) {
-        guard let data = try? JSONEncoder().encode(value).base64EncodedString()
+        guard let data = try? Self.jsonEncoder.encode(value).base64EncodedString()
         else { return }
         self.simpleSet(key, value: data)
     }
@@ -237,6 +241,6 @@ public final class HybridBasicStorage: BasicStorageProtocol {
               let data: Data = Data(base64Encoded: encoded)
         else { return nil }
         
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? Self.jsonDecoder.decode(T.self, from: data)
     }
 }

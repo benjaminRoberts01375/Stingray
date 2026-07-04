@@ -94,6 +94,7 @@ Configure Stingray to look and feel how you want it.
     - Massively improves scrolling performance in busy detail media views
     - Improves library loading performance
   - Improve People grouping performance
+  - Store relevant (en/de)coders and formatters as static variables
   - Only calculate blur hashes in `AsyncBlurImage`
     - Media Card now uses `AsyncBlurImage`
       - This does change the appearance slightly, particularly for 4:3 thumbnails
