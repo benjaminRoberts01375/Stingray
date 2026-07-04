@@ -80,7 +80,8 @@ Configure Stingray to look and feel how you want it.
     - Move the player files into a dedicated "player" folder
     - Abstract metadata and overview in the `DetailMediaView` to their own views
     - Abstract the MovieDetailView into a separate view
-    - Rebrand the `DetailMediaView` to `TVShowDetailView`
+    - Rebrand the `DetailMediaView` to `TVShowDetailView` and created a dedicated `MovieDetailView`
+    - Abstract player transport bar items to a dedicated class
   - Remove unused Equatable conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
   - Massively improve documentation around the `slidingLevenshteinDistance` function

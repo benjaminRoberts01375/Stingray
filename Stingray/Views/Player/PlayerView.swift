@@ -376,131 +376,29 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         // MARK: Subtitle stream choices
         // Add Subtitles menu only if there are subtitle tracks available
         if !self.vm.mediaSource.subtitleStreams.isEmpty {
-            items.append(UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
-                {
-                    let action = UIAction(title: "None") { _ in
-                        self.vm.newPlayer(startTime: self.vm.player.currentTime(), subtitleID: .newID(nil))
-                    }
-                    action.state = self.vm.playerProgress?.subtitleID == nil ? .on : .off
-                    return action
-                }()
-            ] + self.vm.mediaSource.subtitleStreams.map({ subtitleStream in
-                let action = UIAction(title: subtitleStream.title) { _ in
-                    self.vm.newPlayer(startTime: self.vm.player.currentTime(), subtitleID: .newID(subtitleStream.id))
-                }
-                action.state = self.vm.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
-                return action
-            })))
+            items.append(PlayerButtons.subtitleStreamPicker(vm: self.vm))
         }
 
         // MARK: Audio stream choices
         // Add Audio menu only if there's more than one option
         if self.vm.mediaSource.audioStreams.count > 1 {
-            items.append(
-                UIMenu(
-                    title: "Audio",
-                    image: UIImage(systemName: "speaker.wave.2"),
-                    children: self.vm.mediaSource.audioStreams.map({ audioStream in
-                        let action = UIAction(title: audioStream.title) { _ in
-                            self.vm.newPlayer(startTime: self.vm.player.currentTime(), audioID: .newID(audioStream.id))
-                        }
-                        action.state = self.vm.playerProgress?.audioID == audioStream.id ? .on : .off
-                        return action
-                    })
-                )
-            )
+            items.append(PlayerButtons.audioStreamPicker(vm: self.vm))
         }
 
         // MARK: Video stream choices
         // Add Video menu only if there's more than one option
         if self.vm.mediaSource.videoStreams.count > 1 {
-            items.append(
-                UIMenu(
-                    title: "Video",
-                    image: UIImage(systemName: "display"),
-                    children: self.vm.mediaSource.videoStreams.map({ videoStream in
-                        let action = UIAction(title: videoStream.title) { _ in
-                            self.vm.newPlayer(startTime: self.vm.player.currentTime(), videoID: .newID(videoStream.id))
-                        }
-                        action.state = self.vm.playerProgress?.videoID == videoStream.id ? .on : .off
-                        return action
-                    })
-                )
-            )
+            items.append(PlayerButtons.videoStreamPicker(vm: self.vm))
         }
 
         // MARK: Bitrate choices
         if let videoStream = (self.vm.mediaSource.videoStreams.first { self.vm.playerProgress?.videoID == $0.id }),
            videoStream.bitrate > 1_500_000 {
-            let numberFormatter = NumberFormatter()
-            numberFormatter.numberStyle = .decimal
-
-            let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
-            ?? "\(videoStream.bitrate)"
-            let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
-                self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: nil)
-            }
-            fullBitrate.state = {
-                if SettingsModel.bitrateOptions.contains(self.vm.playerProgress?.bitrate ?? -1) {
-                    return .off
-                }
-                return .on
-            }()
-            var bitrateOptions: [UIAction] = [fullBitrate]
-
-            // Helper function to create a bitrate action
-            func makeBitrateAction(bitrate: Int) -> UIAction {
-                let action = UIAction(title: Int.formatMegabitsPerSec(bitrate)) { _ in
-                    self.vm.newPlayer(startTime: self.vm.player.currentTime(), bitrate: bitrate)
-                }
-                action.state = {
-                    if self.vm.playerProgress?.bitrate == bitrate {
-                        return .on
-                    } else {
-                        return .off
-                    }
-                }()
-                return action
-            }
-
-            // Add bitrate options if applicable
-            for bitrate in SettingsModel.bitrateOptions where videoStream.bitrate > bitrate {
-                bitrateOptions.append(makeBitrateAction(bitrate: bitrate))
-            }
-
-            let bitrateIcon: String = {
-                if SettingsModel.bitrateOptions.contains(self.vm.playerProgress?.bitrate ?? -1) {
-                    return "wifi.badge.lock"
-                }
-                return "wifi"
-            }()
-
-            items.append(
-                UIMenu(
-                    title: "Target Bitrate",
-                    image: UIImage(systemName: bitrateIcon),
-                    children: bitrateOptions
-                )
-            )
+            items.append(PlayerButtons.bitratePicker(vm: self.vm, videoStream: videoStream))
         }
 
         // MARK: Playback speed picker
-        var playbackSpeeds: [UIAction] = []
-        for speed in PlaybackSpeed.allCases {
-            let action = UIAction(title: speed.name) { _ in
-                self.vm.changeSpeed(speed)
-            }
-            action.state = vm.player.rate == speed.value ? .on : .off
-            playbackSpeeds.append(action)
-        }
-
-        items.append(
-            UIMenu(
-                title: "Playback Speed",
-                image: UIImage(systemName: "gauge.with.dots.needle.33percent"),
-                children: playbackSpeeds
-            )
-        )
+        items.append(PlayerButtons.playbackSpeedPicker(vm: self.vm))
 
         // MARK: Episode picker
         // TV Season-related buttons
@@ -508,55 +406,28 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
             let allEpisodes = seasons.flatMap(\.episodes)
             var setPreviousEpisode: Bool = false
 
-            if let index = allEpisodes.firstIndex(where: { episode in
+            if let currentEpisodeIndex = allEpisodes.firstIndex(where: { episode in
                 for mediaSource in episode.mediaSources {
                     return mediaSource.id == self.vm.mediaSource.id
                 }
                 return false
             }) {
                 // Next episode
-                if index + 1 < allEpisodes.count {
-                    let episode = allEpisodes[index + 1]
-                    items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
-                        self.vm.savePlaybackDate()
-                        self.vm.mediaSourceID = episode.mediaSources.first?.id ?? self.vm.mediaSourceID
-                        self.vm.newPlayer(episode: episode)
-                    }), at: 0)
+                if currentEpisodeIndex + 1 < allEpisodes.count {
+                    items.insert(PlayerButtons.nextEpisodeButton(vm: self.vm, nextEpisode: allEpisodes[currentEpisodeIndex + 1]), at: 0)
                 }
 
                 // Previous episode
-                if index - 1 >= 0 {
-                    let episode = allEpisodes[index - 1]
-                    items.insert(UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.left"), handler: { _ in
-                        self.vm.savePlaybackDate()
-                        self.vm.mediaSourceID = episode.mediaSources.first?.id ?? self.vm.mediaSourceID
-                        self.vm.newPlayer(episode: episode)
-                    }), at: 0)
+                if currentEpisodeIndex - 1 >= 0 {
+                    items.insert(PlayerButtons.previousEpisodeButton(vm: self.vm, previousEpisode: allEpisodes[currentEpisodeIndex - 1]), at: 0)
                     setPreviousEpisode = true
                 }
             }
 
             // Episode selector
-            let seasonItems = seasons.map { season in
-                let episodeActions = season.episodes.map { episode in
-                    let action = UIAction(title: episode.title) { _ in
-                        self.vm.savePlaybackDate()
-                        self.vm.mediaSourceID = episode.mediaSources.first?.id ?? self.vm.mediaSourceID
-                        self.vm.newPlayer(episode: episode)
-                    }
-                    action.state = self.vm.mediaSource.id == episode.mediaSources.first?.id ? .on : .off
-                    return action
-                }
-
-                // Awful limitation by Apple to only support menus one level deep here
-                return UIMenu(title: season.title, options: .displayInline, children: episodeActions)
-            }
             items.insert(
-                UIMenu(
-                    title: "Seasons",
-                    image: UIImage(systemName: "calendar.day.timeline.right"),
-                    children: seasonItems
-                ), at: setPreviousEpisode ? 1 : 0
+                PlayerButtons.episodePicker(vm: self.vm, seasons: seasons),
+                at: setPreviousEpisode ? 1 : 0
             )
         }
         return items
