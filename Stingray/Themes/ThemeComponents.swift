@@ -40,7 +40,9 @@ public struct StingrayFormButtonStyle: ButtonStyle {
                 .frame(maxWidth: .infinity)
                 .background {
                     let shape: AnyShape = {
-                        if SystemInfoView.tvModel == "AppleTV5,3" || SystemInfoView.tvModel == "AppleTV6,2" { AnyShape(RoundedRectangle(cornerRadius: 12)) }
+                        if SystemInfoView.tvModel == "AppleTV5,3" || SystemInfoView.tvModel == "AppleTV6,2" {
+                            AnyShape(RoundedRectangle(cornerRadius: 12))
+                        }
                         else { AnyShape(Capsule()) }
                     }()
                     shape
