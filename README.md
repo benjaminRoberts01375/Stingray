@@ -98,6 +98,7 @@ Configure Stingray to look and feel how you want it.
   - Only calculate blur hashes in `AsyncBlurImage`
     - Media Card now uses `AsyncBlurImage`
       - This does change the appearance slightly, particularly for 4:3 thumbnails
+  - Only calculate profile images once per load
 
 ## TODO List
 

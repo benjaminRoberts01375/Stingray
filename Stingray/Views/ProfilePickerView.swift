@@ -52,14 +52,16 @@ public struct ProfilePickerView: View {
                 .focusSection()
             }
         }
-        .onGeometryChange(for: CGFloat.self) { $0.size.width }
-        action: { width in
+        .onGeometryChange(for: Int.self) { proxy in
+            max(1, Int(proxy.size.width / (Self.optionSize.width + Self.spacing.width)))
+        }
+        action: { columns in
             var rows: [PickerItem] = userModel
                 .getUsers()
                 .sorted { $0.displayName < $1.displayName }
                 .map { .user($0) }
             rows += [.addProfile]
-            self.itemRows = rows.chunked(into: max(1, Int(width / (Self.optionSize.width + Self.spacing.width))))
+            self.itemRows = rows.chunked(into: columns)
         }
         .ignoresSafeArea()
     }
@@ -134,6 +136,44 @@ fileprivate struct AddProfile: View {
     }
 }
 
+/// Loads and displays a user's profile image.
+///
+/// Kept as its own view with focus-independent inputs so that moving focus between profiles
+/// does not re-evaluate this body or recompute the (network-object-allocating, logging) image URL.
+fileprivate struct ProfilePickerImage: View {
+    /// Theme data used for the fallback icon color
+    @Environment(ThemeModel.self) private var theme
+    /// Whether the enclosing profile button (the nearest focusable ancestor) has focus
+    @Environment(\.isFocused) private var isFocused
+
+    /// URL of the user's profile image, precomputed by the parent so focus changes don't recompute it
+    let url: URL?
+    /// Display name, used for the fallback icon's accessibility label
+    let displayName: String
+
+    var body: some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .empty:
+                Spacer()
+                ProgressView()
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFit()
+            default:
+                // Handle the error here
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.defaultProfileImage)
+                    .accessibilityLabel("Icon for \(displayName)")
+                    .padding(50)
+            }
+        }
+    }
+}
+
 fileprivate struct ProfilePickerUser: View {
     /// Functions and values regarding the users
     @Environment(UserModel.self) private var userModel: UserModel
@@ -146,8 +186,6 @@ fileprivate struct ProfilePickerUser: View {
 
     /// Controls showing the logout confirmation alert
     @State private var showLogoutAlert: Bool = false
-    /// Checks if the user's profile is selected
-    @FocusState private var isFocused: Bool
 
     /// User to display
     let user: User
@@ -165,30 +203,10 @@ fileprivate struct ProfilePickerUser: View {
             VStack(alignment: .center) {
                 switch user.serviceType {
                 case .Jellyfin:
-                    AsyncImage(
-                        url: JellyfinModel.getProfileImageURL(
-                            userID: user.id,
-                            serviceURL: user.serviceURL
-                        )
-                    ) { phase in
-                        switch phase {
-                        case .empty:
-                            Spacer()
-                            ProgressView()
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFit()
-                        default:
-                            // Handle the error here
-                            Image(systemName: "person.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .foregroundStyle(self.isFocused ? AnyShapeStyle(.black) : self.theme.currentTheme.defaultProfileImage)
-                                .accessibilityLabel("Icon for \(user.displayName)")
-                                .padding(50)
-                        }
-                    }
+                    ProfilePickerImage(
+                        url: JellyfinModel.getProfileImageURL(userID: user.id, serviceURL: user.serviceURL),
+                        displayName: user.displayName
+                    )
                 }
                 Spacer()
                 Text(user.displayName)
@@ -205,6 +223,5 @@ fileprivate struct ProfilePickerUser: View {
             .clipShape(RoundedRectangle(cornerRadius: 40))
         }
         .buttonStyle(.plain)
-        .focused($isFocused, equals: true)
     }
 }
