@@ -89,7 +89,7 @@ Configure Stingray to look and feel how you want it.
   - Opening the player description should no longer crash
   - Fix infinite loading when user signs in the same user multiple times
 - Performance
-  - Only calculate blur hash once and store it
+  - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views
     - Massively improves scrolling performance in busy detail media views
     - Improves library loading performance

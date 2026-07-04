@@ -56,10 +56,45 @@ public struct AsyncBlurImage: View {
                 placeholder: { EmptyView() }
             }
         }
-        .task {
-            if let blurHash {
-                self.blurImage = UIImage(blurHash: blurHash, size: self.blurSize)
-            }
+        // Re-decode only when the hash changes, and never on the main actor.
+        .task(id: self.blurHash) {
+            self.blurImage = await BlurHashImageCache.shared.image(hash: self.blurHash, size: self.blurSize)
         }
+    }
+}
+
+/// Caches decoded blur hash placeholder images and performs the expensive decode off the main actor.
+///
+/// Blur hash decoding is CPU-heavy. This actor moves the work off the main
+/// thread and memoizes results so repeated hashes (and re-appearing cells) skip the decode entirely.
+private actor BlurHashImageCache {
+    /// Cache to pull `UIImage`s from
+    static let shared = BlurHashImageCache()
+
+    /// A thread-safe, memory-pressure-aware cache of decoded placeholder images keyed by hash + size.
+    /// Since a large library may have a couple thousand images, we have to work by approximate image size otherwise we'll just be
+    /// clearling the cache left right and center
+    private let cache = NSCache<NSString, UIImage>()
+    
+    /// Singleton setup for allowed memory usage
+    private init() { self.cache.totalCostLimit = 16 * 1024 * 1024 }
+
+    /// Returns the decoded placeholder for the given hash, decoding (and caching) off the main actor on a miss.
+    /// - Parameters:
+    ///   - hash: The blur hash to decode. A `nil` hash yields a `nil` image.
+    ///   - size: The resolution to decode the placeholder at.
+    /// - Returns: The decoded image, or `nil` if there is no hash or decoding fails.
+    func image(hash: String?, size: CGSize) -> UIImage? {
+        guard let hash else { return nil }
+
+        let key = "\(hash)|\(Int(size.width))x\(Int(size.height))" as NSString
+        if let cached = self.cache.object(forKey: key) { return cached }
+
+        guard let decoded = UIImage(blurHash: hash, size: size)
+        else { return nil }
+        // Cost = decoded RGBA pixel bytes, so the cache evicts based on real memory footprint.
+        let cost = Int(decoded.size.width * decoded.scale * decoded.size.height * decoded.scale) * 4
+        self.cache.setObject(decoded, forKey: key, cost: cost)
+        return decoded
     }
 }
