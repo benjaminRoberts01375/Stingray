@@ -82,6 +82,8 @@ Configure Stingray to look and feel how you want it.
     - Abstract the MovieDetailView into a separate view
     - Rebrand the `DetailMediaView` to `TVShowDetailView` and created a dedicated `MovieDetailView`
     - Abstract player transport bar items to a dedicated class
+    - Separate out SwiftUI Player tabs into their own structs
+    - Move `AVPlayerViewControllerRepresentable.Coordinator` to a separate file
   - Remove unused Equatable conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
   - Massively improve documentation around the `slidingLevenshteinDistance` function
