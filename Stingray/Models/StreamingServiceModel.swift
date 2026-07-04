@@ -8,12 +8,8 @@
 import AVKit
 import UIKit
 
-public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol, SystemInfoProviding, LibraryProviding, PlayerProviding {
-    /// The name of the user.
-    var usersName: String { get }
-    /// The server ID of the user.
-    var userID: String { get }
-    
+public protocol StreamingServiceProtocol:
+    StreamingServiceBasicProtocol, SystemInfoProviding, LibraryProviding, PlayerProviding, UserProviding {
     /// Link a media ID to a `MediaModel`.
     /// - Parameters:
     ///   - mediaID: Media ID to search for.
@@ -24,9 +20,6 @@ public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol, SystemI
     /// Fetch the special features for media.
     /// - Parameter media: Media to fetch for.
     func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
-    
-    /// Logout the current user
-    func logout() async
 }
 
 /// Basic information about the connected server
@@ -91,6 +84,17 @@ public protocol PlayerProviding {
 
     /// Inform the server that playback has ended
     func playbackEnd()
+}
+
+/// Provides user actions with the server
+public protocol UserProviding {
+    /// The name of the user.
+    var usersName: String { get }
+    /// The server ID of the user.
+    var userID: String { get }
+
+    /// Logout the current user
+    func logout() async
 }
 
 /// Denotes the availablity of a piece of media

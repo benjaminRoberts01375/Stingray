@@ -25,7 +25,7 @@ public struct SettingsView: View {
     /// Controlls the sheet to show the current session's logs
     @State private var showLogs: Bool = false
 
-    public let streamingService: StreamingServiceProtocol
+    public let streamingService: UserProviding
     
     public var body: some View {
         @Bindable var settings = settings
