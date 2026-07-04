@@ -120,6 +120,10 @@ public protocol AdvancedNetworkProtocol {
     ///   - accessToken: Access token for the server
     /// - Returns: Special features
     func loadSpecialFeatures(mediaID: String, accessToken: String) async throws(AdvancedNetworkErrors) -> [SpecialFeature]
+    
+    /// Expire a session token with the streaming service
+    /// - Parameter accessToken: The token used to authenticate transactions
+    func logoutUser(accessToken: String) async
 }
 
 public enum LibraryMediaSortOrder: String {
@@ -514,6 +518,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             return response.items
         }
         catch let error as RError { throw LibraryErrors.gettingSeason(error, seasonID) }
+        catch { throw LibraryErrors.unknown("Season ID: \(seasonID)") }
     }
     
     public func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
@@ -755,6 +760,16 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
         } catch { throw AdvancedNetworkErrors.failedSpecialFeatures(error) }
+    }
+    
+    public func logoutUser(accessToken: String) async {
+        let _: String? = try? await network.request(
+            verb: .post,
+            path: "/Sessions/Logout",
+            headers: ["X-MediaBrowser-Token": accessToken],
+            urlParams: nil,
+            body: nil
+        )
     }
 }
 

@@ -37,12 +37,25 @@ public final class UserModel {
         self.activeUser = self.storage.getUser(userID: userID)
     }
     
-    /// Adds a user to storage based on a `User` type
-    /// - Parameter user: User to add
-    public func addUser(_ user: User) {
-        userIDs.insert(user.id)
-        storage.upsertUser(user: user)
-        storage.setUserIDs(Array(userIDs))
+    /// Adds a user to storage based on a `User` type. If the user already exists, update its access
+    /// - Parameter user: User to add or update access for
+    /// - Returns: User with correct access
+    public func addUser(_ user: User) -> User {
+        var updatedUser = user
+        // Check if user exists already, and update only the access token
+        if userIDs.contains(where: { $0 == user.id }),
+           var existingUser = self.storage.getUser(userID: user.id) {
+            switch existingUser.serviceType {
+            case .Jellyfin:
+                existingUser.serviceType = updatedUser.serviceType
+                updatedUser = existingUser // Replace the updated user with the existing one
+            }
+        }
+        else { userIDs.insert(user.id) }
+        
+        self.storage.upsertUser(user: updatedUser)
+        self.storage.setUserIDs(Array(userIDs))
+        return updatedUser
     }
     
     /// Gets all users
@@ -128,7 +141,7 @@ public enum ServiceType: Codable, Hashable {
 /// Basic structure for a user
 public struct User: Codable, Identifiable, Hashable {
     public let serviceURL: URL
-    public let serviceType: ServiceType
+    public var serviceType: ServiceType
     public let serviceID: String
     public let id: String
     public let displayName: String

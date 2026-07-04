@@ -30,20 +30,21 @@ public final class SettingStorage: SettingsStorageProtocol {
     public init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
     
     public func setProfileSwitchingMethod(to method: SettingsModel.ProfileSwitching) {
-        self.basicStorage.setEnum(.userSwitchingMethod, value: method)
+        self.basicStorage.setRepresentable(.userSwitchingMethod, value: method)
     }
     
     public func getProfileSwitchingMethod() -> SettingsModel.ProfileSwitching {
-        return self.basicStorage.getEnum(.userSwitchingMethod) ?? .askOnLaunch
+        let method: SettingsModel.ProfileSwitching? = self.basicStorage.getRepresentable(.userSwitchingMethod)
+        return method ?? .askOnLaunch
     }
     
     public func getBitrateCap() -> Int? {
-        let bitrate = self.basicStorage.getInt(.maxBitrate)
+        let bitrate: Int? = self.basicStorage.getNumber(.maxBitrate)
         if bitrate == 0 { return nil }
         return bitrate
     }
     
     public func setBitrateCap(_ bitrate: Int?) {
-        self.basicStorage.setInt(.maxBitrate, value: bitrate)
+        self.basicStorage.setNumber(.maxBitrate, value: bitrate)
     }
 }

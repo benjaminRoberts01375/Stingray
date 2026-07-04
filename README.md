@@ -54,9 +54,17 @@ A clean view of the content art with quick access to content metadata.
 Extensive content metadata.
 
 ### Settings
+
 ![Settings](https://github.com/user-attachments/assets/90a8dfb7-35ea-4bd3-bb44-acf37d9c754c)
 
 Configure Stingray to look and feel how you want it.
+
+## TO-DONE List
+
+- Use the logout endpoint
+- Support User Switching
+  - The previous commented out option is now gone in favor of setting up future updates more effectively. This now means that user switching is used for all users all the time.
+- Store data in iCloud for device syncing.
 
 ## TODO List
 

@@ -62,6 +62,9 @@ public protocol StreamingServiceProtocol: StreamingServiceBasicProtocol {
     /// Fetch the special features for media.
     /// - Parameter media: Media to fetch for.
     func getSpecialFeatures(for media: any MediaProtocol) async throws(LibraryErrors)
+    
+    /// Logout the current user
+    func logout() async
 }
 
 /// Describes the current setup status for a downloaded library
@@ -179,7 +182,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         // APIs
         let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         self.networkAPI = network
-        
+
         // Misc properties
         self.libraryStatus = .waiting
         self.usersName = userDisplayName
@@ -239,7 +242,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         do { response = try await networkAPI.login(username: username, password: password) }
         catch { throw AccountErrors.loginFailed(error) }
         
-        let newUser = User(
+        var newUser = User(
             serviceURL: url,
             serviceType: .Jellyfin(
                 UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
@@ -249,11 +252,8 @@ public final class JellyfinModel: StreamingServiceProtocol {
             displayName: response.userName
         )
         Log.critical("\(response.userId) in \(userModel.userIDs)")
-        if userModel.userIDs.contains(response.userId) {
-            throw AccountErrors.loginFailed(AccountErrors.userAlreadyExists)
-        }
         
-        userModel.addUser(newUser)
+        newUser = userModel.addUser(newUser)
         userModel.activeUser = newUser
         return JellyfinModel(response: response, serviceURL: url)
     }
@@ -270,7 +270,7 @@ public final class JellyfinModel: StreamingServiceProtocol {
         do { response = try await networkAPI.login(quickConnectSecret: quickConnectSecret) }
         catch { throw QuickConnectErrors.loginFailed(error) }
         
-        let newUser = User(
+        var newUser = User(
             serviceURL: url,
             serviceType: .Jellyfin(
                 UserJellyfin(accessToken: response.accessToken, sessionID: response.sessionId)
@@ -279,15 +279,16 @@ public final class JellyfinModel: StreamingServiceProtocol {
             id: response.userId,
             displayName: response.userName
         )
-        if userModel.userIDs.contains(response.userId) {
-            throw QuickConnectErrors.loginFailed(AccountErrors.userAlreadyExists)
-        }
         
-        userModel.addUser(newUser)
+        newUser = userModel.addUser(newUser)
         userModel.activeUser = newUser
         return JellyfinModel(response: response, serviceURL: url)
     }
 
+    public func logout() async {
+        await self.networkAPI.logoutUser(accessToken: self.accessToken)
+    }
+    
     /// Fetch libraries and library media.
     public func retrieveLibraries() async {
         let maxConcurrentLibraries = 2
@@ -703,6 +704,8 @@ public final class ExampleStreamingService: StreamingServiceProtocol {
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] { return [] }
     
     public func retrieveUpNext() async -> [SlimMedia] { return [] }
+    
+    public func logout() async { }
     
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         let poster: String = [
