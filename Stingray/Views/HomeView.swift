@@ -256,14 +256,15 @@ public struct SystemInfoView: View {
             let osVersion = ProcessInfo.processInfo.operatingSystemVersion
             Text(" • " + "tvOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)")
             // Apple TV model
-            if let model = getAppleTVModel() {
+            if let model = Self.tvModel {
                 Text(" • " + model)
             }
         }
         .foregroundStyle(.tertiary)
     }
-    
-    private func getAppleTVModel() -> String? {
+
+    /// Computed once on first access and then cached
+    public static let tvModel: String? = {
         var systemInfo = utsname()
         uname(&systemInfo)
         let machineMirror = Mirror(reflecting: systemInfo.machine)
@@ -272,7 +273,7 @@ public struct SystemInfoView: View {
             return identifier + String(UnicodeScalar(UInt8(value)))
         }
         return identifier.isEmpty ? nil : identifier
-    }
+    }()
 }
 
 public struct LibrariesInfoView: View {
