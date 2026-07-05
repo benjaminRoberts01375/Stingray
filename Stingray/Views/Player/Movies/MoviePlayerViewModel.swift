@@ -9,7 +9,7 @@ import AVFoundation
 import SwiftUI
 
 @Observable
-public final class MoviePlayerViewModel: VideoPlayerViewModelProtocol, Hashable {
+public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     public private(set) var settingsModel: SettingsModel
 
     @ObservationIgnored public let streamingService: PlayerProviding & MediaImageProviding
