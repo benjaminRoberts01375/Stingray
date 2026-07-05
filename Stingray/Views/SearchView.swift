@@ -9,18 +9,44 @@ import SwiftUI
 
 public struct SearchView: View {
     public var streamingService: LibraryProviding & MediaImageProviding
+    public let availableGenres: Set<String>
 
     @Environment(SettingsModel.self) private var settings: SettingsModel
 
-    @State private var searchText: String = ""
-    @State private var searchResults: SearchStatus = .empty
+    @State private var searchText: String
+    @State private var searchResults: SearchStatus
     @Binding public var navigation: NavigationPath
+
+    public init(
+        streamingService: LibraryProviding & MediaImageProviding,
+        navigation: Binding<NavigationPath>
+    ) {
+        self._navigation = navigation
+        self.streamingService = streamingService
+        self.searchText = ""
+        self.searchResults = .empty
+
+        switch self.streamingService.libraryStatus {
+        case .available(let libraries), .complete(let libraries):
+            var genres: Set<String> = []
+            for library in libraries {
+                genres.formUnion(library.genres)
+            }
+            self.availableGenres = genres
+        default: self.availableGenres = []
+        }
+    }
 
     public var body: some View {
         ScrollView {
             switch searchResults {
             case .found(let allMedia):
-                MediaGridView(allMedia: allMedia, streamingService: self.streamingService, navigation: $navigation)
+                FilteredMediaGridView(
+                    availableGenres: self.availableGenres,
+                    streamingService: self.streamingService,
+                    allMedia: allMedia,
+                    navigation: $navigation
+                )
             case .temporarilyNotFound:
                 ProgressView("Not found yet, but we're still getting your media...")
             case .notFound:

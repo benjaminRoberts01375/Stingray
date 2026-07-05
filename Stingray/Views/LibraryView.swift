@@ -25,7 +25,12 @@ public struct LibraryView: View {
                 ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
             case .available(let allMedia), .complete(let allMedia):
                 if !allMedia.isEmpty {
-                    MediaGridView(allMedia: allMedia, streamingService: self.streamingService, navigation: $navigation)
+                    FilteredMediaGridView(
+                        availableGenres: self.library.genres,
+                        streamingService: self.streamingService,
+                        allMedia: allMedia,
+                        navigation: $navigation
+                    )
                     LibraryInfoView(library: self.library)
                         .padding(.top)
                 } else {
@@ -37,6 +42,53 @@ public struct LibraryView: View {
                 }
             }
         }
+    }
+}
+
+public struct FilteredMediaGridView: View {
+    public let availableGenres: Set<String>
+    public let streamingService: any MediaImageProviding
+    public let allMedia: [any MediaRepresentableProtocol]
+    @State private var filteredMedia: [any MediaRepresentableProtocol] = []
+    @State private var appliedGenreFilters: Set<String> = []
+    @Binding public var navigation: NavigationPath
+
+    public var body: some View {
+        HStack {
+            Menu {
+                // Clear action at the top, only when something is selected.
+                if !appliedGenreFilters.isEmpty {
+                    Button(role: .destructive) {
+                        self.appliedGenreFilters = []
+                    }
+                    label: { Label("Remove all genre filters", systemImage: "xmark.circle") }
+                    Divider()
+                }
+
+                ForEach(self.availableGenres.sorted(), id: \.self) { genre in
+                    let genreIsSelected = appliedGenreFilters.contains(genre)
+                    Button {
+                        if genreIsSelected { appliedGenreFilters.remove(genre) }
+                        else { appliedGenreFilters.insert(genre) }
+                    }
+                    label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
+                }
+            }
+            label: { Text("Genres") }
+        }
+        .focusSection()
+
+        MediaGridView(allMedia: self.filteredMedia, streamingService: self.streamingService, navigation: $navigation)
+            .onChange(of: self.appliedGenreFilters, initial: true) {
+                if self.appliedGenreFilters.isEmpty { self.filteredMedia = self.allMedia }
+                self.filteredMedia = self.allMedia.filter { mediaRepresentable in
+                    guard let model = mediaRepresentable as? any MediaProtocol // Filter out incomplete media
+                    else { return false }
+                    // Keep only media that has every applied genre
+                    return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
+                }
+            }
+            .focusSection()
     }
 }
 

@@ -10,6 +10,7 @@ import Foundation
 public protocol LibraryProtocol: Identifiable {
     var title: String { get }
     var media: MediaStatus { get }
+    var genres: Set<String> { get }
 }
 
 /// Denotes the current status of loading media in a library
@@ -32,12 +33,14 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var media: MediaStatus
     public var id: String
     public var libraryType: String
-    
+    public var genres: Set<String>
+
     public init(title: String, id: String, libraryType: String) {
         self.title = title
         self.media = .unloaded
         self.id = id
-        
+        self.genres = []
+
         if libraryType.contains("tv") { self.libraryType = "TV Shows" }
         else { self.libraryType = libraryType.prefix(1).uppercased() + libraryType.dropFirst() }
     }
@@ -53,13 +56,14 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
-            title = try container.decode(String.self, forKey: .title)
-            id = try container.decode(String.self, forKey: .id)
+            self.title = try container.decode(String.self, forKey: .title)
+            self.id = try container.decode(String.self, forKey: .id)
             let rawLibraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
             if rawLibraryType.contains("tv") { self.libraryType = "TV Shows" }
             else if rawLibraryType.lowercased() == "boxsets" { self.libraryType = "Collections" }
             else { libraryType = rawLibraryType.prefix(1).uppercased() + rawLibraryType.dropFirst() }
-            media = .unloaded
+            self.media = .unloaded
+            self.genres = []
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }
         catch DecodingError.valueNotFound(_, let context) {
