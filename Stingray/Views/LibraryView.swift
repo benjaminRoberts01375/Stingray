@@ -49,9 +49,19 @@ public struct FilteredMediaGridView: View {
     public let availableGenres: Set<String>
     public let streamingService: any MediaImageProviding
     public let allMedia: [any MediaRepresentableProtocol]
-    @State private var filteredMedia: [any MediaRepresentableProtocol] = []
     @State private var appliedGenreFilters: Set<String> = []
     @Binding public var navigation: NavigationPath
+
+    /// Media matching every applied genre filter. Computed so it always reflects the current`allMedia`
+    private var filteredMedia: [any MediaRepresentableProtocol] {
+        self.allMedia.filter { mediaRepresentable in
+            guard let model = mediaRepresentable as? any MediaProtocol // Filter out incomplete media
+            else { return false }
+            if appliedGenreFilters.isEmpty { return true } // Small efficiency gain
+            // Keep only media that has every applied genre
+            return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
+        }
+    }
 
     public var body: some View {
         HStack {
@@ -79,15 +89,6 @@ public struct FilteredMediaGridView: View {
         .focusSection()
 
         MediaGridView(allMedia: self.filteredMedia, streamingService: self.streamingService, navigation: $navigation)
-            .onChange(of: self.appliedGenreFilters, initial: true) {
-                if self.appliedGenreFilters.isEmpty { self.filteredMedia = self.allMedia }
-                self.filteredMedia = self.allMedia.filter { mediaRepresentable in
-                    guard let model = mediaRepresentable as? any MediaProtocol // Filter out incomplete media
-                    else { return false }
-                    // Keep only media that has every applied genre
-                    return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
-                }
-            }
             .focusSection()
     }
 }
