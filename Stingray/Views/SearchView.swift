@@ -10,11 +10,12 @@ import SwiftUI
 public struct SearchView: View {
     public var streamingService: LibraryProviding & MediaImageProviding
     public let availableGenres: Set<String>
+    /// Live search results
+    private var searchResults: SearchStatus { search() }
 
     @Environment(SettingsModel.self) private var settings: SettingsModel
 
     @State private var searchText: String
-    @State private var searchResults: SearchStatus
     @Binding public var navigation: NavigationPath
 
     public init(
@@ -24,7 +25,6 @@ public struct SearchView: View {
         self._navigation = navigation
         self.streamingService = streamingService
         self.searchText = ""
-        self.searchResults = .empty
 
         switch self.streamingService.libraryStatus {
         case .available(let libraries), .complete(let libraries):
@@ -56,9 +56,6 @@ public struct SearchView: View {
             }
         }
         .searchable(text: $searchText)
-        .onChange(of: self.searchText) {
-            self.searchResults = search()
-        }
     }
 
     /// Search results
