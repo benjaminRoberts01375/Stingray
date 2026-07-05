@@ -116,8 +116,11 @@ public struct SettingsView: View {
                 }
             }
 
-            // MARK: Filters
-            Section(header: Text(String(localized: "Filters")).bold()) {
+            // MARK: Filters and Sorting
+            Section(header: Text(String(localized: "Filters and Sorting")).bold()) {
+                DoubleButton(label: "Display Sorting Options", sublabel: self.settings.showSorting ? "Enabled" : "Disabled") {
+                    self.settings.showSorting.toggle()
+                }
                 DoubleButton(label: "Display Filter Options", sublabel: self.settings.showFilters ? "Enabled" : "Disabled") {
                     self.settings.showFilters.toggle()
                 }

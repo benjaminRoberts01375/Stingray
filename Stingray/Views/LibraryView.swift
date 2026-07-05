@@ -50,6 +50,8 @@ public struct FilteredMediaGridView: View {
     public let streamingService: any MediaImageProviding
     public let allMedia: [any MediaRepresentableProtocol]
     @State private var appliedGenreFilters: Set<String> = []
+    @State private var sortBy: SortType = .sortTitle
+    @State private var sortOrder: SortOrder = .ascending
     @Binding public var navigation: NavigationPath
 
     @Environment(SettingsModel.self) private var settings
@@ -98,11 +100,42 @@ public struct FilteredMediaGridView: View {
                     }
                 }
             }
+            if self.settings.showSorting {
+                Menu {
+                    ForEach(SortType.allCases, id: \.self) { sortBy in
+                        Button { self.sortBy = sortBy }
+                        label: { Label(sortBy.rawValue, systemImage: self.sortBy == sortBy ? "checkmark" : "") }
+                    }
+                }
+                label: { Text("Sort By: \(self.sortBy.rawValue)") }
+            }
         }
         .focusSection()
 
         MediaGridView(allMedia: self.filteredMedia, streamingService: self.streamingService, navigation: $navigation)
             .focusSection()
+    }
+}
+
+fileprivate enum SortType: CaseIterable {
+    case sortTitle
+
+    var rawValue: String {
+        switch self {
+        case .sortTitle: return String(localized: "Sort Title")
+        }
+    }
+}
+
+fileprivate enum SortOrder: CaseIterable {
+    case ascending
+    case descending
+
+    var rawValue: String {
+        switch self {
+        case .ascending: return String(localized: "Ascending")
+        case .descending: return String(localized: "Descending")
+        }
     }
 }
 

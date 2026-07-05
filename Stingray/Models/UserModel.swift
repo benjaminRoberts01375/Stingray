@@ -67,6 +67,8 @@ public protocol UserProtocol: Codable {
     var searchEpisodeTitles: Bool { get set }
     /// Display filters options in library views
     var showFilters: Bool { get set }
+    /// Display sorting options in library views
+    var showSorting: Bool { get set }
 }
 
 /// Basic data to store about the user
@@ -140,6 +142,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
     public var preferredLangauge: Locale?
     public var searchEpisodeTitles: Bool
     public var showFilters: Bool
+    public var showSorting: Bool
 
     public init(
         serviceURL: URL,
@@ -158,7 +161,8 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         replaceLogosWithText: Bool = false,
         preferredLanguage: Locale? = nil,
         searchEpisodeTitles: Bool = false,
-        showFilters: Bool = true
+        showFilters: Bool = true,
+        showSorting: Bool = true
     ) {
         self.id = id
         self.displayName = displayName
@@ -177,6 +181,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         self.preferredLangauge = preferredLanguage
         self.searchEpisodeTitles = searchEpisodeTitles
         self.showFilters = showFilters
+        self.showSorting = showSorting
     }
 
     /// Create a user from encoded JSON.
@@ -203,6 +208,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
             preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
             searchEpisodeTitles = (try? container.decodeIfPresent(Bool.self, forKey: .searchEpisodeTitles)) ?? false
             showFilters = (try? container.decodeIfPresent(Bool.self, forKey: .showFilters)) ?? true
+            showSorting = (try? container.decodeIfPresent(Bool.self, forKey: .showSorting)) ?? true
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {

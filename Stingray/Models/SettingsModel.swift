@@ -125,6 +125,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.showFilters = newValue }
     }
 
+    /// Display sorting options in library views
+    public var showSorting: Bool {
+        get { self.userModel.activeUser?.showSorting ?? true }
+        set(newValue) { self.userModel.activeUser?.showSorting = newValue }
+    }
+
     /// A short password required to show the users's content
     public var pin: String? {
         get { self.userModel.activeUser?.pin }
