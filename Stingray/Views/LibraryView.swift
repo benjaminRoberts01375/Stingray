@@ -84,7 +84,16 @@ public struct FilteredMediaGridView: View {
                     label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
                 }
             }
-            label: { Text("Genres") }
+            label: {
+                if self.appliedGenreFilters.isEmpty { Text("Genres") }
+                else {
+                    Text("Genres: \(self.appliedGenreFilters.sorted().joined(separator: ", "))")
+                        .frame(maxWidth: 400)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+            }
         }
         .focusSection()
 
