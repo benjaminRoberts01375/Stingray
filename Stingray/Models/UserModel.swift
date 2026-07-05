@@ -65,6 +65,8 @@ public protocol UserProtocol: Codable {
     var preferredLangauge: Locale? { get set}
     /// Allow searching to look at episode titles to surface relevant results
     var searchEpisodeTitles: Bool { get set }
+    /// Display filters options in library views
+    var showFilters: Bool { get set }
 }
 
 /// Basic data to store about the user
@@ -137,6 +139,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
     public var replaceLogosWithText: Bool
     public var preferredLangauge: Locale?
     public var searchEpisodeTitles: Bool
+    public var showFilters: Bool
 
     public init(
         serviceURL: URL,
@@ -154,7 +157,8 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         loadMediaBackgroundArt: Bool = true,
         replaceLogosWithText: Bool = false,
         preferredLanguage: Locale? = nil,
-        searchEpisodeTitles: Bool = false
+        searchEpisodeTitles: Bool = false,
+        showFilters: Bool = true
     ) {
         self.id = id
         self.displayName = displayName
@@ -172,6 +176,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
         self.replaceLogosWithText = replaceLogosWithText
         self.preferredLangauge = preferredLanguage
         self.searchEpisodeTitles = searchEpisodeTitles
+        self.showFilters = showFilters
     }
 
     /// Create a user from encoded JSON.
@@ -197,6 +202,7 @@ public struct User: UserProtocol, Codable, Identifiable, Hashable {
             replaceLogosWithText = (try? container.decodeIfPresent(Bool.self, forKey: .replaceLogosWithText)) ?? false
             preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
             searchEpisodeTitles = (try? container.decodeIfPresent(Bool.self, forKey: .searchEpisodeTitles)) ?? false
+            showFilters = (try? container.decodeIfPresent(Bool.self, forKey: .showFilters)) ?? true
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {

@@ -119,6 +119,12 @@ public final class SettingsModel {
         set(newValue) { self.userModel.activeUser?.searchEpisodeTitles = newValue }
     }
 
+    /// Display filters options in library views
+    public var showFilters: Bool {
+        get { self.userModel.activeUser?.showFilters ?? true }
+        set(newValue) { self.userModel.activeUser?.showFilters = newValue }
+    }
+
     /// A short password required to show the users's content
     public var pin: String? {
         get { self.userModel.activeUser?.pin }

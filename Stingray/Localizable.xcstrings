@@ -445,6 +445,10 @@
         }
       }
     },
+    "Display Filter Options" : {
+
+    },
+    },
     "Enabled" : {
       "comment" : "On state",
       "localizations" : {
@@ -586,6 +590,9 @@
           }
         }
       }
+    },
+    "Filters" : {
+
     },
     "Frosty" : {
       "comment" : "Theme name.",

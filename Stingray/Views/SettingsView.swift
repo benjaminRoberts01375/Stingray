@@ -116,8 +116,11 @@ public struct SettingsView: View {
                 }
             }
 
-            // MARK: Search
-            Section(header: Text(String(localized: "Search")).bold()) {
+            // MARK: Filters
+            Section(header: Text(String(localized: "Filters")).bold()) {
+                DoubleButton(label: "Display Filter Options", sublabel: self.settings.showFilters ? "Enabled" : "Disabled") {
+                    self.settings.showFilters.toggle()
+                }
                 DoubleButton(label: "Search TV Episode Titles", sublabel: self.settings.searchEpisodeTitles ? "Enabled" : "Disabled") {
                     self.settings.searchEpisodeTitles.toggle()
                 }

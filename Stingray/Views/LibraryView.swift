@@ -52,6 +52,8 @@ public struct FilteredMediaGridView: View {
     @State private var appliedGenreFilters: Set<String> = []
     @Binding public var navigation: NavigationPath
 
+    @Environment(SettingsModel.self) private var settings
+
     /// Media matching every applied genre filter. Computed so it always reflects the current`allMedia`
     private var filteredMedia: [any MediaRepresentableProtocol] {
         self.allMedia.filter { mediaRepresentable in
@@ -65,33 +67,35 @@ public struct FilteredMediaGridView: View {
 
     public var body: some View {
         HStack {
-            Menu {
-                // Clear action at the top, only when something is selected.
-                if !appliedGenreFilters.isEmpty {
-                    Button(role: .destructive) {
-                        self.appliedGenreFilters = []
+            if self.settings.showFilters {
+                Menu {
+                    // Clear action at the top, only when something is selected.
+                    if !appliedGenreFilters.isEmpty {
+                        Button(role: .destructive) {
+                            self.appliedGenreFilters = []
+                        }
+                        label: { Label("Remove all genre filters", systemImage: "xmark.circle") }
+                        Divider()
                     }
-                    label: { Label("Remove all genre filters", systemImage: "xmark.circle") }
-                    Divider()
-                }
 
-                ForEach(self.availableGenres.sorted(), id: \.self) { genre in
-                    let genreIsSelected = appliedGenreFilters.contains(genre)
-                    Button {
-                        if genreIsSelected { appliedGenreFilters.remove(genre) }
-                        else { appliedGenreFilters.insert(genre) }
+                    ForEach(self.availableGenres.sorted(), id: \.self) { genre in
+                        let genreIsSelected = appliedGenreFilters.contains(genre)
+                        Button {
+                            if genreIsSelected { appliedGenreFilters.remove(genre) }
+                            else { appliedGenreFilters.insert(genre) }
+                        }
+                        label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
                     }
-                    label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
                 }
-            }
-            label: {
-                if self.appliedGenreFilters.isEmpty { Text("Genres") }
-                else {
-                    Text("Genres: \(self.appliedGenreFilters.sorted().joined(separator: ", "))")
-                        .frame(maxWidth: 400)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
+                label: {
+                    if self.appliedGenreFilters.isEmpty { Text("Genres") }
+                    else {
+                        Text("Genres: \(self.appliedGenreFilters.sorted().joined(separator: ", "))")
+                            .frame(maxWidth: 400)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
                 }
             }
         }
