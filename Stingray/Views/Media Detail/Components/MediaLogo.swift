@@ -13,14 +13,14 @@ public struct MediaLogoView: View {
     
     @State private var logoOpacity: Double
     
-    public let media: any MediaProtocol
+    public let media: any MediaMetadataProtocol
     public let logoImageURL: URL?
     
     /// Displays the logo for some media type
     /// - Parameters:
     ///   - media: Media to display the logo for
     ///   - streamingService: Streaming service to load image from
-    public init(media: any MediaProtocol, streamingService: MediaImageProviding) {
+    public init(media: any MediaMetadataProtocol, streamingService: MediaImageProviding) {
         self.logoOpacity = 0
         self.media = media
         self.logoImageURL = streamingService.getImageURL(imageType: .logo, mediaID: media.id, width: 0)
@@ -46,7 +46,7 @@ public struct MediaLogoView: View {
                     .bold()
                     .foregroundStyle(self.theme.currentTheme.header1)
             }
-            if !media.tagline.isEmpty {
+            if !self.media.tagline.isEmpty {
                 Text(media.tagline)
                     .italic()
                     .multilineTextAlignment(.center)
@@ -60,8 +60,8 @@ public struct MediaLogoView: View {
 /// Shows very basic metadata 
 public struct MediaLogoHeader: View {
     /// Media to display info about
-    public let media: any MediaProtocol
-    
+    public let media: any MediaMetadataProtocol
+
     public var body: some View {
         if self.media.maturity != nil || self.media.releaseDate != nil || !self.media.genres.isEmpty || self.media.duration != nil {
             let items: [String] = [

@@ -102,8 +102,8 @@ public struct MovieDetailView: View {
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
-        .navigationDestination(for: PlayerViewModel.self) { vm in
-            PlayerView(vm: vm, navigation: $navigation)
+        .navigationDestination(for: MoviePlayerViewModel.self) { vm in
+            MoviePlayerView(vm: vm, navigation: $navigation)
         }
         .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
     }
@@ -141,16 +141,16 @@ fileprivate struct PlayNavigationView: View {
             if mediaSource.startPoint == 0 {
                 Button {
                     self.navigation.append(
-                        PlayerViewModel(
-                            media: media,
-                            mediaSource: mediaSource,
-                            startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
-                            streamingService: self.streamingService,
-                            seasons: [], // TODO: Placeholder
+                        MoviePlayerViewModel(
                             settingsModel: self.settings,
+                            streamingService: self.streamingService,
+                            media: self.media,
+                            mediaSource: mediaSource,
+                            startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1)
                         )
                     )
-                } label: { Label(self.title, systemImage: "play.fill") }
+                }
+                label: { Label(self.title, systemImage: "play.fill") }
                     .accessibilityLabel("Play button")
             }
             // Single item that's partially watched - show streamlined menu
@@ -210,13 +210,12 @@ fileprivate struct PlayNavigationView: View {
 
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
-            PlayerViewModel(
+            MoviePlayerViewModel(
+                settingsModel: self.settings,
+                streamingService: self.streamingService,
                 media: media,
                 mediaSource: mediaSource,
-                startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1),
-                streamingService: self.streamingService,
-                seasons: [], // TODO: Placeholder
-                settingsModel: self.settings
+                startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1)
             )
         )
     }

@@ -15,10 +15,10 @@ public final class PlayerButtons {
     ///   - vm: View model containing the playing content
     ///   - episode: Episode to skip to
     /// - Returns: Formatted button
-    public static func nextEpisodeButton(vm: PlayerViewModel, nextEpisode episode: any TVEpisodeProtocol) -> UIAction {
+    public static func nextEpisodeButton(vm: TVPlayerViewModel, nextEpisode episode: any TVEpisodeProtocol) -> UIAction {
         UIAction(title: "Next Episode", image: UIImage(systemName: "arrow.right"), handler: { _ in
             vm.savePlaybackDate()
-            vm.mediaSourceID = episode.mediaSources.first?.id ?? vm.mediaSourceID
+            vm.mediaSource = episode.mediaSources.first ?? vm.mediaSource
             vm.newPlayer(episode: episode)
         })
     }
@@ -28,10 +28,10 @@ public final class PlayerButtons {
     ///   - vm: View model containing the playing content
     ///   - episode: Previous episode to load
     /// - Returns: Formatted button
-    public static func previousEpisodeButton(vm: PlayerViewModel, previousEpisode episode: any TVEpisodeProtocol) -> UIAction {
+    public static func previousEpisodeButton(vm: TVPlayerViewModel, previousEpisode episode: any TVEpisodeProtocol) -> UIAction {
         UIAction(title: "Previous Episode", image: UIImage(systemName: "arrow.left"), handler: { _ in
             vm.savePlaybackDate()
-            vm.mediaSourceID = episode.mediaSources.first?.id ?? vm.mediaSourceID
+            vm.mediaSource = episode.mediaSources.first ?? vm.mediaSource
             vm.newPlayer(episode: episode)
         })
     }
@@ -41,12 +41,12 @@ public final class PlayerButtons {
     ///   - vm: View model containing the playing content
     ///   - seasons: All available seasons of the show that also contain episodes
     /// - Returns: Formatted picker
-    public static func episodePicker(vm: PlayerViewModel, seasons: [any TVSeasonProtocol]) -> UIMenu {
+    public static func episodePicker(vm: TVPlayerViewModel, seasons: [any TVSeasonProtocol]) -> UIMenu {
         let seasonItems = seasons.map { season in
             let episodeActions = season.episodes.map { episode in
                 let action = UIAction(title: episode.title) { _ in
                     vm.savePlaybackDate()
-                    vm.mediaSourceID = episode.mediaSources.first?.id ?? vm.mediaSourceID
+                    vm.mediaSource = episode.mediaSources.first ?? vm.mediaSource
                     vm.newPlayer(episode: episode)
                 }
                 action.state = vm.mediaSource.id == episode.mediaSources.first?.id ? .on : .off
@@ -66,34 +66,58 @@ public final class PlayerButtons {
     /// A menu for choosing the active subtitle stream, including a "None" option.
     /// - Parameter vm: View model containing the playing content
     /// - Returns: Formatted menu
-    public static func subtitleStreamPicker(vm: PlayerViewModel) -> UIMenu {
-        UIMenu(title: "Subtitles", image: UIImage(systemName: "captions.bubble"), children: [
-            {
-                let action = UIAction(title: "None") { _ in
-                    vm.newPlayer(startTime: vm.player.currentTime(), subtitleID: .newID(nil))
+    public static func subtitleStreamPicker(vm: AVPlayerViewModelProtocol) -> UIMenu {
+        UIMenu(
+            title: "Subtitles",
+            image: UIImage(systemName: "captions.bubble"),
+            children: [
+                {
+                    let action = UIAction(title: "None") { _ in
+                        vm.newPlayer(
+                            startTime: vm.player.currentTime(),
+                            videoID: .keep,
+                            audioID: .keep,
+                            subtitleID: .newID(nil),
+                            bitrate: nil
+                        )
+                    }
+                    action.state = vm.playerProgress?.subtitleID == nil ? .on : .off
+                    return action
+                }()
+            ] + vm.mediaSource.subtitleStreams.map { subtitleStream in
+                let action = UIAction(title: subtitleStream.title) { _ in
+                    vm
+                        .newPlayer(
+                            startTime: vm.player.currentTime(),
+                            videoID: .keep,
+                            audioID: .keep,
+                            subtitleID: .newID(subtitleStream.id),
+                            bitrate: nil
+                        )
                 }
-                action.state = vm.playerProgress?.subtitleID == nil ? .on : .off
+                action.state = vm.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
                 return action
-            }()
-        ] + vm.mediaSource.subtitleStreams.map { subtitleStream in
-            let action = UIAction(title: subtitleStream.title) { _ in
-                vm.newPlayer(startTime: vm.player.currentTime(), subtitleID: .newID(subtitleStream.id))
             }
-            action.state = vm.playerProgress?.subtitleID == subtitleStream.id ? .on : .off
-            return action
-        })
+        )
     }
 
     /// A menu for choosing the active audio stream.
     /// - Parameter vm: View model containing the playing content
     /// - Returns: Formatted menu
-    public static func audioStreamPicker(vm: PlayerViewModel) -> UIMenu {
+    public static func audioStreamPicker(vm: AVPlayerViewModelProtocol) -> UIMenu {
         UIMenu(
             title: "Audio",
             image: UIImage(systemName: "speaker.wave.2"),
             children: vm.mediaSource.audioStreams.map { audioStream in
                 let action = UIAction(title: audioStream.title) { _ in
-                    vm.newPlayer(startTime: vm.player.currentTime(), audioID: .newID(audioStream.id))
+                    vm
+                        .newPlayer(
+                            startTime: vm.player.currentTime(),
+                            videoID: .keep,
+                            audioID: .newID(audioStream.id),
+                            subtitleID: .keep,
+                            bitrate: nil
+                        )
                 }
                 action.state = vm.playerProgress?.audioID == audioStream.id ? .on : .off
                 return action
@@ -104,17 +128,26 @@ public final class PlayerButtons {
     /// A menu for choosing the active video stream.
     /// - Parameter vm: View model containing the playing content
     /// - Returns: Formatted menu
-    public static func videoStreamPicker(vm: PlayerViewModel) -> UIMenu {
+    public static func videoStreamPicker(vm: AVPlayerViewModelProtocol) -> UIMenu {
         UIMenu(
             title: "Video",
             image: UIImage(systemName: "display"),
-            children: vm.mediaSource.videoStreams.map({ videoStream in
-                let action = UIAction(title: videoStream.title) { _ in
-                    vm.newPlayer(startTime: vm.player.currentTime(), videoID: .newID(videoStream.id))
+            children: vm.mediaSource.videoStreams.map(
+                { videoStream in
+                    let action = UIAction(title: videoStream.title) { _ in
+                        vm
+                            .newPlayer(
+                                startTime: vm.player.currentTime(),
+                                videoID: .newID(videoStream.id),
+                                audioID: .keep,
+                                subtitleID: .keep,
+                                bitrate: nil
+                            )
+                    }
+                    action.state = vm.playerProgress?.videoID == videoStream.id ? .on : .off
+                    return action
                 }
-                action.state = vm.playerProgress?.videoID == videoStream.id ? .on : .off
-                return action
-            })
+            )
         )
     }
 
@@ -123,14 +156,14 @@ public final class PlayerButtons {
     ///   - vm: View model containing the playing content
     ///   - videoStream: The currently playing video stream
     /// - Returns: Formatted menu with relevant bitrate options
-    public static func bitratePicker(vm: PlayerViewModel, videoStream: any MediaStreamProtocol) -> UIMenu {
+    public static func bitratePicker(vm: AVPlayerViewModelProtocol, videoStream: any MediaStreamProtocol) -> UIMenu {
         let numberFormatter = NumberFormatter()
         numberFormatter.numberStyle = .decimal
 
         let fullBitrateString = numberFormatter.string(from: NSNumber(value: videoStream.bitrate))
         ?? "\(videoStream.bitrate)"
         let fullBitrate = UIAction(title: "Full - \(fullBitrateString) Bits/sec") { _ in
-            vm.newPlayer(startTime: vm.player.currentTime(), bitrate: nil)
+            vm.newPlayer(startTime: vm.player.currentTime(), videoID: .keep, audioID: .keep, subtitleID: .keep, bitrate: nil)
         }
         fullBitrate.state = {
             if SettingsModel.bitrateOptions.contains(vm.playerProgress?.bitrate ?? -1) {
@@ -143,7 +176,7 @@ public final class PlayerButtons {
         // Helper function to create a bitrate action
         func makeBitrateAction(bitrate: Int) -> UIAction {
             let action = UIAction(title: Int.formatMegabitsPerSec(bitrate)) { _ in
-                vm.newPlayer(startTime: vm.player.currentTime(), bitrate: bitrate)
+                vm.newPlayer(startTime: vm.player.currentTime(), videoID: .keep, audioID: .keep, subtitleID: .keep, bitrate: bitrate)
             }
             action.state = {
                 if vm.playerProgress?.bitrate == bitrate {
@@ -175,7 +208,7 @@ public final class PlayerButtons {
     }
 
     /// A menu for selecting the playback speed.
-    public static func playbackSpeedPicker(vm: PlayerViewModel) -> UIMenu {
+    public static func playbackSpeedPicker(vm: AVPlayerViewModelProtocol) -> UIMenu {
         var playbackSpeeds: [UIAction] = []
         for speed in PlaybackSpeed.allCases {
             let action = UIAction(title: speed.name) { _ in
@@ -194,7 +227,7 @@ public final class PlayerButtons {
 
     /// Bulk create transport bar items for typical audio & visual players
     /// - Parameter vm: Player's view model
-    public static func AVPlayerTransportBarItems(vm: PlayerViewModel) -> [UIMenuElement] {
+    public static func AVPlayerTransportBarItems(vm: any AVPlayerViewModelProtocol) -> [UIMenuElement] {
         var items: [UIMenuElement] = []
 
         // Add Subtitles menu only if there are subtitle tracks available

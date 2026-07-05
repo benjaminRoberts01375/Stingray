@@ -9,9 +9,9 @@ import AVKit
 import SwiftUI
 
 // MARK: Parent view
-public struct PlayerView: View {
+public struct TVPlayerView: View {
     @Environment(\.dismiss) private var dismiss
-    @State public var vm: PlayerViewModel
+    @State public var vm: TVPlayerViewModel
     @Binding public var navigation: NavigationPath
 
     public var body: some View {
@@ -27,7 +27,7 @@ public struct PlayerView: View {
                 self.vm.stopPlayer()
             }
             .id( // Force reload the AVPlayerViewControllerRepresentable when the underlying content changes
-                self.vm.mediaSourceID +
+                self.vm.mediaSource.id +
                 (self.vm.playerProgress?.subtitleID ?? "") +
                 (self.vm.playerProgress?.videoID ?? "") +
                 (self.vm.playerProgress?.audioID ?? "") +
@@ -45,8 +45,8 @@ public struct PlayerView: View {
 }
 
 // MARK: UIKit Player
-public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
-    public let vm: PlayerViewModel
+fileprivate struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    public let vm: TVPlayerViewModel
 
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
     public let onStartPiP: () -> Void
@@ -57,7 +57,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
 
     public func makeCoordinator() -> AVPlayerCoordinator {
         let coordinator = AVPlayerCoordinator(
-            id: self.vm.mediaSourceID,
+            id: self.vm.mediaSource.id,
             onStartPiP: self.onStartPiP,
             onRestoreFromPiP: self.onRestoreFromPiP,
             onStopFromPiP: self.onStopFromPiP,
@@ -74,7 +74,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
     }
 
     public func makeUIViewController(context: Context) -> AVPlayerViewController {
-        Log.info("Loading player...")
+        Log.info("Loading TV player...")
         let controller = AVPlayerViewController()
         controller.player = self.vm.player
         controller.showsPlaybackControls = true
@@ -91,7 +91,7 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         if !self.vm.media.description.isEmpty {
             // Series & episode description
             let descTab = UIHostingController(
-                rootView: PlayerDescriptionView(media: self.vm.media, mediaSource: self.vm.mediaSource)
+                rootView: TVPlayerDescriptionView(media: self.vm.media, mediaSourceID: self.vm.mediaSource.id, seasons: self.vm.seasons)
             )
             descTab.title = "Description"
             descTab.preferredContentSize = CGSize(width: 0, height: 350)
@@ -99,29 +99,17 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
         }
 
         if !self.vm.media.people.isEmpty {
-            switch self.vm.media.mediaType {
-            case .movies:
-                let peopleTab = UIHostingController(
-                    rootView: PlayerPeopleView(people: self.vm.media.people, streamingService: self.vm.streamingService)
-                        .environment(self.theme)
-                )
-                peopleTab.title = "People"
-                peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
-                playerTabs.append(peopleTab)
-            case .tv(let seasons):
-                guard let seasons = seasons else { break }
-                for season in seasons { // Find this episode's people
-                    for episode in season.episodes {
-                        if let mediaSource = episode.mediaSources.first, mediaSource.id == self.vm.mediaSourceID {
-                            let peopleTab = UIHostingController(
-                                rootView: PlayerPeopleView(people: episode.people, streamingService: self.vm.streamingService)
-                                    .environment(self.theme)
-                            )
-                            peopleTab.title = "People"
-                            peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
-                            playerTabs.append(peopleTab)
-                            break
-                        }
+            for season in self.vm.seasons {
+                for episode in season.episodes {
+                    if let mediaSource = episode.mediaSources.first, mediaSource.id == self.vm.mediaSource.id {
+                        let peopleTab = UIHostingController(
+                            rootView: PlayerPeopleView(people: episode.people, streamingService: self.vm.streamingService)
+                                .environment(self.theme)
+                        )
+                        peopleTab.title = "People"
+                        peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+                        playerTabs.append(peopleTab)
+                        break
                     }
                 }
             }
@@ -146,36 +134,34 @@ public struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable
 
         // MARK: Episode picker
         // TV Season-related buttons
-        if let seasons = self.vm.seasons {
-            let allEpisodes = seasons.flatMap(\.episodes)
-            var setPreviousEpisode: Bool = false
+        let allEpisodes = self.vm.seasons.flatMap(\.episodes)
+        var setPreviousEpisode: Bool = false
 
-            if let currentEpisodeIndex = allEpisodes.firstIndex(where: { episode in
-                for mediaSource in episode.mediaSources {
-                    return mediaSource.id == self.vm.mediaSource.id
-                }
-                return false
-            }) {
-                // Next episode
-                if currentEpisodeIndex + 1 < allEpisodes.count {
-                    items.insert(PlayerButtons.nextEpisodeButton(vm: self.vm, nextEpisode: allEpisodes[currentEpisodeIndex + 1]), at: 0)
-                }
-
-                // Previous episode
-                if currentEpisodeIndex - 1 >= 0 {
-                    items.insert(
-                        PlayerButtons.previousEpisodeButton(vm: self.vm, previousEpisode: allEpisodes[currentEpisodeIndex - 1]), at: 0
-                    )
-                    setPreviousEpisode = true
-                }
+        if let currentEpisodeIndex = allEpisodes.firstIndex(where: { episode in
+            for mediaSource in episode.mediaSources {
+                return mediaSource.id == self.vm.mediaSource.id
+            }
+            return false
+        }) {
+            // Next episode
+            if currentEpisodeIndex + 1 < allEpisodes.count {
+                items.insert(PlayerButtons.nextEpisodeButton(vm: self.vm, nextEpisode: allEpisodes[currentEpisodeIndex + 1]), at: 0)
             }
 
-            // Episode selector
-            items.insert(
-                PlayerButtons.episodePicker(vm: self.vm, seasons: seasons),
-                at: setPreviousEpisode ? 1 : 0
-            )
+            // Previous episode
+            if currentEpisodeIndex - 1 >= 0 {
+                items.insert(
+                    PlayerButtons.previousEpisodeButton(vm: self.vm, previousEpisode: allEpisodes[currentEpisodeIndex - 1]), at: 0
+                )
+                setPreviousEpisode = true
+            }
         }
+
+        // Episode selector
+        items.insert(
+            PlayerButtons.episodePicker(vm: self.vm, seasons: self.vm.seasons),
+            at: setPreviousEpisode ? 1 : 0
+        )
         return items
     }
 }

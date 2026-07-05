@@ -21,30 +21,35 @@ private extension ISO8601DateFormatter {
 // MARK: Protocols
 
 /// Define the shape of a piece of media
-public protocol MediaProtocol: Identifiable, MediaRepresentableProtocol, Hashable {
-    /// Short descriptor of the media.
-    var tagline: String { get }
-    /// Long descriptor of the media.
-    var description: String { get }
-    /// ID of the media given by the server.
-    var id: String { get }
-    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
-    var genres: [String] { get }
-    /// Rating of this media provided by the server. Ex PG, PG-13, R.
-    var maturity: String? { get }
-    /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
-    var releaseDate: Date? { get }
+public protocol MediaProtocol: Identifiable, MediaRepresentableProtocol, Hashable, MediaMetadataProtocol {
     /// Denotes TV show, vs movie, vs... and contains relevant data for that type.
     var mediaType: MediaType { get }
-    /// Estimated runtime of the movie or per-episode.
-    var duration: Duration? { get }
-    /// People involved in the creation of this media.
-    var people: [any MediaPersonProtocol] { get }
     /// Tracks if the special features have been fetched. If they have been successfully fetched, they'll available through this variable.
     var specialFeatures: SpecialFeaturesStatus { get set }
     
     /// Load special features for this media
     func loadSpecialFeatures(specialFeatures: [SpecialFeature])
+}
+
+public protocol MediaMetadataProtocol: Identifiable {
+    /// Unique identifier for this media
+    var id: String { get }
+    /// The name of the series
+    var title: String { get }
+    /// Short descriptor of the media.
+    var tagline: String { get }
+    /// Rating of this media provided by the server. Ex PG, PG-13, R.
+    var maturity: String? { get }
+    /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
+    var releaseDate: Date? { get }
+    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
+    var genres: [String] { get }
+    /// Estimated runtime of the movie or per-episode.
+    var duration: Duration? { get }
+    /// A longer descriptor of the series
+    var description: String { get }
+    /// Those involved with the media in its entirety
+    var people: [any MediaPersonProtocol] { get }
 }
 
 /// Media contains at least one media source, like different versions of the same movie. Each version of the movie needs their own video,

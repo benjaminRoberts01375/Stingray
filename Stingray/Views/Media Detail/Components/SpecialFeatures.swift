@@ -73,16 +73,16 @@ fileprivate struct SpecialFeaturesRow: View {
                         if let mediaSource = specialFeature.mediaSources.first {
                             Button {
                                 navigation.append(
-                                    PlayerViewModel(
+                                    MoviePlayerViewModel(
+                                        settingsModel: self.settings,
+                                        streamingService: self.streamingService,
                                         media: media,
                                         mediaSource: mediaSource,
-                                        startTime: .zero,
-                                        streamingService: streamingService,
-                                        seasons: nil,
-                                        settingsModel: self.settings
+                                        startTime: .zero
                                     )
                                 )
-                            } label: {
+                            }
+                            label: {
                                 VStack(spacing: 0) {
                                     MediaArtView(media: specialFeature, streamingService: self.streamingService, title: mediaSource.name)
                                         .frame(maxHeight: 250)

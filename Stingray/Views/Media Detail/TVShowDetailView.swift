@@ -177,8 +177,8 @@ public struct TVShowDetailView: View {
                 break
             }
         }
-        .navigationDestination(for: PlayerViewModel.self) { vm in
-            PlayerView(vm: vm, navigation: $navigation)
+        .navigationDestination(for: TVPlayerViewModel.self) { vm in
+            TVPlayerView(vm: vm, navigation: $navigation)
         }
         .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
     }
@@ -228,7 +228,7 @@ fileprivate struct PlayNavigationView: View {
                 if mediaSource.startPoint == 0 {
                     Button {
                         self.navigation.append(
-                            PlayerViewModel(
+                            TVPlayerViewModel(
                                 media: media,
                                 mediaSource: mediaSource,
                                 startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),
@@ -302,7 +302,7 @@ fileprivate struct PlayNavigationView: View {
 
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
-            PlayerViewModel(
+            TVPlayerViewModel(
                 media: media,
                 mediaSource: mediaSource,
                 startTime: CMTimeMakeWithSeconds(startPoint, preferredTimescale: 1),
@@ -513,7 +513,7 @@ fileprivate struct EpisodeNavigationView: View {
     var body: some View {
         Button {
             navigation.append(
-                PlayerViewModel(
+                TVPlayerViewModel(
                     media: media,
                     mediaSource: mediaSource,
                     startTime: CMTimeMakeWithSeconds(mediaSource.startPoint, preferredTimescale: 1),

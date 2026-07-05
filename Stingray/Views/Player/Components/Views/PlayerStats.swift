@@ -10,9 +10,9 @@ import SwiftUI
 
 public struct PlayerStreamingStats: View {
     /// All data regarding current playback
-    public var vm: PlayerViewModel
+    public var vm: AVPlayerViewModelProtocol
 
-    public init(vm: PlayerViewModel) {
+    public init(vm: AVPlayerViewModelProtocol) {
         self.mediaSourceID = vm.playerProgress?.mediaSource.id ?? "Unknown"
         self.mediaSourceTitle = vm.playerProgress?.mediaSource.name ?? "Untitled"
         self.videoStreamID = vm.playerProgress?.videoID ?? "Unknown"

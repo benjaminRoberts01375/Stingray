@@ -76,14 +76,14 @@ Configure Stingray to look and feel how you want it.
     - Rename "Other-Assets" to "Other Assets"
     - Have ErrorView be a component
     - Move all views into a Views folder
-    - Move `DetailMediaView` into a dedicated Media Detail folder
-    - Move the player files into a dedicated "player" folder
-    - Abstract metadata and overview in the `DetailMediaView` to their own views
-    - Abstract the MovieDetailView into a separate view
-    - Rebrand the `DetailMediaView` to `TVShowDetailView` and created a dedicated `MovieDetailView`
-    - Abstract player transport bar items to a dedicated class
-    - Separate out SwiftUI Player tabs into their own structs
-    - Move `AVPlayerViewControllerRepresentable.Coordinator` to a separate file
+    - Separate the TV and Movie detail views
+      - Abstract metadata and overview in the `DetailMediaView` to their own views
+      - Move `DetailMediaView` into a dedicated Media Detail folder
+    - Separate the TV and Movie players
+      - Move the player files into a dedicated "player" folder
+      - Move `AVPlayerViewControllerRepresentable.Coordinator` to a separate file
+      - Abstract player transport bar items to a dedicated class
+      - Separate out SwiftUI Player tabs into their own structs
   - Remove unused `Equatable` conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
   - Massively improve documentation around the `slidingLevenshteinDistance` function
