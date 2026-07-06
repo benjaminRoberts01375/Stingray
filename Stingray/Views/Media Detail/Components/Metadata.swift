@@ -19,7 +19,7 @@ public struct MediaOverview: View {
         Button {} label: {
             VStack(alignment: .leading) {
                 if !media.description.isEmpty {
-                    Text("Overview")
+                    Text("Description")
                         .font(.headline.bold())
                         .lineLimit(2)
                         .foregroundStyle(
