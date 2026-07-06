@@ -117,6 +117,11 @@ public struct FilteredMediaGridView: View {
                     }
                 }
                 label: { Text("Sort By: \(self.sortBy.rawValue)") }
+                Button { self.sortOrderAscending.toggle() }
+                label: {
+                    if self.sortOrderAscending { Text("Sort Order: Ascending") }
+                    else { Text("Sort Order: Descending") }
+                }
             }
         }
         .focusSection()
