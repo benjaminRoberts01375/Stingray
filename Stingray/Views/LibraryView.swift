@@ -58,13 +58,20 @@ public struct FilteredMediaGridView: View {
 
     /// Media matching every applied genre filter. Computed so it always reflects the current`allMedia`
     private var filteredMedia: [any MediaRepresentableProtocol] {
-        self.allMedia.filter { mediaRepresentable in
-            guard let model = mediaRepresentable as? any MediaProtocol // Filter out incomplete media
-            else { return false }
-            if appliedGenreFilters.isEmpty { return true } // Small efficiency gain
+        let filtered = self.allMedia.filter { model in
+            if appliedGenreFilters.isEmpty { return true }
             // Keep only media that has every applied genre
             return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
         }
+
+        // Create an on-the-fly sorting function
+        let areInOrder: (any MediaRepresentableProtocol, any MediaRepresentableProtocol) -> Bool
+        switch (self.sortBy, self.sortOrder) {
+        case (.sortTitle, .ascending):  areInOrder = { $0.sortTitle < $1.sortTitle }
+        case (.sortTitle, .descending): areInOrder = { $0.sortTitle > $1.sortTitle }
+        }
+
+        return filtered.sorted(by: areInOrder)
     }
 
     public var body: some View {
