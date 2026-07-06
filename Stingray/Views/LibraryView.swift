@@ -149,6 +149,7 @@ public struct FilteredMediaGridView: View {
                     }
                 }
             }
+            if self.settings.showFilters && self.settings.showSorting { Divider() }
             if self.settings.showSorting {
                 Menu {
                     ForEach(SortType.allCases, id: \.self) { sortBy in
