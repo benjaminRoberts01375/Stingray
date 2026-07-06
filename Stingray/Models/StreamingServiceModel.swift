@@ -408,7 +408,10 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             }
 
             allMedia.append(contentsOf: incomingMedia)
-            for media in incomingMedia { library.genres.formUnion(media.genres) }
+            for media in incomingMedia {
+                library.genres.formUnion(media.genres)
+                library.maturityRatings.insert(media.maturity ?? String(localized: "Unknown"))
+            }
 
             // Update the UI after each batch
             await MainActor.run { [allMedia] in

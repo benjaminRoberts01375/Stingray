@@ -27,6 +27,7 @@ public struct LibraryView: View {
                 if !allMedia.isEmpty {
                     FilteredMediaGridView(
                         availableGenres: self.library.genres,
+                        availableMaturityRatings: self.library.maturityRatings,
                         streamingService: self.streamingService,
                         allMedia: allMedia,
                         navigation: $navigation
@@ -47,9 +48,11 @@ public struct LibraryView: View {
 
 public struct FilteredMediaGridView: View {
     public let availableGenres: Set<String>
+    public let availableMaturityRatings: Set<String>
     public let streamingService: any MediaImageProviding
     public let allMedia: [any MediaRepresentableProtocol]
     @State private var appliedGenreFilters: Set<String> = []
+    @State private var appliedMaturityRatingFilters: Set<String> = []
     @State private var sortBy: SortType = .sortTitle
     @State private var sortOrderAscending: Bool = true
     @Binding public var navigation: NavigationPath
@@ -58,11 +61,16 @@ public struct FilteredMediaGridView: View {
 
     /// Media matching every applied genre filter. Computed so it always reflects the current`allMedia`
     private var filteredMedia: [any MediaRepresentableProtocol] {
-        let filtered = self.allMedia.filter { model in
-            if appliedGenreFilters.isEmpty { return true }
-            // Keep only media that has every applied genre
-            return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
-        }
+        let filtered = self.allMedia
+            .filter { model in
+                if appliedGenreFilters.isEmpty { return true }
+                // Keep only media that has every applied genre
+                return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
+            }
+            .filter { model in
+                if self.appliedMaturityRatingFilters.isEmpty { return true }
+                return self.appliedMaturityRatingFilters.contains(model.maturity ?? "")
+            }
 
         // Create an on-the-fly sorting function
         let areInOrder: (any MediaRepresentableProtocol, any MediaRepresentableProtocol) -> Bool
@@ -85,7 +93,7 @@ public struct FilteredMediaGridView: View {
             if self.settings.showFilters {
                 Menu {
                     // Clear action at the top, only when something is selected.
-                    if !appliedGenreFilters.isEmpty {
+                    if !self.appliedGenreFilters.isEmpty {
                         Button(role: .destructive) {
                             self.appliedGenreFilters = []
                         }
@@ -94,10 +102,10 @@ public struct FilteredMediaGridView: View {
                     }
 
                     ForEach(self.availableGenres.sorted(), id: \.self) { genre in
-                        let genreIsSelected = appliedGenreFilters.contains(genre)
+                        let genreIsSelected = self.appliedGenreFilters.contains(genre)
                         Button {
-                            if genreIsSelected { appliedGenreFilters.remove(genre) }
-                            else { appliedGenreFilters.insert(genre) }
+                            if genreIsSelected { self.appliedGenreFilters.remove(genre) }
+                            else { self.appliedGenreFilters.insert(genre) }
                         }
                         label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
                     }
@@ -106,6 +114,34 @@ public struct FilteredMediaGridView: View {
                     if self.appliedGenreFilters.isEmpty { Text("Genres") }
                     else {
                         Text("Genres: \(self.appliedGenreFilters.sorted().joined(separator: ", "))")
+                            .frame(maxWidth: 400)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                }
+                Menu {
+                    if !self.appliedMaturityRatingFilters.isEmpty {
+                        Button(role: .destructive) {
+                            self.appliedMaturityRatingFilters = []
+                        }
+                        label: { Label("Remove all maturity filters", systemImage: "xmark.circle") }
+                        Divider()
+                    }
+
+                    ForEach(self.availableMaturityRatings.sorted(), id: \.self) { maturity in
+                        let maturityIsSelected = self.appliedMaturityRatingFilters.contains(maturity)
+                        Button {
+                            if maturityIsSelected { self.appliedMaturityRatingFilters.remove(maturity) }
+                            else { self.appliedMaturityRatingFilters.insert(maturity) }
+                        }
+                        label: { Label(maturity, systemImage: maturityIsSelected ? "checkmark" : "") }
+                    }
+                }
+                label: {
+                    if self.appliedMaturityRatingFilters.isEmpty { Text("Maturity") }
+                    else {
+                        Text("Maturity: \(self.appliedMaturityRatingFilters.sorted().joined(separator: ", "))")
                             .frame(maxWidth: 400)
                             .multilineTextAlignment(.leading)
                             .lineLimit(1)
@@ -183,7 +219,7 @@ public struct LibraryInfoView: View {
             case .waiting, .unloaded, .available: ProgressView()
             default: EmptyView()
             }
-            
+
             switch self.library.media {
             case .available(let media), .complete(let media): Text("\(media.count) Items")
             default: Text("0 Items")

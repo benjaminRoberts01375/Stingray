@@ -10,6 +10,7 @@ import SwiftUI
 public struct SearchView: View {
     public var streamingService: LibraryProviding & MediaImageProviding
     public let availableGenres: Set<String>
+    public let availableMaturityRatings: Set<String>
     /// Live search results
     private var searchResults: SearchStatus { search() }
 
@@ -29,11 +30,16 @@ public struct SearchView: View {
         switch self.streamingService.libraryStatus {
         case .available(let libraries), .complete(let libraries):
             var genres: Set<String> = []
+            var maturityReating: Set<String> = []
             for library in libraries {
                 genres.formUnion(library.genres)
+                maturityReating.formUnion(library.maturityRatings)
             }
             self.availableGenres = genres
-        default: self.availableGenres = []
+            self.availableMaturityRatings = maturityReating
+        default:
+            self.availableGenres = []
+            self.availableMaturityRatings = []
         }
     }
 
@@ -43,6 +49,7 @@ public struct SearchView: View {
             case .found(let allMedia):
                 FilteredMediaGridView(
                     availableGenres: self.availableGenres,
+                    availableMaturityRatings: self.availableMaturityRatings,
                     streamingService: self.streamingService,
                     allMedia: allMedia,
                     navigation: $navigation

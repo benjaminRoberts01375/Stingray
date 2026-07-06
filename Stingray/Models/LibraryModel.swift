@@ -11,6 +11,7 @@ public protocol LibraryProtocol: Identifiable {
     var title: String { get }
     var media: MediaStatus { get }
     var genres: Set<String> { get }
+    var maturityRatings: Set<String> { get }
 }
 
 /// Denotes the current status of loading media in a library
@@ -34,12 +35,14 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var id: String
     public var libraryType: String
     public var genres: Set<String>
+    public var maturityRatings: Set<String>
 
     public init(title: String, id: String, libraryType: String) {
         self.title = title
         self.media = .unloaded
         self.id = id
         self.genres = []
+        self.maturityRatings = []
 
         if libraryType.contains("tv") { self.libraryType = "TV Shows" }
         else { self.libraryType = libraryType.prefix(1).uppercased() + libraryType.dropFirst() }
@@ -64,6 +67,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             else { libraryType = rawLibraryType.prefix(1).uppercased() + rawLibraryType.dropFirst() }
             self.media = .unloaded
             self.genres = []
+            self.maturityRatings = []
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }
         catch DecodingError.valueNotFound(_, let context) {
