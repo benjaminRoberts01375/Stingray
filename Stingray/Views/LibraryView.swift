@@ -51,7 +51,7 @@ public struct FilteredMediaGridView: View {
     public let allMedia: [any MediaRepresentableProtocol]
     @State private var appliedGenreFilters: Set<String> = []
     @State private var sortBy: SortType = .sortTitle
-    @State private var sortOrder: SortOrder = .ascending
+    @State private var sortOrderAscending: Bool = true
     @Binding public var navigation: NavigationPath
 
     @Environment(SettingsModel.self) private var settings
@@ -66,11 +66,11 @@ public struct FilteredMediaGridView: View {
 
         // Create an on-the-fly sorting function
         let areInOrder: (any MediaRepresentableProtocol, any MediaRepresentableProtocol) -> Bool
-        switch (self.sortBy, self.sortOrder) {
-        case (.sortTitle, .ascending):  areInOrder = { $0.sortTitle < $1.sortTitle }
-        case (.sortTitle, .descending): areInOrder = { $0.sortTitle > $1.sortTitle }
-        case (.title, .ascending): areInOrder = { $0.title < $1.title }
-        case (.title, .descending): areInOrder = { $0.title > $1.title }
+        switch (self.sortBy, self.sortOrderAscending) {
+        case (.sortTitle, true):  areInOrder = { $0.sortTitle < $1.sortTitle }
+        case (.sortTitle, false): areInOrder = { $0.sortTitle > $1.sortTitle }
+        case (.title, true): areInOrder = { $0.title < $1.title }
+        case (.title, false): areInOrder = { $0.title > $1.title }
         }
 
         return filtered.sorted(by: areInOrder)
@@ -134,18 +134,6 @@ fileprivate enum SortType: CaseIterable {
         switch self {
         case .sortTitle: return String(localized: "Sort Title")
         case .title: return String(localized: "Title")
-        }
-    }
-}
-
-fileprivate enum SortOrder: CaseIterable {
-    case ascending
-    case descending
-
-    var rawValue: String {
-        switch self {
-        case .ascending: return String(localized: "Ascending")
-        case .descending: return String(localized: "Descending")
         }
     }
 }
