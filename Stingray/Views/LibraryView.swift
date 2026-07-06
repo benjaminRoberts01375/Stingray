@@ -73,6 +73,8 @@ public struct FilteredMediaGridView: View {
         case (.title, false): areInOrder = { $0.title > $1.title }
         case (.duration, true): areInOrder = { ($0.duration ?? .zero) < ($1.duration ?? .zero) }
         case (.duration, false): areInOrder = { ($0.duration ?? .zero) > ($1.duration ?? .zero) }
+        case (.releaseDate, true): areInOrder = { ($0.releaseDate ?? .distantPast) < ($1.releaseDate ?? .distantPast) }
+        case (.releaseDate, false): areInOrder = { ($0.releaseDate ?? .distantPast) > ($1.releaseDate ?? .distantPast) }
         }
 
         return filtered.sorted(by: areInOrder)
@@ -137,12 +139,14 @@ fileprivate enum SortType: CaseIterable {
     case sortTitle
     case title
     case duration
+    case releaseDate
 
     var rawValue: String {
         switch self {
         case .sortTitle: return String(localized: "Sort Title")
         case .title: return String(localized: "Title")
         case .duration: return String(localized: "Duration")
+        case .releaseDate: return String(localized: "Release Date")
         }
     }
 }
