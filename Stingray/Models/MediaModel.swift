@@ -31,27 +31,6 @@ public protocol MediaProtocol: Identifiable, MediaRepresentableProtocol, Hashabl
     func loadSpecialFeatures(specialFeatures: [SpecialFeature])
 }
 
-public protocol MediaMetadataProtocol: Identifiable {
-    /// Unique identifier for this media
-    var id: String { get }
-    /// The name of the series
-    var title: String { get }
-    /// Short descriptor of the media.
-    var tagline: String { get }
-    /// Rating of this media provided by the server. Ex PG, PG-13, R.
-    var maturity: String? { get }
-    /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
-    var releaseDate: Date? { get }
-    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
-    var genres: [String] { get }
-    /// Estimated runtime of the movie or per-episode.
-    var duration: Duration? { get }
-    /// A longer descriptor of the series
-    var description: String { get }
-    /// Those involved with the media in its entirety
-    var people: [any MediaPersonProtocol] { get }
-}
-
 /// Media contains at least one media source, like different versions of the same movie. Each version of the movie needs their own video,
 /// audio, and subtitle streams, among other information.
 public protocol MediaSourceProtocol: Identifiable {
@@ -113,18 +92,6 @@ extension MediaSourceProtocol {
     }
 }
 
-/// Describes how to hold data about a person for a piece of media
-public protocol MediaPersonProtocol {
-    /// ID of the person
-    var id: String { get }
-    /// Person's full name
-    var name: String { get }
-    /// How they contributed to the media.
-    var role: String { get }
-    /// Preview hashes
-    var imageHashes: MediaImageBlurHashes? { get }
-}
-
 /// Describes how to hold information regarding a stream's metadata.
 public protocol MediaStreamProtocol: Identifiable {
     /// ID of the media stream given by the server.
@@ -174,6 +141,7 @@ public protocol TVEpisodeProtocol: Displayable {
 @Observable
 public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
+    public var sortTitle: String
     public var tagline: String
     public var description: String
     public var imageTags: (any MediaImagesProtocol)?
@@ -185,12 +153,12 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var mediaType: MediaType
     public var duration: Duration?
     public var people: [any MediaPersonProtocol]
-    public var errors: [RError]?
     public var specialFeatures: SpecialFeaturesStatus
     
     public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case title = "Name"
+        case sortTitle = "SortName"
         case taglines = "Taglines"
         case description = "Overview"
         case imageTags = "ImageTags"
@@ -214,7 +182,9 @@ public final class MediaModel: MediaProtocol, Decodable {
         
         // Easy to decode stuff
         self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? UUID().uuidString
-        self.title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? "Unknown Title"
+        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? "Unknown Title"
+        self.title = title
+        self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
         self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first ?? ""
         self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
         self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
@@ -404,39 +374,6 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         lhs.bitrate == rhs.bitrate &&
         lhs.codec == rhs.codec &&
         lhs.isDefault == rhs.isDefault
-    }
-}
-
-/// Holds information about a single person who worked on a piece of media.
-@Observable
-public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
-    public var id: String
-    public var name: String
-    public var role: String
-    public var imageHashes: MediaImageBlurHashes?
-    
-    public enum CodingKeys: String, CodingKey {
-        case id = "Id"
-        case name = "Name"
-        case role = "Role"
-        case imageHashes = "ImageBlurHashes"
-    }
-    
-    public init(from decoder: Decoder) throws(JSONError) {
-        do {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            
-            id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
-            name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Anonymous"
-            role = try container.decodeIfPresent(String.self, forKey: .role) ?? "Unknown Roll"
-            imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
-        }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "MediaPerson") }
-        catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "MediaPerson") }
-            else { throw JSONError.failedJSONDecode("MediaPerson", DecodingError.valueNotFound(Any.self, context)) }
-        }
-        catch let error { throw JSONError.failedJSONDecode("MediaPerson", error) }
     }
 }
 
