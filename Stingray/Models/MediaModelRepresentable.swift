@@ -50,6 +50,8 @@ public protocol MediaMetadataProtocol: Identifiable {
     var id: String { get }
     /// The name of the series
     var title: String { get }
+    /// Title to use when running sorting algorithms
+    var sortTitle: String { get }
     /// Short descriptor of the media.
     var tagline: String { get }
     /// Rating of this media provided by the server. Ex PG, PG-13, R.
@@ -82,6 +84,7 @@ public protocol MediaPersonProtocol {
 @Observable
 public final class MediaModelRepresentable: MediaRepresentableProtocol, Decodable {
     public var title: String
+    public var sortTitle: String
     public var tagline: String
     public var description: String
     public var imageTags: (any MediaImagesProtocol)?
@@ -133,6 +136,7 @@ public final class MediaModelRepresentable: MediaRepresentableProtocol, Decodabl
             ?? "Unknown Title"
         )
         self.title = title
+        self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
         self.tagline = (try? container.decodeIfPresent(String.self, forKey: .taglines)) ?? ""
         self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
         self.imageBlurHashes = try? container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
@@ -269,6 +273,7 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
 
 /// Some media designed to be displayed as an example
 public final class ExampleMedia: MediaRepresentableProtocol {
+    public let sortTitle: String
     public let tagline: String
     public let maturity: String?
     public let releaseDate: Date?
@@ -289,6 +294,7 @@ public final class ExampleMedia: MediaRepresentableProtocol {
     
     public init(title: String) {
         self.title = title
+        self.sortTitle = title
         self.tagline = "A short tagline"
         self.maturity = "NA"
         self.releaseDate = Date.now
