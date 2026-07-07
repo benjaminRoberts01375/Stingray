@@ -71,7 +71,8 @@ Configure Stingray to look and feel how you want it.
     - Don't display people segment if people are unavailable
     - Access to Stingray's logs
     - Change roundness of buttons in the settings menu based on the Apple TV model
-  - Filter libraries and search by genre
+  - Filter libraries and search by genre and maturity
+  - Sort libraries and search by title, sort title, duration, and release date
 - Cleanups
   - Repo Organization
     - Rename "Other-Assets" to "Other Assets"
