@@ -22,8 +22,6 @@ public enum MediaStatus {
     case waiting
     /// Some library content is available, and some may still be downloading
     case available([MediaModel])
-    /// All library content is available
-    case complete([MediaModel])
     /// Loading library content failed with an error
     case error(RError)
 }

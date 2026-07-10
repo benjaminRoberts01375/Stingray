@@ -91,6 +91,7 @@ Configure Stingray to look and feel how you want it.
   - Massively improve documentation around the `slidingLevenshteinDistance` function
   - Update all Swift files to use Xcode 27's reworked auto-indent formatting
   - Remove unused `Equatable` conformance from `MediaSource`
+  - Remove practically unused `completed` status for individual libraries
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button

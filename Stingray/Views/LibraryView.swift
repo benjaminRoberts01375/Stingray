@@ -23,7 +23,7 @@ public struct LibraryView: View {
                 ProgressView()
             case .error(let err):
                 ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
-            case .available(let allMedia), .complete(let allMedia):
+            case .available(let allMedia):
                 if !allMedia.isEmpty {
                     FilteredMediaGridView(
                         availableGenres: self.library.genres,
@@ -222,7 +222,7 @@ public struct LibraryInfoView: View {
             }
 
             switch self.library.media {
-            case .available(let media), .complete(let media): Text("\(media.count) Items")
+            case .available(let media): Text("\(media.count) Items")
             default: Text("0 Items")
             }
         }

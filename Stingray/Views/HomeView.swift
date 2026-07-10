@@ -317,7 +317,7 @@ public struct LibrariesInfoView: View {
             switch library.media {
             case .unloaded, .waiting, .error:
                 break
-            case .available(let media), .complete(let media):
+            case .available(let media):
                 counters[library.libraryType, default: 0] += media.count
             }
         }
