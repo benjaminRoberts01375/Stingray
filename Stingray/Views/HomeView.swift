@@ -315,10 +315,8 @@ public struct LibrariesInfoView: View {
 
         for library in libraries {
             switch library.media {
-            case .unloaded, .waiting, .error:
-                break
-            case .available(let media):
-                counters[library.libraryType, default: 0] += media.count
+            case .waiting, .error: break
+            case .available(let media): counters[library.libraryType, default: 0] += media.count
             }
         }
         return counters

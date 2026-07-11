@@ -19,10 +19,8 @@ public struct LibraryView: View {
     public var body: some View {
         ScrollView {
             switch library.media {
-            case .unloaded, .waiting:
-                ProgressView()
-            case .error(let err):
-                ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
+            case .waiting: ProgressView()
+            case .error(let err): ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
             case .available(let allMedia):
                 if !allMedia.isEmpty {
                     FilteredMediaGridView(
@@ -217,7 +215,7 @@ public struct LibraryInfoView: View {
     public var body: some View {
         HStack(spacing: 0) {
             switch self.library.media { // Only display a ProgressView while downloading content.
-            case .waiting, .unloaded, .available: ProgressView()
+            case .available: ProgressView()
             default: EmptyView()
             }
 
