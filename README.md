@@ -110,6 +110,10 @@ Configure Stingray to look and feel how you want it.
       - This does change the appearance slightly, particularly for 4:3 thumbnails
   - Only calculate profile images once per load
   - Only calculate Apple TV model once and cache it
+  - Improve media syncing performance by about 2x
+    - Rework media syncing algorithm
+    - Start syncing sooner
+    - Prevent double loading libraries
 
 ## TODO List
 

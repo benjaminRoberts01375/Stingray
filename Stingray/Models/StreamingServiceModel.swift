@@ -22,9 +22,6 @@ public protocol SystemInfoProviding {
 public protocol LibraryProviding {
     /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
     var libraryStatus: LibraryStatus { get }
-
-    /// Download library data.
-    func retrieveLibraries() async
 }
 
 /// Describes the current setup status for a downloaded library
@@ -219,6 +216,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 self.serverVersion = nil
                 self.serverName = nil
             }
+            await self.retrieveLibraries()
         }
     }
 
@@ -240,6 +238,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.libraryStatus = .waiting
         self.serviceURL = serviceURL
         self.serverVersion = response.serverVersion
+
+        Task { await self.retrieveLibraries() }
     }
 
     /// Log into a Jellyfin server.
