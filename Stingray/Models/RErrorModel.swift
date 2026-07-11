@@ -220,7 +220,7 @@ public enum MediaError: RError {
 /// Different ways a `StreamingServiceProtocol` can error out.
 public enum StreamingServiceErrors: RError {
     /// Failed to get initial library data.
-    case librarySetupFailed(RError?)
+    case librarySetupFailed(Error)
     /// Failed to create a streaming service object
     case initFailed(any Error)
     /// Address to the server was bad
@@ -234,7 +234,7 @@ public enum StreamingServiceErrors: RError {
 
     public var errorDescription: String {
         switch self {
-        case .librarySetupFailed: return "Failed to get library data"
+        case .librarySetupFailed: return "Failed to get any library data"
         case .initFailed: return "Failed to create a library"
         case .badAddress: return "Bad address to server"
         case .noToken: return "No API token available"
@@ -245,11 +245,10 @@ public enum StreamingServiceErrors: RError {
 
     public var next: (any RError)? {
         switch self {
-        case .librarySetupFailed(let err): return err
         case .initFailed(let err):
             if let rError = err as? StreamingServiceErrors { return rError }
             return nil
-        case .badAddress, .noDefaultUser, .noToken: return nil
+        case .badAddress, .noDefaultUser, .noToken, .librarySetupFailed: return nil
         case .badDefaultUser(let err): return err
         }
     }

@@ -214,11 +214,6 @@ public struct LibraryInfoView: View {
 
     public var body: some View {
         HStack(spacing: 0) {
-            switch self.library.media { // Only display a ProgressView while downloading content.
-            case .available: ProgressView()
-            default: EmptyView()
-            }
-
             switch self.library.media {
             case .available(let media): Text("\(media.count) Items")
             default: Text("0 Items")
