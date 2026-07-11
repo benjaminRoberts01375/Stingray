@@ -420,7 +420,10 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                             library.genres.formUnion(newItems.flatMap { $0.genres })
                             library.maturityRatings.formUnion(newItems.compactMap { $0.maturity ?? "Unknown" })
                         }
-                        if newItems.count < batchSize { activeLibrary = libraryIterator.next() } // Advance to the next library
+                        // Advance to the next library
+                        if newItems.count < batchSize && response.0 == activeLibrary?.id {
+                            activeLibrary = libraryIterator.next()
+                        }
                     }
                     getMedia(libraryID: activeLibrary?.id) // Startup next task
                     // When we finish with the tasks, we simply fall out of the loop
