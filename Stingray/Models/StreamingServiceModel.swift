@@ -408,11 +408,13 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         switch library.media {
                         case .error: break
                         case .waiting:
+                            if newItems.isEmpty { break } // Don't update the UI with blank media
                             library.media = .available(newItems)
                             library.genres.formUnion(newItems.flatMap { $0.genres })
                             library.maturityRatings.formUnion(newItems.compactMap { $0.maturity ?? "Unknown" })
-                        case .available(var existingItems): // Micro optimizing >:D
-                            library.media = .waiting
+                        case .available(var existingItems):
+                            if newItems.isEmpty { break } // Don't update the UI with blank media
+                            library.media = .waiting // Micro optimizing >:D
                             existingItems.append(contentsOf: newItems)
                             library.media = .available(existingItems)
                             library.genres.formUnion(newItems.flatMap { $0.genres })
