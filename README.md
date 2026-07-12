@@ -114,6 +114,8 @@ Configure Stingray to look and feel how you want it.
     - Rework media syncing algorithm
     - Start syncing sooner
     - Prevent double loading libraries
+    - Rewrote TV season syncing to use a similar implementation to library syncing
+      - Improved thread control
 
 ## TODO List
 

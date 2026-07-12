@@ -71,12 +71,6 @@ public protocol AdvancedNetworkProtocol {
         title: String,
         subtitle: String?
     ) -> AVPlayerItem?
-    /// Get all media data for a seasons
-    /// - Parameters:
-    ///   - accessToken: Access token for the server
-    ///   - seasonID: ID of the season
-    /// - Returns: Season data
-    func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason]
     /// Updates the server about the current playback status
     /// - Parameters:
     ///   - mediaSourceID: Media source ID of the currently played content
@@ -460,11 +454,12 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "enableUserData", value: "true"),
             URLQueryItem(name: "recursive", value: "true")
         ]
-        
+
         for mediaType in mediaTypes ?? [] {
             params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
         }
-        
+
+        var mediaItems: [MediaModel] = []
         do {
             let response: Root = try await network.request(
                 verb: .get,
@@ -473,76 +468,102 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 urlParams: params,
                 body: nil
             )
-            
-            try await withThrowingTaskGroup(of: (Int, [TVSeason]).self) { group in
-                for (index, item) in response.items.enumerated() {
-                    switch item.mediaType {
-                    case .tv:
-                        // Capture the id before creating the task
-                        let itemId = item.id
-                        group.addTask {
-                            let seasons = try await self.getSeasonMedia(accessToken: accessToken, seasonID: itemId)
-                            return (index, seasons)
-                        }
-                    default: break
-                    }
-                }
-                do {
-                    for try await (index, seasons) in group {
-                        response.items[index].mediaType = .tv(seasons)
-                    }
-                } catch let error as RError { throw LibraryErrors.gettingSeasons(error, libraryId) }
-            }
-            let medias: [MediaModel] = response.items.map { media in
-                switch media.mediaType {
-                case .tv(let seasons):
-                    // Check all episodes for all people and combine it with existing people
-                    let allPeople = media.people + (seasons ?? []).flatMap(\.episodes).flatMap(\.people)
-                    // If we can combine it into the seenPersonIDs, add it to the people list
-                    var seenPersonIDs = Set<String>()
-                    media.people = allPeople.filter { seenPersonIDs.insert($0.id).inserted }
-                    return media
-                default: return media
-                }
-            }
-            
-            return medias // Several library shows, movies, etc. that partially make a library
+            mediaItems = response.items
         }
         catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
-        catch { throw LibraryErrors.unknown(libraryId) }
+        catch let error { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
+
+        switch mediaItems.first?.mediaType {
+        case .tv: // This works in parallel, so we shouldn't break it out even further
+            do { try await self.getMediasSeasons(accessToken: accessToken, media: mediaItems) }
+            catch let error as RError { throw LibraryErrors.seasonGroup(error, libraryId) }
+            return mediaItems
+        default: return mediaItems
+        }
     }
     
-    public func getSeasonMedia(accessToken: String, seasonID: String) async throws(LibraryErrors) -> [TVSeason] {
-        struct Root: Decodable {
-            let items: [TVSeason]
-            
-            init(from decoder: Decoder) throws(JSONError) {
-                do { self.items = try TVSeason.decodeSeasons(from: decoder) }
-                catch { throw JSONError.failedJSONDecode("Season Media Root", error) }
-            }
+    /// Updates each media with their season data
+    /// - Parameters:
+    ///   - accessToken: Jellyfin access key
+    ///   - media: All media to get seasons for
+    private func getMediasSeasons(accessToken: String, media: [MediaModel]) async throws(LibraryErrors) {
+        Log.info("Getting seasons for \(media.count) media")
+        enum SeasonContent {
+            case success([TVSeason])
+            case error(RError)
         }
         
-        let params : [URLQueryItem] = [
-            URLQueryItem(name: "enableImages", value: "true"),
-            URLQueryItem(name: "fields", value: "MediaSources"),
-            URLQueryItem(name: "fields", value: "Overview"),
-            URLQueryItem(name: "fields", value: "People"),
-            URLQueryItem(name: "sortBy", value: "AiredEpisodeOrder")
-        ]
         do {
-            let response: Root = try await network.request(
-                verb: .get,
-                path: "/Shows/\(seasonID)/Episodes",
-                headers: ["X-MediaBrowser-Token":accessToken],
-                urlParams: params,
-                body: nil
-            )
-            return response.items
+            try await withThrowingTaskGroup(of: (String, SeasonContent).self) { group in
+                var mediaIterator = media.makeIterator()
+                var activeMedia: MediaModel? = mediaIterator.next()
+
+                func getSeasonMedia(accessToken: String, showID: String?) {
+                    guard let showID = showID
+                    else { return }
+                    struct Root: Decodable {
+                        let items: [TVSeason]
+
+                        init(from decoder: Decoder) throws(JSONError) {
+                            // Decoding always runs on the main actor
+                            do { self.items = try MainActor.assumeIsolated { try TVSeason.decodeSeasons(from: decoder) } }
+                            catch { throw JSONError.failedJSONDecode("Season Media Root", error) }
+                        }
+                    }
+                    group.addTask {
+                        let params : [URLQueryItem] = [
+                            URLQueryItem(name: "enableImages", value: "true"),
+                            URLQueryItem(name: "fields", value: "MediaSources"),
+                            URLQueryItem(name: "fields", value: "Overview"),
+                            URLQueryItem(name: "fields", value: "People"),
+                            URLQueryItem(name: "sortBy", value: "AiredEpisodeOrder")
+                        ]
+                        do {
+                            let response: Root = try await self.network.request(
+                                verb: .get,
+                                path: "/Shows/\(showID)/Episodes",
+                                headers: ["X-MediaBrowser-Token":accessToken],
+                                urlParams: params,
+                                body: nil
+                            )
+                            return (showID, SeasonContent.success(response.items))
+                        }
+                        catch let error as RError {
+                            await MainActor.run { Log.warning("Network request failed for show: \(showID): \(error.rDescription())") }
+                            return (showID, SeasonContent.error(LibraryErrors.gettingSeason(error, showID)))
+                        }
+                        catch {
+                            await MainActor
+                                .run { Log.warning("network request failed like crazy for show \(showID): \(error.localizedDescription)")}
+                            return (showID, SeasonContent.error(LibraryErrors.unknown("Season ID: \(showID)")))
+                        }
+                    }
+                }
+
+                for _ in 0..<10 {
+                    getSeasonMedia(accessToken: accessToken, showID: activeMedia?.id)
+                    activeMedia = mediaIterator.next()
+                }
+
+                for try await response in group {
+                    guard let media = media.first(where: { $0.id == response.0 })
+                    else {
+                        getSeasonMedia(accessToken: accessToken, showID: response.0)
+                        continue
+                    }
+                    switch response.1 {
+                    case .error(let error): Log.warning("Failed to get content for show \(response.0): \(error.rDescription())")
+                    case .success(let newSeasons): media.mediaType = .tv(newSeasons)
+                    }
+                    getSeasonMedia(accessToken: accessToken, showID: activeMedia?.id)
+                    activeMedia = mediaIterator.next()
+                    // When we finish with the tasks, we simply fall out of the loop and don't start a new task
+                }
+            }
         }
-        catch let error as RError { throw LibraryErrors.gettingSeason(error, seasonID) }
-        catch { throw LibraryErrors.unknown("Season ID: \(seasonID)") }
+        catch let error { throw LibraryErrors.seasonTaskGroup(error) }
     }
-    
+
     public func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
         let params : [URLQueryItem] = [
             URLQueryItem(name: "fillWidth", value: String(width)),

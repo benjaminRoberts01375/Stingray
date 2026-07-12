@@ -285,12 +285,12 @@ public enum LibraryErrors: RError {
     case gettingLibraries(RError)
     /// Failed to get library media. The `String` value is the name/id of the library
     case gettingLibraryMedia(RError, String)
-    /// Failed to get seasons. The `String` value is the name/id of the library
-    case gettingSeasons(RError, String)
     /// Failed to get a single season. The `String` value is the ID of the season
     case gettingSeason(RError, String)
-    /// Failed to get the media for a season. The `String` value is the ID of the season
-    case gettingSeasonMedia(RError, String)
+    /// The task group used to manage season collection threw an error
+    case seasonTaskGroup(Error)
+    /// Getting a group of media's seasons
+    case seasonGroup(RError, String)
     /// Failed to get the special features for a piece of media. The `String` value is the title of the media
     case specialFeaturesFailed(RError, String)
     /// The library failed for some unknown reason.
@@ -298,11 +298,11 @@ public enum LibraryErrors: RError {
 
     public var next: (RError)? {
         switch self {
-        case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
+        case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeason(let next, _), .seasonGroup(let next, _):
             return next
-        case .gettingSeasonMedia(let next, _), .specialFeaturesFailed(let next, _):
+        case .specialFeaturesFailed(let next, _):
             return next
-        case .unknown:
+        case .unknown, .seasonTaskGroup:
             return nil
         }
     }
@@ -311,9 +311,9 @@ public enum LibraryErrors: RError {
         switch self {
         case .gettingLibraries: return "Failed to get library data"
         case .gettingLibraryMedia(_, let name): return "Failed to get library content for library \(name)"
-        case .gettingSeasons(_, let name): return "Failed to get seasons for library \(name)"
         case .gettingSeason(_, let id): return "Failed to get the season with the ID \(id)"
-        case .gettingSeasonMedia(_, let id): return "Failed to get the season media for the season \(id)"
+        case .seasonGroup(_, let libraryID): return "Failed to get seasons for a group of media in \(libraryID)"
+        case .seasonTaskGroup: return "A group of seasons failed to load"
         case .specialFeaturesFailed(_, let name): return "Failed to load the special features for \(name)"
         case .unknown(let name): return "The library \(name) has failed to setup."
         }
