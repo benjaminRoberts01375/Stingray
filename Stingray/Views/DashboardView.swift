@@ -85,7 +85,7 @@ public struct DashboardView: View {
                 TVShowDetailView(
                     media: anyMedia.media,
                     streamingService: self.streamingService,
-                    seasons: seasons ?? [],
+                    seasons: seasons,
                     navigation: $navigationPath
                 )
             case .movies(let movies):

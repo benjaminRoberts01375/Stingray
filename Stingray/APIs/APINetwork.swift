@@ -474,9 +474,12 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         catch let error { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
 
         switch mediaItems.first?.mediaType {
-        case .tv: // This works in parallel, so we shouldn't break it out even further
-            do { try await self.getMediasSeasons(accessToken: accessToken, media: mediaItems) }
-            catch let error as RError { throw LibraryErrors.seasonGroup(error, libraryId) }
+        case .tv:
+            Task {
+                do { try await self.getMediasSeasons(accessToken: accessToken, media: mediaItems) }
+                catch let error as RError { Log.warning("Failed to get seasons for library \(libraryId): \(error.rDescription())") }
+                catch { Log.warning("Failed to get seasons for library \(libraryId): \(error.localizedDescription)") }
+            }
             return mediaItems
         default: return mediaItems
         }
@@ -534,7 +537,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         }
                         catch {
                             await MainActor
-                                .run { Log.warning("network request failed like crazy for show \(showID): \(error.localizedDescription)")}
+                                .run { Log.warning("network request failed like crazy for show \(showID): \(error.localizedDescription)") }
                             return (showID, SeasonContent.error(LibraryErrors.unknown("Season ID: \(showID)")))
                         }
                     }
