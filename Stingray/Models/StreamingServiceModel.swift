@@ -402,6 +402,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     }
                     switch response.1 {
                     case .error(let error):
+                        Log.warning("Failed to get content for library \(response.0): \(error.rDescription())")
                         library.media = .error(error)
                         activeLibrary = libraryIterator.next()
                     case .success(let newItems):
