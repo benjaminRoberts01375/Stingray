@@ -98,6 +98,7 @@ Configure Stingray to look and feel how you want it.
   - Opening the player description should no longer crash
   - Fix infinite loading when user signs in the same user multiple times
   - Fix search results not live updating
+  - Fix `MediaType`'s reported object name in errors
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views
@@ -116,6 +117,7 @@ Configure Stingray to look and feel how you want it.
     - Prevent double loading libraries
     - Rewrote TV season syncing to use a similar implementation to library syncing
       - Improved thread control
+      - Allow seasons to continue downloading during and after all shows load
 
 ## TODO List
 

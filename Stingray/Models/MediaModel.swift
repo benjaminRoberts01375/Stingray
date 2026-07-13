@@ -562,7 +562,7 @@ public enum MediaType: Decodable {
     
     /// Create a media type that does not populate its data. Ex. Creates a movie media type with no media sources attached.
     /// - Parameter decoder: JSON decoder.
-    public init (from decoder: Decoder) throws(JSONError) {
+    public init(from decoder: Decoder) throws(JSONError) {
         let container: any SingleValueDecodingContainer
         let stringValue: String
         
@@ -570,20 +570,17 @@ public enum MediaType: Decodable {
             container = try decoder.singleValueContainer()
             stringValue = try container.decode(String.self)
         }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Image Blur Hash") }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Type") }
         catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Media Image Blur Hash") }
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Media Type") }
             else { throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context)) }
         }
         catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
         
         switch stringValue {
-        case "Movie":
-            self = .movies([])
-        case "Series":
-            self = .tv(nil)
-        default:
-            throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
+        case "Movie": self = .movies([])
+        case "Series": self = .tv(nil)
+        default: throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
         }
     }
     
