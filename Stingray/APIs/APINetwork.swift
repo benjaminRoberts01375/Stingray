@@ -495,9 +495,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             case success([TVSeason])
             case error(RError)
         }
-        
-        do {
-            try await withThrowingTaskGroup(of: (String, SeasonContent).self) { group in
+            await withTaskGroup(of: (String, SeasonContent).self) { group in
                 var mediaIterator = media.makeIterator()
                 var activeMedia: MediaModel? = mediaIterator.next()
 
@@ -543,19 +541,20 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     }
                 }
 
-                for _ in 0..<10 {
+                for _ in 0..<10 { // Max of 10 tasks at a time
                     getSeasonMedia(accessToken: accessToken, showID: activeMedia?.id)
                     activeMedia = mediaIterator.next()
                 }
-
-                for try await response in group {
+                for await response in group {
                     guard let media = media.first(where: { $0.id == response.0 })
                     else {
                         getSeasonMedia(accessToken: accessToken, showID: response.0)
                         continue
                     }
                     switch response.1 {
-                    case .error(let error): Log.warning("Failed to get content for show \(response.0): \(error.rDescription())")
+                    case .error(let error):
+                        media.mediaType = .error(error)
+                        Log.warning("Failed to get content for show \(response.0): \(error.rDescription())")
                     case .success(let newSeasons): media.mediaType = .tv(newSeasons)
                     }
                     getSeasonMedia(accessToken: accessToken, showID: activeMedia?.id)
@@ -563,8 +562,6 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     // When we finish with the tasks, we simply fall out of the loop and don't start a new task
                 }
             }
-        }
-        catch let error { throw LibraryErrors.seasonTaskGroup(error) }
     }
 
     public func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
