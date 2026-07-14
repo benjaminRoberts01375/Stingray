@@ -570,17 +570,31 @@ public enum MediaType: Decodable {
             container = try decoder.singleValueContainer()
             stringValue = try container.decode(String.self)
         }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Type") }
-        catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Media Type") }
-            else { throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context)) }
+        catch DecodingError.keyNotFound(let key, _) {
+            Log.error("Key \(key) was not found to determine the library type with")
+            throw JSONError.missingKey(key.stringValue, "Media Type")
         }
-        catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
-        
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last {
+                Log.error("Key \"\(key)\" was found, however value was missing to determine the library type with")
+                throw JSONError.missingContainer(key.stringValue, "Media Type")
+            }
+            else {
+                Log.error("A key was found, however value was missing to determine the library type with")
+                throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context))
+            }
+        }
+        catch let error {
+            Log.error("Media Type failed to decode: \(error.localizedDescription)")
+            throw JSONError.failedJSONDecode("Media Type", error)
+        }
+
         switch stringValue {
         case "Movie": self = .movies([])
         case "Series": self = .tv(nil)
-        default: throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
+        default:
+            Log.error("Unexpected media type: \(stringValue)")
+            throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
         }
     }
     
@@ -588,6 +602,7 @@ public enum MediaType: Decodable {
         switch self {
         case .movies: return "Movie"
         case .tv: return "Series"
+        case .error: return "Error"
         }
     }
 }
