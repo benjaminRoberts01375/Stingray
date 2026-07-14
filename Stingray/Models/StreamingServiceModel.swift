@@ -22,9 +22,6 @@ public protocol SystemInfoProviding {
 public protocol LibraryProviding {
     /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
     var libraryStatus: LibraryStatus { get }
-
-    /// Download library data.
-    func retrieveLibraries() async
 }
 
 /// Describes the current setup status for a downloaded library
@@ -162,6 +159,7 @@ public final class JellyfinQuickConnectModel {
 }
 
 /// A harness for connecting to Jellyfin.
+@MainActor
 @Observable
 public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerProviding, UserProviding, MediaProviding,
                                   MediaImageProviding, RecommendationProviding {
@@ -218,6 +216,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 self.serverVersion = nil
                 self.serverName = nil
             }
+            await self.retrieveLibraries()
         }
     }
 
@@ -239,6 +238,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.libraryStatus = .waiting
         self.serviceURL = serviceURL
         self.serverVersion = response.serverVersion
+
+        Task { await self.retrieveLibraries() }
     }
 
     /// Log into a Jellyfin server.
@@ -326,10 +327,9 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
 
     /// Fetch libraries and library media.
     public func retrieveLibraries() async {
-        let maxConcurrentLibraries = 2
+        self.libraryStatus = .retrieving
 
-        await MainActor.run { self.libraryStatus = .retrieving }
-
+        // Get all libraries. They'll be empty for now
         let libraries: [LibraryModel]
         do {
             libraries = try await networkAPI.getLibraries(
@@ -338,95 +338,98 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             )
             .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
         } catch {
-            await MainActor.run { self.libraryStatus = .error(StreamingServiceErrors.librarySetupFailed(error)) }
+            self.libraryStatus = .error(StreamingServiceErrors.librarySetupFailed(error))
             return
         }
 
-        if libraries.isEmpty { return }
+        if libraries.isEmpty {
+            self.libraryStatus = .complete([])
+            return
+        }
 
-        await MainActor.run { self.libraryStatus = .available(libraries) }
+        self.libraryStatus = .available(libraries)
 
-        await withTaskGroup(of: Void.self) { group in
+        enum LibraryContent {
+            case success([MediaModel])
+            case error(RError)
+        }
+
+        await withTaskGroup(of: (String, LibraryContent).self) { group in
+            let batchSize: Int = 100
+            var pageTracker: [String : Int] = [:]
             var libraryIterator = libraries.makeIterator()
-            var runningTasks = 0
+            var activeLibrary = libraryIterator.next()
 
-            // Fill up to maxConcurrentLibraries initially
-            while runningTasks < maxConcurrentLibraries {
-                if let library = libraryIterator.next() {
-                    group.addTask {
-                        await Task(priority: .utility) {
-                            await self.retrieveLibraryContent(library: library)
-                        }.value
+            func getMedia(libraryID: String?) {
+                guard let libraryID = libraryID // If we don't have a library ID, skip it
+                else { return }
+                let index = (pageTracker[libraryID] ?? -1) + 1
+                pageTracker[libraryID] = index
+                group.addTask {
+                    do {
+                        return (
+                            libraryID,
+                            LibraryContent.success(
+                                try await self.networkAPI.getLibraryMedia(
+                                    accessToken: self.accessToken,
+                                    libraryId: libraryID,
+                                    index: index * batchSize,
+                                    count: batchSize,
+                                    sortOrder: .ascending,
+                                    sortBy: .SortName,
+                                    mediaTypes: [.movies([]), .tv([])]
+                                )
+                            )
+                        )
                     }
-                    runningTasks += 1
+                    catch let error as RError { return (libraryID, LibraryContent.error(LibraryErrors.gettingLibraries(error))) }
+                    catch { return (libraryID, LibraryContent.error(LibraryErrors.unknown(error.localizedDescription))) }
                 }
-                else { break }
             }
 
-            // As tasks complete, start new ones
-            for await _ in group {
-                runningTasks -= 1
+            // Spin up tasks to download content from each library.
+            // We'll almost defintely have too many requests hitting a library at first, but that's fine
+            // since we can't know how many items are in each library, and they'll return fast to be
+            // reused in the next loop
+            for _ in 0..<8 { getMedia(libraryID: activeLibrary?.id) }
 
-                if let library = libraryIterator.next() {
-                    group.addTask {
-                        await Task(priority: .utility) {
-                            await self.retrieveLibraryContent(library: library)
-                        }.value
+            // Read from the buffer and setup next request
+            for await response in group {
+                guard let library = libraries.first(where: { $0.id == response.0 })
+                else {
+                    getMedia(libraryID: activeLibrary?.id)
+                    continue
+                }
+                switch response.1 {
+                case .error(let error):
+                    Log.warning("Failed to get content for library \(response.0): \(error.rDescription())")
+                    library.media = .error(error)
+                    activeLibrary = libraryIterator.next()
+                case .success(let newItems):
+                    switch library.media {
+                    case .error: break
+                    case .waiting:
+                        if newItems.isEmpty { break } // Don't update the UI with blank media
+                        library.media = .available(newItems)
+                        library.genres.formUnion(newItems.flatMap { $0.genres })
+                        library.maturityRatings.formUnion(newItems.compactMap { $0.maturity ?? "Unknown" })
+                    case .available(var existingItems):
+                        if newItems.isEmpty { break } // Don't update the UI with blank media
+                        library.media = .waiting // Micro optimizing >:D
+                        existingItems.append(contentsOf: newItems)
+                        library.media = .available(existingItems)
+                        library.genres.formUnion(newItems.flatMap { $0.genres })
+                        library.maturityRatings.formUnion(newItems.compactMap { $0.maturity ?? "Unknown" })
                     }
-                    runningTasks += 1
+                    // Advance to the next library
+                    if newItems.count < batchSize && response.0 == activeLibrary?.id {
+                        activeLibrary = libraryIterator.next()
+                    }
                 }
+                getMedia(libraryID: activeLibrary?.id) // Startup next task
+                // When we finish with the tasks, we simply fall out of the loop
             }
-        }
-        await MainActor.run { self.libraryStatus = .complete(libraries) }
-    }
-
-    /// Fetch a single library's media.
-    /// - Parameter library: Library to fetch media for.
-    public func retrieveLibraryContent(library: LibraryModel) async {
-        let batchSize = 100
-        var currentIndex = 0
-        var allMedia: [MediaModel] = []
-        if case .available(let existingMedia) = library.media {
-            allMedia = existingMedia
-        }
-
-        while true {
-            let incomingMedia: [MediaModel]
-            do {
-                incomingMedia = try await self.networkAPI.getLibraryMedia(
-                    accessToken: self.accessToken,
-                    libraryId: library.id,
-                    index: currentIndex,
-                    count: batchSize,
-                    sortOrder: .ascending,
-                    sortBy: .SortName,
-                    mediaTypes: [.movies([]), .tv(nil)]
-                )
-            } catch {
-                library.media = .error(error)
-                return
-            }
-
-            allMedia.append(contentsOf: incomingMedia)
-            for media in incomingMedia {
-                library.genres.formUnion(media.genres)
-                library.maturityRatings.insert(media.maturity ?? String(localized: "Unknown"))
-            }
-
-            // Update the UI after each batch
-            await MainActor.run { [allMedia] in
-                library.media = .available(allMedia)
-            }
-
-            // If we received fewer items than requested, we've reached the end
-            if incomingMedia.count < batchSize {
-                await MainActor.run { [allMedia] in
-                    library.media = .complete(allMedia)
-                }
-                break
-            }
-
-            currentIndex += batchSize
+            self.libraryStatus = .complete(libraries)
         }
     }
 
@@ -459,10 +462,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
            let parentLibrary = libraries.first(where: { $0.id == parentID }) {
             let allMedia: [MediaModel]?
             switch parentLibrary.media {
-            case .available(let media), .complete(let media):
-                allMedia = media
-            default:
-                allMedia = nil
+            case .available(let media): allMedia = media
+            default: allMedia = nil
             }
 
             if let allMedia = allMedia,
@@ -475,10 +476,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         for library in libraries {
             let allMedia: [MediaModel]?
             switch library.media {
-            case .available(let media), .complete(let media):
-                allMedia = media
-            default:
-                allMedia = nil
+            case .available(let media): allMedia = media
+            default: allMedia = nil
             }
 
             if let allMedia = allMedia,

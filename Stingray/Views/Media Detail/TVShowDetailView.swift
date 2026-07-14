@@ -16,7 +16,7 @@ public struct TVShowDetailView: View {
     /// Streaming service the user is using
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
 
-    public let seasons: [any TVSeasonProtocol]
+    public let seasons: [any TVSeasonProtocol]?
 
     @Binding public var navigation: NavigationPath
 
@@ -85,15 +85,16 @@ public struct TVShowDetailView: View {
                         return true
                     }
                 }())
+                .disabled(self.seasons == nil)
 
                 // TV Episodes
-                if seasons.flatMap(\.episodes).count > 1 {
+                if self.seasons?.flatMap(\.episodes).count ?? 0 > 1 {
                     // Season selector
                     ScrollViewReader { svrProxy in
                         ScrollView(.horizontal) {
                             HStack {
                                 SeasonSelectorView(
-                                    seasons: seasons,
+                                    seasons: self.seasons ?? [],
                                     focus: $focus,
                                     scrollProxy: svrProxy
                                 )
@@ -108,7 +109,7 @@ public struct TVShowDetailView: View {
                             LazyHStack {
                                 EpisodeSelectorView(
                                     media: media,
-                                    seasons: seasons,
+                                    seasons: self.seasons ?? [],
                                     streamingService: streamingService,
                                     focus: $focus,
                                     navigation: $navigation
@@ -116,7 +117,7 @@ public struct TVShowDetailView: View {
                             }
                         }
                         .task {
-                            if let nextEpisodeID = seasons.nextUp()?.id {
+                            if let nextEpisodeID = self.seasons?.nextUp()?.id {
                                 svrProxy.scrollTo(nextEpisodeID, anchor: .center)
                             }
                         }
@@ -201,17 +202,17 @@ fileprivate struct PlayNavigationView: View {
         focus: FocusState<ButtonType?>.Binding,
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
-        seasons: [any TVSeasonProtocol],
+        seasons: [any TVSeasonProtocol]?,
         streamingService: PlayerProviding & MediaImageProviding
     ) {
         self._focus = focus
         self._navigation = navigation
         self.media = media
         self.streamingService = streamingService
-        self.seasons = seasons
-        guard let nextEpisode = seasons.nextUp()
+        self.seasons = seasons ?? []
+        guard let nextEpisode = seasons?.nextUp()
         else {
-            self.title = "Error"
+            self.title = "Loading..."
             self.mediaSources = []
             return
         }

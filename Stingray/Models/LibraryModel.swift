@@ -16,14 +16,10 @@ public protocol LibraryProtocol: Identifiable {
 
 /// Denotes the current status of loading media in a library
 public enum MediaStatus {
-    /// An unloaded state of the library, ready to be triggered
-    case unloaded
     /// Waiting for the server to respond
     case waiting
     /// Some library content is available, and some may still be downloading
     case available([MediaModel])
-    /// All library content is available
-    case complete([MediaModel])
     /// Loading library content failed with an error
     case error(RError)
 }
@@ -39,7 +35,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
 
     public init(title: String, id: String, libraryType: String) {
         self.title = title
-        self.media = .unloaded
+        self.media = .waiting
         self.id = id
         self.genres = []
         self.maturityRatings = []
@@ -65,7 +61,7 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             if rawLibraryType.contains("tv") { self.libraryType = "TV Shows" }
             else if rawLibraryType.lowercased() == "boxsets" { self.libraryType = "Collections" }
             else { libraryType = rawLibraryType.prefix(1).uppercased() + rawLibraryType.dropFirst() }
-            self.media = .unloaded
+            self.media = .waiting
             self.genres = []
             self.maturityRatings = []
         }

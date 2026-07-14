@@ -19,11 +19,9 @@ public struct LibraryView: View {
     public var body: some View {
         ScrollView {
             switch library.media {
-            case .unloaded, .waiting:
-                ProgressView()
-            case .error(let err):
-                ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
-            case .available(let allMedia), .complete(let allMedia):
+            case .waiting: ProgressView()
+            case .error(let err): ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
+            case .available(let allMedia):
                 if !allMedia.isEmpty {
                     FilteredMediaGridView(
                         availableGenres: self.library.genres,
@@ -107,7 +105,10 @@ public struct FilteredMediaGridView: View {
                             if genreIsSelected { self.appliedGenreFilters.remove(genre) }
                             else { self.appliedGenreFilters.insert(genre) }
                         }
-                        label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
+                        label: {
+                            if genreIsSelected { Label(genre, systemImage: "checkmark") }
+                            else { Text(genre) }
+                        }
                     }
                 }
                 label: {
@@ -135,7 +136,10 @@ public struct FilteredMediaGridView: View {
                             if maturityIsSelected { self.appliedMaturityRatingFilters.remove(maturity) }
                             else { self.appliedMaturityRatingFilters.insert(maturity) }
                         }
-                        label: { Label(maturity, systemImage: maturityIsSelected ? "checkmark" : "") }
+                        label: {
+                            if maturityIsSelected { Label(maturity, systemImage: "checkmark") }
+                            else { Text(maturity) }
+                        }
                     }
                 }
                 label: {
@@ -154,7 +158,10 @@ public struct FilteredMediaGridView: View {
                 Menu {
                     ForEach(SortType.allCases, id: \.self) { sortBy in
                         Button { self.sortBy = sortBy }
-                        label: { Label(sortBy.rawValue, systemImage: self.sortBy == sortBy ? "checkmark" : "") }
+                        label: {
+                            if sortBy == self.sortBy { Label(sortBy.rawValue, systemImage: "checkmark") }
+                            else { Text(sortBy.rawValue) }
+                        }
                     }
                 }
                 label: { Text("Sort By: \(self.sortBy.rawValue)") }
@@ -216,13 +223,8 @@ public struct LibraryInfoView: View {
 
     public var body: some View {
         HStack(spacing: 0) {
-            switch self.library.media { // Only display a ProgressView while downloading content.
-            case .waiting, .unloaded, .available: ProgressView()
-            default: EmptyView()
-            }
-
             switch self.library.media {
-            case .available(let media), .complete(let media): Text("\(media.count) Items")
+            case .available(let media): Text("\(media.count) Items")
             default: Text("0 Items")
             }
         }

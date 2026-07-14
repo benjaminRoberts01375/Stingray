@@ -11,7 +11,6 @@ public struct DashboardView: View {
     public var streamingService: UserProviding & LibraryProviding & SystemInfoProviding & MediaImageProviding & MediaProviding &
     PlayerProviding & RecommendationProviding
     @State private var selectedTab: String = "home"
-    @State private var lastLoadedUserID: String?
     @Binding public var navigationPath: NavigationPath
     @Binding public var deepLinkRequest: DeepLinkRequest?
     @Binding public var loggedIn: LoginState
@@ -86,7 +85,7 @@ public struct DashboardView: View {
                 TVShowDetailView(
                     media: anyMedia.media,
                     streamingService: self.streamingService,
-                    seasons: seasons ?? [],
+                    seasons: seasons,
                     navigation: $navigationPath
                 )
             case .movies(let movies):
@@ -96,26 +95,13 @@ public struct DashboardView: View {
                     mediaSources: movies,
                     navigation: $navigationPath
                 )
+            case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library")))
             }
         }
         .onChange(of: deepLinkRequest) { _, newValue in
             guard let request = newValue else { return }
             navigationPath.append(request) // Navigate to requested media
             deepLinkRequest = nil // Clear the request
-        }
-        .onChange(of: self.streamingService.userID, initial: true) { _, newValue in
-            // Only load if this is the first time (initial) or the user ID actually changed
-            if self.lastLoadedUserID != newValue {
-                self.lastLoadedUserID = newValue
-                self.selectedTab = "home"
-                Task { await self.streamingService.retrieveLibraries() }
-            }
-        }
-        .task { // Handles case where the user might re-signin
-            guard case .waiting = self.streamingService.libraryStatus
-            else { return }
-            self.selectedTab = "home"
-            await self.streamingService.retrieveLibraries()
         }
     }
 }

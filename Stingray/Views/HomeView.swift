@@ -170,21 +170,22 @@ public struct MediaDetailLoader: View {
     @Binding public var navigation: NavigationPath
 
     public var body: some View {
-        switch self.streamingService.lookup(mediaID: mediaID, parentID: parentID) {
+        switch self.streamingService.lookup(mediaID: self.mediaID, parentID: self.parentID) {
         case .found(let foundMedia):
             switch foundMedia.mediaType {
             case .tv(let seasons): TVShowDetailView(
                 media: foundMedia,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 seasons: seasons ?? [],
                 navigation: $navigation
             )
             case .movies(let movies): MovieDetailView(
                 media: foundMedia,
-                streamingService: streamingService,
+                streamingService: self.streamingService,
                 mediaSources: movies,
                 navigation: $navigation
             )
+            case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load media"))
             }
         case .temporarilyNotFound:
             ProgressView("Loading libraries...")
@@ -315,10 +316,8 @@ public struct LibrariesInfoView: View {
 
         for library in libraries {
             switch library.media {
-            case .unloaded, .waiting, .error:
-                break
-            case .available(let media), .complete(let media):
-                counters[library.libraryType, default: 0] += media.count
+            case .waiting, .error: break
+            case .available(let media): counters[library.libraryType, default: 0] += media.count
             }
         }
         return counters
