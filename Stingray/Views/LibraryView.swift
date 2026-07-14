@@ -105,7 +105,10 @@ public struct FilteredMediaGridView: View {
                             if genreIsSelected { self.appliedGenreFilters.remove(genre) }
                             else { self.appliedGenreFilters.insert(genre) }
                         }
-                        label: { Label(genre, systemImage: genreIsSelected ? "checkmark" : "") }
+                        label: {
+                            if genreIsSelected { Label(genre, systemImage: "checkmark") }
+                            else { Text(genre) }
+                        }
                     }
                 }
                 label: {
@@ -133,7 +136,10 @@ public struct FilteredMediaGridView: View {
                             if maturityIsSelected { self.appliedMaturityRatingFilters.remove(maturity) }
                             else { self.appliedMaturityRatingFilters.insert(maturity) }
                         }
-                        label: { Label(maturity, systemImage: maturityIsSelected ? "checkmark" : "") }
+                        label: {
+                            if maturityIsSelected { Label(maturity, systemImage: "checkmark") }
+                            else { Text(maturity) }
+                        }
                     }
                 }
                 label: {
@@ -152,7 +158,10 @@ public struct FilteredMediaGridView: View {
                 Menu {
                     ForEach(SortType.allCases, id: \.self) { sortBy in
                         Button { self.sortBy = sortBy }
-                        label: { Label(sortBy.rawValue, systemImage: self.sortBy == sortBy ? "checkmark" : "") }
+                        label: {
+                            if sortBy == self.sortBy { Label(sortBy.rawValue, systemImage: "checkmark") }
+                            else { Text(sortBy.rawValue) }
+                        }
                     }
                 }
                 label: { Text("Sort By: \(self.sortBy.rawValue)") }
