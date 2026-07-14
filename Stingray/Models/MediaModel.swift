@@ -200,8 +200,13 @@ public final class MediaModel: MediaProtocol, Decodable {
         
         switch mediaType {
         case .movies:
-            let movieSources = (try? container.decodeIfPresent([MediaSource].self, forKey: .mediaSources)) ?? []
-            
+            let movieSources: [MediaSource]
+            do { movieSources = try container.decode([MediaSource].self, forKey: .mediaSources) }
+            catch let error as RError {
+                self.mediaType = .error(error)
+                break
+            }
+
             struct UserData: Decodable {
                 let playbackPositionTicks: Int
                 let mediaItemID: String
@@ -219,8 +224,7 @@ public final class MediaModel: MediaProtocol, Decodable {
                 movieSources[defaultIndex].startPoint = TimeInterval(ticks: userDataContainer.playbackPositionTicks)
             }
             self.mediaType = .movies(movieSources)
-        default:
-            self.mediaType = mediaType
+        default: self.mediaType = mediaType
         }
         
         // Runtime ticks need conversion
@@ -557,9 +561,11 @@ public enum StreamType: String, Decodable, Equatable {
 public enum MediaType: Decodable {
     /// Movies type with the associated media sources.
     case movies([any MediaSourceProtocol])
-    /// TV type with the associated seasons.
+    /// TV type with the associated seasons. Nil indicates that media has not yet been loaded
     case tv([any TVSeasonProtocol]?)
-    
+    /// The type failed to load media
+    case error(RError)
+
     /// Create a media type that does not populate its data. Ex. Creates a movie media type with no media sources attached.
     /// - Parameter decoder: JSON decoder.
     public init(from decoder: Decoder) throws(JSONError) {
@@ -591,10 +597,8 @@ public enum MediaType: Decodable {
 
         switch stringValue {
         case "Movie": self = .movies([])
-        case "Series": self = .tv(nil)
-        default:
-            Log.error("Unexpected media type: \(stringValue)")
-            throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
+        case "Series": self = .tv([])
+        default: self = .error(JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue)))
         }
     }
     

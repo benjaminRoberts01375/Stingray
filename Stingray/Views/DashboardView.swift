@@ -95,6 +95,7 @@ public struct DashboardView: View {
                     mediaSources: movies,
                     navigation: $navigationPath
                 )
+            case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library")))
             }
         }
         .onChange(of: deepLinkRequest) { _, newValue in

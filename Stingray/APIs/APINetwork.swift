@@ -490,7 +490,6 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     ///   - accessToken: Jellyfin access key
     ///   - media: All media to get seasons for
     private func getMediasSeasons(accessToken: String, media: [MediaModel]) async throws(LibraryErrors) {
-        Log.info("Getting seasons for \(media.count) media")
         enum SeasonContent {
             case success([TVSeason])
             case error(RError)
