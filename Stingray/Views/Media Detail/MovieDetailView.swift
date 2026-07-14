@@ -23,6 +23,7 @@ public struct MovieDetailView: View {
     @State private var shouldBackgroundBlur: Bool = false
     @State private var shouldRevealBottomShelf: Bool = false
     @State private var shouldShowMetaData: Bool = false
+    @FocusState private var focus: ButtonType?
 
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
@@ -75,15 +76,20 @@ public struct MovieDetailView: View {
                     mediaSources: self.mediaSources,
                     streamingService: self.streamingService
                 )
+                .id("Play-button-view")
+                .focused($focus, equals: .play)
 
                 // Metadata
                 HStack(alignment: .top) {
                     MediaOverview(media: self.media)
+                        .focused($focus, equals: .overview)
                     MediaMetadata(media: self.media)
+                        .focused($focus, equals: .metadata)
                 }
 
                 // Special features
                 SpecialFeaturesView(navigation: self.$navigation, streamingService: self.streamingService, media: self.media)
+                    .focused($focus, equals: .specialFeatures)
 
                 // People
                 if !self.media.people.isEmpty {
@@ -93,6 +99,7 @@ public struct MovieDetailView: View {
                             .foregroundStyle(self.theme.currentTheme.header1)
                             .padding(.top)
                         PeopleBrowserView(people: self.media.people, streamingService: streamingService)
+                            .focused($focus, equals: .people)
                     }
                 }
             }
@@ -106,6 +113,18 @@ public struct MovieDetailView: View {
             MoviePlayerView(vm: vm, navigation: $navigation)
         }
         .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
+        .defaultFocus($focus, .play, priority: .userInitiated)
+        .onChange(of: self.focus) { _, newValue in
+            switch newValue {
+            case .play:
+                self.shouldRevealBottomShelf = false
+                self.shouldBackgroundBlur = false
+            case .metadata, .overview, .people, .specialFeatures:
+                self.shouldRevealBottomShelf = true
+                self.shouldBackgroundBlur = true
+            case nil: break
+            }
+        }
     }
 }
 
@@ -219,4 +238,13 @@ fileprivate struct PlayNavigationView: View {
             )
         )
     }
+}
+
+/// Types of buttons available on the `MovieDetailView`
+fileprivate enum ButtonType: Hashable {
+    case play
+    case overview
+    case metadata
+    case people
+    case specialFeatures
 }

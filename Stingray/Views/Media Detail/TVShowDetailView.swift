@@ -71,14 +71,15 @@ public struct TVShowDetailView: View {
 
                 // Play buttons
                 PlayNavigationView(
-                    focus: $focus,
                     navigation: $navigation,
                     media: media,
                     seasons: self.seasons,
                     streamingService: streamingService
                 )
+                .id("play-button-view")
+                .focused($focus, equals: .play)
                 .disabled({
-                    switch focus {
+                    switch self.focus {
                     case .play, .overview, .season, .metadata, nil:
                         return false
                     default:
@@ -151,7 +152,7 @@ public struct TVShowDetailView: View {
                             .foregroundStyle(self.theme.currentTheme.header1)
                             .padding(.top)
                         PeopleBrowserView(people: self.media.people, streamingService: streamingService)
-                            .focused($focus, equals: .actor)
+                            .focused($focus, equals: .person)
                     }
                 }
             }
@@ -166,16 +167,16 @@ public struct TVShowDetailView: View {
                 self.focus = .play
             }
         }
+        .defaultFocus($focus, .play)
         .onChange(of: focus) { _, newValue in
             switch newValue {
-            case .media, .season, .overview, .metadata, .actor:
+            case .media, .season, .overview, .metadata, .person:
                 self.shouldBackgroundBlur = true
                 self.shouldRevealBottomShelf = true
             case .play:
                 self.shouldBackgroundBlur = false
                 self.shouldRevealBottomShelf = false
-            case nil:
-                break
+            case nil: break
             }
         }
         .navigationDestination(for: TVPlayerViewModel.self) { vm in
@@ -193,19 +194,16 @@ fileprivate struct PlayNavigationView: View {
     private let mediaSources: [any MediaSourceProtocol]
     private let seasons: [any TVSeasonProtocol]
 
-    @FocusState.Binding var focus: ButtonType?
     @Binding var navigation: NavigationPath
 
     @Environment(SettingsModel.self) var settings: SettingsModel
 
     init(
-        focus: FocusState<ButtonType?>.Binding,
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
         seasons: [any TVSeasonProtocol]?,
         streamingService: PlayerProviding & MediaImageProviding
     ) {
-        self._focus = focus
         self._navigation = navigation
         self.media = media
         self.streamingService = streamingService
@@ -295,10 +293,6 @@ fileprivate struct PlayNavigationView: View {
                 }
             }
         }
-        .onAppear { self.focus = .play }
-        .focused($focus, equals: .play)
-        .id("Play-button")
-        .defaultFocus($focus, .play, priority: .userInitiated)
     }
 
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
@@ -361,7 +355,7 @@ fileprivate struct SeasonSelectorView: View {
                         return !season.episodes.contains { $0.id == mediaID }
                     case nil:
                         return season.id != lastFocusedSeasonID
-                    case .season, .actor:
+                    case .season, .person:
                         return false
                     }
                 }())
@@ -542,12 +536,12 @@ fileprivate struct EpisodeNavigationView: View {
     }
 }
 
-/// Types of buttons available on the `DetailMediaView`
+/// Types of buttons available on the `TVShowDetailView`
 fileprivate enum ButtonType: Hashable {
     case play
     case season(String)
     case media(String)
     case overview
     case metadata
-    case actor
+    case person
 }
