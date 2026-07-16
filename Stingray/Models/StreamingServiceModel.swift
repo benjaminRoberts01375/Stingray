@@ -337,8 +337,11 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 userID: self.userID
             )
             .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
-        } catch {
-            self.libraryStatus = .error(StreamingServiceErrors.librarySetupFailed(error))
+        }
+        catch let error as RError {
+            let wrappedError = StreamingServiceErrors.librarySetupFailed(error)
+            self.libraryStatus = .error(wrappedError)
+            Log.warning("Failed to get libraries: \(wrappedError.rDescription())")
             return
         }
 
@@ -407,7 +410,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     activeLibrary = libraryIterator.next()
                 case .success(let newItems):
                     switch library.media {
-                    case .error: break
+                    case .error: break // We already errored this library, no need to log it again
                     case .waiting:
                         if newItems.isEmpty { break } // Don't update the UI with blank media
                         library.media = .available(newItems)
