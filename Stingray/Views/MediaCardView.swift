@@ -21,6 +21,7 @@ public struct MediaCard: View {
     public let media: any MediaRepresentableProtocol
     public let url: URL?
     public let reserveTextSpace: Bool
+    public let size: CGSize
 
     /// Creates a button based on the media's available art. This button navigates to the media's detail view
     /// - Parameters:
@@ -28,17 +29,20 @@ public struct MediaCard: View {
     ///   - streamingService: Streaming service to derrive URLs from
     ///   - navigation: The app's `NavigationPath`
     ///   - reserveTextSpace: Allow the MediaCard to reserve the maximum amount of space for text
+    ///   - size: Visual size of the card. Defaults to `cardSize`.
     /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
     public init(
         media: any MediaRepresentableProtocol,
         streamingService: MediaImageProviding,
         navigation: Binding<NavigationPath>? = nil,
-        reserveTextSpace: Bool = true
+        reserveTextSpace: Bool = true,
+        size: CGSize = MediaCard.cardSize
     ) {
         self.media = media
         self.url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 400)
         self._navigation = navigation ?? .constant(NavigationPath())
         self.reserveTextSpace = reserveTextSpace
+        self.size = size
     }
 
     public var body: some View {
@@ -53,26 +57,24 @@ public struct MediaCard: View {
             VStack(spacing: 0) {
                 if self.settings.loadThumbnailArt {
                     if media.imageTags?.primary != nil {
-                        Color.clear
-                            .aspectRatio(2.0 / 3.0, contentMode: .fit)
-                            .overlay {
-                                AsyncBlurImage(
-                                    blurHash: self.media.imageBlurHashes?.primary,
-                                    blurSize: CGSize(width: 20, height: 30),
-                                    imageURL: self.url,
-                                    scaleType: .fill
-                                )
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            }
-                            .clipped()
+                        AsyncBlurImage(
+                            blurHash: self.media.imageBlurHashes?.primary,
+                            blurSize: CGSize(width: 20, height: 30),
+                            imageURL: self.url,
+                            scaleType: .fill
+                        )
                     }
                     else { MediaCardNoImage() }
+                    Spacer(minLength: 0)
                     Text(self.media.title)
                         .multilineTextAlignment(.center)
                         .lineLimit(2, reservesSpace: self.reserveTextSpace)
                         .truncationMode(.tail)
                         .foregroundStyle(self.theme.currentTheme.header2)
                         .padding(5)
+                        .frame(minHeight: 50)
+                        .offset(y: -5)
+                    Spacer(minLength: 0)
                 }
                 else {
                     Spacer(minLength: 0)
@@ -83,14 +85,13 @@ public struct MediaCard: View {
                         .truncationMode(.tail)
                         .foregroundStyle(self.theme.currentTheme.header2)
                         .padding(.horizontal)
-                        .frame(width: Self.cardSize.width)
                     Spacer(minLength: 0)
                 }
             }
+            .frame(width: self.size.width, height: self.size.height)
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
-        .frame(idealWidth: Self.cardSize.width, idealHeight: Self.cardSize.height)
     }
 }
 

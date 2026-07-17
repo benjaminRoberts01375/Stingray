@@ -203,7 +203,7 @@ public struct MediaGridView: View {
     @Binding public var navigation: NavigationPath
 
     private static let columns = [
-        GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.height), spacing: Self.cardSpacing)
+        GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.width), spacing: Self.cardSpacing)
     ]
 
     public var body: some View {

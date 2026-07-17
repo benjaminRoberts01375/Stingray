@@ -8,16 +8,20 @@
 import SwiftUI
 
 public struct ThemeExampleView: View {
-    private let exampleMedia = ExampleMedia(title: "Example Show")
+    private let exampleMedia = ExampleMedia(title: "Example")
     private let exampleService = ExampleStreamingService()
     
     @Environment(ThemeModel.self) private var theme
     
     public var body: some View {
         HStack(alignment: .center, spacing: 20) {
-            MediaCard(media: self.exampleMedia, streamingService: self.exampleService, reserveTextSpace: false)
-                .frame(width: 150, height: 225)
-                .padding(.horizontal, 20)
+            MediaCard(
+                media: self.exampleMedia,
+                streamingService: self.exampleService,
+                reserveTextSpace: false,
+                size: CGSize(width: 150, height: 255)
+            )
+            .padding(.horizontal, 17)
             VStack(alignment: .leading) {
                 Text(self.theme.currentTheme.representation.displayName)
                     .font(.title)
