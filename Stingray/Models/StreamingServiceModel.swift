@@ -594,8 +594,8 @@ public final class JellyfinPlayerProgress: PlayerProtocol {
     public var player: AVPlayer
     /// Network to use for communicating to Jellyfin.
     private let network: any AdvancedNetworkProtocol
-    /// Track how often to page Jellyfin.
-    private var timer: Timer?
+    /// Background loop that periodically reports playback progress to Jellyfin, off the main thread.
+    private var playerProgressTask: Task<Void, Never>?
     public var mediaSource: any MediaSourceProtocol
     public let videoID: String
     public let bitrate: Int
@@ -627,44 +627,41 @@ public final class JellyfinPlayerProgress: PlayerProtocol {
         self.bitrate = bitrate
         self.audioID = audioID
         self.subtitleID = subtitleID
-        self.timer = nil
+        self.playerProgressTask = nil
         self.playbackSessionID = playbackSessionID
         self.userSessionID = userSessionID
         self.accessToken = accessToken
         let playbackPos = TimeInterval(self.player.currentTime().seconds).ticks
         Task {
-            do {
-                try await self.network.updatePlaybackStatus(
-                    mediaSourceID: self.mediaSource.id,
-                    audioStreamIndex: self.audioID,
-                    subtitleStreamIndex: self.subtitleID,
-                    playbackPosition: playbackPos,
-                    playSessionID: self.playbackSessionID,
-                    userSessionID: self.userSessionID,
-                    playbackStatus: .play,
-                    accessToken: self.accessToken
-                )
-            } catch { }
+            try? await self.network.updatePlaybackStatus(
+                mediaSourceID: self.mediaSource.id,
+                audioStreamIndex: self.audioID,
+                subtitleStreamIndex: self.subtitleID,
+                playbackPosition: playbackPos,
+                playSessionID: self.playbackSessionID,
+                userSessionID: self.userSessionID,
+                playbackStatus: .play,
+                accessToken: self.accessToken
+            )
         }
     }
 
-    deinit {
-        self.timer?.invalidate()
-        self.timer = nil
-    }
+    deinit { self.playerProgressTask?.cancel() }
 
     public func start() {
-        self.timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
+        // Run the progress loop off the main thread so periodic reporting never hitches the UI.
+        self.playerProgressTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self = self
+                else { return }
 
-            let playbackStatus: PlaybackStatus
-            switch self.player.timeControlStatus {
-            case .playing: playbackStatus = .progressed
-            default: playbackStatus = .paused
-            }
+                let playbackStatus: PlaybackStatus
+                switch self.player.timeControlStatus {
+                case .playing: playbackStatus = .progressed
+                default: playbackStatus = .paused
+                }
 
-            let playbackPos = TimeInterval(self.player.currentTime().seconds).ticks
-            Task {
+                let playbackPos = TimeInterval(self.player.currentTime().seconds).ticks
                 try? await self.network.updatePlaybackStatus(
                     mediaSourceID: self.mediaSource.id,
                     audioStreamIndex: self.audioID,
@@ -675,13 +672,14 @@ public final class JellyfinPlayerProgress: PlayerProtocol {
                     playbackStatus: playbackStatus,
                     accessToken: self.accessToken
                 )
+                try? await Task.sleep(for: .seconds(1))
             }
         }
     }
 
     public func stop() {
         let playbackTicks = TimeInterval(self.player.currentTime().seconds).ticks
-        self.timer?.invalidate()
+        self.playerProgressTask?.cancel()
         self.mediaSource.startPoint = TimeInterval(ticks: playbackTicks)
         Task {
             try? await self.network.updatePlaybackStatus(

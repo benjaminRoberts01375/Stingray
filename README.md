@@ -119,6 +119,7 @@ Configure Stingray to look and feel how you want it.
     - Rewrote TV season syncing to use a similar implementation to library syncing
       - Improved thread control
       - Allow seasons to continue downloading during and after all shows load
+  - Reduce hitching during video playback by moving playback updates off the UI thread
 
 ## TODO List
 
