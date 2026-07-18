@@ -35,6 +35,8 @@ public struct MediaOverview: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .background(.ultraThinMaterial)
+        .clipShape(.buttonBorder)
         .focused($isFocused, equals: true)
     }
 }
@@ -93,6 +95,8 @@ public struct MediaMetadata: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .background(.ultraThinMaterial)
+        .clipShape(.buttonBorder)
         .focused($isFocused, equals: true)
     }
 }
