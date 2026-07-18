@@ -97,16 +97,15 @@ public struct FilteredMediaGridView: View {
     }
 
     public var body: some View {
-        HStack {
+        HStack(spacing: 25) {
             if self.settings.showFilters {
                 Menu {
                     // Clear action at the top, only when something is selected.
                     if !self.appliedGenreFilters.isEmpty {
-                        Button(role: .destructive) {
-                            self.appliedGenreFilters = []
-                        }
+                        Button(role: .destructive) { self.appliedGenreFilters = [] }
                         label: { Label("Remove all genre filters", systemImage: "xmark.circle") }
                         Divider()
+                            .padding(.horizontal)
                     }
 
                     ForEach(self.availableGenres.sorted(), id: \.self) { genre in
@@ -133,11 +132,10 @@ public struct FilteredMediaGridView: View {
                 }
                 Menu {
                     if !self.appliedMaturityRatingFilters.isEmpty {
-                        Button(role: .destructive) {
-                            self.appliedMaturityRatingFilters = []
-                        }
+                        Button(role: .destructive) { self.appliedMaturityRatingFilters = [] }
                         label: { Label("Remove all maturity filters", systemImage: "xmark.circle") }
                         Divider()
+                            .padding(.horizontal)
                     }
 
                     ForEach(self.availableMaturityRatings.sorted(), id: \.self) { maturity in
@@ -163,7 +161,10 @@ public struct FilteredMediaGridView: View {
                     }
                 }
             }
-            if self.settings.showFilters && self.settings.showSorting { Divider() }
+            if self.settings.showFilters && self.settings.showSorting {
+                Divider()
+                    .padding(.horizontal)
+            }
             if self.settings.showSorting {
                 Menu {
                     ForEach(SortType.allCases, id: \.self) { sortBy in
