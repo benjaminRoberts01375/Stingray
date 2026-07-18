@@ -72,7 +72,7 @@ Configure Stingray to look and feel how you want it.
     - Access to Stingray's logs
     - Change roundness of buttons in the settings menu based on the Apple TV model
   - Filter libraries and search by genre and maturity
-  - Sort libraries and search by title, sort title, duration, and release date
+  - Sort libraries and search by title, sort title, duration, release date, and random
 - Cleanups
   - Repo Organization
     - Rename "Other-Assets" to "Other Assets"

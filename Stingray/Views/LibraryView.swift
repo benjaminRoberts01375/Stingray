@@ -53,6 +53,8 @@ public struct FilteredMediaGridView: View {
     @State private var appliedMaturityRatingFilters: Set<String> = []
     @State private var sortBy: SortType = .sortTitle
     @State private var sortOrderAscending: Bool = true
+    /// Seed for the random sort. Kept in state so the shuffle is stable across re-renders and only changes when Random is (re)selected.
+    @State private var randomSeed: UInt64 = .random(in: .min ... .max)
     @Binding public var navigation: NavigationPath
 
     @Environment(SettingsModel.self) private var settings
@@ -70,6 +72,13 @@ public struct FilteredMediaGridView: View {
                 return self.appliedMaturityRatingFilters.contains(model.maturity ?? "")
             }
 
+        // Random can't be expressed as a comparator (it would violate the strict weak ordering
+        // sorted(by:) requires), so shuffle with a seeded generator for a stable, repeatable order.
+        if self.sortBy == .random {
+            var generator = SeededGenerator(seed: self.randomSeed)
+            return filtered.shuffled(using: &generator)
+        }
+
         // Create an on-the-fly sorting function
         let areInOrder: (any MediaRepresentableProtocol, any MediaRepresentableProtocol) -> Bool
         switch (self.sortBy, self.sortOrderAscending) {
@@ -81,6 +90,7 @@ public struct FilteredMediaGridView: View {
         case (.duration, false): areInOrder = { ($0.duration ?? .zero) > ($1.duration ?? .zero) }
         case (.releaseDate, true): areInOrder = { ($0.releaseDate ?? .distantPast) < ($1.releaseDate ?? .distantPast) }
         case (.releaseDate, false): areInOrder = { ($0.releaseDate ?? .distantPast) > ($1.releaseDate ?? .distantPast) }
+        case (.random, _): return filtered // Handled above
         }
 
         return filtered.sorted(by: areInOrder)
@@ -157,7 +167,11 @@ public struct FilteredMediaGridView: View {
             if self.settings.showSorting {
                 Menu {
                     ForEach(SortType.allCases, id: \.self) { sortBy in
-                        Button { self.sortBy = sortBy }
+                        Button {
+                            // Reshuffle every time Random is chosen, even if it's already selected.
+                            if sortBy == .random { self.randomSeed = .random(in: .min ... .max) }
+                            self.sortBy = sortBy
+                        }
                         label: {
                             if sortBy == self.sortBy { Label(sortBy.rawValue, systemImage: "checkmark") }
                             else { Text(sortBy.rawValue) }
@@ -165,10 +179,16 @@ public struct FilteredMediaGridView: View {
                     }
                 }
                 label: { Text("Sort By: \(self.sortBy.rawValue)") }
-                Button { self.sortOrderAscending.toggle() }
-                label: {
-                    if self.sortOrderAscending { Text("Sort Order: Ascending") }
-                    else { Text("Sort Order: Descending") }
+                if self.sortBy == .random {
+                    Button { self.randomSeed = .random(in: .min ... .max) }
+                    label: { Text("Reshuffle") }
+                }
+                else {
+                    Button { self.sortOrderAscending.toggle() }
+                    label: {
+                        if self.sortOrderAscending { Text("Sort Order: Ascending") }
+                        else { Text("Sort Order: Descending") }
+                    }
                 }
             }
         }
@@ -184,6 +204,7 @@ fileprivate enum SortType: CaseIterable {
     case title
     case duration
     case releaseDate
+    case random
 
     var rawValue: String {
         switch self {
@@ -191,7 +212,27 @@ fileprivate enum SortType: CaseIterable {
         case .title: return String(localized: "Title")
         case .duration: return String(localized: "Duration")
         case .releaseDate: return String(localized: "Release Date")
+        case .random: return String(localized: "Random")
         }
+    }
+}
+
+/// A deterministic random number generator so a random sort stays stable across re-renders for a given seed.
+fileprivate struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        // Avoid an all-zero state, which would produce a degenerate sequence.
+        self.state = seed == 0 ? 0x9E3779B97F4A7C15 : seed
+    }
+
+    mutating func next() -> UInt64 {
+        // SplitMix64
+        self.state &+= 0x9E3779B97F4A7C15
+        var z = self.state
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        return z ^ (z >> 31)
     }
 }
 
