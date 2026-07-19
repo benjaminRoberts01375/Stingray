@@ -103,6 +103,7 @@ Configure Stingray to look and feel how you want it.
   - Fix `MediaType`'s reported object name in errors
   - Improve error handling for loading show episodes
   - Allow `AsyncBlurImage` to re-attempt downloads
+  - Add error handling for failing to sync library version
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views

@@ -210,9 +210,17 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 self.serverVersion = serverVersion
                 self.serverName = serverName
             }
-            catch {
+            catch let error as RError {
                 self.serverVersion = nil
                 self.serverName = nil
+                Log.error("Failed to get server version: \(error.localizedDescription)")
+                self.libraryStatus = .error(StreamingServiceErrors.serverVersionFailed(error))
+                return
+            }
+            catch let error {
+                Log.error("Failed to get server version: \(error.localizedDescription)")
+                self.libraryStatus = .error(StreamingServiceErrors.serverVersionFailed(nil))
+                return
             }
             await self.retrieveLibraries()
         }

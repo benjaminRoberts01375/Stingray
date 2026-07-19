@@ -231,6 +231,8 @@ public enum StreamingServiceErrors: RError {
     case badDefaultUser(RError)
     /// No user is available
     case noDefaultUser
+    /// Unable to get the library version of the server
+    case serverVersionFailed(RError?)
 
     public var errorDescription: String {
         switch self {
@@ -240,6 +242,7 @@ public enum StreamingServiceErrors: RError {
         case .noToken: return "No API token available"
         case .badDefaultUser: return "Creation of a default user failed"
         case .noDefaultUser: return "No default user is available"
+        case .serverVersionFailed: return "Failed to get the server's version"
         }
     }
 
@@ -250,6 +253,7 @@ public enum StreamingServiceErrors: RError {
             return nil
         case .badAddress, .noDefaultUser, .noToken, .librarySetupFailed: return nil
         case .badDefaultUser(let err): return err
+        case .serverVersionFailed(let err): return err
         }
     }
 }
