@@ -29,7 +29,6 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var title: String
     public var media: MediaStatus
     public var id: String
-    public var libraryType: String
     public var genres: Set<String>
     public var maturityRatings: Set<String>
 
@@ -39,9 +38,6 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         self.id = id
         self.genres = []
         self.maturityRatings = []
-
-        if libraryType.contains("tv") { self.libraryType = "TV Shows" }
-        else { self.libraryType = libraryType.prefix(1).uppercased() + libraryType.dropFirst() }
     }
     
     public enum CodingKeys: String, CodingKey {
@@ -57,10 +53,6 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             
             self.title = try container.decode(String.self, forKey: .title)
             self.id = try container.decode(String.self, forKey: .id)
-            let rawLibraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
-            if rawLibraryType.contains("tv") { self.libraryType = "TV Shows" }
-            else if rawLibraryType.lowercased() == "boxsets" { self.libraryType = "Collections" }
-            else { libraryType = rawLibraryType.prefix(1).uppercased() + rawLibraryType.dropFirst() }
             self.media = .waiting
             self.genres = []
             self.maturityRatings = []

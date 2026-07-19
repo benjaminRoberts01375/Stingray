@@ -315,8 +315,17 @@ public struct LibrariesInfoView: View {
 
         for library in libraries {
             switch library.media {
-            case .waiting, .error: break
-            case .available(let media): counters[library.libraryType, default: 0] += media.count
+            case .waiting, .error: continue
+            case .available(let medias):
+                for media in medias {
+                    switch media.mediaType {
+                    case .movies:
+                        counters["Movies", default: 0] += 1
+                    case .tv:
+                        counters["TV Shows", default: 0] += 1
+                    case .error: continue
+                    }
+                }
             }
         }
         return counters

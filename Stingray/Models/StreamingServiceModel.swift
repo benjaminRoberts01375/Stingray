@@ -340,7 +340,6 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 accessToken: self.accessToken,
                 userID: self.userID
             )
-            .filter { $0.libraryType != "boxsets" } // Temp fix until we support collections
         }
         catch let error as RError {
             let wrappedError = StreamingServiceErrors.librarySetupFailed(error)

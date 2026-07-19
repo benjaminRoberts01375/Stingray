@@ -94,6 +94,7 @@ Configure Stingray to look and feel how you want it.
   - Remove unused `Equatable` conformance from `MediaSource`
   - Remove practically unused `completed` and `unloaded` statuses for individual libraries
   - Remove the redundant `waiting` status for streaming service libraries status
+  - Remove the poorly used library media type
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
