@@ -1003,17 +1003,6 @@
         }
       }
     },
-    "Login again" : {
-      "comment" : "Prompt the user to login even if they’ve logged in once before",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erneut anmelden"
-          }
-        }
-      }
-    },
     "Logout" : {
       "comment" : "Final button to logout a user",
       "localizations" : {

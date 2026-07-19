@@ -29,9 +29,7 @@ public struct AddServerView: View {
     @Environment(SettingsModel.self) public var settings: SettingsModel
     @Environment(\.dismiss) public var dismiss
 
-    public init(loginState: Binding<LoginState>) {
-        self._loggedIn = loginState
-    }
+    public init(loginState: Binding<LoginState>) { self._loggedIn = loginState }
 
     public var body: some View {
         VStack {
@@ -73,9 +71,7 @@ public struct AddServerView: View {
                 .frame(maxWidth: .infinity)
                 .focusSection()
             }
-            else {
-                Button("Disconnect") { self.connected = false }
-            }
+            else { Button("Disconnect") { self.connected = false } }
             if self.connected {
                 Divider()
                 HStack {
@@ -86,10 +82,8 @@ public struct AddServerView: View {
                         HStack {
                             ProgressView()
                                 .opacity(0)
-                            Button("Login") {
-                                self.setupConnection(quickConnectSecret: nil)
-                            }
-                            .disabled(self.loading)
+                            Button("Login") { self.setupConnection(quickConnectSecret: nil) }
+                                .disabled(self.loading)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -97,13 +91,9 @@ public struct AddServerView: View {
                     .frame(maxWidth: .infinity)
                     HStack {
                         VStack {
-                            HStack {
-                                Divider()
-                            }
+                            HStack { Divider() }
                             Text("or").font(.title2)
-                            HStack {
-                                Divider()
-                            }
+                            HStack { Divider() }
                         }
                     }
                     VStack {
@@ -133,13 +123,6 @@ public struct AddServerView: View {
             if let error = self.error {
                 ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
-                NavigationLink { AddServerView(loginState: $loggedIn) }
-                label: {
-                    Image(systemName: "person.2.arrow.trianglehead.counterclockwise")
-                        .resizable()
-                        .scaledToFit()
-                }
-                .accessibilityLabel("Login again")
             }
         }
         // Done separately so we can ue the @Environment, also helps against reloads
