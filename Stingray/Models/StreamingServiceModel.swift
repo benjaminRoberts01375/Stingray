@@ -333,8 +333,6 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
 
     /// Fetch libraries and library media.
     public func retrieveLibraries() async {
-        self.libraryStatus = .retrieving
-
         // Get all libraries. They'll be empty for now
         let libraries: [LibraryModel]
         do {
