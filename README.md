@@ -73,6 +73,7 @@ Configure Stingray to look and feel how you want it.
     - Change roundness of buttons in the settings menu based on the Apple TV model
   - Filter libraries and search by genre and maturity
   - Sort libraries and search by title, sort title, duration, release date, and random
+  - Slightly darken the background of the Notes App theme to improve the legibility of buttons
 - Cleanups
   - Repo Organization
     - Rename "Other-Assets" to "Other Assets"

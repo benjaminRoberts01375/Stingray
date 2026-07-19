@@ -78,8 +78,8 @@ public final class ThemeDeepSeaDark: ThemeProtocol {
 public final class ThemeNotesAppLight: ThemeProtocol {
     public let representation: Themes = .notesApp
     public let colorScheme: ColorScheme = .light
-    public let appBackground: AnyView = AnyView(Color.white)
-    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.gray.opacity(0.15))
+    public let appBackground: AnyView = AnyView(Color(red: 0.95, green: 0.95, blue: 0.95))
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.white)
     public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
     public let activeColor: Color = Color.gray.opacity(0.15)
