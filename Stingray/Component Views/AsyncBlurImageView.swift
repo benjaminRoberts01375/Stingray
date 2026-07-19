@@ -37,7 +37,7 @@ public struct AsyncBlurImage: View {
     }
     
     public var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             if let blurImage {
                 Image(uiImage: blurImage)
                     .resizable()
@@ -56,8 +56,8 @@ public struct AsyncBlurImage: View {
                 placeholder: { EmptyView() }
             }
         }
-        // Re-decode only when the hash changes, and never on the main actor.
-        .task(id: self.blurHash) {
+        .clipped()
+        .task(id: self.blurHash) { // Re-decode only when the hash changes, and never on the main actor.
             self.blurImage = await BlurHashImageCache.shared.image(hash: self.blurHash, size: self.blurSize)
         }
     }
