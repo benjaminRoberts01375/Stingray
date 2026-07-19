@@ -101,6 +101,7 @@ Configure Stingray to look and feel how you want it.
   - Fix search results not live updating
   - Fix `MediaType`'s reported object name in errors
   - Improve error handling for loading show episodes
+  - ALlow `AsyncBlurImage` to re-attempt downloads
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views
@@ -110,7 +111,6 @@ Configure Stingray to look and feel how you want it.
   - Store relevant (en/de)coders and formatters as static variables
   - Only calculate blur hashes in `AsyncBlurImage`
     - Media Card now uses `AsyncBlurImage`
-      - This does change the appearance slightly, particularly for 4:3 thumbnails
   - Only calculate profile images once per load (kinda)
   - Only calculate Apple TV model once and cache it
   - Improve media syncing performance by about 2.2x

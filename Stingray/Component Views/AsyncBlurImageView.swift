@@ -13,7 +13,9 @@ public struct AsyncBlurImage: View {
     @State private var blurImage: UIImage?
     /// Opacity of the full-resolution image
     @State private var fadeIn: Double = 0
-    
+    /// Number of times the full-resolution load has been retried.
+    @State private var retryAttempt: Int = 0
+
     /// Blurry hash of the preview image
     private let blurHash: String?
     /// Size of the hash to
@@ -45,15 +47,28 @@ public struct AsyncBlurImage: View {
                     .accessibilityHint("Placeholder image", isEnabled: false)
             }
             if let imageURL {
-                AsyncImage(url: imageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: self.scaleType)
-                        .opacity(self.fadeIn)
-                        .animation(.smooth(duration: 0.5), value: self.fadeIn)
-                        .onAppear { self.fadeIn = 1 }
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: self.scaleType)
+                            .opacity(self.fadeIn)
+                            .animation(.smooth(duration: 0.5), value: self.fadeIn)
+                            .onAppear { self.fadeIn = 1 }
+                    case .failure: // Re-attempt loading the image
+                        Color.clear
+                            .task {
+                                if self.retryAttempt < 3 { // Attempt 3 times
+                                    let retryDelay = pow(2, Double(self.retryAttempt)) // 1s, 2s, 4s
+                                    try? await Task.sleep(for: .seconds(retryDelay))
+                                    self.retryAttempt += 1
+                                }
+                            }
+                    default: EmptyView()
+                    }
                 }
-                placeholder: { EmptyView() }
+                .id(self.retryAttempt)
             }
         }
         .clipped()
