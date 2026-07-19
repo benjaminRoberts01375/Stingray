@@ -18,7 +18,7 @@ public struct DashboardView: View {
     public var body: some View {
         VStack {
             switch self.streamingService.libraryStatus {
-            case .waiting, .retrieving: ProgressView()
+            case .retrieving: ProgressView()
             case .error(let err):
                 VStack {
                     Text("Failed to Load Libraries")

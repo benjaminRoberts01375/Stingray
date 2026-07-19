@@ -2258,23 +2258,6 @@
         }
       }
     },
-    "Waiting to get libraries..." : {
-      "comment" : "Waiting for libraries to load",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Warte auf Bibliotheken..."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Waiting to get libraries..."
-          }
-        }
-      }
-    },
     "Warning" : {
       "comment" : "The third most important log level (3/5)",
       "localizations" : {

@@ -82,10 +82,8 @@ public struct SearchView: View {
         var scoredMedia: [MediaScore] = []
 
         switch self.streamingService.libraryStatus {
-        case .error:
-            return .notFound
-        case .waiting, .retrieving:
-            return .temporarilyNotFound
+        case .error: return .notFound
+        case .retrieving: return .temporarilyNotFound
         case .available(let libraries), .complete(let libraries):
             let libraries = libraries.compactMap(\.media)
             for library in libraries {

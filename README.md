@@ -93,6 +93,7 @@ Configure Stingray to look and feel how you want it.
   - Update all Swift files to use Xcode 27's reworked auto-indent formatting
   - Remove unused `Equatable` conformance from `MediaSource`
   - Remove practically unused `completed` and `unloaded` statuses for individual libraries
+  - Remove the redundant `waiting` status for streaming service libraries status
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
@@ -101,7 +102,7 @@ Configure Stingray to look and feel how you want it.
   - Fix search results not live updating
   - Fix `MediaType`'s reported object name in errors
   - Improve error handling for loading show episodes
-  - ALlow `AsyncBlurImage` to re-attempt downloads
+  - Allow `AsyncBlurImage` to re-attempt downloads
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views

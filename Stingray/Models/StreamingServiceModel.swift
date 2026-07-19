@@ -26,8 +26,6 @@ public protocol LibraryProviding {
 
 /// Describes the current setup status for a downloaded library
 public enum LibraryStatus {
-    /// The library object has been created but hasn't fetched
-    case waiting
     /// The library object has been created and is fetching
     case retrieving
     /// Some of the library's content is available, but we're still fetching
@@ -199,7 +197,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.networkAPI = network
 
         // Misc properties
-        self.libraryStatus = .waiting
+        self.libraryStatus = .retrieving
         self.usersName = userDisplayName
         self.userID = userID
         self.serverID = serviceID
@@ -235,7 +233,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.sessionID = response.sessionId
         self.accessToken = response.accessToken
         self.serverID = response.serverId
-        self.libraryStatus = .waiting
+        self.libraryStatus = .retrieving
         self.serviceURL = serviceURL
         self.serverVersion = response.serverVersion
 

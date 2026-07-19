@@ -285,7 +285,6 @@ public struct LibrariesInfoView: View {
 
     public var body: some View {
         switch self.streamingService.libraryStatus {
-        case .waiting: Text(String(localized: "Waiting to get libraries..."))
         case .retrieving: Text(String(localized: "Getting libraries..."))
         case .available(let libraries), .complete(let libraries):
             let mediaCounts = countMedia(libraries: libraries)
