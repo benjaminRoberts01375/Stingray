@@ -134,36 +134,6 @@ public final class HybridBasicStorage: BasicStorageProtocol {
             self.defaults.synchronize()
             Log.critical("Reset complete. DB Version: \(self.defaults.integer(forKey: Self.dbVersionKey))")
         }
-        else { self.migrateToV2() }
-    }
-    
-    /// Migrates the old v1 database to v2
-    private func migrateToV2() {
-        if Bundle.main.bundleIdentifier?.hasSuffix("TopShelf") ?? true {
-            Log.info("Top Shelf called, skipping migration")
-            return
-        }
-        else if self.cloudStore.longLong(forKey: Self.dbVersionKey) >= Self.dbVersion {
-            Log.info("No migration required: \(self.defaults.integer(forKey: Self.dbVersionKey))")
-            return
-        }
-        
-        Log.critical("Migrating db to v2...")
-        self.cloudStore.set(
-            self.defaults.string(forKey: StorageKeys.defaultStreamingUserID.rawValue),
-            forKey: StorageKeys.defaultStreamingUserID.rawValue
-        )
-        self.cloudStore.set(self.defaults.stringArray(forKey: StorageKeys.userIDs.rawValue), forKey: StorageKeys.userIDs.rawValue)
-        self.cloudStore.set(self.defaults.integer(forKey: StorageKeys.maxBitrate.rawValue), forKey: StorageKeys.maxBitrate.rawValue)
-        
-        for key in self.defaults.dictionaryRepresentation().keys where key.hasPrefix("user") {
-            self.cloudStore.set(self.defaults.object(forKey: key), forKey: key)
-        }
-        self.defaults.set(Self.dbVersion, forKey: Self.dbVersionKey)
-        self.cloudStore.set(Self.dbVersion, forKey: Self.dbVersionKey)
-        self.cloudStore.synchronize()
-        self.defaults.synchronize()
-        Log.critical("Migration to db v2 is complete")
     }
     
     public func getKeyIsLocal(_ key: StorageKeys) -> Bool {

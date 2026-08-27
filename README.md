@@ -108,6 +108,7 @@ Configure Stingray to look and feel how you want it.
   - `User` is now a class, helping ensure data stays synced across the app
   - The active user is now stored in the `LoginStatus` state machine, replacing `UserModel.activeUser` in most cases
   - Reworked PIN mechanism to work asynchronously and force the use of the new `PINModel` for more reliable PIN usage
+  - Remove cloud DB migration
 - Bug Fixes
   - Specify do not sleep while playing video
   - Allow moving from media metadata to play button
