@@ -417,24 +417,36 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     Log.warning("Failed to get content for library \(response.0): \(error.rDescription())")
                     library.media = .error(error)
                     activeLibrary = libraryIterator.next()
-                case .success(let newItems):
+                case .success(let newMedia):
                     switch library.media {
                     case .error: break // We already errored this library, no need to log it again
                     case .waiting:
-                        if newItems.isEmpty { break } // Don't update the UI with blank media
-                        library.media = .available(newItems)
-                        library.genres.formUnion(newItems.flatMap { $0.genres })
-                        library.maturityRatings.formUnion(newItems.compactMap { $0.maturity ?? "Unknown" })
+                        if newMedia.isEmpty { break } // Don't update the UI with blank media
+                        library.media = .available(newMedia)
+                        library.genres.formUnion(newMedia.flatMap { $0.genres })
+                        library.maturityRatings.formUnion(newMedia.compactMap { media in
+                            if let maturity = media.maturity {
+                                if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
+                                return maturity
+                            }
+                            return "Not Rated"
+                        })
                     case .available(var existingItems):
-                        if newItems.isEmpty { break } // Don't update the UI with blank media
+                        if newMedia.isEmpty { break } // Don't update the UI with blank media
                         library.media = .waiting // Micro optimizing >:D
-                        existingItems.append(contentsOf: newItems)
+                        existingItems.append(contentsOf: newMedia)
                         library.media = .available(existingItems)
-                        library.genres.formUnion(newItems.flatMap { $0.genres })
-                        library.maturityRatings.formUnion(newItems.compactMap { $0.maturity ?? "Unknown" })
+                        library.genres.formUnion(newMedia.flatMap { $0.genres })
+                        library.maturityRatings.formUnion(newMedia.compactMap { media in
+                            if let maturity = media.maturity {
+                                if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
+                                return maturity
+                            }
+                            return "Not Rated"
+                        })
                     }
                     // Advance to the next library
-                    if newItems.count < batchSize && response.0 == activeLibrary?.id {
+                    if newMedia.count < batchSize && response.0 == activeLibrary?.id {
                         activeLibrary = libraryIterator.next()
                     }
                 }
