@@ -422,13 +422,30 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         do {
             let root: Root = try await network.request(
                 verb: .get,
-                path: "/Users/\(userID)/Views",
+                path: "/UserViews",
                 headers: ["X-MediaBrowser-Token":accessToken],
-                urlParams: nil,
+                urlParams: [
+                    URLQueryItem(name: "userID", value: userID),
+                    URLQueryItem(name: "includeHidden", value: "true")
+                ],
                 body: nil
             )
             return root.items
-        } catch let error { throw LibraryErrors.gettingLibraries(error) }
+        }
+        catch { // Fallback for compatibility
+            Log.warning("Falling back to legacy API for list of libraries")
+            do {
+                let root: Root = try await network.request(
+                    verb: .get,
+                    path: "/Users/\(userID)/Views",
+                    headers: ["X-MediaBrowser-Token":accessToken],
+                    urlParams: nil,
+                    body: nil
+                )
+                return root.items
+            }
+            catch let error { throw LibraryErrors.gettingLibraries(error) }
+        }
     }
     
     public func getLibraryMedia(

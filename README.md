@@ -142,6 +142,9 @@ Configure Stingray to look and feel how you want it.
   - Reduce hitching during video playback by moving playback updates off the UI thread
   - Add priority Jellyfin syncing
     - If a show is not fully synched when opened, request that show's special features and episodes separately from all the others
+- Improvements
+  - API
+    - Swapped from `/Users/{userID}/Views` to `/UserViews` with the userID as a parameter
 
 ### Media Picker
 
