@@ -202,6 +202,9 @@ public struct SettingsView: View {
                 DoubleButton(label: "Display Filter Options", sublabel: self.settings.showFilters ? "Enabled" : "Disabled") {
                     self.settings.showFilters.toggle()
                 }
+                DoubleButton(label: "Display Refresh Library Button", sublabel: self.settings.showRefreshLibrary ? "Enabled" : "Disabled") {
+                    self.settings.showRefreshLibrary.toggle()
+                }
                 DoubleButton(label: "Search TV Episode Titles", sublabel: self.settings.searchEpisodeTitles ? "Enabled" : "Disabled") {
                     self.settings.searchEpisodeTitles.toggle()
                 }

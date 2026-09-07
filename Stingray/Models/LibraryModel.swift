@@ -7,11 +7,12 @@
 
 import Foundation
 
-public protocol LibraryProtocol: Identifiable {
+public protocol LibraryProtocol: AnyObject, Identifiable {
     var title: String { get }
-    var media: MediaStatus { get }
-    var genres: Set<String> { get }
-    var maturityRatings: Set<String> { get }
+    var id: String { get }
+    var media: MediaStatus { get set }
+    var genres: Set<String> { get set }
+    var maturityRatings: Set<String> { get set }
 }
 
 /// Denotes the current status of loading media in a library

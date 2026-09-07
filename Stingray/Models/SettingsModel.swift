@@ -129,6 +129,12 @@ public final class SettingsModel {
         get { self.user?.showSorting ?? true }
         set(newValue) { self.user?.showSorting = newValue }
     }
+    
+    /// Display a button for resyncing a library
+    public var showRefreshLibrary: Bool {
+        get { self.user?.showRefreshLibrary ?? true }
+        set(newValue) { self.user?.showRefreshLibrary = newValue }
+    }
 
     /// A short password required to show the users's content
     public var pin: String? {

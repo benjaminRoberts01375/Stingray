@@ -83,6 +83,8 @@ public protocol UserProtocol: AnyObject, Codable {
     var showFilters: Bool { get set }
     /// Display sorting options in library views
     var showSorting: Bool { get set }
+    /// Display a button for refreshing a library
+    var showRefreshLibrary: Bool { get set }
 }
 
 /// Basic data to store about the user
@@ -158,7 +160,8 @@ public final class UserModel: UserModelProtocol {
             preferredLanguage: nil,
             searchEpisodeTitles: false,
             showFilters: true,
-            showSorting: true
+            showSorting: true,
+            showRefreshLibrary: true
         )
         // Store the user
         self.storage.upsertUser(user: user)
@@ -211,6 +214,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
     public var searchEpisodeTitles: Bool { didSet { self.save() } }
     public var showFilters: Bool { didSet { self.save() } }
     public var showSorting: Bool { didSet { self.save() } }
+    public var showRefreshLibrary: Bool { didSet { self.save() } }
 
     public func attach(storage: UserStorageProtocol?) { self.storage = storage }
 
@@ -228,7 +232,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
     private enum CodingKeys: String, CodingKey {
         case serviceURL, serviceType, serviceID, id, displayName, usesSubtitles, pin, autoplay, darkTheme, lightTheme, playbackSpeed
         case loadThumbnailArt, loadMediaBackgroundArt, replaceLogosWithText, preferredLangauge, searchEpisodeTitles, showFilters
-        case showSorting
+        case showSorting, showRefreshLibrary
     }
 
     public static func == (lhs: User, rhs: User) -> Bool { lhs.id == rhs.id }
@@ -254,7 +258,8 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         preferredLanguage: Locale?,
         searchEpisodeTitles: Bool,
         showFilters: Bool,
-        showSorting: Bool
+        showSorting: Bool,
+        showRefreshLibrary: Bool
     ) {
         self.id = id
         self.displayName = displayName
@@ -275,6 +280,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         self.searchEpisodeTitles = searchEpisodeTitles
         self.showFilters = showFilters
         self.showSorting = showSorting
+        self.showRefreshLibrary = showRefreshLibrary
     }
 
     /// Create a user from encoded JSON.
@@ -283,25 +289,26 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
 
-            serviceURL = try container.decode(URL.self, forKey: .serviceURL)
-            serviceType = try container.decode(ServiceType.self, forKey: .serviceType)
-            serviceID = try container.decode(String.self, forKey: .serviceID)
-            id = try container.decode(String.self, forKey: .id)
-            displayName = try container.decode(String.self, forKey: .displayName)
+            self.serviceURL = try container.decode(URL.self, forKey: .serviceURL)
+            self.serviceType = try container.decode(ServiceType.self, forKey: .serviceType)
+            self.serviceID = try container.decode(String.self, forKey: .serviceID)
+            self.id = try container.decode(String.self, forKey: .id)
+            self.displayName = try container.decode(String.self, forKey: .displayName)
             // Settings
-            pin = try container.decodeIfPresent(String.self, forKey: .pin)
-            autoplay = (try? container.decodeIfPresent(Bool.self, forKey: .autoplay)) ?? false
-            usesSubtitles = (try? container.decodeIfPresent(Bool.self, forKey: .usesSubtitles)) ?? false
-            darkTheme = (try? container.decodeIfPresent(Themes.self, forKey: .darkTheme)) ?? .deepSea
-            lightTheme = (try? container.decodeIfPresent(Themes.self, forKey: .lightTheme)) ?? .beach
-            playbackSpeed = (try? container.decodeIfPresent(PlaybackSpeed.self, forKey: .playbackSpeed)) ?? .one
-            loadThumbnailArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadThumbnailArt)) ?? true
-            loadMediaBackgroundArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadMediaBackgroundArt)) ?? true
-            replaceLogosWithText = (try? container.decodeIfPresent(Bool.self, forKey: .replaceLogosWithText)) ?? false
-            preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
-            searchEpisodeTitles = (try? container.decodeIfPresent(Bool.self, forKey: .searchEpisodeTitles)) ?? false
-            showFilters = (try? container.decodeIfPresent(Bool.self, forKey: .showFilters)) ?? true
-            showSorting = (try? container.decodeIfPresent(Bool.self, forKey: .showSorting)) ?? true
+            self.pin = try container.decodeIfPresent(String.self, forKey: .pin)
+            self.autoplay = (try? container.decodeIfPresent(Bool.self, forKey: .autoplay)) ?? false
+            self.usesSubtitles = (try? container.decodeIfPresent(Bool.self, forKey: .usesSubtitles)) ?? false
+            self.darkTheme = (try? container.decodeIfPresent(Themes.self, forKey: .darkTheme)) ?? .deepSea
+            self.lightTheme = (try? container.decodeIfPresent(Themes.self, forKey: .lightTheme)) ?? .beach
+            self.playbackSpeed = (try? container.decodeIfPresent(PlaybackSpeed.self, forKey: .playbackSpeed)) ?? .one
+            self.loadThumbnailArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadThumbnailArt)) ?? true
+            self.loadMediaBackgroundArt = (try? container.decodeIfPresent(Bool.self, forKey: .loadMediaBackgroundArt)) ?? true
+            self.replaceLogosWithText = (try? container.decodeIfPresent(Bool.self, forKey: .replaceLogosWithText)) ?? false
+            self.preferredLangauge = (try? container.decodeIfPresent(Locale.self, forKey: .preferredLangauge))
+            self.searchEpisodeTitles = (try? container.decodeIfPresent(Bool.self, forKey: .searchEpisodeTitles)) ?? false
+            self.showFilters = (try? container.decodeIfPresent(Bool.self, forKey: .showFilters)) ?? true
+            self.showSorting = (try? container.decodeIfPresent(Bool.self, forKey: .showSorting)) ?? true
+            self.showRefreshLibrary = (try? container.decodeIfPresent(Bool.self, forKey: .showRefreshLibrary)) ?? true
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -323,19 +330,20 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
             try container.encode(id, forKey: .id)
             try container.encode(displayName, forKey: .displayName)
             // Settings
-            try container.encodeIfPresent(pin, forKey: .pin)
-            try container.encode(autoplay, forKey: .autoplay)
-            try container.encode(usesSubtitles, forKey: .usesSubtitles)
-            try container.encode(darkTheme, forKey: .darkTheme)
-            try container.encode(lightTheme, forKey: .lightTheme)
-            try container.encode(playbackSpeed, forKey: .playbackSpeed)
-            try container.encode(loadThumbnailArt, forKey: .loadThumbnailArt)
-            try container.encode(loadMediaBackgroundArt, forKey: .loadMediaBackgroundArt)
-            try container.encode(replaceLogosWithText, forKey: .replaceLogosWithText)
-            try container.encodeIfPresent(preferredLangauge, forKey: .preferredLangauge)
-            try container.encode(searchEpisodeTitles, forKey: .searchEpisodeTitles)
-            try container.encode(showFilters, forKey: .showFilters)
-            try container.encode(showSorting, forKey: .showSorting)
+            try container.encodeIfPresent(self.pin, forKey: .pin)
+            try container.encode(self.autoplay, forKey: .autoplay)
+            try container.encode(self.usesSubtitles, forKey: .usesSubtitles)
+            try container.encode(self.darkTheme, forKey: .darkTheme)
+            try container.encode(self.lightTheme, forKey: .lightTheme)
+            try container.encode(self.playbackSpeed, forKey: .playbackSpeed)
+            try container.encode(self.loadThumbnailArt, forKey: .loadThumbnailArt)
+            try container.encode(self.loadMediaBackgroundArt, forKey: .loadMediaBackgroundArt)
+            try container.encode(self.replaceLogosWithText, forKey: .replaceLogosWithText)
+            try container.encodeIfPresent(self.preferredLangauge, forKey: .preferredLangauge)
+            try container.encode(self.searchEpisodeTitles, forKey: .searchEpisodeTitles)
+            try container.encode(self.showFilters, forKey: .showFilters)
+            try container.encode(self.showSorting, forKey: .showSorting)
+            try container.encode(self.showRefreshLibrary, forKey: .showRefreshLibrary)
         }
         catch { throw JSONError.failedJSONEncode("User \(self.displayName)") }
     }

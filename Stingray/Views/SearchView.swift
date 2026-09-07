@@ -52,7 +52,8 @@ public struct SearchView: View {
                     availableMaturityRatings: self.availableMaturityRatings,
                     streamingService: self.streamingService,
                     allMedia: allMedia,
-                    navigation: $navigation
+                    navigation: $navigation,
+                    additionalButtons: { }
                 )
             case .temporarilyNotFound:
                 ProgressView("Not found yet, but we're still getting your media...")
