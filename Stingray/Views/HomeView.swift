@@ -248,9 +248,6 @@ fileprivate struct MediaNavigationLoadingPicker: View {
 
 /// A single non-focusable placeholder card standing in for a media card that hasn't loaded.
 public struct MediaNavigationLoadingCard: View {
-    /// Unused. The title skeleton's word count is generated inline in `body` instead
-    private let randomWordCount = Int.random(in: 3...5)
-
     public var body: some View {
         Button {
 
@@ -306,9 +303,6 @@ public struct SystemInfoView: View {
 public struct LibrariesInfoView: View {
     /// Streaming service containing libraries
     public let streamingService: LibraryProviding
-
-    /// Unused. Counts are recomputed from `countMedia(libraries:)` on each render instead
-    @State private var movieCount: Int = 0
 
     public var body: some View {
         switch self.streamingService.libraryStatus {

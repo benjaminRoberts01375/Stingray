@@ -12,8 +12,6 @@ public struct MediaCard: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
 
-    @State private var showError: Bool = false
-
     @Binding public var navigation: NavigationPath
 
     public static let cardSize = CGSize(width: 200, height: 370)

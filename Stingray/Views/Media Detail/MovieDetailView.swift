@@ -26,8 +26,6 @@ public struct MovieDetailView: View {
     @State private var shouldBackgroundBlur: Bool = false
     /// Slides the metadata shelf up once focus leaves the play button
     @State private var shouldRevealBottomShelf: Bool = false
-    /// Unused. The shelf's visibility is driven by `shouldRevealBottomShelf`
-    @State private var shouldShowMetaData: Bool = false
     /// Which element has focus. Drives both the blur and the shelf
     @FocusState private var focus: ButtonType?
 

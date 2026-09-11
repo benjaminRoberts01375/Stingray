@@ -17,10 +17,6 @@ public struct LibraryView: View {
 
     /// Streaming service used for artwork and for resyncing the library
     public let streamingService: MediaImageProviding & LibraryProviding
-    /// Unused. `MediaCard.cardSize` is the real card width
-    public let cardWidth = CGFloat(200)
-    /// Unused. `MediaGridView.cardSpacing` is the real grid spacing
-    public let cardSpacing = CGFloat(50)
 
     public var body: some View {
         ScrollView {

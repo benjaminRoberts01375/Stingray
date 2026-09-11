@@ -20,8 +20,6 @@ public struct MediaArtView: View {
 
     @Environment(ThemeModel.self) private var theme
     @Environment(SettingsModel.self) private var settings
-    /// Unused. `AsyncBlurImage` owns the fade-in
-    @State private var imageOpacity: Double = 0
 
     /// Episode artwork
     /// - Parameters:
