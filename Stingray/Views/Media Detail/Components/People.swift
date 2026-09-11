@@ -1,5 +1,5 @@
 //
-//  Actors.swift
+//  People.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 6/15/26.
@@ -16,7 +16,7 @@ public struct PeopleBrowserView: View {
 
     @Environment(ThemeModel.self) private var theme
 
-    @FocusState private var focusedActor: Int?
+    @FocusState private var focusedPerson: Int?
 
     /// Displays a list of people's photos, names, and roles
     /// - Parameters:
@@ -58,15 +58,15 @@ public struct PeopleBrowserView: View {
                                 .frame(width: 350, height: 600)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
                             }
-                            MarqueeText(text: person.name, animate: self.focusedActor == offset, font: .headline)
+                            MarqueeText(text: person.name, animate: self.focusedPerson == offset, font: .headline)
                                 .foregroundStyle(
-                                    self.focusedActor == offset ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
+                                    self.focusedPerson == offset ? AnyShapeStyle(.black) : self.theme.currentTheme.header2
                                 )
-                            MarqueeText(text: person.role, animate: self.focusedActor == offset, font: .caption)
+                            MarqueeText(text: person.role, animate: self.focusedPerson == offset, font: .caption)
                         }
                     }
                     .buttonStyle(.plain)
-                    .focused($focusedActor, equals: offset)
+                    .focused($focusedPerson, equals: offset)
                     .frame(width: 350)
                 }
             }
