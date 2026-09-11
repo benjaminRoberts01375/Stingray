@@ -201,6 +201,14 @@ public struct ContentView: View {
                 }
             }
         }
+        .onChange(of: self.userModel.userIDs) { _, _ in
+            // Accounts can arrive from iCloud after the launch task has already given up and shown the login screen
+            guard case .loggedOut = self.loginState,
+                  !self.userModel.getUsers().isEmpty
+            else { return }
+            Log.info("Accounts arrived from iCloud, switching to the profile picker")
+            self.loginState = .pickingUser
+        }
     }
 
     /// Parses a `stingray://media?id=…&parentID=…` URL into a `DeepLinkRequest`.

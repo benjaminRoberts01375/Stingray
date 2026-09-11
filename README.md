@@ -125,6 +125,7 @@ Configure Stingray to look and feel how you want it.
   - Add per-AppleTV-generation streaming compatibility
   - Improve tracking for watched content
   - Synchronize iCloud storage with models
+    - Fixes a bug where signing in on a new Apple TV doesn't load data correctly for the first time
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views
