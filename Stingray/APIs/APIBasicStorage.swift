@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Security
 
 /// Available keys for interacting with the permanent storage.
 public enum StorageKeys {
