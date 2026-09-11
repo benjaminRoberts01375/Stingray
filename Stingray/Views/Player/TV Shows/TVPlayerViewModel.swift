@@ -172,13 +172,13 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         NotificationCenter.default.removeObserver(
             self,
             name: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem
+            object: self.player.currentItem
         )
 
         // Add observer for the current item
         NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
+            object: self.player.currentItem,
             queue: .main
         ) { [weak self] _ in
             self?.handlePlaybackEnded()
@@ -221,6 +221,8 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { self.playerProgress?.subtitleID == $0.id }) {
             newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle)
         }
+        self.savePlaybackDate()
+
         self.newPlayer(
             startTime: .zero,
             videoID: .newID(newVideoStream.id),
@@ -264,7 +266,7 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
-        player.pause()
+        self.player.pause()
         streamingService.playbackEnd()
     }
 }

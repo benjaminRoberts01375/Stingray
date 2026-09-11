@@ -123,6 +123,7 @@ Configure Stingray to look and feel how you want it.
   - Add error handling for failing to sync library version
   - Hitting cancel on the PIN entry screen no longer navigates to the switch user page
   - Add per-AppleTV-generation streaming compatibility
+  - Improve tracking for watched content
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views
@@ -161,7 +162,6 @@ Configure Stingray to look and feel how you want it.
 
 - [ ] Rework library structure to support more library types, like collections and group by actor.
 - [ ] Library filtering.
-- [ ] Manual library refresh.
 
 ### Playback
 
