@@ -31,6 +31,23 @@ public enum StorageKeys {
         case .maxBitrate: return "maxBitrate"
         }
     }
+    
+    /// Rebuilds a key from the string it was stored under.
+    /// iCloud change notifications report raw key names, so they have to be mapped back to cases before use.
+    /// - Parameter rawValue: The stored string form of a key
+    /// - Returns: The matching key, or `nil` when the string isn't one Stingray owns
+    public init?(rawValue: String) {
+        switch rawValue {
+        // Exact cases are matched first, since `userIDs` and `userSwitchingMethod` would otherwise parse as user IDs
+        case StorageKeys.defaultStreamingUserID.rawValue: self = .defaultStreamingUserID
+        case StorageKeys.userIDs.rawValue: self = .userIDs
+        case StorageKeys.userSwitchingMethod.rawValue: self = .userSwitchingMethod
+        case StorageKeys.maxBitrate.rawValue: self = .maxBitrate
+        default:
+            guard rawValue.hasPrefix("user") else { return nil }
+            self = .user(String(rawValue.dropFirst("user".count)))
+        }
+    }
 }
 
 /// A protocol for abstracting access to local storage via key-value pairs
@@ -97,6 +114,39 @@ public protocol BasicStorageProtocol {
     /// - Parameter key: Key to check
     /// - Returns: If the key is only stored locally or not
     func getKeyIsLocal(_ key: StorageKeys) -> Bool
+    /// Batches of keys that changed outside this process, as the cloud reports them.
+    /// Each access hands back its own stream, so several observers can watch at once without stealing each other's events.
+    var externalChanges: AsyncStream<[StorageKeys]> { get }
+}
+
+/// Fans cloud change notifications out to every interested observer.
+/// Kept separate from `HybridBasicStorage` so it can be touched from the notification callback regardless of the storage's actor
+/// isolation, which differs between the app and the Top Shelf extension.
+private final class ExternalChangeBroadcaster: @unchecked Sendable {
+    /// Guards `continuations`, which is read when an observer starts and written when one stops
+    private let lock = NSLock()
+    /// One continuation per live observer, keyed so each can remove itself once it stops listening
+    private var continuations: [UUID: AsyncStream<[StorageKeys]>.Continuation] = [:]
+    
+    /// Hands out a stream carrying every future batch of changed keys.
+    /// - Returns: A stream that only finishes when its consumer stops iterating
+    func makeStream() -> AsyncStream<[StorageKeys]> {
+        return AsyncStream { continuation in
+            let id = UUID()
+            self.lock.withLock { self.continuations[id] = continuation }
+            continuation.onTermination = { [weak self] _ in
+                guard let self else { return }
+                self.lock.withLock { _ = self.continuations.removeValue(forKey: id) }
+            }
+        }
+    }
+    
+    /// Sends a batch of changed keys to every live observer.
+    /// - Parameter keys: Keys that just changed outside this process
+    func send(_ keys: [StorageKeys]) {
+        let live = self.lock.withLock { Array(self.continuations.values) }
+        for continuation in live { continuation.yield(keys) }
+    }
 }
 
 /// Stores data locally and in the cloud
@@ -105,6 +155,10 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     private let cloudStore: NSUbiquitousKeyValueStore
     /// Data that remains local
     private let defaults: UserDefaults
+    /// Fans incoming cloud changes out to every observer
+    private let changeBroadcaster = ExternalChangeBroadcaster()
+    /// Token for the cloud change observer, held so it lives as long as storage does
+    private var changeObserver: NSObjectProtocol?
     
     /// Current major iteration of database storage
     public static let dbVersion: Int8 = 2
@@ -134,6 +188,11 @@ public final class HybridBasicStorage: BasicStorageProtocol {
             self.defaults.synchronize()
             Log.critical("Reset complete. DB Version: \(self.defaults.integer(forKey: Self.dbVersionKey))")
         }
+        
+        // Which profile is in use is a per-device choice, so it must never travel between Apple TVs
+        self.setKeyIsLocal(.defaultStreamingUserID, local: true)
+        
+        self.observeCloudChanges()
     }
     
     public func getKeyIsLocal(_ key: StorageKeys) -> Bool {
@@ -145,6 +204,47 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     
     public func setKeyIsLocal(_ key: StorageKeys, local: Bool) {
         self.defaults.set(local, forKey: "Local\(key.rawValue)")
+    }
+    
+    public var externalChanges: AsyncStream<[StorageKeys]> { self.changeBroadcaster.makeStream() }
+    
+    /// Starts watching for values the cloud changed underneath us.
+    /// Registered during setup, since the initial-sync notification arrives shortly after launch and is easy to miss.
+    private func observeCloudChanges() {
+        self.changeObserver = NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: self.cloudStore,
+            queue: .main // Observers drive SwiftUI state, and the cloud posts this on an arbitrary queue
+        ) { [weak self] notification in
+            self?.handleCloudChange(notification)
+        }
+    }
+    
+    /// Mirrors changed cloud values into local storage, then tells observers which keys moved.
+    /// - Parameter notification: The change notification the cloud posted
+    private func handleCloudChange(_ notification: Notification) {
+        let userInfo = notification.userInfo
+        if userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int == NSUbiquitousKeyValueStoreQuotaViolationChange {
+            Log.critical("iCloud key-value storage is over quota, so the last write was rejected")
+            return
+        }
+        
+        // An initial sync or an account change can replace the whole store, and reports no specific keys
+        let rawKeys = userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String]
+            ?? Array(self.cloudStore.dictionaryRepresentation.keys)
+        
+        var changed: [StorageKeys] = []
+        for rawKey in rawKeys {
+            guard let key = StorageKeys(rawValue: rawKey),
+                  !self.getKeyIsLocal(key) // A local-only key must never be clobbered by a stale cloud copy
+            else { continue }
+            // Keep the local mirror current, since the TopShelf only ever reads locally
+            self.defaults.set(self.cloudStore.object(forKey: rawKey), forKey: rawKey)
+            changed.append(key)
+        }
+        
+        guard !changed.isEmpty else { return }
+        self.changeBroadcaster.send(changed)
     }
     
     /// Directly interfaces with storage systems to set values.

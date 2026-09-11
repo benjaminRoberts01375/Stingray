@@ -52,6 +52,9 @@ public protocol UserProtocol: AnyObject, Codable {
     /// Hands the user the storage it saves itself to whenever it changes. Pass `nil` to stop the user from saving.
     /// - Parameter storage: Storage to write changes to
     func attach(storage: UserStorageProtocol?)
+    /// Folds in settings that changed on another device, without writing them straight back out again
+    /// - Parameter other: A freshly loaded copy of this same user
+    func apply(from other: any UserProtocol)
 
     /// URL to the streaming service
     var serviceURL: URL { get }
@@ -112,6 +115,9 @@ public final class UserModel: UserModelProtocol {
 
     public private(set) var userIDs: Set<String> = []
 
+    /// Watches storage for changes made on other devices. Cancelled when the model goes away.
+    @ObservationIgnored private var reconcileTask: Task<Void, Never>?
+
     /// Create the model based on a storage medium
     /// - Parameter storage: The storage medium
     public init(storage: UserStorageProtocol) {
@@ -119,8 +125,44 @@ public final class UserModel: UserModelProtocol {
         self.userIDs = Set(self.storage.getUserIDs())
         self.activeUser = nil
 
+        self.setupICloudObservation()
+
         guard let userID = self.storage.getActiveUserID() else { return }
         self.activeUser = self.storage.getUser(userID: userID)
+    }
+
+    deinit { self.reconcileTask?.cancel() }
+
+    /// Starts folding changes made on other devices into the live models.
+    /// Incoming settings are merged into the existing `User` rather than replacing it, because views capture the user by
+    /// reference and would otherwise keep observing an orphaned instance.
+    private func setupICloudObservation() {
+        let changes = self.storage.externalChanges
+        self.reconcileTask = Task { @MainActor [weak self] in
+            for await keys in changes {
+                guard let self else { return }
+                for key in keys { self.reconcileICloudChanges(key) }
+            }
+        }
+    }
+
+    /// Applies a change from iCloud to memory.
+    /// - Parameter key: The key that changed
+    private func reconcileICloudChanges(_ key: StorageKeys) {
+        switch key {
+        case .userIDs: self.userIDs = Set(self.storage.getUserIDs())
+        case .user(let id):
+            // Inactive profiles are re-read from storage whenever they're shown, so only the live one needs refreshing
+            guard id == self.activeUser?.id, let activeUser = self.activeUser else { return }
+            guard let updatedUser = self.storage.getUser(userID: id)
+            else {
+                // Either the profile was removed elsewhere or the payload didn't decode
+                Log.warning("Could not reload user \(id) after an external change, so the in-memory copy was kept")
+                return
+            }
+            activeUser.apply(from: updatedUser)
+        default: return
+        }
     }
 
     public func getUsers() -> [User] {
@@ -201,6 +243,8 @@ public final class UserModel: UserModelProtocol {
 public final class User: UserProtocol, Codable, Identifiable, Hashable {
     /// Storage the user writes itself back to whenever it changes. Attached by `UserStorage`, so it is never encoded.
     @ObservationIgnored private var storage: UserStorageProtocol?
+    /// Set while folding in a change from another device, so the user doesn't echo that change straight back to the cloud
+    @ObservationIgnored private var isApplyingExternalChange = false
 
     public var serviceURL: URL { didSet { self.save() } }
     public var serviceType: ServiceType { didSet { self.save() } }
@@ -226,8 +270,37 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
 
     public func attach(storage: UserStorageProtocol?) { self.storage = storage }
 
+    /// Copies another instance's settings onto this one without writing them back to storage. By mutating in place, we don't have to worry
+    /// about views holding stale data.
+    /// - Parameter other: A freshly loaded copy of this same user, carrying the incoming values
+    public func apply(from newUser: any UserProtocol) {
+        self.isApplyingExternalChange = true
+        defer { self.isApplyingExternalChange = false }
+
+        // Only assign on a real difference, since @Observable invalidates readers on every set, equal value or not
+        if self.serviceURL != newUser.serviceURL { self.serviceURL = newUser.serviceURL }
+        if self.serviceType != newUser.serviceType { self.serviceType = newUser.serviceType }
+        if self.serviceID != newUser.serviceID { self.serviceID = newUser.serviceID }
+        if self.usesSubtitles != newUser.usesSubtitles { self.usesSubtitles = newUser.usesSubtitles }
+        if self.pin != newUser.pin { self.pin = newUser.pin }
+        if self.autoplay != newUser.autoplay { self.autoplay = newUser.autoplay }
+        if self.darkTheme != newUser.darkTheme { self.darkTheme = newUser.darkTheme }
+        if self.lightTheme != newUser.lightTheme { self.lightTheme = newUser.lightTheme }
+        if self.playbackSpeed != newUser.playbackSpeed { self.playbackSpeed = newUser.playbackSpeed }
+        if self.loadThumbnailArt != newUser.loadThumbnailArt { self.loadThumbnailArt = newUser.loadThumbnailArt }
+        if self.loadMediaBackgroundArt != newUser.loadMediaBackgroundArt { self.loadMediaBackgroundArt = newUser.loadMediaBackgroundArt }
+        if self.replaceLogosWithText != newUser.replaceLogosWithText { self.replaceLogosWithText = newUser.replaceLogosWithText }
+        if self.preferredLangauge != newUser.preferredLangauge { self.preferredLangauge = newUser.preferredLangauge }
+        if self.searchEpisodeTitles != newUser.searchEpisodeTitles { self.searchEpisodeTitles = newUser.searchEpisodeTitles }
+        if self.showFilters != newUser.showFilters { self.showFilters = newUser.showFilters }
+        if self.showSorting != newUser.showSorting { self.showSorting = newUser.showSorting }
+        if self.showRefreshLibrary != newUser.showRefreshLibrary { self.showRefreshLibrary = newUser.showRefreshLibrary }
+    }
+
     /// Writes the user back to permanent storage. Called for every change, so no caller has to remember to save.
     private func save() {
+        // A small hacky state thing to prevent posting changes to the cloud when it's the cloud that started the change
+        guard !self.isApplyingExternalChange else { return }
         guard let storage = self.storage
         else {
             Log.warning("User \(self.id) changed before being attached to storage, so the change was not saved")

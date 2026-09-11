@@ -124,6 +124,7 @@ Configure Stingray to look and feel how you want it.
   - Hitting cancel on the PIN entry screen no longer navigates to the switch user page
   - Add per-AppleTV-generation streaming compatibility
   - Improve tracking for watched content
+  - Synchronize iCloud storage with models
 - Performance
   - Only calculate blur hash once and globally cache it
     - Improves speed to opening detail media views

@@ -32,6 +32,8 @@ public protocol UserStorageProtocol {
     /// Deletes only user data
     /// - Parameter userID: ID of the user to remove
     func deleteUser(userID: String)
+    /// Batches of keys that changed outside this process, forwarded from the underlying store
+    var externalChanges: AsyncStream<[StorageKeys]> { get }
 }
 
 /// Stores all the users for Stingray
@@ -73,4 +75,6 @@ public final class UserStorage: UserStorageProtocol {
     public func deleteUser(userID: String) {
         self.basicStorage.delete(.user(userID))
     }
+
+    public var externalChanges: AsyncStream<[StorageKeys]> { self.basicStorage.externalChanges }
 }
