@@ -7,9 +7,13 @@
 
 import SwiftUI
 
+/// Fuzzy search across every downloaded library, reusing the library grid for its results.
 public struct SearchView: View {
+    /// Streaming service supplying the libraries to search and the result artwork
     public var streamingService: LibraryProviding & MediaImageProviding
+    /// Union of genres across every library, snapshotted at init to populate the filter menu
     public let availableGenres: Set<String>
+    /// Union of maturity ratings across every library, snapshotted at init to populate the filter menu
     public let availableMaturityRatings: Set<String>
     /// Live search results
     private var searchResults: SearchStatus { search() }
@@ -19,6 +23,10 @@ public struct SearchView: View {
     @State private var searchText: String
     @Binding public var navigation: NavigationPath
 
+    /// Creates the search tab, collecting the available filters from whatever libraries have loaded so far.
+    /// - Parameters:
+    ///   - streamingService: Streaming service to search
+    ///   - navigation: App navigation, forwarded to each result card
     public init(
         streamingService: LibraryProviding & MediaImageProviding,
         navigation: Binding<NavigationPath>
@@ -78,6 +86,12 @@ public struct SearchView: View {
         case empty
     }
 
+    /// Scores every downloaded media item against the current search text and keeps the close matches.
+    ///
+    /// A substring hit scores `0`; otherwise the title is scored by sliding Levenshtein distance, and results worse than `2` are dropped.
+    /// When `searchEpisodeTitles` is on, shows that don't match by title are also scored against each episode title. Runs synchronously
+    /// over every library on each keystroke, so it is only viable because libraries are already in memory.
+    /// - Returns: Matches ordered best-first, or a status explaining why there are none
     public func search() -> SearchStatus {
         if self.searchText.isEmpty { return .empty }
         var scoredMedia: [MediaScore] = []

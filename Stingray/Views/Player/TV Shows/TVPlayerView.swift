@@ -1,5 +1,5 @@
 //
-//  PlayerView.swift
+//  TVPlayerView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 11/19/25.
@@ -9,9 +9,12 @@ import AVKit
 import SwiftUI
 
 // MARK: Parent view
+/// Hosts the TV player, keeping playback alive across a Picture in Picture handoff.
 public struct TVPlayerView: View {
     @Environment(\.dismiss) private var dismiss
+    /// Playback state for the current episode
     @State public var vm: TVPlayerViewModel
+    /// App navigation. Stashed on the view model when entering PiP and restored on the way back
     @Binding public var navigation: NavigationPath
 
     public var body: some View {
@@ -45,12 +48,18 @@ public struct TVPlayerView: View {
 }
 
 // MARK: UIKit Player
+/// Wraps `AVPlayerViewController` for the TV player. An existing PiP stream for different content is killed on creation, so only one
+/// episode plays at a time.
 fileprivate struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    /// Playback state for the current episode
     public let vm: TVPlayerViewModel
 
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
+    /// Called when PiP first begins
     public let onStartPiP: () -> Void
+    /// Called when a PiP stream is becoming full-screen again
     public let onRestoreFromPiP: () -> Void
+    /// Called when PiP ends without being restored
     public let onStopFromPiP: () -> Void
 
     @Environment(ThemeModel.self) private var theme
@@ -129,6 +138,8 @@ fileprivate struct AVPlayerViewControllerRepresentable: UIViewControllerRepresen
         uiViewController.transportBarCustomMenuItems = makeTransportBarItems()
     }
 
+    /// Builds the transport bar, prepending previous/next episode buttons and the season picker to the shared player menus.
+    /// - Returns: Menus to hand to `AVPlayerViewController.transportBarCustomMenuItems`
     private func makeTransportBarItems() -> [UIMenuElement] {
         // Typical buttons
         var items = PlayerButtons.AVPlayerTransportBarItems(vm: self.vm)

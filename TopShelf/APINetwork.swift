@@ -7,12 +7,14 @@
 
 import Foundation
 
+/// The slice of the server API the Top Shelf extension needs.
+///
+/// Deliberately narrower than the app's `AdvancedNetworkProtocol`: the extension has a tight launch budget, so it only fetches the two
+/// recommendation rows and the artwork URLs required to render them.
 public protocol TopShelfNetworkProtocol {
-    /// Retrieve recently added media of some type
-    /// - Parameters:
-    ///   - contentType: Type of media to retrieve
-    ///   - accessToken: Access token for the server
-    /// - Returns: A silm verion of the media type
+    /// Retrieve recently added media of any type
+    /// - Parameter accessToken: Access token for the server
+    /// - Returns: A slim version of each media item
     func getRecentlyAdded(accessToken: String) async throws -> [MediaModelRepresentable]
     
     /// Gets up next shows
@@ -30,7 +32,9 @@ public protocol TopShelfNetworkProtocol {
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL?
 }
 
+/// Jellyfin implementation of `TopShelfNetworkProtocol`, built on the app's shared `BasicNetworkProtocol`.
 public struct APINetwork: TopShelfNetworkProtocol {
+    /// Transport used for every request
     var network: BasicNetworkProtocol
     
     public func getRecentlyAdded(accessToken: String) async throws -> [MediaModelRepresentable] {

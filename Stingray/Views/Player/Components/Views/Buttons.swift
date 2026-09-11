@@ -203,6 +203,8 @@ public final class PlayerButtons {
     }
 
     /// A menu for selecting the playback speed.
+    /// - Parameter vm: View model containing the playing content
+    /// - Returns: Formatted menu with every `PlaybackSpeed`
     public static func playbackSpeedPicker(vm: AVPlayerViewModelProtocol) -> UIMenu {
         var playbackSpeeds: [UIAction] = []
         for speed in PlaybackSpeed.allCases {

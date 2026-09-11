@@ -216,6 +216,7 @@ public final class ThemeFrostyLight: ThemeProtocol {
         /// Sets up the data for a bubble
         /// - Parameters:
         ///   - startPosition: Where on screen the bubble should start
+        ///   - duration: How long the bubble should last for
         public init(startPosition: CGPoint, duration: TimeInterval) {
             self.startPosition = startPosition
             self.duration = duration
@@ -266,7 +267,7 @@ public final class ThemeVoidDark: ThemeProtocol {
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
-// A theme based on the well-known Dracula theme https://draculatheme.com/spec
+/// A theme based on the well-known Dracula theme https://draculatheme.com/spec
 public final class ThemeSpaceVampiresDark: ThemeProtocol {
     // Official Dracula colors https://draculatheme.com/spec#color-palette
     public static let background = Color(red: 0.1568627450980392, green: 0.16470588235294117, blue: 0.21176470588235294)
@@ -327,9 +328,13 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
 
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 
+    /// A single streak that crosses the upper third of the screen at random intervals.
     public struct ShootingStarView: View {
+        /// Direction of travel, chosen so the streak always heads away from the nearest edge
         @State private var angle: Angle = .degrees(0)
+        /// Current position of the streak
         @State private var position: CGPoint = CGPoint(x: 200, y: 100)
+        /// Fades the streak in and out around each pass
         @State private var opacity: CGFloat = .zero
 
         public var body: some View {
@@ -357,6 +362,8 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
             }
         }
 
+        /// Schedules the next pass 5-30 seconds out, rescheduling itself each time so streaks keep appearing.
+        /// - Parameter screenSize: Size to pick the streak's starting point within
         public func scheduleNextShootingStar(screenSize: CGSize) {
             let randomInterval = Double.random(in: 5...30)
             Timer.scheduledTimer(withTimeInterval: randomInterval, repeats: false) { _ in
@@ -411,6 +418,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
         }
     }
 
+    /// Three layered sine-wave hills along the bottom of the screen, lightest at the front.
     public struct RollingHillsView: View {
         public var body: some View {
             Canvas { context, size in
@@ -488,7 +496,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     }
 }
 
-/// A beach with water coming in and out
+/// A vaporwave inspired theme with a grid floor moving towards the user
 public final class ThemeRetroMid: ThemeProtocol {
     public static let gridColor = Color(red: 0.7411764705882353, green: 0.17254901960784313, blue: 0.4823529411764706) // #BD2C7B
 
@@ -508,12 +516,18 @@ public final class ThemeRetroMid: ThemeProtocol {
 
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 
+    /// A sunset over layered mountains and a grid floor scrolling toward the viewer.
     public struct RetroVibes: View {
+        /// Darkest purple, used for the sky base and the mountain bases
         public static let deepPurple = Color(red: 0.11764705882352941, green: 0.011764705882352941, blue: 0.23529411764705882)
+        /// Mid-tone pink of the sky gradient
         public static let deepPink = Color(red: 0.7333333333333333, green: 0.0784313725490196, blue: 0.42745098039215684)
+        /// Pale yellow of the sun and the sky's brightest band
         public static let deepYellow = Color(red: 1, green: 0.9372549019607843, blue: 0.615686274509804)
 
+        /// Number of vertical grid lines
         public let columns: Int = 15
+        /// Number of horizontal grid lines
         public let rows: Int = 16
         /// X position of the vanishing point (0.0 = left, 1.0 = right)
         public let vanishingPointX: CGFloat = 0.5
@@ -743,6 +757,7 @@ public final class ThemeRetroMid: ThemeProtocol {
         .ignoresSafeArea()
 }
 
+/// An isosceles triangle filling its frame, apex centered at the top. Used for the Synth theme's mountains.
 public struct Triangle: Shape {
     public func path(in rect: CGRect) -> Path {
         Path { path in

@@ -95,6 +95,7 @@ public struct MediaCard: View {
     }
 }
 
+/// Stand-in artwork for media the server has no poster for.
 public struct MediaCardNoImage: View {
     public var body: some View {
         ZStack {

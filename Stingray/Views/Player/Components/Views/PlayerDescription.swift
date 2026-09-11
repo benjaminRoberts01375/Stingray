@@ -7,9 +7,13 @@
 
 import SwiftUI
 
+/// The TV player's "Description" info tab, showing the series synopsis beside the current episode's.
 public struct TVPlayerDescriptionView: View {
+    /// Synopsis of the show as a whole
     private let seriesDescription: String
+    /// Synopsis of the playing episode. `nil` when the server has none, which hides that column
     private let episodeDescription: String?
+    /// Media the metadata header is drawn from
     private let media: any MediaMetadataProtocol
     
     /// Displays the description for a tv show and episode
@@ -44,6 +48,7 @@ public struct TVPlayerDescriptionView: View {
     }
 }
 
+/// The movie player's "Description" info tab.
 public struct MoviePlayerDescriptionView: View {
     /// Media to load the description from
     public let media: any MediaMetadataProtocol
@@ -56,8 +61,11 @@ public struct MoviePlayerDescriptionView: View {
     }
 }
 
+/// A single titled block of description text on the player's glass background.
 fileprivate struct PlayerDescriptionView: View {
+    /// Heading above the text
     public let title: String
+    /// Body text
     public let description: String
 
     public var body: some View {

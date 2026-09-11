@@ -25,8 +25,11 @@ public protocol SettingsStorageProtocol {
 
 /// Implementation of the `SettingsStorageProtocol`.
 public final class SettingStorage: SettingsStorageProtocol {
+    /// Underlying key-value storage
     public let basicStorage: BasicStorageProtocol
     
+    /// Creates settings storage over a key-value store.
+    /// - Parameter basicStorage: Store to read and write through
     public init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
     
     public func setProfileSwitchingMethod(to method: SettingsModel.ProfileSwitching) {

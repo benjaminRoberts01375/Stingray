@@ -7,10 +7,14 @@
 
 import SwiftUI
 
+/// The landing tab, showing rows of recommended media followed by server and library summaries.
 public struct HomeView: View {
+    /// Streaming service used to source recommendations and artwork
     public let streamingService: RecommendationProviding & MediaImageProviding & SystemInfoProviding & LibraryProviding
 
+    /// Fetched media keyed by `HomeRow.id`. Held here rather than in each row so that switching tabs doesn't refetch every row.
     @State private var dashboardCache: [String: [MediaModelRepresentable]] = [:]
+    /// App navigation, forwarded to each media card
     @Binding public var navigation: NavigationPath
 
     public var body: some View {
@@ -65,12 +69,18 @@ public struct HomeView: View {
     }
 }
 
+/// The recommendation rows shown on the home tab, in display order.
 fileprivate enum HomeRow: Identifiable {
+    /// Partially watched shows, and the next episode of shows the user has finished an episode of
     case nextUp
+    /// Most recently added media of any type
     case recentlyAdded
+    /// Most recently added movies
     case latestMovies
+    /// Most recently added TV shows
     case latestShows
 
+    /// Stable key used both for SwiftUI identity and as the `HomeView` cache key
     var id: String {
         switch self {
         case .nextUp: return "nextUp"
@@ -80,6 +90,7 @@ fileprivate enum HomeRow: Identifiable {
         }
     }
 
+    /// User-facing row heading
     var name: LocalizedStringKey {
         switch self {
         case .nextUp: return "Next Up"
@@ -90,13 +101,20 @@ fileprivate enum HomeRow: Identifiable {
     }
 }
 
+/// A single horizontally scrolling recommendation row.
 fileprivate struct DashboardRow: View {
+    /// Which row this is, supplying both the heading and the cache key
     let rowType: HomeRow
+    /// Streaming service used for card artwork
     let streamingService: RecommendationProviding & MediaImageProviding
+    /// Shared cache owned by `HomeView`. Checked before fetching, and written to after
     @Binding var cache: [String: [MediaModelRepresentable]]
+    /// App navigation, forwarded to each media card
     @Binding var navigation: NavigationPath
+    /// Fetches this row's media. Only called on a cache miss
     let fetchMedia: () async -> [MediaModelRepresentable]
 
+    /// Progress of this row's fetch
     @State private var status: DashboardRowStatus = .unstarted
 
     @Environment(ThemeModel.self) private var theme
@@ -137,18 +155,27 @@ fileprivate struct DashboardRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Progress of a row's media fetch
     enum DashboardRowStatus {
+        /// The fetch has not been kicked off yet
         case unstarted
+        /// The fetch is in flight
         case retrieving
+        /// Media is available and ready to display
         case complete([MediaModelRepresentable])
+        /// The fetch finished with nothing to show, so the whole row is hidden
         case empty
     }
 }
 
+/// A horizontal strip of media cards for one populated dashboard row.
 fileprivate struct MediaPicker: View {
+    /// Streaming service used for card artwork
     var streamingService: MediaImageProviding
+    /// Media to lay out, in the order the server returned it
     let pickerMedia: [MediaModelRepresentable]
 
+    /// App navigation, forwarded to each media card
     @Binding var navigation: NavigationPath
 
     var body: some View {
@@ -162,11 +189,17 @@ fileprivate struct MediaPicker: View {
     }
 }
 
+/// Resolves a media ID into the matching detail view. Because libraries stream in over time, a lookup that fails now may succeed later, so
+/// a miss shows a spinner until every library has finished downloading.
 public struct MediaDetailLoader: View {
+    /// Server ID of the media to open
     public let mediaID: String
+    /// Library the media is expected to live in, checked first to avoid scanning every library
     public let parentID: String?
+    /// Streaming service used to look the media up and load its artwork
     public let streamingService: MediaImageProviding & MediaProviding & PlayerProviding
 
+    /// App navigation, forwarded to the resolved detail view
     @Binding public var navigation: NavigationPath
 
     public var body: some View {
@@ -197,7 +230,9 @@ public struct MediaDetailLoader: View {
     }
 }
 
+/// Placeholder row shown while a dashboard row is still fetching.
 fileprivate struct MediaNavigationLoadingPicker: View {
+    /// Number of placeholder cards. Randomized so the skeleton doesn't imply a known result count
     private let numOfPlaceholders: Int = Int.random(in: 4..<8)
     var body: some View {
         ScrollView(.horizontal) {
@@ -211,7 +246,9 @@ fileprivate struct MediaNavigationLoadingPicker: View {
     }
 }
 
+/// A single non-focusable placeholder card standing in for a media card that hasn't loaded.
 public struct MediaNavigationLoadingCard: View {
+    /// Unused. The title skeleton's word count is generated inline in `body` instead
     private let randomWordCount = Int.random(in: 3...5)
 
     public var body: some View {
@@ -239,7 +276,9 @@ public struct MediaNavigationLoadingCard: View {
     }
 }
 
+/// A single line of build and hardware versions: Stingray, the Jellyfin server, tvOS, and the Apple TV model.
 public struct SystemInfoView: View {
+    /// Streaming service supplying the server's name and version
     public let streamingService: any SystemInfoProviding
 
     public var body: some View {
@@ -263,10 +302,12 @@ public struct SystemInfoView: View {
     }
 }
 
+/// A single line summarizing library counts, with a spinner while libraries are still downloading.
 public struct LibrariesInfoView: View {
     /// Streaming service containing libraries
     public let streamingService: LibraryProviding
 
+    /// Unused. Counts are recomputed from `countMedia(libraries:)` on each render instead
     @State private var movieCount: Int = 0
 
     public var body: some View {

@@ -7,8 +7,11 @@
 
 import SwiftUI
 
+/// Creates a PIN for a profile, requiring it to be typed twice.
 public struct PINSetup: View {
+    /// First entry
     @State private var desiredPIN: String = ""
+    /// Second entry, which must match
     @State private var pinConfirmation: String = ""
     @State private var contentIsFilled: Bool = false // Both the desired and confirmation fields have data
     @State private var error: String = ""
@@ -101,6 +104,9 @@ public final class PINModel {
     }
 }
 
+/// Prompts for a profile's PIN and reports the outcome back through its `PINModel`.
+/// Reports `.canceled` on disappear so a backing out doesn't leave the awaiting caller suspended forever, and short-circuits to `.success`
+/// when the user has no PIN set.
 public struct PINEntry: View {
     @Environment(SettingsModel.self) private var settings
 
@@ -143,6 +149,7 @@ public struct PINEntry: View {
     }
 }
 
+/// Removes a profile's PIN, requiring the current PIN plus a confirmation menu first.
 public struct PINDelete: View {
     @Environment(\.dismiss) private var dismiss
     /// User the PIN is being removed from

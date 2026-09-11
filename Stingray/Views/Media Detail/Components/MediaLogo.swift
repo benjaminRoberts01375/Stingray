@@ -1,5 +1,5 @@
 //
-//  MediaMetadata.swift
+//  MediaLogo.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 6/15/26.
@@ -7,13 +7,18 @@
 
 import SwiftUI
 
+/// A media's logo art, tagline, and one-line metadata header.
+/// Falls back to plain text when the server has no logo, or when the user has turned logos off for legibility.
 public struct MediaLogoView: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(ThemeModel.self) private var theme
     
+    /// Controls the logo's fade-in once loaded
     @State private var logoOpacity: Double
     
+    /// Media to display the logo and tagline for
     public let media: any MediaMetadataProtocol
+    /// Logo artwork URL, resolved once at init
     public let logoImageURL: URL?
     
     /// Displays the logo for some media type

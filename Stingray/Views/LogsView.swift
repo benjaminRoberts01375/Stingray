@@ -7,8 +7,12 @@
 
 import SwiftUI
 
+/// Shows the current session's logs, newest first, filtered to a minimum severity.
+/// Logs are only held in memory for the life of the process, so this list is empty on a fresh launch.
 public struct LogsView: View {
+    /// Minimum severity to display. Changing it rebuilds `logEntries`
     @State private var logVerbosity: LogLevel = .info
+    /// Flattened log chain at the current verbosity. `nil` while the list is still being built
     @State private var logEntries: [LogEntry]?
 
     public var body: some View {
@@ -67,7 +71,7 @@ public struct LogsView: View {
                 var logs: [LogEntry] = []
                 var nextLog = Log.lastLogEntry
                 while let goodNextLog = nextLog {
-                    nextLog = goodNextLog.next
+                    nextLog = goodNextLog.previous
                     if goodNextLog.level.severity < self.logVerbosity.severity { continue }
                     logs.append(goodNextLog)
                 }

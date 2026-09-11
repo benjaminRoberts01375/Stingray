@@ -13,7 +13,7 @@ public protocol MediaImageProviding {
     /// - Parameters:
     ///   - imageType: Shape of image
     ///   - mediaID: The mediaID of the media to get the image for
-    ///   - width: Target width of hte image
+    ///   - width: Target width of the image
     /// - Returns: A formatted URL to the image
     func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL?
 }

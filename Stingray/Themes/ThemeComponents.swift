@@ -1,5 +1,5 @@
 //
-//  ThemeViewModel.swift
+//  ThemeComponents.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 4/2/26.
@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Fills all available space with the current theme's background. Applied via `stingrayBackground()`.
 public struct StingrayBackground: ViewModifier {
     @Environment(ThemeModel.self) private var theme
     

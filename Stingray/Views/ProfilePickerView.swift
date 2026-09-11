@@ -7,15 +7,19 @@
 
 import SwiftUI
 
+/// A grid of signed-in profiles plus an "Add User" tile, reflowed to fit the available width.
 public struct ProfilePickerView: View {
     /// List of all users who have at some point signed into Stingray
     @State private var itemRows: [[PickerItem]] = []
     /// Login state for the entire app
     @Binding public var loginState: LoginState
 
+    /// Location where all users are stored
     public let userModel: UserModelProtocol
 
+    /// Size of a single profile tile
     public static let optionSize: CGSize = CGSize(width: 274, height: 335)
+    /// Gap between tiles, horizontally and vertically
     public static let spacing: CGSize = CGSize(width: 60, height: 45)
 
     /// Types of items available to show in the profile picker
@@ -25,6 +29,7 @@ public struct ProfilePickerView: View {
         /// Display the add user icon
         case addProfile
 
+        /// Stable identity for SwiftUI. The user's own ID, or a fixed key for the add tile
         public var id: String {
             switch self {
             case .addProfile: return "addProfile"
@@ -72,6 +77,7 @@ public struct ProfilePickerView: View {
     ///   - userModel: Location where users are stored
     ///   - currentLoginState: The current `LoginState`
     ///   - settingsModel: Location of settings and themes
+    ///   - pinModel: Data holding the user's PIN information
     /// - Returns: Updated `LoginState`
     public static func switchUser(
         user: any UserProtocol,
@@ -118,8 +124,10 @@ public struct ProfilePickerView: View {
     }
 }
 
+/// The "Add User" tile, navigating to the sign-in form.
 fileprivate struct AddProfile: View {
     @Environment(ThemeModel.self) private var theme
+    /// Login state, handed to the sign-in form
     @Binding public var loginState: LoginState
 
     /// Checks if add user button is selected
@@ -185,6 +193,7 @@ fileprivate struct ProfilePickerImage: View {
     }
 }
 
+/// A single profile tile that signs its user in when selected, prompting for a PIN first when one is set.
 fileprivate struct ProfilePickerUser: View {
     /// Current settings for the user
     @Environment(SettingsModel.self) private var settings
@@ -203,6 +212,11 @@ fileprivate struct ProfilePickerUser: View {
     /// User to display
     private let user: UserProtocol
 
+    /// Creates a profile tile.
+    /// - Parameters:
+    ///   - loginState: Login state to update when this profile is chosen
+    ///   - userModel: Location where all users are stored
+    ///   - user: User this tile represents
     init(loginState: Binding<LoginState>, userModel: UserModelProtocol, user: UserProtocol) {
         self.showLogoutAlert = false
         self._loginState = loginState

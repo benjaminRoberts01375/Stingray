@@ -18,6 +18,7 @@ public final class PurchasesModel {
 
     /// A simple string that contains the ID for the supporter tier
     public enum ProductID: String, CaseIterable {
+        /// The one-time supporter purchase. Raw value must match App Store Connect exactly
         case supporter = "com.benlab.Stingray.Supporter"
     }
 

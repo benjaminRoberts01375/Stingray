@@ -8,9 +8,12 @@
 import AVKit
 import SwiftUI
 
+/// Hosts the movie player, keeping playback alive across a Picture in Picture handoff.
 public struct MoviePlayerView: View {
     @Environment(\.dismiss) private var dismiss
+    /// Playback state for this movie
     @State public var vm: MoviePlayerViewModel
+    /// App navigation. Stashed on the view model when entering PiP and restored on the way back
     @Binding public var navigation: NavigationPath
 
     public var body: some View {
@@ -43,13 +46,19 @@ public struct MoviePlayerView: View {
     }
 }
 
+/// Wraps `AVPlayerViewController` for the movie player, wiring up the transport bar and the Description, People, and Stats tabs.
+/// An existing PiP stream for different content is killed on creation, so only one movie plays at a time.
 fileprivate struct PlayerViewControllerRepresentable: UIViewControllerRepresentable {
 
+    /// Playback state for this movie
     public let vm: MoviePlayerViewModel
 
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
+    /// Called when PiP first begins
     public let onStartPiP: () -> Void
+    /// Called when a PiP stream is becoming full-screen again
     public let onRestoreFromPiP: () -> Void
+    /// Called when PiP ends without being restored
     public let onStopFromPiP: () -> Void
 
     @Environment(ThemeModel.self) private var theme

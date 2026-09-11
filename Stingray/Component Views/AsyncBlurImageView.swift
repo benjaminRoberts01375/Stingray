@@ -8,6 +8,8 @@
 import BlurHashKit
 import SwiftUI
 
+/// Shows a blur hash placeholder immediately, then cross-fades to the full-resolution image once it loads.
+/// Failed loads are retried up to three times with backoff, since a large library can briefly overwhelm the server.
 public struct AsyncBlurImage: View {
     /// The preview image generated from a blur hash
     @State private var blurImage: UIImage?
@@ -18,7 +20,7 @@ public struct AsyncBlurImage: View {
 
     /// Blurry hash of the preview image
     private let blurHash: String?
-    /// Size of the hash to
+    /// Resolution of the image preview
     private let blurSize: CGSize
     /// Image to download the full resolution image
     private let imageURL: URL?
@@ -89,7 +91,7 @@ private actor BlurHashImageCache {
     
     /// A thread-safe, memory-pressure-aware cache of decoded placeholder images keyed by hash + size.
     /// Since a large library may have a couple thousand images, we have to work by approximate image size otherwise we'll just be
-    /// clearling the cache left right and center
+    /// clearing the cache left right and center
     private let cache = NSCache<NSString, UIImage>()
     
     /// Singleton setup for allowed memory usage

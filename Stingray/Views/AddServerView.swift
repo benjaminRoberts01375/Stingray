@@ -8,27 +8,47 @@
 import CoreImage.CIFilterBuiltins
 import SwiftUI
 
+/// Two-step sign-in: connect to a server, then authenticate by password or Quick Connect.
+/// Also used to refresh an existing user's credentials, in which case the new tokens land on the existing user rather than creating a
+/// second one. While connected, Quick Connect is polled every five seconds until the user enters the code or the view disappears.
 public struct AddServerView: View {
+    /// Login state, set once authentication succeeds
     @Binding public var loggedIn: LoginState
 
+    /// Transport the user picked. Also selects which address fields are shown
     @State private var httpProcol: HttpProtocol = .http
+    /// Hostname for HTTP, or the full URL for HTTPS
     @State private var httpHostname: String = ""
+    /// Port, only used for HTTP. Defaults to Jellyfin's
     @State private var httpPort: String = "8096"
 
+    /// Entered username
     @State private var username: String = ""
+    /// Entered password
     @State private var password: String = ""
 
+    /// Code the user types into Jellyfin. `nil` when Quick Connect is unavailable
     @State private var quickConnectCode: String?
+    /// Underlying failure, shown expandable beneath the form
     @State private var error: RError?
+    /// Human-readable summary of `error`
     @State private var errorSummary: String = ""
+    /// Whether a request is in flight, which disables the form
     @State private var loading: Bool = false
+    /// Whether the server has been reached. Also gates the Quick Connect polling loop
     @State private var connected: Bool = false
+    /// Validated base URL of the server
     @State private var jellyfinURL: URL?
 
+    /// Location where all users are stored
     public var userModel: UserModelProtocol
     @Environment(SettingsModel.self) public var settings: SettingsModel
     @Environment(\.dismiss) public var dismiss
 
+    /// Creates the sign-in form
+    /// - Parameters:
+    ///   - loginState: Login state to update once authentication succeeds
+    ///   - userModel: Location where the resulting user is stored
     public init(loginState: Binding<LoginState>, userModel: UserModelProtocol) {
         self._loggedIn = loginState
         self.userModel = userModel
@@ -143,6 +163,8 @@ public struct AddServerView: View {
         httpHostname = serviceURL.host ?? ""
     }
 
+    /// Turns the current `error` into a user-facing summary and clears the loading state.
+    /// Network failures are rewritten into protocol-specific advice, since "check your hostname and port" only makes sense over HTTP.
     private func setError() {
         guard let error = self.error else { return }
         if let netErr = error.last() as? NetworkError {

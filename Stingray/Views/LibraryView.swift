@@ -7,13 +7,19 @@
 
 import SwiftUI
 
+/// One library tab: a filterable, sortable grid of its media with a refresh button.
 public struct LibraryView: View {
+    /// Library being displayed. Media streams into it while the view is open
     @State public var library: any LibraryProtocol
 
+    /// App navigation, forwarded to each media card
     @Binding public var navigation: NavigationPath
 
+    /// Streaming service used for artwork and for resyncing the library
     public let streamingService: MediaImageProviding & LibraryProviding
+    /// Unused. `MediaCard.cardSize` is the real card width
     public let cardWidth = CGFloat(200)
+    /// Unused. `MediaGridView.cardSpacing` is the real grid spacing
     public let cardSpacing = CGFloat(50)
 
     public var body: some View {
@@ -51,18 +57,30 @@ public struct LibraryView: View {
     }
 }
 
+/// A media grid preceded by a scrolling row of filter, sort, and caller-supplied buttons. Filtering and sorting happen here rather than on
+/// the server, since all media is already local.
 public struct FilteredMediaGridView<ButtonContent: View>: View {
+    /// Every genre available to filter by
     public let availableGenres: Set<String>
+    /// Every maturity rating available to filter by
     public let availableMaturityRatings: Set<String>
+    /// Streaming service used for card artwork
     public let streamingService: any MediaImageProviding
+    /// Unfiltered, unsorted media. `filteredMedia` derives the displayed list from it
     public let allMedia: [any MediaRepresentableProtocol]
+    /// Extra buttons appended to the button row, ex. the library refresh button
     public var additionalButtons: () -> ButtonContent
+    /// Selected genres. Media must match every one of them
     @State private var appliedGenreFilters: Set<String> = []
+    /// Selected maturity ratings. Media must match any one of them
     @State private var appliedMaturityRatingFilters: Set<String> = []
+    /// Field currently sorted on
     @State private var sortBy: SortType = .sortTitle
+    /// Sort direction. Ignored when sorting randomly
     @State private var sortOrderAscending: Bool = true
     /// Seed for the random sort. Kept in state so the shuffle is stable across re-renders and only changes when Random is (re)selected.
     @State private var randomSeed: UInt64 = .random(in: .min ... .max)
+
     @Binding public var navigation: NavigationPath
 
     @Environment(SettingsModel.self) private var settings
@@ -247,13 +265,20 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     }
 }
 
+/// Orderings offered by the library and search sort menu.
 fileprivate enum SortType: CaseIterable {
+    /// The server's sort title, which honors user-set aliases. The default
     case sortTitle
+    /// The media's original title, ignoring aliases
     case title
+    /// Runtime, or per-episode runtime for shows
     case duration
+    /// Original release date
     case releaseDate
+    /// Seeded shuffle. Ignores sort direction and is reshuffled on demand
     case random
 
+    /// User-facing, localized menu label
     var rawValue: String {
         switch self {
         case .sortTitle: return String(localized: "Sort Title")
@@ -285,13 +310,19 @@ fileprivate struct SeededGenerator: RandomNumberGenerator {
     }
 }
 
+/// A lazily loaded, adaptive grid of media cards.
 public struct MediaGridView: View {
+    /// Gap between cards, horizontally and vertically
     public static let cardSpacing = 50.0
+    /// Media to display, already filtered and sorted
     public let allMedia: [any MediaRepresentableProtocol]
+    /// Streaming service used for card artwork
     public let streamingService: any MediaImageProviding
 
+    /// App navigation, forwarded to each media card
     @Binding public var navigation: NavigationPath
 
+    /// Columns sized to exactly one card, so cards never stretch to fill the row
     private static let columns = [
         GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.width), spacing: Self.cardSpacing)
     ]

@@ -1,5 +1,5 @@
 //
-//  UserView.swift
+//  SettingsView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 12/17/25.
@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// The settings tab: account management, playback, filtering, themes, accessibility, and supporter options.
 public struct SettingsView: View {
     /// Tracks if the user has logged in, is about to login, or needs to login.
     @Binding public var loginState: LoginState
@@ -17,8 +18,10 @@ public struct SettingsView: View {
     /// Controls when to show a dialog box for logging out
     @State private var showLogoutAlert: Bool
 
+    /// Location where all users are stored
     public var userModel: UserModelProtocol
 
+    /// User whose settings are being edited
     public let user: UserProtocol
 
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
@@ -27,12 +30,16 @@ public struct SettingsView: View {
     /// Controlls the sheet to show the current session's logs
     @State private var showLogs: Bool
 
+    /// Controls the sheet for re-entering server credentials
     @State private var showRefreshLogin: Bool
 
+    /// Gates destructive actions behind the profile's PIN. Replaced after each use so the next prompt starts fresh
     @State private var enterPIN: PINModel
 
+    /// Controls when to show a dialog box for resetting settings
     @State private var showResetSettings: Bool
 
+    /// Current connection to the server, used to log the user out
     public let streamingService: UserProviding
     
     /// Create a SettingsView view for altering user and app settings
@@ -338,8 +345,11 @@ public struct ThemesListView: View {
     }
 }
 
+/// Languages Stingray ships translations for, offered in the language picker alongside a "System" option.
 public enum SupportedLanguages: CaseIterable {
+    /// English
     case english
+    /// German
     case german
 
     /// The name of the language in the language it is

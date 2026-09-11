@@ -99,7 +99,8 @@ Configure Stingray to look and feel how you want it.
       - Separate out SwiftUI Player tabs into their own structs
   - Remove unused `Equatable` conformance from `MediaCard`
   - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
-  - Massively improve documentation around the `slidingLevenshteinDistance` function
+  - Document all the things
+    - Massively improve documentation around the `slidingLevenshteinDistance` function
   - Update all Swift files to use Xcode 27's reworked auto-indent formatting
   - Remove unused `Equatable` conformance from `MediaSource`
   - Remove practically unused `completed` and `unloaded` statuses for individual libraries
@@ -167,8 +168,3 @@ Configure Stingray to look and feel how you want it.
 - [ ] Live TV.
 - [ ] Music Support.
 - [ ] Trickplay.
-
-### Code Quality
-
-- [ ] Break up the Detail Media View into smaller pieces.
-- [ ] Comment all class/struct/enum variables and functions.

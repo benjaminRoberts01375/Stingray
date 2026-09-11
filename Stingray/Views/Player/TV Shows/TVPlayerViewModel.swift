@@ -1,5 +1,5 @@
 //
-//  PlayerViewModel.swift
+//  TVPlayerViewModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 12/4/25.
@@ -8,6 +8,11 @@
 import AVKit
 import SwiftUI
 
+/// Drives playback for one episode of a TV show, including moving between episodes.
+///
+/// Jellyfin has no concept of switching tracks on a live stream, so every subtitle, audio, video, or bitrate change tears the stream down
+/// and builds a new one via `newPlayer(...)`. Holds all seasons so it can autoplay, skip, and populate the episode picker without a
+/// round trip. Identity is the media source ID, which is what makes it usable as a `NavigationPath` value.
 @Observable
 public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     /// Player with formatted URL already set
@@ -19,6 +24,7 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     /// Quickly get the media source from the media source ID
     public var mediaSource: any MediaSourceProtocol
 
+    /// User settings, read for subtitles, bitrate, autoplay, and speed, and written back when the viewer changes them mid-playback
     public private(set) var settingsModel: SettingsModel
 
     /// Current player progress (exposed for observation)
@@ -43,6 +49,13 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     }
 
     /// Normal init for setting up a player
+    /// - Parameters:
+    ///   - media: Show the episode belongs to, used for titles and artwork
+    ///   - mediaSource: Specific episode source to play
+    ///   - startTime: Where to begin playback. `nil` starts from the beginning
+    ///   - streamingService: Connection to the server
+    ///   - seasons: Every season of the show, needed for next/previous episode and the episode picker
+    ///   - settingsModel: User settings for subtitles, bitrate, autoplay, and speed
     public init(
         media: any MediaMetadataProtocol,
         mediaSource: any MediaSourceProtocol,
@@ -216,12 +229,18 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         )
     }
 
+    /// Pauses playback and tells the server this session is over.
     public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
 
+    /// Marks the currently playing episode as watched now, and normalizes its resume point.
+    ///
+    /// Also clears `startPoint` back to `0` when playback sits past 90% or before 10% of the runtime, so a finished episode doesn't resume
+    /// in its final seconds and a barely-started one doesn't resume mid-credits-sequence. Call before switching episodes, or the outgoing
+    /// episode keeps a stale resume point.
     public func savePlaybackDate() {
         for seasonIndex in self.seasons.indices {
             for episodeIndex in self.seasons[seasonIndex].episodes.indices {

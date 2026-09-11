@@ -1,5 +1,5 @@
 //
-//  JellyfinModel.swift
+//  StreamingServiceModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 11/13/25.
@@ -53,7 +53,6 @@ public protocol PlayerProviding {
     ///   - title: Title of the media to put on the player.
     ///   - subtitle: Subtitle, if available, to put on the player.
     ///   - player: An AVPlayer instance to update and use.
-    /// - Returns: Playback device.
     func playbackStart(
         mediaSource: any MediaSourceProtocol,
         videoID: String,
@@ -256,6 +255,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - url: Base URL.
     ///   - username: Signin username.
     ///   - password: Signin password.
+    ///   - userModel: User storage to load the user from
+    ///   - settingsModel: Settings model to write updated settings to
     /// - Returns: The configured Jellyfin model.
     public static func login(
         url: URL,
@@ -277,6 +278,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     /// - Parameters:
     ///   - url: Base URL.
     ///   - quickConnectSecret: The quick connect secret retrieved by the server
+    ///   - userModel: User storage to load the user from
+    ///   - settingsModel: Settings model to write updated settings to
     /// - Returns: The configured Jellyfin model.
     public static func login(
         url: URL,

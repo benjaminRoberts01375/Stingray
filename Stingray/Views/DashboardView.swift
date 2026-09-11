@@ -7,16 +7,27 @@
 
 import SwiftUI
 
+/// The signed-in shell: a tab per library alongside the settings, search, and home tabs.
+///
+/// Also owns every `navigationDestination` for media, so both deep links and in-app cards resolve to a detail view from here.
 public struct DashboardView: View {
+    /// Streaming service backing every tab
     public var streamingService: UserProviding & LibraryProviding & SystemInfoProviding & MediaImageProviding & MediaProviding &
     PlayerProviding & RecommendationProviding
+    /// Selected tab. Holds either a fixed name or a library ID
     @State private var selectedTab: String = "home"
+    /// App navigation, shared with every tab and detail view
     @Binding public var navigationPath: NavigationPath
+    /// A pending deep link. Appended to the navigation path and then cleared
     @Binding public var deepLinkRequest: DeepLinkRequest?
+    /// Login state, so the settings tab can sign the user out or switch profiles
     @Binding public var loggedIn: LoginState
 
+    /// Currently signed-in user
     public let user: UserProtocol
+    /// Location where all users are stored
     public let userModel: UserModelProtocol
+
     @Environment(SettingsModel.self) public var settings: SettingsModel
 
     public var body: some View {
@@ -132,7 +143,9 @@ public struct DashboardView: View {
 }
 
 /// A type-erased wrapper for MediaProtocol that conforms to Hashable
+/// `NavigationPath` requires concrete `Hashable` values, which `any MediaProtocol` can't satisfy on its own.
 public struct AnyMedia: Hashable {
+    /// The wrapped media. Identity is its `id` alone
     public let media: any MediaProtocol
 
     public static func == (lhs: AnyMedia, rhs: AnyMedia) -> Bool {

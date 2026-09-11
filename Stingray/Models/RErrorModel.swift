@@ -1,5 +1,5 @@
 //
-//  RError.swift
+//  RErrorModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 1/24/26.
@@ -133,8 +133,11 @@ public enum NetworkError: RError {
     }
 }
 
+/// HTTP protocol types
 public enum HttpProtocol: String, CaseIterable {
+    /// Plain insecure HTTP >:(
     case http = "http"
+    /// HTTPS. The good stuff
     case https = "https"
 }
 
@@ -197,7 +200,7 @@ public enum JSONError: RError {
         case .failedJSONEncode(let objectName):
             return "Failed to encode JSON for \(objectName)"
         case .unexpectedKey:
-            return "The unwraped JSON value was unexpected"
+            return "The unwrapped JSON value was unexpected"
         }
     }
 }
@@ -264,7 +267,7 @@ public enum AdvancedNetworkErrors: RError {
     case failedRecentlyAdded(RError)
     /// Failed to get "up next" (what to watch next).
     case failedUpNext(RError)
-    /// Failed to get special features for a particular `MediaModelProtocol`.
+    /// Failed to get special features for a particular `MediaProtocol`.
     case failedSpecialFeatures(RError)
 
     public var next: (any RError)? {
@@ -285,7 +288,7 @@ public enum AdvancedNetworkErrors: RError {
 
 /// Different ways a Library can error out while setting up.
 public enum LibraryErrors: RError {
-    /// Failed ot get library metadata
+    /// Failed to get library metadata
     case gettingLibraries(RError)
     /// Failed to get library media. The `String` value is the name/id of the library
     case gettingLibraryMedia(RError, String)
@@ -376,6 +379,7 @@ public enum UserDefaultsErrors: RError {
 
 /// Errors for `DefaultsBasicStorage`
 public enum BasicStorageErrors: RError {
+    /// `UserDefaults` could not be opened for the shared app group, so nothing can be persisted
     case userDefaultsSetup
 
     public var next: (any RError)? {
@@ -393,6 +397,7 @@ public enum BasicStorageErrors: RError {
 
 /// Errors during app setup
 public enum SetupErrors: RError {
+    /// Permanent storage failed to open. Stingray stops rather than risk writing over the user's existing data
     case databaseError(RError)
 
     public var next: (any RError)? {
@@ -421,6 +426,7 @@ public enum QuickConnectErrors: RError {
     /// Failed to check if Quick Connect is enabled
     case isEnabled(RError)
 
+    /// Failed to poll the server for whether the user has entered the Quick Connect code yet
     case statusFailedtoFetch(RError)
 
     public var next: (any RError)? {
@@ -449,11 +455,17 @@ public enum QuickConnectErrors: RError {
 
 /// Errors for in app purchases
 public enum StoreErrors: RError {
+    /// StoreKit rejected the purchase attempt
     case purchaseFailed(Product, Error)
+    /// StoreKit reported a `PurchaseResult` case that did not exist when this was written
     case purchasesUpdated
+    /// The transaction came back unverified, meaning its signature could not be trusted
     case tamperedPurchase(Product, Error)
+    /// The supporter product was missing from an otherwise successful product fetch
     case productUnavailable
+    /// The product list could not be fetched from App Store Connect at all
     case productsUnavailable(Error)
+    /// A purchase was attempted before the product list finished loading
     case productsStillLoading
 
     public var next: (any RError)? { nil }

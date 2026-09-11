@@ -31,7 +31,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func debug(_ message: String) {
         Log.shared.logger.debug("\(message, privacy: .public)")
-        Log.lastLogEntry = LogEntry(message: message, level: .debug, next: Log.lastLogEntry)
+        Log.lastLogEntry = LogEntry(message: message, level: .debug, previous: Log.lastLogEntry)
     }
     
     /// Useful runtime info and app flow - stored briefly.
@@ -40,7 +40,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func info(_ message: String) {
         Log.shared.logger.info("\(message, privacy: .public)")
-        Log.lastLogEntry = LogEntry(message: message, level: .info, next: Log.lastLogEntry)
+        Log.lastLogEntry = LogEntry(message: message, level: .info, previous: Log.lastLogEntry)
     }
     
     /// Unexpected but recoverable issue cropped up.
@@ -49,7 +49,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func warning(_ message: String) {
         Log.shared.logger.warning("\(message, privacy: .public)")
-        Log.lastLogEntry = LogEntry(message: message, level: .warning, next: Log.lastLogEntry)
+        Log.lastLogEntry = LogEntry(message: message, level: .warning, previous: Log.lastLogEntry)
     }
     
     /// Something failed, but the lights are still on.
@@ -58,7 +58,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func error(_ message: String) {
         Log.shared.logger.error("\(message, privacy: .public)")
-        Log.lastLogEntry = LogEntry(message: message, level: .error, next: Log.lastLogEntry)
+        Log.lastLogEntry = LogEntry(message: message, level: .error, previous: Log.lastLogEntry)
     }
     
     /// The app can no longer function. Use sparingly.
@@ -67,7 +67,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func critical(_ message: String) {
         Log.shared.logger.critical("\(message, privacy: .public)")
-        Log.lastLogEntry = LogEntry(message: message, level: .critical, next: Log.lastLogEntry)
+        Log.lastLogEntry = LogEntry(message: message, level: .critical, previous: Log.lastLogEntry)
     }
 }
 
@@ -80,29 +80,35 @@ public final class LogEntry: Encodable, Identifiable {
     /// The importance of the log
     public let level: LogLevel
     
+    /// When the entry was created
     public let timestamp: Date
-    /// The next log message
-    public fileprivate(set) var next: LogEntry?
-    
+    /// The previous log message
+    public fileprivate(set) var previous: LogEntry?
+
     /// Creates a single log entry
     /// - Parameters:
     ///   - message: Message to display
     ///   - level: Importance of the log
-    ///   - next: Next log in the list
-    public init(message: String, level: LogLevel, next: LogEntry?) {
+    ///   - previous: The last log message
+    public init(message: String, level: LogLevel, previous: LogEntry?) {
         self.message = message
         self.level = level
-        self.next = next
+        self.previous = previous
         self.timestamp = Date()
     }
 }
 
 /// Denotes how important a log is
 public enum LogLevel: String, Encodable, CaseIterable {
+    /// Verbose dev-only detail: variable values and flow tracing
     case debug = "Debug"
+    /// Useful runtime milestones, like a profile loading or an API finishing setup
     case info = "Info"
+    /// Unexpected but recoverable, like a missing JSON key that was defaulted
     case warning = "Warning"
+    /// Something failed unrecoverably, but the app keeps running
     case error = "Error"
+    /// The app can no longer function. The user is stuck or about to crash
     case critical = "Critical"
     
     /// A localized, user-facing name for the log level.

@@ -7,9 +7,11 @@
 
 import SwiftUI
 
+/// A horizontally scrolling row of cast and crew, with names that marquee while focused.
 public struct PeopleBrowserView: View {
     /// Media to pull people from
     public let people: [any MediaPersonProtocol]
+    /// Streaming service used to load each person's photo
     public let streamingService: MediaImageProviding
 
     @Environment(ThemeModel.self) private var theme

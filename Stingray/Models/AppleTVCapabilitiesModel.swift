@@ -29,7 +29,6 @@ public struct AppleTVCapabilities {
     /// Get the capabilities of an Apple TV from an identifier
     /// - Parameter hardwareModel: A hardware identifier as returned by `uname`, ex. `"AppleTV14,1"`
     public init(hardwareModel: String) {
-        let hardwareModel = Self.hardwareModelIdentifier()
 
         switch hardwareModel {
         case "AppleTV5,3": // Apple TV HD (4th gen, 2015, A8): no HEVC hardware decoder

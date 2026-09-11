@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Backdrop art for a detail view, blurring on demand so foreground text stays readable.
 public struct MediaBackgroundView: View {
     /// Preview for the background image
     @State private var blurImage: UIImage?

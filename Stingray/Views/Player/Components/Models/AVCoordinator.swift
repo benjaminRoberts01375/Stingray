@@ -8,26 +8,43 @@
 import AVKit
 import UIKit
 
+/// Bridges `AVPlayerViewController`'s Picture in Picture delegate callbacks back into SwiftUI, and logs playback failures.
+///
+/// tvOS tears the player view controller down when PiP starts, so `activePiPCoordinator` holds the coordinator alive for the duration.
+/// That also means callers must check `activePiPCoordinator` before stopping a player on disappear, or backgrounding into PiP would kill
+/// the stream it just created.
 public class AVPlayerCoordinator: NSObject, AVPlayerViewControllerDelegate {
+    /// Function to call when PiP first begins
     public let onStartPiP: () -> Void
+    /// Function to call when PiP is active and is becoming full-screen
     public let onRestoreFromPiP: () -> Void
+    /// Function to call when the PiP ends
     public let onStopFromPiP: () -> Void
     /// Used for PiP identification
     public let id: String
 
-    // Maintain a reference to a PiP instance
+    /// Maintain a reference to a PiP instance
     public weak var playerViewController: AVPlayerViewController?
-    // Maintain a reference to this Coordinator while PiP is active
+    /// Maintain a reference to this Coordinator while PiP is active
     public static var activePiPCoordinator: AVPlayerCoordinator?
 
-    // Track whether we're restoring vs closing
+    /// Track whether we're restoring vs closing
     private var isRestoringFromPiP = false
 
     // Keep error observation alive for the lifetime of the coordinator
+    /// Watches for the player swapping in a new item, so failure observation can be re-hooked onto it
     private var currentItemObservation: NSKeyValueObservation?
+    /// Watches the current item's load status
     private var itemStatusObservation: NSKeyValueObservation?
+    /// Watches for the current item failing partway through playback
     private var failedToPlayObserver: NSObjectProtocol?
 
+    /// Creates a coordinator for one media source's player.
+    /// - Parameters:
+    ///   - id: Media source ID, used to tell whether an active PiP stream is the same content the user is now opening
+    ///   - onStartPiP: Called when PiP first begins
+    ///   - onRestoreFromPiP: Called when a PiP stream is becoming full-screen again
+    ///   - onStopFromPiP: Called when PiP ends without being restored
     public init(
         id: String,
         onStartPiP: @escaping () -> Void,
@@ -40,6 +57,7 @@ public class AVPlayerCoordinator: NSObject, AVPlayerViewControllerDelegate {
         self.onStopFromPiP = onStopFromPiP
     }
 
+    /// Tears down the player, which on tvOS also dismisses any PiP window it owns.
     public func stopPlayer() {
         // On tvOS, stopping the player will end PiP automatically
         playerViewController?.player?.pause()
@@ -91,11 +109,9 @@ public class AVPlayerCoordinator: NSObject, AVPlayerViewControllerDelegate {
 
     public func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {
         Log.info("PiP stopped")
-        if !isRestoringFromPiP {
-            onStopFromPiP()
-        }
+        if !self.isRestoringFromPiP { self.onStopFromPiP() }
 
-        isRestoringFromPiP = false // Reset for next time
+        self.isRestoringFromPiP = false // Reset for next time
         Self.activePiPCoordinator = nil
     }
 
@@ -118,8 +134,8 @@ public class AVPlayerCoordinator: NSObject, AVPlayerViewControllerDelegate {
         restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
     ) {
         Log.info("Restoring UI from PiP")
-        isRestoringFromPiP = true // Flag that this is a restore, not a close
-        onRestoreFromPiP()
+        self.isRestoringFromPiP = true // Flag that this is a restore, not a close
+        self.onRestoreFromPiP()
         completionHandler(true)
     }
 }

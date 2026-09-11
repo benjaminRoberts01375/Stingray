@@ -7,11 +7,17 @@
 
 import Foundation
 
+/// A single library on the server, along with the media downloaded into it so far.
 public protocol LibraryProtocol: AnyObject, Identifiable {
+    /// User-facing name of the library
     var title: String { get }
+    /// ID provided by the server
     var id: String { get }
+    /// Fetch progress for this library's media. Holds the media itself once any is available
     var media: MediaStatus { get set }
+    /// Every genre seen across this library's media, accumulated as pages arrive. Drives the genre filter
     var genres: Set<String> { get set }
+    /// Every maturity rating seen across this library's media, accumulated as pages arrive. Drives the maturity filter
     var maturityRatings: Set<String> { get set }
 }
 
@@ -25,6 +31,7 @@ public enum MediaStatus {
     case error(RError)
 }
 
+/// Holds a single library's metadata and its downloaded media.
 @Observable
 public final class LibraryModel: LibraryProtocol, Decodable {
     public var title: String
@@ -32,8 +39,12 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var id: String
     public var genres: Set<String>
     public var maturityRatings: Set<String>
-
-    public init(title: String, id: String, libraryType: String) {
+    
+    /// Create a model for storing a single Library's data
+    /// - Parameters:
+    ///   - title: User-facing name of the library
+    ///   - id: Unique ID of this library
+    public init(title: String, id: String) {
         self.title = title
         self.media = .waiting
         self.id = id
@@ -48,6 +59,8 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         case libraryType = "CollectionType"
     }
     
+    /// Create a `LibraryModel` from JSON. Media always starts empty, since libraries are paged in separately.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)

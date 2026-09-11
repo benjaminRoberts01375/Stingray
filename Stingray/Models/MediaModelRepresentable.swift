@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// A slimmed down version of the `MediaModelProtocol` for faster loading.
+/// A slimmed down version of the `MediaProtocol` for faster loading.
 public protocol MediaRepresentableProtocol: Displayable, MediaMetadataProtocol, Hashable {
     /// ID provided by the server.
     var id: String { get }
@@ -45,6 +45,7 @@ public protocol MediaImageBlurHashesProtocol {
     var backdrop: String? { get }
 }
 
+/// The descriptive metadata shared by every kind of media, independent of how it is played.
 public protocol MediaMetadataProtocol: Identifiable {
     /// Unique identifier for this media
     var id: String { get }
@@ -176,14 +177,16 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
         case imageHashes = "ImageBlurHashes"
     }
 
+    /// Create a `MediaPerson` from JSON. Every field falls back to a placeholder rather than failing the whole decode.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
 
-            id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
-            name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Anonymous"
-            role = try container.decodeIfPresent(String.self, forKey: .role) ?? "Unknown Roll"
-            imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
+            self.id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
+            self.name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Anonymous"
+            self.role = try container.decodeIfPresent(String.self, forKey: .role) ?? "Unknown Roll"
+            self.imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "MediaPerson") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -213,6 +216,9 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
         lhs.backdrop == rhs.backdrop
     }
     
+    /// Create a `MediaImageBlurHashes` from JSON.
+    /// The server nests each hash under an image-tag key, so only the first value of each map is kept.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -249,12 +255,19 @@ public final class MediaImages: Decodable, Equatable, MediaImagesProtocol {
         case primary = "Primary"
     }
     
+    /// Create image tags directly, for placeholder and example media.
+    /// - Parameters:
+    ///   - thumbnail: Thumbnail image tag
+    ///   - logo: Logo image tag
+    ///   - primary: Primary, or poster, image tag
     public init(thumbnail: String?, logo: String?, primary: String?) {
         self.thumbnail = thumbnail
         self.logo = logo
         self.primary = primary
     }
     
+    /// Create a `MediaImages` from JSON. A missing tag simply means the server has no image of that kind.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -292,6 +305,8 @@ public final class ExampleMedia: MediaRepresentableProtocol {
     
     public func hash(into hasher: inout Hasher) { hasher.combine(id) }
     
+    /// Creates example media with fixed placeholder metadata, used by the theme previews.
+    /// - Parameter title: Title to display
     public init(title: String) {
         self.title = title
         self.sortTitle = title

@@ -8,10 +8,13 @@
 import AVFoundation
 import SwiftUI
 
+/// The player's "Stats" info tab: fixed stream metadata alongside live playback numbers refreshed once a second.
 public struct PlayerStreamingStats: View {
     /// All data regarding current playback
     public var vm: AVPlayerViewModelProtocol
 
+    /// Snapshots the stream IDs at init, since `playerProgress` is cleared when the stream is torn down.
+    /// - Parameter vm: View model containing the playing content
     public init(vm: AVPlayerViewModelProtocol) {
         self.mediaSourceID = vm.playerProgress?.mediaSource.id ?? "Unknown"
         self.mediaSourceTitle = vm.playerProgress?.mediaSource.name ?? "Untitled"
@@ -140,6 +143,12 @@ public struct PlayerStreamingStats: View {
         else { self.bufferDuration = 0 }
     }
 
+    /// Reads the H.264 profile out of the track's `avcC` configuration atom.
+    ///
+    /// AVFoundation exposes no profile API, so the raw atom is read directly. Byte 1 of `avcC` is `AVCProfileIndication`, where the
+    /// values below are the profile numbers from the H.264 spec.
+    /// - Parameter formatDescription: Format description of the playing video track
+    /// - Returns: A display name for the profile, or `nil` if the atom is missing or truncated
     private func getH264Profile(from formatDescription: CMFormatDescription) -> String? {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],
@@ -155,6 +164,12 @@ public struct PlayerStreamingStats: View {
         }
     }
 
+    /// Reads the HEVC profile out of the track's `hvcC` configuration atom.
+    ///
+    /// Byte 1 of `hvcC` packs the general profile space and IDC; a value of `2` is Main 10, which is all Stingray needs to distinguish
+    /// since it only ever requests Main or Main 10.
+    /// - Parameter formatDescription: Format description of the playing video track
+    /// - Returns: A display name for the profile, or `nil` if the atom is missing or truncated
     private func getHEVCProfile(from formatDescription: CMFormatDescription) -> String? {
         guard let extensions = CMFormatDescriptionGetExtensions(formatDescription) as? [String: Any],
               let atoms = extensions["SampleDescriptionExtensionAtoms"] as? [String: Any],

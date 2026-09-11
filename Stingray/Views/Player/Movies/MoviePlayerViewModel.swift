@@ -8,21 +8,30 @@
 import AVFoundation
 import SwiftUI
 
+/// Drives playback for a movie or a special feature.
+/// Jellyfin has no concept of switching tracks on a live stream, so every subtitle, audio, video, or bitrate change tears the stream down
+/// and builds a new one via `newPlayer(...)`. Identity is the media source ID, which is what makes it usable as a `NavigationPath` value.
 @Observable
 public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
+    /// User settings, read for subtitles, bitrate, and speed, and written back when the viewer changes them mid-playback
     public private(set) var settingsModel: SettingsModel
 
+    /// Server to stream from
     @ObservationIgnored public let streamingService: PlayerProviding & MediaImageProviding
 
+    /// Store and restore the current navigation path across a Picture in Picture handoff
     @ObservationIgnored public var navigationPath: NavigationPath?
 
     /// Trigger to refresh transport bar items
     public var transportBarNeedsUpdate: Bool = false
 
+    /// Player with formatted URL already set
     public private(set) var player: AVPlayer
 
+    /// Media the source belongs to, used for the title shown on the player
     public private(set) var media: any MediaMetadataProtocol
 
+    /// Specific source being played. Movies may offer several versions
     public var mediaSource: any MediaSourceProtocol
 
     /// Current player progress
@@ -32,7 +41,14 @@ public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
 
     public func hash(into hasher: inout Hasher) { hasher.combine(media.id) }
 
-    // Normal init for setting up a movie player
+    /// Normal init for setting up a movie player
+    /// - Parameters:
+    ///   - settingsModel: Load the user's settings
+    ///   - streamingService: Connection to the server
+    ///   - navigationPath: Stingray's navigation
+    ///   - media: Media to show on screen
+    ///   - mediaSource: Specific source of the media to show
+    ///   - startTime: Where in the media source to start from
     public init(
         settingsModel: SettingsModel,
         streamingService: PlayerProviding & MediaImageProviding,
@@ -118,6 +134,7 @@ public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         self.player.play()
     }
 
+    /// Pauses playback and tells the server this session is over, and drops `playerProgress`
     public func stopPlayer() {
         player.pause()
         self.playerProgress = nil

@@ -7,8 +7,12 @@
 
 import SwiftUI
 
+/// A non-interactive preview of the current theme, showing a sample card alongside the theme's name and description.
+/// Reads the theme from the environment, so wrapping it in `.environment(someThemeModel)` renders that theme instead of the user's.
 public struct ThemeExampleView: View {
+    /// Placeholder media so the card has a title and artwork to render
     private let exampleMedia = ExampleMedia(title: "Example")
+    /// Serves bundled sample posters in place of a real server
     private let exampleService = ExampleStreamingService()
     
     @Environment(ThemeModel.self) private var theme

@@ -1,5 +1,5 @@
 //
-//  SpecialFeaturesRow.swift
+//  SpecialFeatures.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 6/15/26.
@@ -10,9 +10,12 @@ import SwiftUI
 
 /// Displays each of the special feature types for the given media
 public struct SpecialFeaturesView: View {
+    /// App navigation, forwarded to each feature's player
     @Binding public var navigation: NavigationPath
 
+    /// Streaming service used to fetch the features and their artwork
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
+    /// Media whose special features are shown. Fetching is kicked off lazily on first appearance
     public let media: any MediaProtocol
 
     public var body: some View {
@@ -32,17 +35,29 @@ public struct SpecialFeaturesView: View {
     }
 }
 
+/// One row of special features, all sharing a feature type.
 fileprivate struct SpecialFeaturesRow: View {
+    /// Streaming service used for artwork and playback
     public let streamingService: MediaProviding & MediaImageProviding & PlayerProviding
+    /// Features in this row. Assumed non-empty, since the title is read from the first element
     public let rowData: [any SpecialFeatureProtocol]
+    /// Row heading, taken from the first feature's type
     public let title: String
+    /// Media these features belong to
     public let media: any MediaProtocol
 
+    /// App navigation, forwarded to each feature's player
     @Binding public var navigation: NavigationPath
 
     @Environment(SettingsModel.self) private var settings: SettingsModel
     @Environment(ThemeModel.self) private var theme
 
+    /// Creates a row for one group of special features.
+    /// - Parameters:
+    ///   - streamingService: Streaming service used for artwork and playback
+    ///   - rowData: Features to show. Must not be empty, as the heading comes from its first element
+    ///   - media: Media these features belong to
+    ///   - navigation: App navigation, forwarded to each feature's player
     public init(
         streamingService: MediaProviding & MediaImageProviding & PlayerProviding,
         rowData: [any SpecialFeatureProtocol],

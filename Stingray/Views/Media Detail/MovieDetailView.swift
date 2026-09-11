@@ -10,6 +10,7 @@ import BlurHashKit
 import SwiftUI
 
 // MARK: Main view
+/// A movie's detail screen: logo over backdrop art, with a bottom shelf of metadata, special features, and cast that slides up on focus.
 public struct MovieDetailView: View {
     /// Media that contains content to play
     public let media: any MediaProtocol
@@ -18,11 +19,16 @@ public struct MovieDetailView: View {
     /// All available content sources for this movie and its various versions
     public let mediaSources: [any MediaSourceProtocol]
 
+    /// App navigation, used to push the player
     @Binding public var navigation: NavigationPath
 
+    /// Blurs the backdrop once focus leaves the play button
     @State private var shouldBackgroundBlur: Bool = false
+    /// Slides the metadata shelf up once focus leaves the play button
     @State private var shouldRevealBottomShelf: Bool = false
+    /// Unused. The shelf's visibility is driven by `shouldRevealBottomShelf`
     @State private var shouldShowMetaData: Bool = false
+    /// Which element has focus. Drives both the blur and the shelf
     @FocusState private var focus: ButtonType?
 
     @Environment(SettingsModel.self) private var settings
@@ -129,16 +135,29 @@ public struct MovieDetailView: View {
 }
 
 // MARK: Play button
+/// Button for beginning playback. Renders a plain button for a single unwatched version, and a menu otherwise, splitting into Resume and
+/// Restart sections once any version has progress.
 fileprivate struct PlayNavigationView: View {
+    /// Movie being played
     private let media: any MediaProtocol
+    /// Streaming service used to start playback
     private let streamingService: PlayerProviding & MediaImageProviding
+    /// Button label, taken from the movie's title
     private var title: String
+    /// Every version of this movie
     private let mediaSources: [any MediaSourceProtocol]
 
+    /// App navigation, used to push the player
     @Binding var navigation: NavigationPath
 
     @Environment(SettingsModel.self) var settings: SettingsModel
 
+    /// Creates the play control for a movie.
+    /// - Parameters:
+    ///   - navigation: App navigation, used to push the player
+    ///   - media: Movie to play
+    ///   - mediaSources: Every version of the movie
+    ///   - streamingService: Streaming service used to start playback
     init(
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
@@ -227,6 +246,10 @@ fileprivate struct PlayNavigationView: View {
         }
     }
 
+    /// Pushes the movie player for one version at a given position.
+    /// - Parameters:
+    ///   - mediaSource: Version to play
+    ///   - startPoint: Where to begin, in seconds. Pass `.zero` to restart
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         self.navigation.append(
             MoviePlayerViewModel(
@@ -242,9 +265,14 @@ fileprivate struct PlayNavigationView: View {
 
 /// Types of buttons available on the `MovieDetailView`
 fileprivate enum ButtonType: Hashable {
+    /// The play button or play menu
     case play
+    /// The description panel
     case overview
+    /// The genres, release, and maturity panel
     case metadata
+    /// The cast and crew row
     case people
+    /// One of the special features rows
     case specialFeatures
 }

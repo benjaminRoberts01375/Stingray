@@ -313,6 +313,10 @@ public final class MediaSource: Decodable, MediaSourceProtocol {
         case defaultAudioIndex = "DefaultAudioStreamIndex"
     }
     
+    /// Create a `MediaSource` from JSON.
+    /// Splits the server's single `MediaStreams` array into video, audio, and subtitle collections, and marks the server's default audio
+    ///  stream so playback can start on the right track.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -370,6 +374,10 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         case isDefault = "IsDefault"
     }
     
+    /// Create a `MediaStream` from JSON.
+    /// Bitrate is inflated for AV1, which the Apple TV cannot decode: the stream will be transcoded, so it needs a higher target bitrate
+    /// to come out looking comparable.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -548,6 +556,16 @@ public final class TVEpisode: TVEpisodeProtocol {
     public var overview: String?
     public let people: [any MediaPersonProtocol]
     
+    /// Creates an episode. Built by `TVSeason.decodeSeasons(from:)` rather than decoded directly.
+    /// - Parameters:
+    ///   - id: ID given by the server
+    ///   - blurHashes: Hashes for rendering preview artwork before the real image loads
+    ///   - title: Name of the episode
+    ///   - episodeNumber: Episode number within its season
+    ///   - mediaSources: Playable sources for this episode
+    ///   - lastPlayed: When the episode was last watched. `nil` if never
+    ///   - overview: Longer description. `nil` if the server has none
+    ///   - people: Cast and crew credited on this episode
     public init(
         id: String,
         blurHashes: MediaImageBlurHashes? = nil,

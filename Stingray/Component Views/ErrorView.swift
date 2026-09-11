@@ -1,5 +1,5 @@
 //
-//  Error-View.swift
+//  ErrorView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 1/26/26.
@@ -51,7 +51,7 @@ fileprivate struct ErrorSummaryView: View {
 
 /// Show a verbose version of an RError
 public struct ErrorExpandedView: View {
-    /// Verbose error thrown by Stingray
+    /// Verbose error thrown by Stingray and is lazily evaluated
     public let errorDesc: () -> String
     
     public var body: some View {

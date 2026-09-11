@@ -96,7 +96,7 @@ public protocol AdvancedNetworkProtocol {
     /// - Parameters:
     ///   - contentType: Type of media to retrieve
     ///   - accessToken: Access token for the server
-    /// - Returns: A silm verion of the media type
+    /// - Returns: A slim version of each media item
     func getRecentlyAdded(
         contentType: RecentlyAddedMediaType,
         accessToken: String
@@ -136,12 +136,17 @@ public protocol AdvancedNetworkProtocol {
     func getSeasonMedia(accessToken: String, showID: String, priority: RequestPriority) async throws -> [TVSeason]
 }
 
+/// Direction the server should sort a library request in.
 public enum LibraryMediaSortOrder: String {
+    /// A→Z, oldest first, smallest first
     case ascending = "Ascending"
+    /// Z→A, newest first, largest first
     case Descending = "Descending"
 }
 
+/// Raw values are the server's field names, so cases must not be renamed without checking the API
 public enum LibraryMediaSortBy: String {
+    /// Whatever order the server considers default
     case Default = "Default"
     case AiredEpisodeOrder = "AiredEpisodeOrder"
     case Album = "Album"
@@ -174,14 +179,22 @@ public enum LibraryMediaSortBy: String {
     case IndexNumber = "IndexNumber"
 }
 
+/// A successful authentication response, flattened from Jellyfin's nested `User` and `SessionInfo` objects.
 public struct APILoginResponse: Decodable {
+    /// Display name of the authenticated user
     public let userName: String
+    /// Server-issued session identifier
     public let sessionId: String
+    /// Server-issued user identifier
     public let userId: String
+    /// Token authenticating every subsequent request
     public let accessToken: String
+    /// Identifier of the server itself
     public let serverId: String
+    /// Server version. Not part of the login payload, so it starts `nil` and is filled in by a later `/System/Info` call
     public var serverVersion: String?
     
+    /// Every field in one line. Includes the access token, so keep it out of logs
     public var description: String {
         return "User's name: \(userName), SessionID: \(sessionId), userID: \(userId), accessToken: \(accessToken), serverID: \(serverId)"
     }
@@ -230,9 +243,16 @@ public struct APILoginResponse: Decodable {
     }
 }
 
+/// Jellyfin implementation of `AdvancedNetworkProtocol`.
+///
+/// Composes every endpoint out of `BasicNetworkProtocol` primitives, declaring its response shapes as local structs so the JSON contract
+/// lives next to the request that depends on it.
 public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
+    /// Transport used for every request
     public var network: BasicNetworkProtocol
     
+    /// Wraps a basic network in the Jellyfin-specific endpoints.
+    /// - Parameter network: Transport to send requests over
     public init(network: BasicNetworkProtocol) {
         self.network = network
     }

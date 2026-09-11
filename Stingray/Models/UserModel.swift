@@ -1,5 +1,5 @@
 //
-//  User.swift
+//  UserModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 12/16/25.
@@ -24,6 +24,14 @@ public protocol UserModelProtocol: AnyObject {
     /// - Parameter userID: ID of the user to delete
     func deleteUser(_ userID: String)
 
+    /// Creates a user with default settings, saves it, and adds it to the known user IDs
+    /// - Parameters:
+    ///   - serviceURL: URL of the streaming service
+    ///   - serviceType: Type of streaming service, carrying that service's credentials
+    ///   - serviceID: Unique ID of the service
+    ///   - id: Server-provided user ID, reused so the same account maps to the same user across sign-ins
+    ///   - displayName: Name to show on screen
+    /// - Returns: The stored user
     func createUser(
         serviceURL: URL,
         serviceType: ServiceType,
@@ -239,6 +247,29 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
 
     public func hash(into hasher: inout Hasher) { hasher.combine(self.id) }
 
+    /// Creates a user with every setting supplied explicitly.
+    /// Call using `UserModelProtocol.createUser(...)`, which fills in Stingray's defaults and registers the user.
+    /// - Parameters:
+    ///   - serviceURL: URL of the streaming service
+    ///   - serviceType: Type of streaming service, carrying that service's credentials
+    ///   - serviceID: Unique ID of the service
+    ///   - id: Server-provided user ID
+    ///   - storage: Storage the user saves itself back to on every change
+    ///   - displayName: Name to show on screen
+    ///   - usesSubtitles: Whether the viewer wants subtitles on by default
+    ///   - pin: Short password required to open this profile. `nil` for no PIN
+    ///   - autoplay: Whether to roll into the next episode automatically
+    ///   - darkTheme: Theme to use in system dark mode
+    ///   - lightTheme: Theme to use in system light mode
+    ///   - playbackSpeed: Default playback rate
+    ///   - loadThumbnailArt: Whether to show poster art, or titles only
+    ///   - loadMediaBackgroundArt: Whether to show backdrop art on detail views
+    ///   - replaceLogosWithText: Whether to show media logos, or plain titles
+    ///   - preferredLanguage: Language to render Stingray in. `nil` follows the Apple TV
+    ///   - searchEpisodeTitles: Whether search should also match episode titles
+    ///   - showFilters: Whether to show filter menus in library views
+    ///   - showSorting: Whether to show sort menus in library views
+    ///   - showRefreshLibrary: Whether to show the library refresh button
     public init(
         serviceURL: URL,
         serviceType: ServiceType,
@@ -365,6 +396,7 @@ public enum PlaybackSpeed: CaseIterable, Codable {
     /// 2x the speed of realtime
     case two
 
+    /// Rate to hand to `AVPlayer`
     public var value: Float {
         switch self {
         case .quarter: return 0.25
@@ -376,6 +408,7 @@ public enum PlaybackSpeed: CaseIterable, Codable {
         }
     }
 
+    /// User-facing multiplier label, ex. `"1.5x"`
     public var name: String {
         switch self {
         case .quarter: return "0.25x"
@@ -391,8 +424,10 @@ public enum PlaybackSpeed: CaseIterable, Codable {
 /// Types of streaming services
 /// Temporary name for compatibility until migration is complete
 public enum ServiceType: Codable, Hashable {
+    /// A Jellyfin server, carrying that user's credentials for it
     case Jellyfin(UserJellyfin)
 
+    /// The service's name, as persisted in the encoded `type` field
     public var rawValue: String {
         switch self {
         case .Jellyfin:
@@ -405,6 +440,8 @@ public enum ServiceType: Codable, Hashable {
         case type, jellyfinData
     }
 
+    /// Encode the service type into JSON, tagging it so the matching case can be rebuilt.
+    /// - Parameter encoder: JSON encoder
     public func encode(to encoder: Encoder) throws(JSONError) {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
@@ -449,6 +486,8 @@ public enum ServiceType: Codable, Hashable {
 
 /// Jellyfin-specific userdata
 public struct UserJellyfin: Codable, Hashable {
+    /// Token authenticating this user's requests
     public let accessToken: String
+    /// Server-issued session identifier, reported alongside playback progress
     public let sessionID: String
 }

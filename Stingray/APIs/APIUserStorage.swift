@@ -10,6 +10,7 @@ import Foundation
 /// Local storage for modifying user-related data
 public protocol UserStorageProtocol {
     /// Get all user IDs for all streaming services
+    /// - Returns: Every known user ID, or an empty array if nobody has signed in
     func getUserIDs() -> [String]
     /// Set all user IDs to an array of IDs
     /// - Parameter userIDs: User IDs to set
@@ -33,9 +34,13 @@ public protocol UserStorageProtocol {
     func deleteUser(userID: String)
 }
 
+/// Stores all the users for Stingray
 public final class UserStorage: UserStorageProtocol {
+    /// Underlying key-value storage
     public let basicStorage: BasicStorageProtocol
     
+    /// Creates user storage
+    /// - Parameter basicStorage: Store to read and write through
     public init(basicStorage: BasicStorageProtocol) { self.basicStorage = basicStorage }
     
     public func getUserIDs() -> [String] {

@@ -44,14 +44,23 @@ public final class ThemeModel: Identifiable {
 
 }
 
-/// Available themes to choose from
+/// Available themes to choose from.
+/// A light-weight stand-in for the `ThemeProtocol` implementations, so a user's choice can be persisted and compared without building the
+/// theme itself. Cases are `Codable` and saved per user, so they must not be renamed.
 public enum Themes: Codable, CaseIterable {
+    /// Light grayscale, no gradients
     case notesApp
+    /// Light, with drifting blurred circles of color. Requires supporter
     case frosty
+    /// Light, with a blue-to-sand gradient
     case beach
+    /// Vaporwave, with an animated grid floor. Requires supporter
     case retro
+    /// Dark blues, the default dark theme
     case deepSea
+    /// Dark Dracula palette with stars and shooting stars. Requires supporter
     case spaceVampires
+    /// Near-black with minimal color
     case void
 
     /// User facing name of the theme
