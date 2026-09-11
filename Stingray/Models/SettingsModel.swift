@@ -58,7 +58,7 @@ public final class SettingsModel {
             switch self {
             case .askOnResume:
                 return """
-                You'll be prompted for your choice of account when Jellyfin launches or opens from the background. \
+                You'll be prompted for your choice of account when Stingray launches or opens from the background. \
                 This can be annoying to some and triggers on things like Control Center. \
                 If only one user is signed in, the user picker screen will be skipped.
                 """
