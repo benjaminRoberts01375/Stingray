@@ -119,10 +119,12 @@ public protocol BasicStorageProtocol {
     var externalChanges: AsyncStream<[StorageKeys]> { get }
 }
 
-/// Fans cloud change notifications out to every interested observer.
+/// Send cloud change notifications out to every interested observer.
 /// Kept separate from `HybridBasicStorage` so it can be touched from the notification callback regardless of the storage's actor
 /// isolation, which differs between the app and the Top Shelf extension.
-private final class ExternalChangeBroadcaster: @unchecked Sendable {
+/// `nonisolated` because the lock already guards the state, and stream termination can arrive on any actor.
+/// Written by AI.
+nonisolated private final class ExternalChangeBroadcaster: @unchecked Sendable {
     /// Guards `continuations`, which is read when an observer starts and written when one stops
     private let lock = NSLock()
     /// One continuation per live observer, keyed so each can remove itself once it stops listening
