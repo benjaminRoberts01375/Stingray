@@ -133,7 +133,7 @@ public struct DashboardView: View {
                 )
             case .homeVideo:
                 EmptyView() // TODO: Actually add a view here
-            case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library")))
+            case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library media")))
             }
         }
         .onChange(of: deepLinkRequest) { _, newValue in
