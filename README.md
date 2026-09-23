@@ -59,97 +59,7 @@ Extensive content metadata.
 
 Configure Stingray to look and feel how you want it.
 
-## TO-DONE List
-
-- Features
-  - Settings
-    - A new toggle to allow the search tab to search through TV episode titles
-    - If Stingray fails to login, provide options to retry and update the user's login
-  - UI
-    - Apply the media title shadow directly to the media title
-    - Collect all people from episodes and display them for the season
-      - Not sure what Jellyfin was collecting prior to this, but this is more correct
-    - Don't display people segment if people are unavailable
-    - Access to Stingray's logs
-    - Change roundness of buttons in the settings menu based on the Apple TV model
-  - Filter libraries and search by genre and maturity
-  - Sort libraries and search by title, sort title, duration, release date, and random
-  - Refresh individual libraries
-  - Slightly darken the background of the Notes App theme to improve the legibility of buttons
-  - Add a missing "No image available" placeholder for people with no images
-  - Add marquee-style text for people's names and roles
-  - Add a proper loading indicator to the TV show play button
-  - If a PIN is configured, display the PIN entry screen on a cold boot even in "Manual" profile switching
-  - Improved error logging for video players
-  - If the limited bitrate is greater than the media stream's bitrate, do not show as limited in the player
-  - Require PIN for logging out
-  - Reset settings button
-- Cleanups
-  - Repo Organization
-    - Rename "Other-Assets" to "Other Assets"
-    - Have ErrorView be a component
-    - Move all views into a Views folder
-    - Separate the TV and Movie detail views
-      - Abstract metadata and overview in the `DetailMediaView` to their own views
-      - Move `DetailMediaView` into a dedicated Media Detail folder
-    - Separate the TV and Movie players
-      - Move the player files into a dedicated "player" folder
-      - Move `AVPlayerViewControllerRepresentable.Coordinator` to a separate file
-      - Abstract player transport bar items to a dedicated class
-      - Separate out SwiftUI Player tabs into their own structs
-  - Remove unused `Equatable` conformance from `MediaCard`
-  - Remove the `StreamingServiceProtocol` and `StreamingServiceBasicProtocol`
-  - Document all the things
-    - Massively improve documentation around the `slidingLevenshteinDistance` function
-  - Update all Swift files to use Xcode 27's reworked auto-indent formatting
-  - Remove unused `Equatable` conformance from `MediaSource`
-  - Remove practically unused `completed` and `unloaded` statuses for individual libraries
-  - Remove the redundant `waiting` status for streaming service libraries status
-  - Remove the poorly used library media type
-  - Add season sync status with `TVSeasonsAvailable`
-  - `User` is now a class, helping ensure data stays synced across the app
-  - The active user is now stored in the `LoginStatus` state machine, replacing `UserModel.activeUser` in most cases
-  - Reworked PIN mechanism to work asynchronously and force the use of the new `PINModel` for more reliable PIN usage
-  - Remove cloud DB migration
-- Bug Fixes
-  - Specify do not sleep while playing video
-  - Allow moving from media metadata to play button
-  - Opening the player description should no longer crash
-  - Fix infinite loading when user signs in the same user multiple times
-  - Fix search results not live updating
-  - Fix `MediaType`'s reported object name in errors
-  - Improve error handling for loading show episodes
-  - Allow `AsyncBlurImage` to re-attempt downloads
-  - Add error handling for failing to sync library version
-  - Hitting cancel on the PIN entry screen no longer navigates to the switch user page
-  - Add per-AppleTV-generation streaming compatibility
-  - Improve tracking for watched content
-  - Synchronize iCloud storage with models
-    - Fixes a bug where signing in on a new Apple TV doesn't load data correctly for the first time
-- Performance
-  - Only calculate blur hash once and globally cache it
-    - Improves speed to opening detail media views
-    - Massively improves scrolling performance in busy detail media views
-    - Improves library loading performance
-  - Improve People grouping performance
-  - Store relevant (en/de)coders and formatters as static variables
-  - Only calculate blur hashes in `AsyncBlurImage`
-    - Media Card now uses `AsyncBlurImage`
-  - Only calculate profile images once per load (kinda)
-  - Only calculate Apple TV model once and cache it
-  - Improve media syncing performance by about 2.2x
-    - Rework media syncing algorithm
-    - Start syncing sooner
-    - Prevent double loading libraries
-    - Rewrote TV season syncing to use a similar implementation to library syncing
-      - Improved thread control
-      - Allow seasons to continue downloading during and after all shows load
-  - Reduce hitching during video playback by moving playback updates off the UI thread
-  - Add priority Jellyfin syncing
-    - If a show is not fully synched when opened, request that show's special features and episodes separately from all the others
-- Improvements
-  - API
-    - Swapped from `/Users/{userID}/Views` to `/UserViews` with the userID as a parameter
+## TO-DO List
 
 ### Media Picker
 
@@ -163,7 +73,6 @@ Configure Stingray to look and feel how you want it.
 ### Libraries
 
 - [ ] Rework library structure to support more library types, like collections and group by actor.
-- [ ] Library filtering.
 
 ### Playback
 
