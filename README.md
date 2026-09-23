@@ -73,9 +73,13 @@ Configure Stingray to look and feel how you want it.
 ### Libraries
 
 - [ ] Rework library structure to support more library types, like collections and group by actor.
+- [ ] Collections.
+- [ ] Playlists.
+- [ ] Subfolders.
 
 ### Playback
 
-- [ ] Live TV.
+- [ ] Home Videos.
 - [ ] Music Support.
 - [ ] Trickplay.
+- [ ] Live TV.
