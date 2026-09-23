@@ -7,33 +7,30 @@
 
 import Foundation
 
+/// Shared date formatter for Jellyfin's ISO-8601 timestamps.
+private extension ISO8601DateFormatter {
+    /// Reused across decodes; allocating an `ISO8601DateFormatter` is expensive and `date(from:)` is
+    /// thread-safe once the format options are configured.
+    static let jellyfin: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+}
+
 // MARK: Protocols
 
 /// Define the shape of a piece of media
-public protocol MediaProtocol: Identifiable, SlimMediaProtocol, Hashable {
-    /// Short descriptor of the media.
-    var tagline: String { get }
-    /// Long descriptor of the media.
-    var description: String { get }
-    /// ID of the media given by the server.
-    var id: String { get }
-    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
-    var genres: [String] { get }
-    /// Rating of this media provided by the server. Ex PG, PG-13, R.
-    var maturity: String? { get }
-    /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
-    var releaseDate: Date? { get }
+public protocol MediaProtocol: Identifiable, MediaRepresentableProtocol, Hashable, MediaMetadataProtocol {
     /// Denotes TV show, vs movie, vs... and contains relevant data for that type.
     var mediaType: MediaType { get }
-    /// Estimated runtime of the movie or per-episode.
-    var duration: Duration? { get }
-    /// People involved in the creation of this media.
-    var people: [MediaPersonProtocol] { get }
     /// Tracks if the special features have been fetched. If they have been successfully fetched, they'll available through this variable.
     var specialFeatures: SpecialFeaturesStatus { get set }
     
     /// Load special features for this media
     func loadSpecialFeatures(specialFeatures: [SpecialFeature])
+    /// Load season data
+    func loadSeasons(_ newState: TVSeasonsAvailable)
 }
 
 /// Media contains at least one media source, like different versions of the same movie. Each version of the movie needs their own video,
@@ -97,18 +94,6 @@ extension MediaSourceProtocol {
     }
 }
 
-/// Describes how to hold data about a person for a piece of media
-public protocol MediaPersonProtocol {
-    /// ID of the person
-    var id: String { get }
-    /// Person's full name
-    var name: String { get }
-    /// How they contributed to the media.
-    var role: String { get }
-    /// Preview hashes
-    var imageHashes: MediaImageBlurHashes? { get }
-}
-
 /// Describes how to hold information regarding a stream's metadata.
 public protocol MediaStreamProtocol: Identifiable {
     /// ID of the media stream given by the server.
@@ -149,6 +134,8 @@ public protocol TVEpisodeProtocol: Displayable {
     var lastPlayed: Date? { get set }
     /// Longer description of the episode. Nil if none is provided.
     var overview: String? { get }
+    /// People who were a part of this episode
+    var people: [any MediaPersonProtocol] { get }
 }
 
 // MARK: Concrete types
@@ -156,6 +143,7 @@ public protocol TVEpisodeProtocol: Displayable {
 @Observable
 public final class MediaModel: MediaProtocol, Decodable {
     public var title: String
+    public var sortTitle: String
     public var tagline: String
     public var description: String
     public var imageTags: (any MediaImagesProtocol)?
@@ -167,12 +155,12 @@ public final class MediaModel: MediaProtocol, Decodable {
     public var mediaType: MediaType
     public var duration: Duration?
     public var people: [any MediaPersonProtocol]
-    public var errors: [RError]?
     public var specialFeatures: SpecialFeaturesStatus
     
     public enum CodingKeys: String, CodingKey {
         case id = "Id"
         case title = "Name"
+        case sortTitle = "SortName"
         case taglines = "Taglines"
         case description = "Overview"
         case imageTags = "ImageTags"
@@ -194,95 +182,33 @@ public final class MediaModel: MediaProtocol, Decodable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.specialFeatures = .unloaded
         
-        var errBucket: [any RError] = []
-        id = container.decodeFieldSafely(
-            String.self,
-            forKey: .id,
-            default: UUID().uuidString,
-            errBucket: &errBucket,
-            errLabel: "Media Model"
-        )
+        // Easy to decode stuff
+        self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? UUID().uuidString
+        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? "Unknown Title"
+        self.title = title
+        self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
+        self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first ?? ""
+        self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
+        self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
+        MediaImages(thumbnail: nil, logo: nil, primary: nil)
+        self.imageBlurHashes = try? container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
+        self.genres = (try? container.decodeIfPresent([String].self, forKey: .genres)) ?? []
+        self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
+        self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
         
-        title = container.decodeFieldSafely(
-            String.self,
-            forKey: .title,
-            default: "Unknown Title",
-            errBucket: &errBucket,
-            errLabel: "Media Model"
-        )
+        // Harder to decode stuff
+        guard let mediaType = try? container.decode(MediaType.self, forKey: .mediaType)
+        else { throw JSONError.missingKey("Media Type", "Media Model") }
         
-        let taglines = container.decodeFieldSafely(
-            [String].self,
-            forKey: .taglines,
-            default: [],
-            errBucket: &errBucket,
-            errLabel: "Media Model"
-        )
-        tagline = taglines.first ?? ""
-        
-        description = container.decodeFieldSafely(
-            String.self,
-            forKey: .description,
-            default: "",
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        
-        imageTags = container.decodeFieldSafely(
-            MediaImages.self,
-            forKey: .imageTags,
-            default: MediaImages(thumbnail: nil, logo: nil, primary: nil),
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        
-        imageBlurHashes = container.decodeFieldSafely(
-            MediaImageBlurHashes?.self,
-            forKey: .imageBlurHashes,
-            default: nil,
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        
-        genres = container.decodeFieldSafely(
-            [String].self,
-            forKey: .genres,
-            default: [],
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        
-        maturity = container.decodeFieldSafely(
-            String?.self,
-            forKey: .maturity,
-            default: nil,
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        
-        let mediaType = container.decodeFieldSafely(
-            MediaType.self,
-            forKey: .mediaType,
-            default: .unknown,
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
         switch mediaType {
         case .movies:
-            let movieSources = container.decodeFieldSafely(
-                [MediaSource].self,
-                forKey: .mediaSources,
-                default: [],
-                errBucket: &errBucket,
-                errLabel: "Media Model"
-            )
-            
+            let movieSources: [MediaSource]
+            do { movieSources = try container.decode([MediaSource].self, forKey: .mediaSources) }
+            catch let error as RError {
+                self.mediaType = .error(error)
+                break
+            }
+
             struct UserData: Decodable {
                 let playbackPositionTicks: Int
                 let mediaItemID: String
@@ -293,56 +219,25 @@ public final class MediaModel: MediaProtocol, Decodable {
                 }
             }
             
-            let userDataContainer = container.decodeFieldSafely(
-                UserData.self,
-                forKey: .userData,
-                default: UserData(playbackPositionTicks: .zero, mediaItemID: UUID().uuidString),
-                errBucket: &errBucket,
-                errLabel: "Media Model",
-                required: false
-            )
+            let userDataContainer = (try? container.decodeIfPresent(UserData.self, forKey: .userData)) ??
+            UserData(playbackPositionTicks: .zero, mediaItemID: UUID().uuidString)
+            
             if let defaultIndex = movieSources.firstIndex(where: { $0.id == userDataContainer.mediaItemID }) {
                 movieSources[defaultIndex].startPoint = TimeInterval(ticks: userDataContainer.playbackPositionTicks)
             }
             self.mediaType = .movies(movieSources)
-        default:
-            self.mediaType = mediaType
+        default: self.mediaType = mediaType
         }
         
-        let runtimeTicks = container.decodeFieldSafely(
-            Int?.self,
-            forKey: .duration,
-            default: nil,
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        if let runtimeTicks = runtimeTicks, runtimeTicks != 0 { duration = .nanoseconds(100 * runtimeTicks) }
-        else { duration = nil }
+        // Runtime ticks need conversion
+        if let runtimeTicks = try? container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {
+            self.duration = .nanoseconds(100 * runtimeTicks)
+        }
         
-        if let dateString = container.decodeFieldSafely(
-            String?.self,
-            forKey: .releaseDate,
-            default: nil,
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        ) {
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            releaseDate = formatter.date(from: dateString)
-        } else { releaseDate = nil }
-        
-        people = container.decodeFieldSafely(
-            [MediaPerson].self,
-            forKey: .people,
-            default: [],
-            errBucket: &errBucket,
-            errLabel: "Media Model",
-            required: false
-        )
-        
-        if !errBucket.isEmpty { errors = errBucket } // Otherwise nil
+        // Date needs to be interpreted
+        if let dateString = try? container.decodeIfPresent(String.self, forKey: .releaseDate) {
+            self.releaseDate = ISO8601DateFormatter.jellyfin.date(from: dateString)
+        }
     }
     
     /// Stores and formats the special features for this media.
@@ -366,7 +261,29 @@ public final class MediaModel: MediaProtocol, Decodable {
         
         self.specialFeatures = .loaded(groupedFeatures)
     }
-    
+
+    public func loadSeasons(_ newState: TVSeasonsAvailable) {
+        // Save the episodes
+        self.mediaType = .tv(newState)
+
+        switch newState {
+        case .unloaded, .loading: return
+        case .loaded(let newSeasons):
+            // Save all the people
+            var people: [any MediaPersonProtocol] = self.people
+            // We don't use IDs here because people across a series can have different IDs. This prevents duplicates
+            var seenIDs: Set<String> = Set(self.people.map { $0.name + $0.role })
+            for season in newSeasons {
+                for episode in season.episodes {
+                    for person in episode.people where seenIDs.insert(person.name + person.role).inserted {
+                        people.append(person)
+                    }
+                }
+            }
+            self.people = people
+        }
+    }
+
     // Hashable conformance
     public static func == (lhs: MediaModel, rhs: MediaModel) -> Bool {
         lhs.id == rhs.id
@@ -379,7 +296,7 @@ public final class MediaModel: MediaProtocol, Decodable {
 
 /// Holds information about all of a media's sources.
 @Observable
-public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
+public final class MediaSource: Decodable, MediaSourceProtocol {
     public var id: String
     public var name: String
     public var videoStreams: [any MediaStreamProtocol]
@@ -396,6 +313,10 @@ public final class MediaSource: Decodable, Equatable, MediaSourceProtocol {
         case defaultAudioIndex = "DefaultAudioStreamIndex"
     }
     
+    /// Create a `MediaSource` from JSON.
+    /// Splits the server's single `MediaStreams` array into video, audio, and subtitle collections, and marks the server's default audio
+    ///  stream so playback can start on the right track.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -453,10 +374,14 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         case isDefault = "IsDefault"
     }
     
+    /// Create a `MediaStream` from JSON.
+    /// Bitrate is inflated for AV1, which the Apple TV cannot decode: the stream will be transcoded, so it needs a higher target bitrate
+    /// to come out looking comparable.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-
+            
             let rawType = try container.decodeIfPresent(String.self, forKey: .type) ?? ""
             type = StreamType(rawValue: rawType) ?? .unknown
             
@@ -485,39 +410,6 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         lhs.bitrate == rhs.bitrate &&
         lhs.codec == rhs.codec &&
         lhs.isDefault == rhs.isDefault
-    }
-}
-
-/// Holds information about a single person who worked on a piece of media.
-@Observable
-public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
-    public var id: String
-    public var name: String
-    public var role: String
-    public var imageHashes: MediaImageBlurHashes?
-    
-    public enum CodingKeys: String, CodingKey {
-        case id = "Id"
-        case name = "Name"
-        case role = "Role"
-        case imageHashes = "ImageBlurHashes"
-    }
-    
-    public init(from decoder: Decoder) throws(JSONError) {
-        do {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            
-            id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
-            name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Anonymous"
-            role = try container.decodeIfPresent(String.self, forKey: .role) ?? "Unknown Roll"
-            imageHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageHashes)
-        }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "MediaPerson") }
-        catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "MediaPerson") }
-            else { throw JSONError.failedJSONDecode("MediaPerson", DecodingError.valueNotFound(Any.self, context)) }
-        }
-        catch let error { throw JSONError.failedJSONDecode("MediaPerson", error) }
     }
 }
 
@@ -557,6 +449,7 @@ public final class TVSeason: TVSeasonProtocol {
             case blurHashes = "ImageBlurHashes"
             case mediaSources = "MediaSources"
             case userData = "UserData"
+            case people = "People"
             
             case seasonID = "SeasonId" // The actual season ID
             case seasonTitle = "SeasonName" // The actual season name
@@ -591,11 +484,10 @@ public final class TVSeason: TVSeasonProtocol {
                             String.self,
                             forKey: .lastPlayedDate
                         ) else { return nil }
-                        let formatter = ISO8601DateFormatter()
-                        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                        return formatter.date(from: dateString)
+                        return ISO8601DateFormatter.jellyfin.date(from: dateString)
                     }(),
-                    overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview)
+                    overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
+                    people: try episodeContainer.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []
                 )
                 let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
                 episodeContainer.decode(String.self, forKey: .seriesID)
@@ -662,7 +554,18 @@ public final class TVEpisode: TVEpisodeProtocol {
     public var mediaSources: [any MediaSourceProtocol]
     public var lastPlayed: Date?
     public var overview: String?
+    public let people: [any MediaPersonProtocol]
     
+    /// Creates an episode. Built by `TVSeason.decodeSeasons(from:)` rather than decoded directly.
+    /// - Parameters:
+    ///   - id: ID given by the server
+    ///   - blurHashes: Hashes for rendering preview artwork before the real image loads
+    ///   - title: Name of the episode
+    ///   - episodeNumber: Episode number within its season
+    ///   - mediaSources: Playable sources for this episode
+    ///   - lastPlayed: When the episode was last watched. `nil` if never
+    ///   - overview: Longer description. `nil` if the server has none
+    ///   - people: Cast and crew credited on this episode
     public init(
         id: String,
         blurHashes: MediaImageBlurHashes? = nil,
@@ -670,7 +573,8 @@ public final class TVEpisode: TVEpisodeProtocol {
         episodeNumber: Int,
         mediaSources: [any MediaSourceProtocol],
         lastPlayed: Date? = nil,
-        overview: String? = nil
+        overview: String? = nil,
+        people: [any MediaPersonProtocol]
     ) {
         self.id = id
         self.imageBlurHashes = blurHashes
@@ -679,6 +583,7 @@ public final class TVEpisode: TVEpisodeProtocol {
         self.mediaSources = mediaSources
         self.lastPlayed = lastPlayed
         self.overview = overview
+        self.people = people
     }
 }
 
@@ -694,18 +599,28 @@ public enum StreamType: String, Decodable, Equatable {
     case unknown
 }
 
+/// Track the loading status of TV Seasons
+public enum TVSeasonsAvailable {
+    /// Season downloads have yet to start
+    case unloaded
+    /// Seasons downloads have started for this media
+    case loading
+    /// Season downloading is complete
+    case loaded([any TVSeasonProtocol])
+}
+
 /// Denotes the type of media a `MediaModel` is.
 public enum MediaType: Decodable {
     /// Movies type with the associated media sources.
     case movies([any MediaSourceProtocol])
-    /// TV type with the associated seasons.
-    case tv([any TVSeasonProtocol]?)
-    /// Unknown media type
-    case unknown
-    
+    /// TV type with the associated seasons. Nil indicates that media has not yet been loaded
+    case tv(TVSeasonsAvailable)
+    /// The type failed to load media
+    case error(RError)
+
     /// Create a media type that does not populate its data. Ex. Creates a movie media type with no media sources attached.
     /// - Parameter decoder: JSON decoder.
-    public init (from decoder: Decoder) throws(JSONError) {
+    public init(from decoder: Decoder) throws(JSONError) {
         let container: any SingleValueDecodingContainer
         let stringValue: String
         
@@ -713,31 +628,37 @@ public enum MediaType: Decodable {
             container = try decoder.singleValueContainer()
             stringValue = try container.decode(String.self)
         }
-        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Image Blur Hash") }
-        catch DecodingError.valueNotFound(_, let context) {
-            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "Media Image Blur Hash") }
-            else { throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context)) }
+        catch DecodingError.keyNotFound(let key, _) {
+            Log.error("Key \(key) was not found to determine the library type with")
+            throw JSONError.missingKey(key.stringValue, "Media Type")
         }
-        catch let error { throw JSONError.failedJSONDecode("Media Image Blur Hash", error) }
-        
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last {
+                Log.error("Key \"\(key)\" was found, however value was missing to determine the library type with")
+                throw JSONError.missingContainer(key.stringValue, "Media Type")
+            }
+            else {
+                Log.error("A key was found, however value was missing to determine the library type with")
+                throw JSONError.failedJSONDecode("Media Image Blur Hash", DecodingError.valueNotFound(Any.self, context))
+            }
+        }
+        catch let error {
+            Log.error("Media Type failed to decode: \(error.localizedDescription)")
+            throw JSONError.failedJSONDecode("Media Type", error)
+        }
+
         switch stringValue {
-        case "Movie":
-            self = .movies([])
-        case "Series":
-            self = .tv(nil)
-        default:
-            throw JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue))
+        case "Movie": self = .movies([])
+        case "Series": self = .tv(.unloaded)
+        default: self = .error(JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue)))
         }
     }
     
     public var rawValue: String {
         switch self {
-        case .movies:
-            return "Movie"
-        case .tv:
-            return "Series"
-        case .unknown:
-            return "Unknown"
+        case .movies: return "Movie"
+        case .tv: return "Series"
+        case .error: return "Error"
         }
     }
 }

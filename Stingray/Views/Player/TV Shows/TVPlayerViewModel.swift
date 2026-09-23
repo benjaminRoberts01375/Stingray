@@ -1,5 +1,5 @@
 //
-//  PlayerViewModel.swift
+//  TVPlayerViewModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 12/4/25.
@@ -8,109 +8,86 @@
 import AVKit
 import SwiftUI
 
+/// Drives playback for one episode of a TV show, including moving between episodes.
+///
+/// Jellyfin has no concept of switching tracks on a live stream, so every subtitle, audio, video, or bitrate change tears the stream down
+/// and builds a new one via `newPlayer(...)`. Holds all seasons so it can autoplay, skip, and populate the episode picker without a
+/// round trip. Identity is the media source ID, which is what makes it usable as a `NavigationPath` value.
 @Observable
-public final class PlayerViewModel: Hashable {
+public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     /// Player with formatted URL already set
-    public var player: AVPlayer
+    public private(set) var player: AVPlayer
+
     /// Media that contains the source to play
-    public var media: any MediaProtocol
-    /// Media source in play
-    public var mediaSourceID: String {
-        didSet {
-            switch self.media.mediaType {
-            case .unknown:
-                break
-            case .movies(let mediaSources):
-                self.mediaSource = mediaSources.first { $0.id == self.mediaSourceID } ?? self.mediaSource
-                return
-            case .tv(let seasons):
-                guard let seasons = seasons else { return }
-                for season in seasons {
-                    for episode in season.episodes {
-                        if let mediaSource = episode.mediaSources.first, mediaSource.id == self.mediaSourceID {
-                            self.mediaSource = mediaSource
-                            return
-                        }
-                    }
-                }
-            }
-        }
-    }
+    public private(set) var media: any MediaMetadataProtocol
+
     /// Quickly get the media source from the media source ID
-    public private(set) var mediaSource: any MediaSourceProtocol
-    
+    public var mediaSource: any MediaSourceProtocol
+
+    /// User settings, read for subtitles, bitrate, autoplay, and speed, and written back when the viewer changes them mid-playback
     public private(set) var settingsModel: SettingsModel
-    
-    /// Time to start the player at
-    public var startTime: CMTime
+
     /// Current player progress (exposed for observation)
     public var playerProgress: PlayerProtocol?
     /// Trigger to refresh transport bar items
     public var transportBarNeedsUpdate: Bool = false
-    
+
     /// Server to stream from
-    @ObservationIgnored public let streamingService: any StreamingServiceProtocol
+    @ObservationIgnored public let streamingService: PlayerProviding & MediaImageProviding
     /// Seasons of a TV show if available (may be a movie)
-    @ObservationIgnored public let seasons: [(any TVSeasonProtocol)]?
+    @ObservationIgnored public private(set) var seasons: [(any TVSeasonProtocol)]
     /// Store and restore the current navigation path
     @ObservationIgnored public var navigationPath: NavigationPath?
-    
+
     // Hashable Conformance
-    public static func == (lhs: PlayerViewModel, rhs: PlayerViewModel) -> Bool {
-        lhs.mediaSourceID == rhs.mediaSourceID &&
-        lhs.startTime == rhs.startTime
+    public static func == (lhs: TVPlayerViewModel, rhs: TVPlayerViewModel) -> Bool {
+        lhs.mediaSource.id == rhs.mediaSource.id
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(media.id)
-        hasher.combine(startTime.seconds)
     }
-    
+
     /// Normal init for setting up a player
+    /// - Parameters:
+    ///   - media: Show the episode belongs to, used for titles and artwork
+    ///   - mediaSource: Specific episode source to play
+    ///   - startTime: Where to begin playback. `nil` starts from the beginning
+    ///   - streamingService: Connection to the server
+    ///   - seasons: Every season of the show, needed for next/previous episode and the episode picker
+    ///   - settingsModel: User settings for subtitles, bitrate, autoplay, and speed
     public init(
-        media: any MediaProtocol,
+        media: any MediaMetadataProtocol,
         mediaSource: any MediaSourceProtocol,
         startTime: CMTime?,
-        streamingService: StreamingServiceProtocol,
-        seasons: [any TVSeasonProtocol]?,
+        streamingService: PlayerProviding & MediaImageProviding,
+        seasons: [any TVSeasonProtocol],
         settingsModel: SettingsModel
     ) {
         self.player = AVPlayer()
-        self.startTime = startTime ?? .zero
         self.streamingService = streamingService
         self.seasons = seasons
         self.playerProgress = nil
-        self.mediaSourceID = mediaSource.id
         self.mediaSource = mediaSource
         self.media = media
         self.settingsModel = settingsModel
-        
+
         var subtitleID: String?
-        
+
         // Setup subtitles
         if settingsModel.usesSubtitles {
-            subtitleID = self.mediaSource.subtitleStreams.first {
-                $0.isDefault
-            }?.id ?? self.mediaSource.subtitleStreams.first?.id
+            subtitleID = self.mediaSource.subtitleStreams.first { $0.isDefault }?.id ?? self.mediaSource.subtitleStreams.first?.id
         }
-        
+
         self.savePlaybackDate()
         self.newPlayer(
-            startTime: self.startTime,
+            startTime: startTime ?? .zero,
             videoID: .newID(self.mediaSource.videoStreams.first { $0.isDefault }?.id ?? (self.mediaSource.videoStreams.first?.id ?? "0")),
             audioID: .newID(self.mediaSource.audioStreams.first { $0.isDefault }?.id ?? (self.mediaSource.audioStreams.first?.id ?? "1")),
             subtitleID: .newID(subtitleID),
             bitrate: settingsModel.bitrate
         )
         self.player.rate = self.settingsModel.playbackSpeed.value
-    }
-    
-    /// Dictates how the player should transition a particular stream
-    public enum StreamTransitionType {
-        /// Do not transition to a new stream
-        case keep
-        /// Update the current stream to a new ID. Nil for no stream.
-        case newID(String?)
     }
 
     /// Creates a new player based on current state
@@ -129,30 +106,20 @@ public final class PlayerViewModel: Hashable {
     ) {
         do { try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback) }
         catch { Log.warning("Failed to configure audio session: \(error)") }
-        
+
         // Setup title and possibly a subtitle (ex. "Season 1, Episode 1" or "The Super Duper Cut")
         var title = ""
         var subtitle = ""
-        switch self.media.mediaType {
-        case .tv(let seasons):
-            if let seasons = seasons { // TV Shows
-                for season in seasons {
-                    if let episode = (season.episodes.first { $0.mediaSources.first?.id == self.mediaSource.id }) {
-                        subtitle = "\(season.title), Episode \(episode.episodeNumber)"
-                        break
-                    }
-                }
-                let allEpisodes = seasons.flatMap(\.episodes)
-                let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == self.mediaSource.id }
-                title = currentEpisode?.title ?? ""
+        for season in self.seasons {
+            if let episode = (season.episodes.first { $0.mediaSources.first?.id == self.mediaSource.id }) {
+                subtitle = "\(season.title), Episode \(episode.episodeNumber)"
+                break
             }
-            else { title = self.mediaSource.name }
-        case .movies(let sources):
-            title = self.media.title
-            if sources.count > 1 { subtitle = self.mediaSource.name }
-        default: title = self.media.title
         }
-        
+        let allEpisodes = self.seasons.flatMap(\.episodes)
+        let currentEpisode = allEpisodes.first { $0.mediaSources.first?.id == self.mediaSource.id }
+        title = currentEpisode?.title ?? ""
+
         // Setup stream IDs
         let finalVideoID: String
         let finalAudioID: String
@@ -169,10 +136,10 @@ public final class PlayerViewModel: Hashable {
         case .keep: finalSubtitleID = self.playerProgress?.subtitleID
         case .newID(let id): finalSubtitleID = id
         }
-        
+
         // We're done reading from the running player
         self.stopPlayer()
-        
+
         // Create/update the player
         self.streamingService.playbackStart(
             mediaSource: self.mediaSource,
@@ -184,74 +151,78 @@ public final class PlayerViewModel: Hashable {
             subtitle: subtitle,
             player: self.player
         )
-        
+
+        self.player.preventsDisplaySleepDuringVideoPlayback = true // Should be default, but oh well
         self.playerProgress = streamingService.playerProgress // Sync to view model
         self.player.seek(to: startTime, toleranceBefore: .zero, toleranceAfter: .zero)
         self.player.play()
-        
+
         // Update user settings
         self.settingsModel.usesSubtitles = self.playerProgress?.subtitleID != nil
-        
+
         // Set up observer for when the current item finishes playing
         if self.settingsModel.autoplay {
             self.setupPlaybackEndObserver()
         }
     }
-    
+
     /// Sets up an observer to detect when playback finishes and auto-advance to next episode
     private func setupPlaybackEndObserver() {
         // Remove any existing observers first
         NotificationCenter.default.removeObserver(
             self,
             name: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem
+            object: self.player.currentItem
         )
-        
+
         // Add observer for the current item
         NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
+            object: self.player.currentItem,
             queue: .main
         ) { [weak self] _ in
             self?.handlePlaybackEnded()
         }
     }
-    
+
     /// Called when the current video finishes playing
     private func handlePlaybackEnded() {
-        guard let seasons = self.seasons else { return }
-        
-        let allEpisodes = seasons.flatMap(\.episodes)
+        let allEpisodes = self.seasons.flatMap(\.episodes)
         guard let currentIndex = allEpisodes.firstIndex(where: { episode in
             episode.mediaSources.first?.id == self.mediaSource.id
         }),
-        currentIndex + 1 < allEpisodes.count else {
+              currentIndex + 1 < allEpisodes.count else {
             // No next episode, playback complete
             return
         }
-        
+
         let nextEpisode = allEpisodes[currentIndex + 1]
-        
+
         // Save the current episode's progress
         self.savePlaybackDate()
-        
+
         // Update to the next episode
-        self.mediaSourceID = nextEpisode.mediaSources.first?.id ?? self.mediaSourceID
+        self.mediaSource = nextEpisode.mediaSources.first ?? self.mediaSource
         self.newPlayer(episode: nextEpisode)
     }
-    
+
     /// Creates a new player based on current state and new episode
     /// - Parameter episode: Episode to transition into
     public func newPlayer(episode: any TVEpisodeProtocol) {
-        guard let oldVideoStream = mediaSource.videoStreams.first(where: { self.playerProgress?.videoID == $0.id }),
+        guard let oldVideoStream = self.mediaSource.videoStreams.first(where: { self.playerProgress?.videoID == $0.id }),
               let newVideoStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldVideoStream, streamType: .video),
-              let oldAudioStream = mediaSource.audioStreams.first(where: { self.playerProgress?.audioID == $0.id }),
+              let oldAudioStream = self.mediaSource.audioStreams.first(where: { self.playerProgress?.audioID == $0.id }),
               let newAudioStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldAudioStream, streamType: .audio)
-        else { return }
+        else {
+            Log.warning("Failed to find similar streams for \(episode.title)")
+            return
+        }
         var newSubtitleStream: (any MediaStreamProtocol)?
         if let oldSubtitleStream = mediaSource.subtitleStreams.first(where: { self.playerProgress?.subtitleID == $0.id }) {
             newSubtitleStream = episode.mediaSources.first?.getSimilarStream(baseStream: oldSubtitleStream, streamType: .subtitle)
         }
+        self.savePlaybackDate()
+
         self.newPlayer(
             startTime: .zero,
             videoID: .newID(newVideoStream.id),
@@ -259,43 +230,43 @@ public final class PlayerViewModel: Hashable {
             subtitleID: .newID(newSubtitleStream?.id)
         )
     }
-    
+
+    /// Pauses playback and tells the server this session is over.
     public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
         streamingService.playbackEnd()
     }
-    
+
+    /// Marks the currently playing episode as watched now, and normalizes its resume point.
+    ///
+    /// Also clears `startPoint` back to `0` when playback sits past 90% or before 10% of the runtime, so a finished episode doesn't resume
+    /// in its final seconds and a barely-started one doesn't resume mid-credits-sequence. Call before switching episodes, or the outgoing
+    /// episode keeps a stale resume point.
     public func savePlaybackDate() {
-        switch self.media.mediaType {
-        case .tv(let seasons):
-            if var seasons = seasons {
-                for seasonIndex in seasons.indices {
-                    for episodeIndex in seasons[seasonIndex].episodes.indices {
-                        let episode = seasons[seasonIndex].episodes[episodeIndex]
-                        if (episode.mediaSources.contains { $0.id == self.mediaSource.id }) {
-                            seasons[seasonIndex].episodes[episodeIndex].lastPlayed = Date.now
-                            if self.mediaSource.startPoint >= self.mediaSource.duration * 0.9 ||
-                                self.mediaSource.startPoint < self.mediaSource.duration * 0.1 {
-                                self.mediaSource.startPoint = 0
-                            }
-                        }
+        for seasonIndex in self.seasons.indices {
+            for episodeIndex in self.seasons[seasonIndex].episodes.indices {
+                let episode = self.seasons[seasonIndex].episodes[episodeIndex]
+                if (episode.mediaSources.contains { $0.id == self.mediaSource.id }) {
+                    self.seasons[seasonIndex].episodes[episodeIndex].lastPlayed = Date.now
+                    if self.mediaSource.startPoint >= self.mediaSource.duration * 0.9 ||
+                        self.mediaSource.startPoint < self.mediaSource.duration * 0.1 {
+                        self.mediaSource.startPoint = 0
                     }
                 }
             }
-        default: break
         }
     }
-    
+
     public func changeSpeed(_ speed: PlaybackSpeed) {
         self.player.rate = speed.value
         self.settingsModel.playbackSpeed = speed
         self.transportBarNeedsUpdate.toggle() // Trigger UI update
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
-        player.pause()
+        self.player.pause()
         streamingService.playbackEnd()
     }
 }

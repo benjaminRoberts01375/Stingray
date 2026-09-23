@@ -5,6 +5,7 @@
 //  Created by Ben Roberts on 3/11/26.
 //
 
+import Foundation
 import OSLog
 
 /// A nice wrapper around the `Logger` type.
@@ -14,6 +15,9 @@ public final class Log {
     
     /// Hook into system logging
     private let logger: Logger
+    
+    /// The most recent log entry
+    public private(set) static var lastLogEntry: LogEntry?
     
     /// Private due to singleton.
     private init() {
@@ -27,6 +31,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func debug(_ message: String) {
         Log.shared.logger.debug("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .debug, previous: Log.lastLogEntry)
     }
     
     /// Useful runtime info and app flow - stored briefly.
@@ -35,6 +40,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func info(_ message: String) {
         Log.shared.logger.info("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .info, previous: Log.lastLogEntry)
     }
     
     /// Unexpected but recoverable issue cropped up.
@@ -43,6 +49,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func warning(_ message: String) {
         Log.shared.logger.warning("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .warning, previous: Log.lastLogEntry)
     }
     
     /// Something failed, but the lights are still on.
@@ -51,6 +58,7 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func error(_ message: String) {
         Log.shared.logger.error("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .error, previous: Log.lastLogEntry)
     }
     
     /// The app can no longer function. Use sparingly.
@@ -59,5 +67,69 @@ public final class Log {
     /// - Important: Logs are set to public, so show no secrets.
     public static func critical(_ message: String) {
         Log.shared.logger.critical("\(message, privacy: .public)")
+        Log.lastLogEntry = LogEntry(message: message, level: .critical, previous: Log.lastLogEntry)
+    }
+}
+
+/// A single logged value
+public final class LogEntry: Encodable, Identifiable {
+    /// Stable identity for use in SwiftUI lists.
+    public let id = UUID()
+    /// What the log actually says
+    public let message: String
+    /// The importance of the log
+    public let level: LogLevel
+    
+    /// When the entry was created
+    public let timestamp: Date
+    /// The previous log message
+    public fileprivate(set) var previous: LogEntry?
+
+    /// Creates a single log entry
+    /// - Parameters:
+    ///   - message: Message to display
+    ///   - level: Importance of the log
+    ///   - previous: The last log message
+    public init(message: String, level: LogLevel, previous: LogEntry?) {
+        self.message = message
+        self.level = level
+        self.previous = previous
+        self.timestamp = Date()
+    }
+}
+
+/// Denotes how important a log is
+public enum LogLevel: String, Encodable, CaseIterable {
+    /// Verbose dev-only detail: variable values and flow tracing
+    case debug = "Debug"
+    /// Useful runtime milestones, like a profile loading or an API finishing setup
+    case info = "Info"
+    /// Unexpected but recoverable, like a missing JSON key that was defaulted
+    case warning = "Warning"
+    /// Something failed unrecoverably, but the app keeps running
+    case error = "Error"
+    /// The app can no longer function. The user is stuck or about to crash
+    case critical = "Critical"
+    
+    /// A localized, user-facing name for the log level.
+    public var localized: String {
+        switch self {
+        case .debug: return String(localized: "Debug")
+        case .info: return String(localized: "Info")
+        case .warning: return String(localized: "Warning")
+        case .error: return String(localized: "Error")
+        case .critical: return String(localized: "Critical")
+        }
+    }
+    
+    /// Importance of the log relative to each other
+    public var severity: Int {
+        switch self {
+        case .debug: return 0
+        case .info: return 1
+        case .warning: return 2
+        case .error: return 3
+        case .critical: return 4
+        }
     }
 }

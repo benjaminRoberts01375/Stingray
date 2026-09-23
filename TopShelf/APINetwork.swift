@@ -7,18 +7,20 @@
 
 import Foundation
 
+/// The slice of the server API the Top Shelf extension needs.
+///
+/// Deliberately narrower than the app's `AdvancedNetworkProtocol`: the extension has a tight launch budget, so it only fetches the two
+/// recommendation rows and the artwork URLs required to render them.
 public protocol TopShelfNetworkProtocol {
-    /// Retrieve recently added media of some type
-    /// - Parameters:
-    ///   - contentType: Type of media to retrieve
-    ///   - accessToken: Access token for the server
-    /// - Returns: A silm verion of the media type
-    func getRecentlyAdded(accessToken: String) async throws -> [SlimMedia]
+    /// Retrieve recently added media of any type
+    /// - Parameter accessToken: Access token for the server
+    /// - Returns: A slim version of each media item
+    func getRecentlyAdded(accessToken: String) async throws -> [MediaModelRepresentable]
     
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
-    func getUpNext(accessToken: String) async throws -> [SlimMedia]
+    func getUpNext(accessToken: String) async throws -> [MediaModelRepresentable]
     
     /// Generates a URL for an image
     /// - Parameters:
@@ -30,10 +32,12 @@ public protocol TopShelfNetworkProtocol {
     func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL?
 }
 
+/// Jellyfin implementation of `TopShelfNetworkProtocol`, built on the app's shared `BasicNetworkProtocol`.
 public struct APINetwork: TopShelfNetworkProtocol {
+    /// Transport used for every request
     var network: BasicNetworkProtocol
     
-    public func getRecentlyAdded(accessToken: String) async throws -> [SlimMedia] {
+    public func getRecentlyAdded(accessToken: String) async throws -> [MediaModelRepresentable] {
         let params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
@@ -48,9 +52,9 @@ public struct APINetwork: TopShelfNetworkProtocol {
         )
     }
     
-    public func getUpNext(accessToken: String) async throws -> [SlimMedia] {
+    public func getUpNext(accessToken: String) async throws -> [MediaModelRepresentable] {
         struct Root: Decodable {
-            let Items: [SlimMedia]
+            let Items: [MediaModelRepresentable]
         }
         
         let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]

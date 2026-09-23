@@ -59,14 +59,7 @@ Extensive content metadata.
 
 Configure Stingray to look and feel how you want it.
 
-## TO-DONE List
-
-- Use the logout endpoint
-- Support User Switching
-  - The previous commented out option is now gone in favor of setting up future updates more effectively. This now means that user switching is used for all users all the time.
-- Store data in iCloud for device syncing.
-
-## TODO List
+## TO-DO List
 
 ### Media Picker
 
@@ -80,16 +73,9 @@ Configure Stingray to look and feel how you want it.
 ### Libraries
 
 - [ ] Rework library structure to support more library types, like collections and group by actor.
-- [ ] Library filtering.
-- [ ] Manual library refresh.
 
 ### Playback
 
 - [ ] Live TV.
 - [ ] Music Support.
 - [ ] Trickplay.
-
-### Code Quality
-
-- [ ] Break up the Detail Media View into smaller pieces.
-- [ ] Comment all class/struct/enum variables and functions.

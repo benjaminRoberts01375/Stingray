@@ -1,5 +1,5 @@
 //
-//  UserView.swift
+//  SettingsView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 12/17/25.
@@ -7,31 +7,68 @@
 
 import SwiftUI
 
+/// The settings tab: account management, playback, filtering, themes, accessibility, and supporter options.
 public struct SettingsView: View {
     /// Tracks if the user has logged in, is about to login, or needs to login.
     @Binding public var loginState: LoginState
     /// System-wide settings
     @Environment(SettingsModel.self) private var settings: SettingsModel
     /// Controls the pin configuration screen showing and hiding
-    @State private var showPinSetup: Bool = false
+    @State private var showPinSetup: Bool
     /// Controls when to show a dialog box for logging out
-    @State private var showLogoutAlert: Bool = false
-    
-    @Environment(UserModel.self) private var userModel: UserModel
-    
+    @State private var showLogoutAlert: Bool
+
+    /// Location where all users are stored
+    public var userModel: UserModelProtocol
+
+    /// User whose settings are being edited
+    public let user: UserProtocol
+
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
     /// Controls the sheet to show the supporting Stingray screen
-    @State private var showSupportStingray: Bool = false
+    @State private var showSupportStingray: Bool
+    /// Controlls the sheet to show the current session's logs
+    @State private var showLogs: Bool
+
+    /// Controls the sheet for re-entering server credentials
+    @State private var showRefreshLogin: Bool
+
+    /// Gates destructive actions behind the profile's PIN. Replaced after each use so the next prompt starts fresh
+    @State private var enterPIN: PINModel
+
+    /// Controls when to show a dialog box for resetting settings
+    @State private var showResetSettings: Bool
+
+    /// Current connection to the server, used to log the user out
+    public let streamingService: UserProviding
     
-    public let streamingService: StreamingServiceProtocol
-    
+    /// Create a SettingsView view for altering user and app settings
+    /// - Parameters:
+    ///   - loginState: The login state machine
+    ///   - userModel: Location where all users are stored
+    ///   - user: User to load preferences for
+    ///   - streamingService: Current connection to server
+    public init(loginState: Binding<LoginState>, userModel: UserModelProtocol, user: UserProtocol, streamingService: UserProviding) {
+        self.showPinSetup = false
+        self.showLogoutAlert = false
+        self.showSupportStingray = false
+        self.showLogs = false
+        self.showRefreshLogin = false
+        self.showResetSettings = false
+        self._loginState = loginState
+        self.userModel = userModel
+        self.user = user
+        self.streamingService = streamingService
+        self.enterPIN = PINModel(for: user)
+    }
+
     public var body: some View {
         @Bindable var settings = settings
         Form {
             // MARK: Profiles
             // Profile picker
             Section(header: Text(String(localized: "Account")).bold()) {
-                ProfilePickerView(loginState: $loginState)
+                ProfilePickerView(loginState: $loginState, userModel: self.userModel)
                     .focusSection()
                 // PIN button
                 DoubleButton(label: "PIN", sublabel: self.settings.pin == nil ? "Configure..." : "Configured") {
@@ -39,34 +76,86 @@ public struct SettingsView: View {
                 }
                 .fullScreenCover(isPresented: $showPinSetup) {
                     if self.settings.pin == nil {
-                        PINSetup()
+                        PINSetup(user: self.user)
                             .padding(64)
                             .stingrayBackground()
                             .ignoresSafeArea()
                     } else {
-                        PINDelete()
+                        PINDelete(user: self.user)
                             .padding(64)
                             .stingrayBackground()
                             .ignoresSafeArea()
                     }
                 }
-                if let user = self.userModel.activeUser {
-                    DoubleButton(label: "Logout...", sublabel: "", role: .destructive) { self.showLogoutAlert = true }
-                        .alert(
-                            Text(String(localized: "Logout \(user.displayName)")),
-                            isPresented: $showLogoutAlert
-                        ) {
-                            Button("Logout", role: .destructive) {
+                DoubleButton(label: "Update Login...", sublabel: "") { self.showRefreshLogin = true }
+                    .fullScreenCover(isPresented: $showRefreshLogin) {
+                        AddServerView(loginState: $loginState, userModel: self.userModel) // This view updates existing users access
+                            .padding(64)
+                            .stingrayBackground()
+                            .ignoresSafeArea()
+                    }
+                DoubleButton(label: "Logout...", sublabel: "", role: .destructive) { self.showLogoutAlert = true }
+                    .alert(
+                        Text(String(localized: "Logout \(user.displayName)")),
+                        isPresented: $showLogoutAlert
+                    ) {
+                        Button("Logout", role: .destructive) {
+                            Task {
+                                if self.user.pin != nil {
+                                    self.enterPIN.isPresented = true
+                                    switch await enterPIN.status {
+                                    case .success: self.enterPIN = PINModel(for: self.user)
+                                    case .canceled:
+                                        self.enterPIN = PINModel(for: self.user)
+                                        return
+                                    }
+                                }
                                 self.userModel.deleteUser(user.id)
-                                Task { await self.streamingService.logout() }
+                                await self.streamingService.logout()
                                 if self.userModel.userIDs.isEmpty { self.loginState = .loggedOut }
                                 else { self.loginState = .pickingUser }
                             }
                         }
-                    message: { Text(String(localized: "Are you sure you want \(user.displayName) to logout?")) }
+                    }
+                message: { Text(String(localized: "Are you sure you want \(user.displayName) to logout?")) }
+                    .fullScreenCover(isPresented: self.$enterPIN.isPresented) {
+                        PINEntry(model: self.enterPIN)
+                            .padding(64)
+                            .stingrayBackground()
+                            .ignoresSafeArea()
+                    }
+                DoubleButton(label: "Reset Settings...", sublabel: "", role: .destructive) { self.showResetSettings = true }
+                    .alert(
+                        Text(String(localized: "Reset Settings")),
+                        isPresented: self.$showResetSettings
+                    ) {
+                        Button("Reset", role: .destructive) {
+                            Task {
+                                if self.user.pin != nil {
+                                    switch await self.enterPIN.status {
+                                    case .success: self.enterPIN = PINModel(for: self.user)
+                                    case .canceled:
+                                        self.enterPIN = PINModel(for: self.user)
+                                        return
+                                    }
+                                }
+                                self.userModel.reset(user: self.user)
+                                self.settings.bitrate = nil
+                                self.settings.profileSwitchingMethod = .askOnLaunch
+                            }
+                        }
+                    }
+                message: {
+                    Text(String(localized: "Are you sure you want to reset all settings to default for \(self.user.displayName)"))
+                }
+                .fullScreenCover(isPresented: self.$enterPIN.isPresented) {
+                    PINEntry(model: self.enterPIN)
+                        .padding(64)
+                        .stingrayBackground()
+                        .ignoresSafeArea()
                 }
             }
-            
+
             // Profile switching
             Section(
                 header: Text(String(localized: "Profile Switching")).bold(),
@@ -81,7 +170,7 @@ public struct SettingsView: View {
                 .focusSection()
             }
             .listRowBackground(Color.clear)
-            
+
             // MARK: Playback settings
             Section(header: Text(String(localized: "Playback Settings")).bold()) {
                 DoubleButton(label: "Autoplay Next Episode", sublabel: self.settings.autoplay ? "Enabled" : "Disabled") {
@@ -105,15 +194,29 @@ public struct SettingsView: View {
                     ForEach(PlaybackSpeed.allCases, id: \.value) { speed in
                         Button { settings.playbackSpeed = speed }
                         label: {
-                            if settings.playbackSpeed == speed {
-                                Label(speed.name, systemImage: "checkmark")
-                            }
+                            if settings.playbackSpeed == speed { Label(speed.name, systemImage: "checkmark") }
                             else { Text(speed.name) }
                         }
                     }
                 }
             }
-            
+
+            // MARK: Filters and Sorting
+            Section(header: Text(String(localized: "Filters and Sorting")).bold()) {
+                DoubleButton(label: "Display Sorting Options", sublabel: self.settings.showSorting ? "Enabled" : "Disabled") {
+                    self.settings.showSorting.toggle()
+                }
+                DoubleButton(label: "Display Filter Options", sublabel: self.settings.showFilters ? "Enabled" : "Disabled") {
+                    self.settings.showFilters.toggle()
+                }
+                DoubleButton(label: "Display Refresh Library Button", sublabel: self.settings.showRefreshLibrary ? "Enabled" : "Disabled") {
+                    self.settings.showRefreshLibrary.toggle()
+                }
+                DoubleButton(label: "Search TV Episode Titles", sublabel: self.settings.searchEpisodeTitles ? "Enabled" : "Disabled") {
+                    self.settings.searchEpisodeTitles.toggle()
+                }
+            }
+
             // MARK: Themes
             Section(header: Text(String(localized: "Themes")).bold()) {
                 // Light mode
@@ -125,7 +228,7 @@ public struct SettingsView: View {
                     ThemesListView(showSupportStingray: $showSupportStingray, themeType: .dark)
                 }
             }
-            
+
             // MARK: Accessibility
             Section(header: Text(String(localized: "Accessibility")).bold()) {
                 DoubleMenu(label: "Language", sublabel: self.settings.langauge?.languageDisplayName ?? LocalizedStringKey("System")) {
@@ -155,7 +258,7 @@ public struct SettingsView: View {
                     self.settings.replaceLogosWithText.toggle()
                 }
             }
-            
+
             // MARK: Supporting Stingray
             Section(header: Text(String(localized: "Support Stingray")).bold()) {
                 DoubleButton(
@@ -180,12 +283,18 @@ public struct SettingsView: View {
                         .stingrayBackground()
                         .ignoresSafeArea()
                 }
+                DoubleButton(label: "Logs", sublabel: "Open Logs...") { self.showLogs = true }
+                    .fullScreenCover(isPresented: $showLogs) {
+                        LogsView()
+                            .stingrayBackground()
+                            .ignoresSafeArea()
+                    }
             }
-            
+
             // MARK: Connection info
             Section {
                 switch loginState {
-                case .loggedIn(let streamingService):
+                case .loggedIn(let streamingService, _):
                     VStack {
                         SystemInfoView(streamingService: streamingService)
                         LibrariesInfoView(streamingService: streamingService)
@@ -204,12 +313,12 @@ public struct ThemesListView: View {
     @Environment(SettingsModel.self) private var settings
     @Environment(PurchasesModel.self) private var purchases
     @Binding public var showSupportStingray: Bool
-    
+
     /// Is the list meant to set dark or light mode themes
     public let themeType: ColorScheme
-    
+
     public var body: some View {
-        ForEach(ThemeModel.Themes.allCases, id: \.self) { option in
+        ForEach(Themes.allCases, id: \.self) { option in
             Button {
                 if !self.purchases.boughtSupporter && option.requiresSupporter {
                     self.showSupportStingray = true
@@ -236,13 +345,16 @@ public struct ThemesListView: View {
     }
 }
 
+/// Languages Stingray ships translations for, offered in the language picker alongside a "System" option.
 public enum SupportedLanguages: CaseIterable {
+    /// English
     case english
+    /// German
     case german
-    
+
     /// The name of the language in the language it is
     public var name: String? { self.locale.localizedString(forLanguageCode: self.languageCode) }
-    
+
     /// Country code of the language
     public var languageCode: String {
         switch self {
@@ -250,7 +362,7 @@ public enum SupportedLanguages: CaseIterable {
         case .german: return "de"
         }
     }
-    
+
     /// A locale object from this language
     public var locale: Locale { Locale(identifier: self.languageCode) }
 }

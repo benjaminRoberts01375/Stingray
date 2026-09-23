@@ -1,5 +1,5 @@
 //
-//  Error-View.swift
+//  ErrorView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 1/26/26.
@@ -22,7 +22,6 @@ public struct ErrorView: View {
         Button { self.isExpanded = true }
         label: { ErrorSummaryView(summary: summary, altColors: isFocused) }
             .buttonStyle(.plain)
-            .padding(.horizontal, 70)
             .focused($isFocused, equals: true)
             .sheet(isPresented: $isExpanded) { ErrorExpandedView(errorDesc: error.rDescription) }
     }
@@ -52,7 +51,7 @@ fileprivate struct ErrorSummaryView: View {
 
 /// Show a verbose version of an RError
 public struct ErrorExpandedView: View {
-    /// Verbose error thrown by Stingray
+    /// Verbose error thrown by Stingray and is lazily evaluated
     public let errorDesc: () -> String
     
     public var body: some View {

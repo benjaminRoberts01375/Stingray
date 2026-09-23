@@ -1,5 +1,5 @@
 //
-//  ThemeViewModel.swift
+//  ThemeComponents.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 4/2/26.
@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Fills all available space with the current theme's background. Applied via `stingrayBackground()`.
 public struct StingrayBackground: ViewModifier {
     @Environment(ThemeModel.self) private var theme
     
@@ -39,7 +40,14 @@ public struct StingrayFormButtonStyle: ButtonStyle {
                 .padding(.vertical, 15)
                 .frame(maxWidth: .infinity)
                 .background {
-                    Capsule()
+                    let shape: AnyShape = {
+                        if AppleTVCapabilities.current.hardwareModel == "AppleTV5,3" ||
+                            AppleTVCapabilities.current.hardwareModel == "AppleTV6,2" {
+                            AnyShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        else { AnyShape(Capsule()) }
+                    }()
+                    shape
                         .fill(isFocused ? AnyShapeStyle(Color.white) : self.theme.currentTheme.buttonBackground)
                         .shadow(color: .black.opacity(isFocused ? 0.45 : 0), radius: isFocused ? 15 : 0, y: isFocused ? 16 : 0)
                 }

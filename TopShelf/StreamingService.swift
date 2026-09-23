@@ -7,12 +7,19 @@
 
 import Foundation
 
-public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
+/// A cut-down streaming service for the Top Shelf extension.
+/// Implements only the two protocols the extension renders from, so it can be built and queried without the app's full library sync.
+public final class StreamingServiceBasicModel: MediaImageProviding & RecommendationProviding {
+    /// Network used to reach the server
     private var networkAPI: TopShelfNetworkProtocol
+    /// Access token for the active user
     private var accessToken: String
     
+    /// Builds a service for whichever user is currently active.
+    /// - Parameter userModel: Store to read the active user from
+    /// - Throws: `StreamingServiceErrors.initFailed` wrapping `.noDefaultUser` when nobody is signed in
     init(userModel: UserModel) throws(StreamingServiceErrors) {
-        let defaultUser: User
+        let defaultUser: any UserProtocol
         do {
             if let maybeUser = userModel.activeUser { defaultUser = maybeUser }
             else { throw StreamingServiceErrors.noDefaultUser }
@@ -27,15 +34,15 @@ public final class StreamingServiceBasicModel: StreamingServiceBasicProtocol {
         }
     }
     
-    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [SlimMedia] {
-        do {
-            return try await networkAPI.getRecentlyAdded(accessToken: accessToken)
-        } catch {
-            return []
-        }
+    /// Get all the recently added media. contentType is ignored
+    /// - Parameter contentType: Ignored
+    /// - Returns: All recently added media
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable] {
+        do { return try await networkAPI.getRecentlyAdded(accessToken: accessToken) }
+        catch { return [] }
     }
     
-    public func retrieveUpNext() async -> [SlimMedia] {
+    public func retrieveUpNext() async -> [MediaModelRepresentable] {
         do {
             guard let upNext = try await networkAPI.getUpNext(accessToken: accessToken).first else { return [] }
             return [upNext]

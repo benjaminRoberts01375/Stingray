@@ -7,39 +7,49 @@
 
 import Foundation
 
-public protocol LibraryProtocol: Identifiable {
+/// A single library on the server, along with the media downloaded into it so far.
+public protocol LibraryProtocol: AnyObject, Identifiable {
+    /// User-facing name of the library
     var title: String { get }
-    var media: MediaStatus { get }
+    /// ID provided by the server
+    var id: String { get }
+    /// Fetch progress for this library's media. Holds the media itself once any is available
+    var media: MediaStatus { get set }
+    /// Every genre seen across this library's media, accumulated as pages arrive. Drives the genre filter
+    var genres: Set<String> { get set }
+    /// Every maturity rating seen across this library's media, accumulated as pages arrive. Drives the maturity filter
+    var maturityRatings: Set<String> { get set }
 }
 
 /// Denotes the current status of loading media in a library
 public enum MediaStatus {
-    /// An unloaded state of the library, ready to be triggered
-    case unloaded
     /// Waiting for the server to respond
     case waiting
     /// Some library content is available, and some may still be downloading
     case available([MediaModel])
-    /// All library content is available
-    case complete([MediaModel])
     /// Loading library content failed with an error
     case error(RError)
 }
 
+/// Holds a single library's metadata and its downloaded media.
 @Observable
 public final class LibraryModel: LibraryProtocol, Decodable {
     public var title: String
     public var media: MediaStatus
     public var id: String
-    public var libraryType: String
+    public var genres: Set<String>
+    public var maturityRatings: Set<String>
     
-    public init(title: String, id: String, libraryType: String) {
+    /// Create a model for storing a single Library's data
+    /// - Parameters:
+    ///   - title: User-facing name of the library
+    ///   - id: Unique ID of this library
+    public init(title: String, id: String) {
         self.title = title
-        self.media = .unloaded
+        self.media = .waiting
         self.id = id
-        
-        if libraryType.contains("tv") { self.libraryType = "TV Shows" }
-        else { self.libraryType = libraryType.prefix(1).uppercased() + libraryType.dropFirst() }
+        self.genres = []
+        self.maturityRatings = []
     }
     
     public enum CodingKeys: String, CodingKey {
@@ -49,17 +59,17 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         case libraryType = "CollectionType"
     }
     
+    /// Create a `LibraryModel` from JSON. Media always starts empty, since libraries are paged in separately.
+    /// - Parameter decoder: JSON decoder
     public init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
-            title = try container.decode(String.self, forKey: .title)
-            id = try container.decode(String.self, forKey: .id)
-            let rawLibraryType = try container.decodeIfPresent(String.self, forKey: .libraryType) ?? ""
-            if rawLibraryType.contains("tv") { self.libraryType = "TV Shows" }
-            else if rawLibraryType.lowercased() == "boxsets" { self.libraryType = "Collections" }
-            else { libraryType = rawLibraryType.prefix(1).uppercased() + rawLibraryType.dropFirst() }
-            media = .unloaded
+            self.title = try container.decode(String.self, forKey: .title)
+            self.id = try container.decode(String.self, forKey: .id)
+            self.media = .waiting
+            self.genres = []
+            self.maturityRatings = []
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }
         catch DecodingError.valueNotFound(_, let context) {

@@ -8,30 +8,52 @@
 import CoreImage.CIFilterBuiltins
 import SwiftUI
 
+/// Two-step sign-in: connect to a server, then authenticate by password or Quick Connect.
+/// Also used to refresh an existing user's credentials, in which case the new tokens land on the existing user rather than creating a
+/// second one. While connected, Quick Connect is polled every five seconds until the user enters the code or the view disappears.
 public struct AddServerView: View {
+    /// Login state, set once authentication succeeds
     @Binding public var loggedIn: LoginState
-    
+
+    /// Transport the user picked. Also selects which address fields are shown
     @State private var httpProcol: HttpProtocol = .http
+    /// Hostname for HTTP, or the full URL for HTTPS
     @State private var httpHostname: String = ""
+    /// Port, only used for HTTP. Defaults to Jellyfin's
     @State private var httpPort: String = "8096"
-    
+
+    /// Entered username
     @State private var username: String = ""
+    /// Entered password
     @State private var password: String = ""
-    
+
+    /// Code the user types into Jellyfin. `nil` when Quick Connect is unavailable
     @State private var quickConnectCode: String?
+    /// Underlying failure, shown expandable beneath the form
     @State private var error: RError?
+    /// Human-readable summary of `error`
     @State private var errorSummary: String = ""
+    /// Whether a request is in flight, which disables the form
     @State private var loading: Bool = false
+    /// Whether the server has been reached. Also gates the Quick Connect polling loop
     @State private var connected: Bool = false
+    /// Validated base URL of the server
     @State private var jellyfinURL: URL?
-    
-    @Environment(UserModel.self) public var userModel: UserModel
+
+    /// Location where all users are stored
+    public var userModel: UserModelProtocol
+    @Environment(SettingsModel.self) public var settings: SettingsModel
     @Environment(\.dismiss) public var dismiss
-    
-    public init(loginState: Binding<LoginState>) {
+
+    /// Creates the sign-in form
+    /// - Parameters:
+    ///   - loginState: Login state to update once authentication succeeds
+    ///   - userModel: Location where the resulting user is stored
+    public init(loginState: Binding<LoginState>, userModel: UserModelProtocol) {
         self._loggedIn = loginState
+        self.userModel = userModel
     }
-    
+
     public var body: some View {
         VStack {
             Text("Sign into Jellyfin")
@@ -72,9 +94,7 @@ public struct AddServerView: View {
                 .frame(maxWidth: .infinity)
                 .focusSection()
             }
-            else {
-                Button("Disconnect") { self.connected = false }
-            }
+            else { Button("Disconnect") { self.connected = false } }
             if self.connected {
                 Divider()
                 HStack {
@@ -85,10 +105,8 @@ public struct AddServerView: View {
                         HStack {
                             ProgressView()
                                 .opacity(0)
-                            Button("Login") {
-                                self.setupConnection(quickConnectSecret: nil)
-                            }
-                            .disabled(self.loading)
+                            Button("Login") { self.setupConnection(quickConnectSecret: nil) }
+                                .disabled(self.loading)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -96,13 +114,9 @@ public struct AddServerView: View {
                     .frame(maxWidth: .infinity)
                     HStack {
                         VStack {
-                            HStack {
-                                Divider()
-                            }
+                            HStack { Divider() }
                             Text("or").font(.title2)
-                            HStack {
-                                Divider()
-                            }
+                            HStack { Divider() }
                         }
                     }
                     VStack {
@@ -132,30 +146,25 @@ public struct AddServerView: View {
             if let error = self.error {
                 ErrorView(error: error, summary: self.errorSummary)
                     .padding(.vertical)
-                NavigationLink { AddServerView(loginState: $loggedIn) }
-                label: {
-                    Image(systemName: "person.2.arrow.trianglehead.counterclockwise")
-                        .resizable()
-                        .scaledToFit()
-                }
-                .accessibilityLabel("Login again")
             }
         }
         // Done separately so we can ue the @Environment, also helps against reloads
         .onAppear { self.loadExistingServerInfo() }
         .onDisappear { self.connected = false } // A small hacky fix to stop checking QuickConnect
     }
-    
+
     /// Autofills connection info, prefers the current user's login info
     public func loadExistingServerInfo() {
         guard let serviceURL = self.userModel.activeUser?.serviceURL ?? self.userModel.getUsers().first?.serviceURL
         else { return }
         if serviceURL.scheme == "https" { httpProcol = .https }
-        
+
         httpPort = String(serviceURL.port ?? 8096)
         httpHostname = serviceURL.host ?? ""
     }
-    
+
+    /// Turns the current `error` into a user-facing summary and clears the loading state.
+    /// Network failures are rewritten into protocol-specific advice, since "check your hostname and port" only makes sense over HTTP.
     private func setError() {
         guard let error = self.error else { return }
         if let netErr = error.last() as? NetworkError {
@@ -167,13 +176,13 @@ public struct AddServerView: View {
         }
         self.loading = false
     }
-    
+
     /// Initial connection to server before Username and Password or Quick Connect can be used
     private func connectToServer() {
         self.error = nil
         self.quickConnectCode = nil
         self.loading = true
-        
+
         // Setup URL
         var url: URL?
         switch httpProcol {
@@ -198,7 +207,7 @@ public struct AddServerView: View {
             return
         }
         self.jellyfinURL = url
-        
+
         // Check if quick connect is available
         Task {
             let jellyfinServerInfo = JellyfinQuickConnectModel(url: url)
@@ -216,7 +225,7 @@ public struct AddServerView: View {
                 return
             }
             self.loading = false
-            
+
             if quickConnectAvailable {
                 // Get the code for quick connect code
                 do {
@@ -240,7 +249,7 @@ public struct AddServerView: View {
             }
         }
     }
-    
+
     /// Setup user with the Jellyfin server
     /// - Parameter quickConnectSecret: Quick Connection secret generated by the Jellyfin server
     private func setupConnection(quickConnectSecret: String?) {
@@ -254,17 +263,24 @@ public struct AddServerView: View {
                 }
                 // Login using Quick Connect
                 if let quickConnectSecret = quickConnectSecret {
-                    let streamingService = try await JellyfinModel.login(
-                        url: jellyfinURL, quickConnectSecret: quickConnectSecret, userModel: self.userModel
+                    let result = try await JellyfinModel.login(
+                        url: jellyfinURL,
+                        quickConnectSecret: quickConnectSecret,
+                        userModel: self.userModel,
+                        settingsModel: self.settings
                     )
-                    self.loggedIn = .loggedIn(streamingService)
+                    self.loggedIn = .loggedIn(result.0, result.1)
                 }
                 // Login using normal credentials
                 else {
-                    let streamingService = try await JellyfinModel.login(
-                        url: jellyfinURL, username: username, password: password, userModel: self.userModel
+                    let result = try await JellyfinModel.login(
+                        url: jellyfinURL,
+                        username: username,
+                        password: password,
+                        userModel: self.userModel,
+                        settingsModel: self.settings
                     )
-                    self.loggedIn = .loggedIn(streamingService)
+                    self.loggedIn = .loggedIn(result.0, result.1)
                 }
             } catch let error as RError {
                 self.error = AccountErrors.loginFailed(error)
@@ -280,14 +296,14 @@ public struct AddServerView: View {
             self.dismiss()
         }
     }
-    
+
     /// Generate a QR Code from a URL
     /// - Parameter url: URL to encode
     /// - Returns: QR Code if available
     public static func generateQRCode(from url: URL) -> UIImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(url.absoluteString.utf8)
-        
+
         guard let outputImage = filter.outputImage,
               let cgImage = CIContext().createCGImage(outputImage, from: outputImage.extent)
         else { return nil }
@@ -295,7 +311,7 @@ public struct AddServerView: View {
     }
 }
 
-#Preview {
-    @Previewable @State var loginState: LoginState = .loggedOut
-    AddServerView(loginState: $loginState)
-}
+// #Preview {
+//     @Previewable @State var loginState: LoginState = .loggedOut
+//     AddServerView(loginState: $loginState)
+// }

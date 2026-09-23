@@ -16,26 +16,44 @@ public protocol BasicNetworkProtocol {
     ///   - headers: Headers to add to request
     ///   - urlParams: URL paramaters for data fields
     ///   - body: For sending more advanced data structures like JSON
+    ///   - priority: Which connection pool the request runs on. `.high` "skips the line".
     /// - Returns: A formatted response in a Decodable type
     func request<T: Decodable>(
         verb: NetworkRequestType,
         path: String,
         headers: [String : String]?,
         urlParams: [URLQueryItem]?,
-        body: (any Encodable)?
+        body: (any Encodable)?,
+        priority: RequestPriority
     ) async throws(NetworkError) -> T
-    
+
     /// Allows simple URL building using the URL type.
     /// - Parameters:
     ///   - path: Path to a particular resource without the hostname, leading slashes, or URL params
     ///   - urlParams: URL params to add to URL
     /// - Returns: Formatted URL
     func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL?
-    
+
     /// Builds an Authorization header value for the streaming service.
     /// - Parameter accessToken: The access token to include.
     /// - Returns: The formatted Authorization header value.
     func buildAuthHeader(accessToken: String?) -> String
+}
+
+/// Extend to support existing network requests that don't specify a priority. This is put in an extension so that all
+/// `BasicNetworkProtocol`s get the benefit
+public extension BasicNetworkProtocol {
+    /// Convenience wrapper around the priority request function that uses the `.standard` priority. Keeps existing callers working by
+    /// skipping the `priority` param.
+    func request<T: Decodable>(
+        verb: NetworkRequestType,
+        path: String,
+        headers: [String : String]? = nil,
+        urlParams: [URLQueryItem]? = nil,
+        body: (any Encodable)? = nil
+    ) async throws(NetworkError) -> T {
+        try await request(verb: verb, path: path, headers: headers, urlParams: urlParams, body: body, priority: .standard)
+    }
 }
 
 /// Basic descriptor for REST API verbs
@@ -50,8 +68,25 @@ public enum NetworkRequestType: String {
     case delete = "DELETE"
 }
 
+/// How important a request is
+public enum RequestPriority {
+    /// Typical traffic, should be used most often
+    case standard
+    /// Latency-sensitive "skip the line" requests on an isolated connection pool
+    case high
+}
+
 /// A Jellyfin specific basic network struct for making network requests
 public final class JellyfinBasicNetwork: BasicNetworkProtocol {
+    /// Shared session for normal, high-volume traffic. Supports 6 concurrent requests, queues the rest
+    private static let standardSession: URLSession = .shared
+    /// Dedicated "skip-the-line" priority session. Supports 6 concurrent requests, queues the rest
+    private static let prioritySession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.httpMaximumConnectionsPerHost = 6
+        return URLSession(configuration: configuration)
+    }()
+
     /// Address of the Jellyfin server
     public var address: URL
     /// Unique identifier based on the device
@@ -60,14 +95,18 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
     private let deviceName: String
     /// Current stingray version
     private let appVersion: String
-    
+    /// Reused JSON encoder. Allocating a fresh coder per request is wasteful
+    private static let jsonEncoder = JSONEncoder()
+    /// Reused JSON decoder. Allocating a fresh coder per request is still wasteful
+    private static let jsonDecoder = JSONDecoder()
+
     public init(address: URL) {
         self.address = address
         self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         self.deviceName = UIDevice.current.name
     }
-    
+
     public func buildAuthHeader(accessToken: String?) -> String {
         var headerValue = "MediaBrowser Client=\"Stingray\", Device=\"\(deviceName)\", DeviceId=\"\(deviceId)\", Version=\"\(appVersion)\""
         if let token = accessToken {
@@ -75,25 +114,26 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
         }
         return headerValue
     }
-    
+
     public func request<T: Decodable>(
         verb: NetworkRequestType,
         path: String,
         headers: [String : String]? = nil,
         urlParams: [URLQueryItem]? = nil,
-        body: (any Encodable)? = nil
+        body: (any Encodable)? = nil,
+        priority: RequestPriority
     ) async throws(NetworkError) -> T {
         // Setup URL with path
         guard let url = self.buildURL(path: path, urlParams: urlParams) else {
             throw NetworkError.invalidURL("\(self.address.absoluteString) + \(path) + \(urlParams?.debugDescription ?? "No params")")
         }
-        
+
         Log.debug("Reaching out to \(url.absoluteString)")
-        
+
         // Setup request
         var request = URLRequest(url: url)
         request.httpMethod = verb.rawValue
-        
+
         // Jellyfin headers
         request.setValue(buildAuthHeader(accessToken: headers?["X-MediaBrowser-Token"]), forHTTPHeaderField: "Authorization")
         // Only add custom headers if they are provided
@@ -102,32 +142,36 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
                 request.setValue(header.1, forHTTPHeaderField: header.0)
             }
         }
-        
+
         // Only encode body if one is provided
         if let body = body {
             let jsonData: Data
             do {
-                jsonData = try JSONEncoder().encode(body)
+                jsonData = try Self.jsonEncoder.encode(body)
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type") // Set JSON as content type
                 request.httpBody = jsonData
             } catch {
                 throw NetworkError.encodeJSONFailed(error)
             }
         }
-        
+
         // Send the request
         let responseData: Data
         let response: URLResponse
         do {
-            (responseData, response) = try await URLSession.shared.data(for: request)
+            let session = switch priority {
+            case .standard: Self.standardSession
+            case .high: Self.prioritySession
+            }
+            (responseData, response) = try await session.data(for: request)
         }
         catch { throw NetworkError.requestFailedToSend(error) }
-        
+
         // Verify not invalid status code
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.badResponse(responseCode: 0, response: "Not an HTTP response")
         }
-        
+
         // Verify non-bad status code
         if !(200...299).contains(httpResponse.statusCode) {
             throw NetworkError.badResponse(
@@ -135,15 +179,15 @@ public final class JellyfinBasicNetwork: BasicNetworkProtocol {
                 response: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
             )
         }
-        
+
         // Decode the JSON response
         do {
-            let decodedResponse = try JSONDecoder().decode(T.self, from: responseData)
+            let decodedResponse = try Self.jsonDecoder.decode(T.self, from: responseData)
             return decodedResponse
         }
         catch { throw NetworkError.decodeJSONFailed(error, url: url) } // Can decode errors
     }
-    
+
     public func buildURL(path: String, urlParams: [URLQueryItem]?) -> URL? {
         return self.address.buildURL(path: path, urlParams: urlParams)
     }

@@ -1,5 +1,5 @@
 //
-//  SupportStingray.swift
+//  SupportStingrayView.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 4/12/26.
@@ -8,16 +8,20 @@
 import StoreKit
 import SwiftUI
 
+/// The supporter pitch, previewing the supporter-only themes alongside the purchase button.
+/// Doubles as the upsell shown when a locked theme is selected, so it also handles the already-purchased case.
 public struct SupportStingrayView: View {
     @Environment(PurchasesModel.self) private var purchases: PurchasesModel
+    /// Purchase failure, shown in place of the button
     @State private var error: RError?
-    
+
+    /// The supporter-only themes, each previewed in its own `ThemeExampleView`
     private let exampleThemes: [ThemeModel] = [
         ThemeModel(darkTheme: .frosty, lightTheme: .frosty, colorScheme: .light),
         ThemeModel(darkTheme: .retro, lightTheme: .retro, colorScheme: .dark),
         ThemeModel(darkTheme: .spaceVampires, lightTheme: .spaceVampires, colorScheme: .dark)
     ]
-    
+
     public var body: some View {
         VStack {
             Text("Supporting Stingray")
@@ -40,7 +44,7 @@ public struct SupportStingrayView: View {
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                
+
                 VStack {
                     if self.purchases.boughtSupporter {
                         VStack {
@@ -77,7 +81,7 @@ public struct SupportStingrayView: View {
                                     """)
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical)
-                                
+
                                     Button {
                                         _ = Task {
                                             do { try await self.purchases.purchase(product) }

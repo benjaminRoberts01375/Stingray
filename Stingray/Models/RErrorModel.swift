@@ -1,5 +1,5 @@
 //
-//  RError.swift
+//  RErrorModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 1/24/26.
@@ -22,17 +22,16 @@ extension RError {
     public func rDescription() -> String {
         var parts: [String] = [errorDescription]
         var current = next
-        
+
         while let err = current {
             parts.append(err.errorDescription)
             current = err.next
         }
-        
+
         let total = "\n\t→ \(parts.joined(separator: "\n\t→ "))"
-        Log.warning(total)
         return total
     }
-    
+
     /// Gets the last error in the chain of errors. Useful for writing summary error messages
     /// - Returns: The last error in the chain
     public func last() -> (any RError) {
@@ -52,7 +51,6 @@ extension [RError] {
         let total = self.reduce("") { (result, error) -> String in
             return result + "\n\t→ \(error.errorDescription)"
         }
-        Log.warning(total)
         return total
     }
 }
@@ -72,7 +70,7 @@ public enum NetworkError: RError {
     case decodeJSONFailed((any Error)?, url: URL?)
     /// An access token is needed
     case missingAccessToken
-    
+
     public var next: (any RError)? {
         switch self {
         case .decodeJSONFailed(let error, _):
@@ -81,7 +79,7 @@ public enum NetworkError: RError {
         default: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .invalidURL(let description):
@@ -101,7 +99,7 @@ public enum NetworkError: RError {
             return "An access token is needed"
         }
     }
-    
+
     /// A function to override `NetworkError` messages with a more human readable option
     /// - Parameters:
     ///   - netErr: NetworkError that was thrown
@@ -115,7 +113,7 @@ public enum NetworkError: RError {
             case .https: return "Invalid HTTPS URL. Check your URL."
             }
         case .encodeJSONFailed: return "Failed to send request to server. " +
-                "This may be because of some tricky characters in your username and password."
+            "This may be because of some tricky characters in your username and password."
         case .decodeJSONFailed, .missingAccessToken, .requestFailedToSend:
             switch httpProtocol {
             case .http: return "Could not find your Jellyfin server. Please check your hostname and port."
@@ -135,8 +133,11 @@ public enum NetworkError: RError {
     }
 }
 
+/// HTTP protocol types
 public enum HttpProtocol: String, CaseIterable {
+    /// Plain insecure HTTP >:(
     case http = "http"
+    /// HTTPS. The good stuff
     case https = "https"
 }
 
@@ -153,7 +154,7 @@ public enum JSONError: RError {
     case failedJSONEncode(String)
     /// The unwrapped key is an unexpected value.
     case unexpectedKey(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .unexpectedKey(let err): return err
@@ -163,7 +164,7 @@ public enum JSONError: RError {
         default: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .missingKey(let key, let objectName):
@@ -199,7 +200,7 @@ public enum JSONError: RError {
         case .failedJSONEncode(let objectName):
             return "Failed to encode JSON for \(objectName)"
         case .unexpectedKey:
-            return "The unwraped JSON value was unexpected"
+            return "The unwrapped JSON value was unexpected"
         }
     }
 }
@@ -208,21 +209,21 @@ public enum JSONError: RError {
 public enum MediaError: RError {
     /// The media is an unknown type. The `String` value is the type attempted to be made
     case unknownMediaType(String)
-    
+
     public var errorDescription: String {
         switch self {
         case .unknownMediaType(let mediaType):
             return "Unknown media type \"\(mediaType)\""
         }
     }
-    
+
     public var next: (any RError)? { nil }
 }
 
 /// Different ways a `StreamingServiceProtocol` can error out.
 public enum StreamingServiceErrors: RError {
     /// Failed to get initial library data.
-    case librarySetupFailed(RError?)
+    case librarySetupFailed(Error)
     /// Failed to create a streaming service object
     case initFailed(any Error)
     /// Address to the server was bad
@@ -233,26 +234,29 @@ public enum StreamingServiceErrors: RError {
     case badDefaultUser(RError)
     /// No user is available
     case noDefaultUser
-    
+    /// Unable to get the library version of the server
+    case serverVersionFailed(RError?)
+
     public var errorDescription: String {
         switch self {
-        case .librarySetupFailed: return "Failed to get library data"
+        case .librarySetupFailed: return "Failed to get any library data"
         case .initFailed: return "Failed to create a library"
         case .badAddress: return "Bad address to server"
         case .noToken: return "No API token available"
         case .badDefaultUser: return "Creation of a default user failed"
         case .noDefaultUser: return "No default user is available"
+        case .serverVersionFailed: return "Failed to get the server's version"
         }
     }
-    
+
     public var next: (any RError)? {
         switch self {
-        case .librarySetupFailed(let err): return err
         case .initFailed(let err):
             if let rError = err as? StreamingServiceErrors { return rError }
             return nil
-        case .badAddress, .noDefaultUser, .noToken: return nil
+        case .badAddress, .noDefaultUser, .noToken, .librarySetupFailed: return nil
         case .badDefaultUser(let err): return err
+        case .serverVersionFailed(let err): return err
         }
     }
 }
@@ -263,16 +267,16 @@ public enum AdvancedNetworkErrors: RError {
     case failedRecentlyAdded(RError)
     /// Failed to get "up next" (what to watch next).
     case failedUpNext(RError)
-    /// Failed to get special features for a particular `MediaModelProtocol`.
+    /// Failed to get special features for a particular `MediaProtocol`.
     case failedSpecialFeatures(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .failedRecentlyAdded(let err), .failedUpNext(let err), .failedSpecialFeatures(let err):
             return err
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .failedRecentlyAdded: return "Failed to get recently added list"
@@ -284,39 +288,36 @@ public enum AdvancedNetworkErrors: RError {
 
 /// Different ways a Library can error out while setting up.
 public enum LibraryErrors: RError {
-    /// Failed ot get library metadata
+    /// Failed to get library metadata
     case gettingLibraries(RError)
     /// Failed to get library media. The `String` value is the name/id of the library
     case gettingLibraryMedia(RError, String)
-    /// Failed to get seasons. The `String` value is the name/id of the library
-    case gettingSeasons(RError, String)
     /// Failed to get a single season. The `String` value is the ID of the season
     case gettingSeason(RError, String)
-    /// Failed to get the media for a season. The `String` value is the ID of the season
-    case gettingSeasonMedia(RError, String)
+    /// Failed to get any of the seasons. The string is the media ID
+    case gettingSeasons(RError?, String)
+    /// The task group used to manage season collection threw an error
+    case seasonTaskGroup(Error)
     /// Failed to get the special features for a piece of media. The `String` value is the title of the media
-    case specialFeaturesFailed(RError, String)
+    case specialFeaturesFailed(RError?, String)
     /// The library failed for some unknown reason.
     case unknown(String)
-    
+
     public var next: (RError)? {
         switch self {
-        case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeasons(let next, _), .gettingSeason(let next, _):
-            return next
-        case .gettingSeasonMedia(let next, _), .specialFeaturesFailed(let next, _):
-            return next
-        case .unknown:
-            return nil
+        case .gettingLibraries(let next), .gettingLibraryMedia(let next, _), .gettingSeason(let next, _): return next
+        case .specialFeaturesFailed(let next, _), .gettingSeasons(let next, _): return next
+        case .unknown, .seasonTaskGroup: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .gettingLibraries: return "Failed to get library data"
         case .gettingLibraryMedia(_, let name): return "Failed to get library content for library \(name)"
-        case .gettingSeasons(_, let name): return "Failed to get seasons for library \(name)"
         case .gettingSeason(_, let id): return "Failed to get the season with the ID \(id)"
-        case .gettingSeasonMedia(_, let id): return "Failed to get the season media for the season \(id)"
+        case .gettingSeasons(_, let id): return "Failed to get any of the seasons for Media ID: \(id)"
+        case .seasonTaskGroup: return "A group of seasons failed to load"
         case .specialFeaturesFailed(_, let name): return "Failed to load the special features for \(name)"
         case .unknown(let name): return "The library \(name) has failed to setup."
         }
@@ -336,7 +337,7 @@ public enum AccountErrors: RError {
         case .serverVersionFailed(let next): return next
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .loginFailed:
@@ -351,14 +352,14 @@ public enum AccountErrors: RError {
 public enum JellyfinNetworkErrors: RError {
     /// Failed to update the playback position.
     case playbackUpdateFailed(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .playbackUpdateFailed(let err):
             return err
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .playbackUpdateFailed: return "Failed to update playback status"
@@ -370,22 +371,23 @@ public enum JellyfinNetworkErrors: RError {
 public enum UserDefaultsErrors: RError {
     /// Failed to create a UserDefaults object
     case FailedSetup
-    
+
     public var next: (any RError)? { nil }
-    
+
     public var errorDescription: String { "Failed to setup user defaults with suiteName" }
 }
 
 /// Errors for `DefaultsBasicStorage`
 public enum BasicStorageErrors: RError {
+    /// `UserDefaults` could not be opened for the shared app group, so nothing can be persisted
     case userDefaultsSetup
-    
+
     public var next: (any RError)? {
         switch self {
         case .userDefaultsSetup: return nil
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .userDefaultsSetup: return "Failed to setup User Defaults with App Group"
@@ -395,14 +397,15 @@ public enum BasicStorageErrors: RError {
 
 /// Errors during app setup
 public enum SetupErrors: RError {
+    /// Permanent storage failed to open. Stingray stops rather than risk writing over the user's existing data
     case databaseError(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .databaseError(let error): return error
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .databaseError: return "Failed to setup databases. Stingray may be able to continue, but this protects your data"
@@ -422,9 +425,10 @@ public enum QuickConnectErrors: RError {
     case authFailed(RError)
     /// Failed to check if Quick Connect is enabled
     case isEnabled(RError)
-    
+
+    /// Failed to poll the server for whether the user has entered the Quick Connect code yet
     case statusFailedtoFetch(RError)
-    
+
     public var next: (any RError)? {
         switch self {
         case .initialConnectionFailed(let err): return err
@@ -435,7 +439,7 @@ public enum QuickConnectErrors: RError {
         case .statusFailedtoFetch(let err): return err
         }
     }
-    
+
     public var errorDescription: String {
         switch self {
         case .initialConnectionFailed: return "Failed to connect to the Jellyfin server"
@@ -444,22 +448,28 @@ public enum QuickConnectErrors: RError {
         case .quickConnectCodesFailed: return "Failed to get Quick Connect code"
         case .isEnabled: return "Failed to check if Quick Connect is available"
         case .statusFailedtoFetch: return "Failed to check if Quick Connect has been setup on the Jellyfin server"
-            
+
         }
     }
 }
 
 /// Errors for in app purchases
 public enum StoreErrors: RError {
+    /// StoreKit rejected the purchase attempt
     case purchaseFailed(Product, Error)
+    /// StoreKit reported a `PurchaseResult` case that did not exist when this was written
     case purchasesUpdated
+    /// The transaction came back unverified, meaning its signature could not be trusted
     case tamperedPurchase(Product, Error)
+    /// The supporter product was missing from an otherwise successful product fetch
     case productUnavailable
+    /// The product list could not be fetched from App Store Connect at all
     case productsUnavailable(Error)
+    /// A purchase was attempted before the product list finished loading
     case productsStillLoading
-    
+
     public var next: (any RError)? { nil }
-    
+
     public var errorDescription: String {
         switch self {
         case .purchaseFailed(let product, let err): return "Failed to purchase \(product.id): \(err.localizedDescription)"

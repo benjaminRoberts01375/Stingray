@@ -11,42 +11,42 @@ import SwiftUI
 /// How a theme needs to be built
 public protocol ThemeProtocol {
     /// A light-weight stand-in for this theme that holds basic info like the name and description
-    var representation: ThemeModel.Themes { get }
-    
+    var representation: Themes { get }
+
     /// Prefer dark mode or light mode SwiftUI rendering
     var colorScheme: ColorScheme { get }
-    
+
     /// How the app's background should be rendered
     var appBackground: AnyView { get }
-    
+
     /// The background color of a normal button or menu
     var buttonBackground: AnyShapeStyle { get }
-    
+
     /// When an option is active but not selected
     var activeColor: Color { get }
-    
+
     /// View used when there is no default image on profiles
     var defaultProfileImage: AnyShapeStyle { get }
-    
+
     /// Color to use for shading the add profile icon
     var addProfileStyle: AnyShapeStyle { get }
-    
+
     /// The normal color used on labels
     var labelPrimary: AnyShapeStyle { get }
-    
+
     /// If a button has a secondary element, shade it accordingly
     var labelSecondary: AnyShapeStyle { get }
-    
+
     /// Style to use for some of the largest text used
     var header1: AnyShapeStyle { get }
-    
+
     /// Style to use for slightly smaller than the largest text
     var header2: AnyShapeStyle { get }
 }
 
 /// A dark blue color scheme, like deep in the ocean
 public final class ThemeDeepSeaDark: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .deepSea
+    public let representation: Themes = .deepSea
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(
         LinearGradient(
@@ -76,17 +76,17 @@ public final class ThemeDeepSeaDark: ThemeProtocol {
 
 /// A white theme and grayscale theme
 public final class ThemeNotesAppLight: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .notesApp
+    public let representation: Themes = .notesApp
     public let colorScheme: ColorScheme = .light
-    public let appBackground: AnyView = AnyView(Color.white)
-    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.gray.opacity(0.15))
+    public let appBackground: AnyView = AnyView(Color(red: 0.95, green: 0.95, blue: 0.95))
+    public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.white)
     public let labelPrimary: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let labelSecondary: AnyShapeStyle = AnyShapeStyle(Color.gray)
     public let activeColor: Color = Color.gray.opacity(0.15)
     public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let header1: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let header2: AnyShapeStyle = AnyShapeStyle(Color.black)
-    
+
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
@@ -97,8 +97,8 @@ public final class ThemeFrostyLight: ThemeProtocol {
         green: 0.12941176470588237,
         blue: 0.17647058823529413
     )
-    
-    public let representation: ThemeModel.Themes = .frosty
+
+    public let representation: Themes = .frosty
     public let colorScheme: ColorScheme = .light
     public let appBackground: AnyView = AnyView(SlidingBubblesView())
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color.clear)
@@ -109,12 +109,12 @@ public final class ThemeFrostyLight: ThemeProtocol {
     public let addProfileStyle: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let header1: AnyShapeStyle = AnyShapeStyle(Color.blue)
     public var header2: AnyShapeStyle = AnyShapeStyle(ThemeFrostyLight.darkPink)
-    
+
     /// Circles that slowly fade in and fade out with subtle movements
     public struct SlidingBubblesView: View {
         @State private var bubbles: [BubbleModel] = []
         @State private var spawnTimer: Timer?
-        
+
         public var body: some View {
             GeometryReader { geo in
                 ZStack {
@@ -135,7 +135,7 @@ public final class ThemeFrostyLight: ThemeProtocol {
                             duration: duration() * Double(i) // Stagger disappear
                         )
                     }
-                    
+
                     // Setup bubble spawning
                     self.spawnTimer = Timer.scheduledTimer(withTimeInterval: 11.5 / Double(count), repeats: true) { _ in
                         self.bubbles.append(
@@ -154,12 +154,12 @@ public final class ThemeFrostyLight: ThemeProtocol {
             }
         }
     }
-    
+
     /// A single circle that fades in, slides a bit, and fades out
     public struct SlidingBubbleView: View {
         /// Data about the bubble to animate
         @State public var bubble: BubbleModel
-        
+
         public var body: some View {
             Circle()
                 .fill(self.bubble.color.opacity(self.bubble.opacity))
@@ -172,14 +172,14 @@ public final class ThemeFrostyLight: ThemeProtocol {
                 .onAppear {
                     // Start to fade in
                     self.bubble.opacity = Double.random(in: 0.2...0.5)
-                    
+
                     // Move the bubble
                     let distance: CGFloat = 10
                     self.bubble.offsetPosition = CGSize(
                         width: self.bubble.duration * CGFloat.random(in: -distance...distance),
                         height: self.bubble.duration * CGFloat.random(in: -distance...distance)
                     )
-                    
+
                     // Fade out
                     Task { // Delay the deletion time so the transition can complete
                         try? await Task.sleep(for: .seconds(self.bubble.duration - BubbleModel.fadeTime))
@@ -190,7 +190,7 @@ public final class ThemeFrostyLight: ThemeProtocol {
                 }
         }
     }
-    
+
     /// Animation data for a bubble
     @Observable
     public final class BubbleModel: Identifiable {
@@ -202,20 +202,21 @@ public final class ThemeFrostyLight: ThemeProtocol {
         public let color: Color = [.red, .blue, .green, .yellow, .orange, .cyan, .indigo, .mint, .pink, .teal].randomElement() ?? .red
         /// How long the bubble should be shown for
         public let duration: TimeInterval
-        
+
         /// Bubble transparency
         public var opacity: Double = 0
         /// How far the bubble slides
         public var offsetPosition: CGSize = .zero
         /// Tracks when the animation is complete. Set by the `SlidingBubbleView`
         public var complete: Bool = false
-        
+
         /// How long it takes for a bubble to fade in/out
         public static let fadeTime: TimeInterval = 1.5
-        
+
         /// Sets up the data for a bubble
         /// - Parameters:
         ///   - startPosition: Where on screen the bubble should start
+        ///   - duration: How long the bubble should last for
         public init(startPosition: CGPoint, duration: TimeInterval) {
             self.startPosition = startPosition
             self.duration = duration
@@ -226,8 +227,8 @@ public final class ThemeFrostyLight: ThemeProtocol {
 /// A light theme with a little splash of color in the background
 public final class ThemeBeachLight: ThemeProtocol {
     public static let tan = Color(red: 1, green: 0.973, blue: 0.863)
-    
-    public let representation: ThemeModel.Themes = .beach
+
+    public let representation: Themes = .beach
     public let colorScheme: ColorScheme = .light
     public let appBackground: AnyView = AnyView(
         LinearGradient(
@@ -246,13 +247,13 @@ public final class ThemeBeachLight: ThemeProtocol {
     public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let header1: AnyShapeStyle = AnyShapeStyle(Color.black)
     public let header2: AnyShapeStyle = AnyShapeStyle(Color.black)
-    
+
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
 /// A super dark theme
 public final class ThemeVoidDark: ThemeProtocol {
-    public let representation: ThemeModel.Themes = .void
+    public let representation: Themes = .void
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(Color.black)
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(Color(red: 0.1, green: 0.1, blue: 0.1))
@@ -262,11 +263,11 @@ public final class ThemeVoidDark: ThemeProtocol {
     public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.gray)
     public let header1: AnyShapeStyle = AnyShapeStyle(Color.white)
     public let header2: AnyShapeStyle = AnyShapeStyle(Color.white)
-    
+
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
 }
 
-// A theme based on the well-known Dracula theme https://draculatheme.com/spec
+/// A theme based on the well-known Dracula theme https://draculatheme.com/spec
 public final class ThemeSpaceVampiresDark: ThemeProtocol {
     // Official Dracula colors https://draculatheme.com/spec#color-palette
     public static let background = Color(red: 0.1568627450980392, green: 0.16470588235294117, blue: 0.21176470588235294)
@@ -281,35 +282,35 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     public static let cyan = Color(red: 0.5450980392156862, green: 0.9137254901960784, blue: 0.9921568627450981)
     public static let purple = Color(red: 0.7411764705882353, green: 0.5764705882352941, blue: 0.9764705882352941)
     public static let pink = Color(red: 1, green: 0.4745098039215686, blue: 0.7764705882352941)
-    
-    public let representation: ThemeModel.Themes = .spaceVampires
+
+    public let representation: Themes = .spaceVampires
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(
         ZStack {
             // Shooting stars
             ShootingStarView()
-            
+
             LinearGradient(colors: [ThemeSpaceVampiresDark.background, .clear], startPoint: .bottom, endPoint: .top)
-            
+
             // Stars
             Canvas { context, size in
                 let starCount = 50
                 let starRegionHeight = size.height / 3
-                
+
                 for _ in 0..<starCount {
                     let x = Double.random(in: 0..<size.width)
                     let y = Double.random(in: 0..<size.height / 3)
                     let radius = Double.random(in: 0.75..<2)
-                    
+
                     // Handle negative positions
                     let finalX = x < 0 ? x + size.width : x
                     let finalY = y < 0 ? y + starRegionHeight : y
-                    
+
                     let star = Path(ellipseIn: CGRect(x: finalX, y: finalY, width: radius * 2, height: radius * 2))
                     context.fill(star, with: .color(.white.opacity(0.8)))
                 }
             }
-            
+
             // Rolling hills
             RollingHillsView()
         }
@@ -324,14 +325,18 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     public let defaultProfileImage: AnyShapeStyle = AnyShapeStyle(Color.gray)
     public let header1: AnyShapeStyle = AnyShapeStyle(ThemeSpaceVampiresDark.pink)
     public let header2: AnyShapeStyle = AnyShapeStyle(Color.yellow)
-    
+
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
-    
+
+    /// A single streak that crosses the upper third of the screen at random intervals.
     public struct ShootingStarView: View {
+        /// Direction of travel, chosen so the streak always heads away from the nearest edge
         @State private var angle: Angle = .degrees(0)
+        /// Current position of the streak
         @State private var position: CGPoint = CGPoint(x: 200, y: 100)
+        /// Fades the streak in and out around each pass
         @State private var opacity: CGFloat = .zero
-        
+
         public var body: some View {
             GeometryReader { geo in
                 Capsule()
@@ -356,7 +361,9 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                     }
             }
         }
-        
+
+        /// Schedules the next pass 5-30 seconds out, rescheduling itself each time so streaks keep appearing.
+        /// - Parameter screenSize: Size to pick the streak's starting point within
         public func scheduleNextShootingStar(screenSize: CGSize) {
             let randomInterval = Double.random(in: 5...30)
             Timer.scheduledTimer(withTimeInterval: randomInterval, repeats: false) { _ in
@@ -364,14 +371,14 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                 scheduleNextShootingStar(screenSize: screenSize)
             }
         }
-        
+
         private func animateShootingStar(screenSize: CGSize) {
             self.opacity = 0
             self.position = CGPoint(
                 x: Double.random(in: 0..<screenSize.width),
                 y: Double.random(in: 20..<(screenSize.height / 3))
             )
-            
+
             if self.position.x < screenSize.width / 2 { // Left edge
                 if self.position.y < screenSize.height / 6 { // Top Left
                     self.angle = .degrees(Double.random(in: 15...75))
@@ -388,12 +395,12 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                     self.angle = .degrees(Double.random(in: 145...200))
                 }
             }
-            
+
             // Fade in
             withAnimation(.easeIn(duration: 0.5)) {
                 self.opacity = 1
             }
-            
+
             // Move along trajectory
             withAnimation(.linear(duration: 1.25)) {
                 let distance: CGFloat = 800
@@ -403,14 +410,15 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                     y: self.position.y + distance * sin(radians)
                 )
             }
-            
+
             // Fade out
             withAnimation(.easeOut(duration: 0.3).delay(0.95)) {
                 self.opacity = 0
             }
         }
     }
-    
+
+    /// Three layered sine-wave hills along the bottom of the screen, lightest at the front.
     public struct RollingHillsView: View {
         public var body: some View {
             Canvas { context, size in
@@ -426,7 +434,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                     backHillPath,
                     with: .color(Color(red: 0.12549019607843137, green: 0.12549019607843137, blue: 0.16470588235294117))
                 )
-                
+
                 // Middle hill
                 let middleHillPath = createHillPath(
                     size: size,
@@ -439,7 +447,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                     middleHillPath,
                     with: .color(Color(red: 0.19215686274509805, green: 0.17647058823529413, blue: 0.25882352941176473))
                 )
-                
+
                 // Front hill (brightest purple)
                 let frontHillPath = createHillPath(
                     size: size,
@@ -454,7 +462,7 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
                 )
             }
         }
-        
+
         /// Creates a single wave pattern
         /// - Parameters:
         ///   - size: Available width and height
@@ -466,20 +474,20 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
         private func createHillPath(size: CGSize, yOffset: CGFloat, amplitude: CGFloat, frequency: CGFloat, seed: Int) -> Path {
             Path { path in
                 path.move(to: CGPoint(x: 0, y: size.height))
-                
+
                 // Create smooth rolling hills using sine waves
                 let steps = 100
                 for step in 0...steps {
                     let x = (CGFloat(step) / CGFloat(steps)) * size.width
                     let normalizedX = x / size.width
-                    
+
                     // Use seeded random-like behavior with sine combination
                     let wave = sin(normalizedX * .pi * 2 * frequency + CGFloat(seed) * 0.1)
                     let y = yOffset + wave * amplitude
-                    
+
                     path.addLine(to: CGPoint(x: x, y: y))
                 }
-                
+
                 // Close the path at bottom right
                 path.addLine(to: CGPoint(x: size.width, y: size.height))
                 path.closeSubpath()
@@ -488,11 +496,11 @@ public final class ThemeSpaceVampiresDark: ThemeProtocol {
     }
 }
 
-/// A beach with water coming in and out
+/// A vaporwave inspired theme with a grid floor moving towards the user
 public final class ThemeRetroMid: ThemeProtocol {
     public static let gridColor = Color(red: 0.7411764705882353, green: 0.17254901960784313, blue: 0.4823529411764706) // #BD2C7B
-    
-    public let representation: ThemeModel.Themes = .retro
+
+    public let representation: Themes = .retro
     public let colorScheme: ColorScheme = .dark
     public let appBackground: AnyView = AnyView(RetroVibes())
     public let buttonBackground: AnyShapeStyle = AnyShapeStyle(.regularMaterial)
@@ -505,21 +513,27 @@ public final class ThemeRetroMid: ThemeProtocol {
         Color.white
             .shadow(.drop(radius: 5))
     )
-    
+
     public var addProfileStyle: AnyShapeStyle { self.defaultProfileImage }
-    
+
+    /// A sunset over layered mountains and a grid floor scrolling toward the viewer.
     public struct RetroVibes: View {
+        /// Darkest purple, used for the sky base and the mountain bases
         public static let deepPurple = Color(red: 0.11764705882352941, green: 0.011764705882352941, blue: 0.23529411764705882)
+        /// Mid-tone pink of the sky gradient
         public static let deepPink = Color(red: 0.7333333333333333, green: 0.0784313725490196, blue: 0.42745098039215684)
+        /// Pale yellow of the sun and the sky's brightest band
         public static let deepYellow = Color(red: 1, green: 0.9372549019607843, blue: 0.615686274509804)
-        
+
+        /// Number of vertical grid lines
         public let columns: Int = 15
+        /// Number of horizontal grid lines
         public let rows: Int = 16
         /// X position of the vanishing point (0.0 = left, 1.0 = right)
         public let vanishingPointX: CGFloat = 0.5
         /// Seconds for one row's worth of grid travel toward the camera
         public let cycleDuration: Double = 60.0
-        
+
         public var body: some View {
             GeometryReader { geo in
                 ZStack {
@@ -568,7 +582,7 @@ public final class ThemeRetroMid: ThemeProtocol {
                                     endPoint: .top
                                 )
                             )
-                            
+
                             HStack(alignment: .bottom) { // Midground mountains
                                 ForEach(0..<4) { _ in
                                     Triangle()
@@ -597,7 +611,7 @@ public final class ThemeRetroMid: ThemeProtocol {
                                 )
                             )
                             .brightness(0.03)
-                            
+
                             HStack { // Foreground mountains
                                 Triangle()
                                     .frame(maxHeight: geo.size.height / 3 - 40)
@@ -620,7 +634,7 @@ public final class ThemeRetroMid: ThemeProtocol {
                         }
                         .frame(width: geo.size.width, height: geo.size.height / 3, alignment: .bottom)
                         .clipped()
-                        
+
                         // Ground
                         TimelineView(.animation) { timeline in
                             Canvas { context, size in
@@ -658,7 +672,7 @@ public final class ThemeRetroMid: ThemeProtocol {
                 )
             }
         }
-        
+
         /// Generates a grid floor
         /// - Parameters:
         ///   - size: Available size to draw the floor
@@ -666,42 +680,42 @@ public final class ThemeRetroMid: ThemeProtocol {
         /// - Returns: The planned floor
         public func floorGenerator(in size: CGSize, phase: CGFloat = 0) -> Path {
             var path = Path()
-            
+
             // Vanishing point sits above the canvas; horizonOffset controls perspective steepness
             let horizonOffset = size.height * 0.5
             let vanishingPoint = CGPoint(
                 x: size.width * vanishingPointX,
                 y: -horizonOffset
             )
-            
+
             // Bottom extension factor — how far past the canvas bottom edge the lines reach
             let s = 1 + size.height / horizonOffset
-            
+
             // Column lines: top spans 0...size.width, bottom fans past the canvas edges
             for col in 0...columns {
                 let t = CGFloat(col) / CGFloat(columns)
                 let topX = t * size.width
                 let bottomX = vanishingPoint.x + s * (topX - vanishingPoint.x)
-                
+
                 path.move(to: CGPoint(x: topX, y: 0))
                 path.addLine(to: CGPoint(x: bottomX, y: size.height))
             }
-            
+
             // Horizontal rows: phase shifts each row toward the camera, wrapping at the horizon
             for row in 0...rows {
                 var raw = CGFloat(row) / CGFloat(rows) + phase
                 raw -= floor(raw)
                 let curved = raw * raw
                 let y = curved * size.height
-                
+
                 let rowS = (y + horizonOffset) / horizonOffset
                 let leftX = vanishingPoint.x + rowS * (0 - vanishingPoint.x)
                 let rightX = vanishingPoint.x + rowS * (size.width - vanishingPoint.x)
-                
+
                 path.move(to: CGPoint(x: leftX, y: y))
                 path.addLine(to: CGPoint(x: rightX, y: y))
             }
-            
+
             return path
         }
     }
@@ -743,6 +757,7 @@ public final class ThemeRetroMid: ThemeProtocol {
         .ignoresSafeArea()
 }
 
+/// An isosceles triangle filling its frame, apex centered at the top. Used for the Synth theme's mountains.
 public struct Triangle: Shape {
     public func path(in rect: CGRect) -> Path {
         Path { path in

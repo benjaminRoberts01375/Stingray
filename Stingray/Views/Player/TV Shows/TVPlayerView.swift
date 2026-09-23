@@ -1,0 +1,179 @@
+//
+//  TVPlayerView.swift
+//  Stingray
+//
+//  Created by Ben Roberts on 11/19/25.
+//
+
+import AVKit
+import SwiftUI
+
+// MARK: Parent view
+/// Hosts the TV player, keeping playback alive across a Picture in Picture handoff.
+public struct TVPlayerView: View {
+    @Environment(\.dismiss) private var dismiss
+    /// Playback state for the current episode
+    @State public var vm: TVPlayerViewModel
+    /// App navigation. Stashed on the view model when entering PiP and restored on the way back
+    @Binding public var navigation: NavigationPath
+
+    public var body: some View {
+        VStack {
+            AVPlayerViewControllerRepresentable(vm: self.vm) {
+                self.vm.navigationPath = self.navigation
+                dismiss()
+            } onRestoreFromPiP: {
+                if let restoredPath = self.vm.navigationPath {
+                    self.navigation = restoredPath
+                }
+            } onStopFromPiP: {
+                self.vm.stopPlayer()
+            }
+            .id( // Force reload the AVPlayerViewControllerRepresentable when the underlying content changes
+                self.vm.mediaSource.id +
+                (self.vm.playerProgress?.subtitleID ?? "") +
+                (self.vm.playerProgress?.videoID ?? "") +
+                (self.vm.playerProgress?.audioID ?? "") +
+                (String(self.vm.transportBarNeedsUpdate))
+            )
+        }
+        .onDisappear { // Only stop the player if PiP is not active
+            if AVPlayerCoordinator.activePiPCoordinator == nil {
+                Log.info("Stopping player")
+                self.vm.stopPlayer()
+            }
+        }
+        .ignoresSafeArea(.all)
+    }
+}
+
+// MARK: UIKit Player
+/// Wraps `AVPlayerViewController` for the TV player. An existing PiP stream for different content is killed on creation, so only one
+/// episode plays at a time.
+fileprivate struct AVPlayerViewControllerRepresentable: UIViewControllerRepresentable {
+    /// Playback state for the current episode
+    public let vm: TVPlayerViewModel
+
+    // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
+    /// Called when PiP first begins
+    public let onStartPiP: () -> Void
+    /// Called when a PiP stream is becoming full-screen again
+    public let onRestoreFromPiP: () -> Void
+    /// Called when PiP ends without being restored
+    public let onStopFromPiP: () -> Void
+
+    @Environment(ThemeModel.self) private var theme
+
+    public func makeCoordinator() -> AVPlayerCoordinator {
+        let coordinator = AVPlayerCoordinator(
+            id: self.vm.mediaSource.id,
+            onStartPiP: self.onStartPiP,
+            onRestoreFromPiP: self.onRestoreFromPiP,
+            onStopFromPiP: self.onStopFromPiP,
+        )
+
+        // Should we kill the current PiP stream because the user is now watching something new?
+        if AVPlayerCoordinator.activePiPCoordinator?.id != nil && self.vm.mediaSource.id != AVPlayerCoordinator.activePiPCoordinator?.id {
+            Log.info("Killing PiP Coordinator")
+            // Stop the previous player to kill PiP
+            AVPlayerCoordinator.activePiPCoordinator?.stopPlayer()
+            AVPlayerCoordinator.activePiPCoordinator = nil
+        }
+        return coordinator
+    }
+
+    public func makeUIViewController(context: Context) -> AVPlayerViewController {
+        Log.info("Loading TV player...")
+        let controller = AVPlayerViewController()
+        controller.player = self.vm.player
+        controller.showsPlaybackControls = true
+        controller.transportBarCustomMenuItems = makeTransportBarItems()
+        controller.appliesPreferredDisplayCriteriaAutomatically = true
+        controller.allowsPictureInPicturePlayback = true
+        controller.allowedSubtitleOptionLanguages = .init(["nerd"])
+        controller.delegate = context.coordinator
+
+        context.coordinator.playerViewController = controller
+        context.coordinator.observeFailures(of: self.vm.player)
+
+        var playerTabs: [UIViewController] = []
+
+        if !self.vm.media.description.isEmpty {
+            // Series & episode description
+            let descTab = UIHostingController(
+                rootView: TVPlayerDescriptionView(media: self.vm.media, mediaSourceID: self.vm.mediaSource.id, seasons: self.vm.seasons)
+            )
+            descTab.title = "Description"
+            descTab.preferredContentSize = CGSize(width: 0, height: 350)
+            playerTabs.append(descTab)
+        }
+
+        if !self.vm.media.people.isEmpty {
+            for season in self.vm.seasons {
+                for episode in season.episodes {
+                    if let mediaSource = episode.mediaSources.first, mediaSource.id == self.vm.mediaSource.id {
+                        let peopleTab = UIHostingController(
+                            rootView: PlayerPeopleView(people: episode.people, streamingService: self.vm.streamingService)
+                                .environment(self.theme)
+                        )
+                        peopleTab.title = "People"
+                        peopleTab.preferredContentSize = CGSize(width: 0, height: 350)
+                        playerTabs.append(peopleTab)
+                        break
+                    }
+                }
+            }
+        }
+
+        let streamingStatsTab = UIHostingController(rootView: PlayerStreamingStats(vm: self.vm))
+        streamingStatsTab.title = "Stats"
+        playerTabs.append(streamingStatsTab)
+
+        controller.customInfoViewControllers = playerTabs
+        return controller
+    }
+
+    public func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+        uiViewController.player = self.vm.player
+        uiViewController.transportBarCustomMenuItems = makeTransportBarItems()
+    }
+
+    /// Builds the transport bar, prepending previous/next episode buttons and the season picker to the shared player menus.
+    /// - Returns: Menus to hand to `AVPlayerViewController.transportBarCustomMenuItems`
+    private func makeTransportBarItems() -> [UIMenuElement] {
+        // Typical buttons
+        var items = PlayerButtons.AVPlayerTransportBarItems(vm: self.vm)
+
+        // MARK: Episode picker
+        // TV Season-related buttons
+        let allEpisodes = self.vm.seasons.flatMap(\.episodes)
+        var setPreviousEpisode: Bool = false
+
+        if let currentEpisodeIndex = allEpisodes.firstIndex(where: { episode in
+            for mediaSource in episode.mediaSources {
+                return mediaSource.id == self.vm.mediaSource.id
+            }
+            return false
+        }) {
+            // Next episode
+            if currentEpisodeIndex + 1 < allEpisodes.count {
+                items.insert(PlayerButtons.nextEpisodeButton(vm: self.vm, nextEpisode: allEpisodes[currentEpisodeIndex + 1]), at: 0)
+            }
+
+            // Previous episode
+            if currentEpisodeIndex - 1 >= 0 {
+                items.insert(
+                    PlayerButtons.previousEpisodeButton(vm: self.vm, previousEpisode: allEpisodes[currentEpisodeIndex - 1]), at: 0
+                )
+                setPreviousEpisode = true
+            }
+        }
+
+        // Episode selector
+        items.insert(
+            PlayerButtons.episodePicker(vm: self.vm, seasons: self.vm.seasons),
+            at: setPreviousEpisode ? 1 : 0
+        )
+        return items
+    }
+}

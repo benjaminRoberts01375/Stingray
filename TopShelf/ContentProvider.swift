@@ -7,10 +7,13 @@
 
 import TVServices
 
+/// Supplies the Apple TV home screen's Top Shelf with "Up Next" and "Recently Added" rows for the active user.
 class ContentProvider: TVTopShelfContentProvider {
 
+    /// Builds the Top Shelf content for the active user.
+    /// - Returns: Sectioned content for whichever rows came back non-empty, or `nil` if setup failed or there is nothing to show
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
-        let streamingModel: StreamingServiceBasicProtocol
+        let streamingModel: MediaImageProviding & RecommendationProviding
         let userModel: UserModel
         do {
             let storage = try HybridBasicStorage()
@@ -21,9 +24,8 @@ class ContentProvider: TVTopShelfContentProvider {
             Log.error("Failed to initalize UserModel: \(error)")
             return nil
         }
-        do {
-            streamingModel = try StreamingServiceBasicModel(userModel: userModel)
-        } catch {
+        do { streamingModel = try StreamingServiceBasicModel(userModel: userModel) }
+        catch {
             Log.error("Failed to initialize StreamingServiceBasicModel: \(error)")
             return nil
         }
@@ -77,11 +79,23 @@ class ContentProvider: TVTopShelfContentProvider {
     }
     
     private enum ImageStyle {
-        case landscape  // For horizontal/wide images (Up Next)
-        case poster     // For vertical/portrait images (Recently Added)
+        /// Horizontal/wide images (Up Next)
+        case landscape
+        /// Vertical/portrait images (Recently Added)
+        case poster
     }
     
-    private func createTopShelfItem(from media: SlimMedia, streamingModel: StreamingServiceBasicProtocol, imageStyle: ImageStyle) -> TVTopShelfSectionedItem? {
+    /// Builds a single Top Shelf item, including the deep link that reopens the media in Stingray.
+    /// - Parameters:
+    ///   - media: Media to represent
+    ///   - streamingModel: Streaming service used to resolve artwork URLs at 1x and 2x
+    ///   - imageStyle: Whether to request wide backdrop art or a vertical poster
+    /// - Returns: The configured item
+    private func createTopShelfItem(
+        from media: MediaModelRepresentable,
+        streamingModel: MediaImageProviding & RecommendationProviding,
+        imageStyle: ImageStyle
+    ) -> TVTopShelfSectionedItem? {
         // Create the content identifier for deep linking into your app
         let mediaID = media.id
         
