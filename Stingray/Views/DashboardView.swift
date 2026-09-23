@@ -131,6 +131,8 @@ public struct DashboardView: View {
                     mediaSources: movies,
                     navigation: $navigationPath
                 )
+            case .homeVideo:
+                EmptyView() // TODO: Actually add a view here
             case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library")))
             }
         }

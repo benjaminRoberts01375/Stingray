@@ -611,12 +611,14 @@ public enum TVSeasonsAvailable {
 
 /// Denotes the type of media a `MediaModel` is.
 public enum MediaType: Decodable {
-    /// Movies type with the associated media sources.
+    /// A movie (and its versions) with its media streams.
     case movies([any MediaSourceProtocol])
     /// TV type with the associated seasons. Nil indicates that media has not yet been loaded
     case tv(TVSeasonsAvailable)
     /// The type failed to load media
     case error(RError)
+    /// A single home video with its media streams
+    case homeVideo([any MediaSourceProtocol])
 
     /// Create a media type that does not populate its data. Ex. Creates a movie media type with no media sources attached.
     /// - Parameter decoder: JSON decoder.
@@ -654,10 +656,12 @@ public enum MediaType: Decodable {
         }
     }
     
+    /// To be used in the URL when requesting library content
     public var rawValue: String {
         switch self {
         case .movies: return "Movie"
         case .tv: return "Series"
+        case .homeVideo: return "Video"
         case .error: return "Error"
         }
     }

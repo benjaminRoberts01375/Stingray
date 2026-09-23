@@ -218,6 +218,8 @@ public struct MediaDetailLoader: View {
                 mediaSources: movies,
                 navigation: $navigation
             )
+            case .homeVideo:
+                EmptyView() // TODO: Actually add a view here
             case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load media"))
             }
         case .temporarilyNotFound:
@@ -344,6 +346,8 @@ public struct LibrariesInfoView: View {
                         counters["Movies", default: 0] += 1
                     case .tv:
                         counters["TV Shows", default: 0] += 1
+                    case .homeVideo:
+                        counters["Home Video", default: 0] += 1
                     case .error: continue
                     }
                 }
