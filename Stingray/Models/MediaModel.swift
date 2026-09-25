@@ -226,7 +226,15 @@ public final class MediaModel: MediaProtocol, Decodable {
                 movieSources[defaultIndex].startPoint = TimeInterval(ticks: userDataContainer.playbackPositionTicks)
             }
             self.mediaType = .movies(movieSources)
-        default: self.mediaType = mediaType
+        case .homeVideo:
+            let sources: [MediaSource]
+            do { sources = try container.decode([MediaSource].self, forKey: .mediaSources) }
+            catch let error as RError {
+                self.mediaType = .error(error)
+                break
+            }
+            self.mediaType = .homeVideo(sources)
+        case .error, .tv: self.mediaType = mediaType
         }
         
         // Runtime ticks need conversion
@@ -652,6 +660,7 @@ public enum MediaType: Decodable {
         switch stringValue {
         case "Movie": self = .movies([])
         case "Series": self = .tv(.unloaded)
+        case "Video": self = .homeVideo([])
         default: self = .error(JSONError.unexpectedKey(MediaError.unknownMediaType(stringValue)))
         }
     }
