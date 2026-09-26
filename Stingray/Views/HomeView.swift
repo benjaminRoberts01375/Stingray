@@ -218,8 +218,16 @@ public struct MediaDetailLoader: View {
                 mediaSources: movies,
                 navigation: $navigation
             )
-            case .homeVideo:
-                EmptyView() // TODO: Actually add a view here
+            case .homeVideo(let homeVideo):
+                if let mediaSource = homeVideo.first {
+                    HomeVideoPlayerLauncher(
+                        media: foundMedia,
+                        mediaSource: mediaSource,
+                        streamingService: self.streamingService,
+                        navigation: $navigation
+                    )
+                }
+                else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
             case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load media"))
             }
         case .temporarilyNotFound:

@@ -131,10 +131,21 @@ public struct DashboardView: View {
                     mediaSources: movies,
                     navigation: $navigationPath
                 )
-            case .homeVideo:
-                EmptyView() // TODO: Actually add a view here
+            case .homeVideo(let homeVideo):
+                if let mediaSource = homeVideo.first {
+                    HomeVideoPlayerLauncher(
+                        media: anyMedia.media,
+                        mediaSource: mediaSource,
+                        streamingService: self.streamingService,
+                        navigation: $navigationPath
+                    )
+                }
+                else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
             case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library media")))
             }
+        }
+        .navigationDestination(for: HomeVideoPlayerViewModel.self) { vm in
+            HomeVideoPlayerView(vm: vm, navigation: $navigationPath)
         }
         .onChange(of: deepLinkRequest) { _, newValue in
             guard let request = newValue else { return }
