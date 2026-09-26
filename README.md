@@ -59,6 +59,11 @@ Extensive content metadata.
 
 Configure Stingray to look and feel how you want it.
 
+## TO-Done
+
+- Playback
+  - Home video support
+
 ## TO-DO List
 
 ### Media Picker
@@ -79,7 +84,6 @@ Configure Stingray to look and feel how you want it.
 
 ### Playback
 
-- [ ] Home Videos.
 - [ ] Music Support.
 - [ ] Trickplay.
 - [ ] Live TV.

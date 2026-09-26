@@ -10,7 +10,7 @@ import SwiftUI
 
 public struct HomeVideoPlayerView: View {
     @Environment(\.dismiss) private var dismiss
-    /// Playback state for this movie
+    /// Playback state for this home video
     @State public var vm: HomeVideoPlayerViewModel
     /// App navigation. Stashed on the view model when entering PiP and restored on the way back
     @Binding public var navigation: NavigationPath
@@ -80,11 +80,11 @@ public struct HomeVideoPlayerLauncher: View {
 }
 
 // MARK: UIKit Player
-/// Wraps `AVPlayerViewController` for the movie player, wiring up the transport bar and the Description, People, and Stats tabs.
-/// An existing PiP stream for different content is killed on creation, so only one movie plays at a time.
+/// Wraps `AVPlayerViewController` for the home video player, wiring up the transport bar and the Description, People, and Stats tabs.
+/// An existing PiP stream for different content is killed on creation, so only one home video plays at a time.
 fileprivate struct PlayerViewControllerRepresentable: UIViewControllerRepresentable {
 
-    /// Playback state for this movie
+    /// Playback state for this home video
     public let vm: HomeVideoPlayerViewModel
 
     // Let's keep SwiftUI to SwiftUI, and UIKit to UIKit
@@ -94,8 +94,6 @@ fileprivate struct PlayerViewControllerRepresentable: UIViewControllerRepresenta
     public let onRestoreFromPiP: () -> Void
     /// Called when PiP ends without being restored
     public let onStopFromPiP: () -> Void
-
-    @Environment(ThemeModel.self) private var theme
 
     public func makeCoordinator() -> AVPlayerCoordinator {
         let coordinator = AVPlayerCoordinator(
@@ -132,7 +130,7 @@ fileprivate struct PlayerViewControllerRepresentable: UIViewControllerRepresenta
         var playerTabs: [UIViewController] = []
 
         if !self.vm.media.description.isEmpty {
-            // Series & episode description
+            // Home video description
             let descTab = UIHostingController(rootView: MoviePlayerDescriptionView(media: self.vm.media))
             descTab.title = "Description"
             descTab.preferredContentSize = CGSize(width: 0, height: 350)
