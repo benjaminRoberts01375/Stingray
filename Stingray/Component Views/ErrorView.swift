@@ -15,35 +15,33 @@ public struct ErrorView: View {
     public let summary: String
     /// Tracks whether or not the error has been expanded
     @State private var isExpanded: Bool = false
-    /// Tracks the current focus for changing colors
-    @FocusState private var isFocused: Bool
     
     public var body: some View {
         Button { self.isExpanded = true }
-        label: { ErrorSummaryView(summary: summary, altColors: isFocused) }
+        label: { ErrorSummaryView(summary: summary) }
             .buttonStyle(.plain)
-            .focused($isFocused, equals: true)
             .sheet(isPresented: $isExpanded) { ErrorExpandedView(errorDesc: error.rDescription) }
     }
 }
 
 /// Show a summary of a greater error.
-fileprivate struct ErrorSummaryView: View {
+public struct ErrorSummaryView: View {
     /// User-facing error to show before expanding
-    let summary: String
-    /// Should switch into a high-contrast mode
-    let altColors: Bool
-    
-    var body: some View {
+    public let summary: String
+    /// Tracks the current focus for changing colors
+    @FocusState private var isFocused: Bool
+
+    public var body: some View {
         Text(summary)
-            .foregroundStyle(altColors ? .black : .red)
+            .focused($isFocused, equals: true)
+            .foregroundStyle(self.isFocused ? .black : .red)
             .padding()
             .background {
                 RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(altColors ? .clear : .red, lineWidth: 2)
+                    .strokeBorder(self.isFocused ? .clear : .red, lineWidth: 2)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(altColors ? .clear : .red.opacity(0.25))
+                            .fill(self.isFocused ? .clear : .red.opacity(0.25))
                     )
             }
     }
@@ -65,11 +63,11 @@ public struct ErrorExpandedView: View {
 }
 
 #Preview {
-    ErrorSummaryView(summary: "Stingray went kaplooey.", altColors: false)
+    ErrorSummaryView(summary: "Stingray went kaplooey.")
 }
 
 #Preview {
-    ErrorSummaryView(summary: "Stingray went kaplooey.", altColors: false)
+    ErrorSummaryView(summary: "Stingray went kaplooey.")
         .sheet(isPresented: .constant(true)) {
             ErrorExpandedView(errorDesc: NetworkError.decodeJSONFailed(JSONError.missingKey("Nerd", "Preview"), url: nil).rDescription)
         }
