@@ -113,9 +113,6 @@ public struct MovieDetailView: View {
             .animation(.spring(.smooth), value: shouldRevealBottomShelf)
         }
         .ignoresSafeArea()
-        .navigationDestination(for: MoviePlayerViewModel.self) { vm in
-            MoviePlayerView(vm: vm, navigation: $navigation)
-        }
         .colorScheme(self.settings.loadMediaBackgroundArt ? .dark : self.theme.currentTheme.colorScheme)
         .defaultFocus($focus, .play, priority: .userInitiated)
         .onChange(of: self.focus) { _, newValue in

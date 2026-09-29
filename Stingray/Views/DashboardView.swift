@@ -144,8 +144,8 @@ public struct DashboardView: View {
             case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library media")))
             }
         }
-        .navigationDestination(for: HomeVideoPlayerViewModel.self) { vm in
-            HomeVideoPlayerView(vm: vm, navigation: $navigationPath)
+        .navigationDestination(for: MoviePlayerViewModel.self) { vm in
+            MoviePlayerView(vm: vm, navigation: $navigationPath)
         }
         .onChange(of: deepLinkRequest) { _, newValue in
             guard let request = newValue else { return }

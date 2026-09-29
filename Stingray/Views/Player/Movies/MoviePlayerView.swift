@@ -46,6 +46,41 @@ public struct MoviePlayerView: View {
     }
 }
 
+// MARK: Launcher
+/// Since we don't have a nice detail view for launching home videos, this is just a little wrapper around the movie player.
+public struct HomeVideoPlayerLauncher: View {
+    /// Media the home video belongs to
+    public let media: any MediaMetadataProtocol
+    /// Source to play
+    public let mediaSource: any MediaSourceProtocol
+    /// Server to stream from
+    public let streamingService: PlayerProviding & MediaImageProviding
+    /// App navigation. This view's entry is replaced with the player's view model
+    @Binding public var navigation: NavigationPath
+
+    @Environment(SettingsModel.self) private var settings
+    /// Guards against swapping the path more than once if the view reappears mid-transition
+    @State private var hasLaunched = false
+
+    public var body: some View {
+        ProgressView()
+            .onAppear {
+                guard !self.hasLaunched
+                else { return }
+                self.hasLaunched = true
+                let vm = MoviePlayerViewModel(
+                    settingsModel: self.settings,
+                    streamingService: self.streamingService,
+                    media: self.media,
+                    mediaSource: self.mediaSource,
+                    startTime: nil
+                )
+                self.navigation.removeLast() // Prevent the user having to do a double back button
+                self.navigation.append(vm)
+            }
+    }
+}
+
 /// Wraps `AVPlayerViewController` for the movie player, wiring up the transport bar and the Description, People, and Stats tabs.
 /// An existing PiP stream for different content is killed on creation, so only one movie plays at a time.
 fileprivate struct PlayerViewControllerRepresentable: UIViewControllerRepresentable {
