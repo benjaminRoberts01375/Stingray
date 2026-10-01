@@ -162,13 +162,12 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     @ViewBuilder private var buttonRow: some View {
         HStack(spacing: 25) {
             if self.settings.showFilters {
-                Menu {
+                Menu { // Genres
                     // Clear action at the top, only when something is selected.
                     if !self.appliedGenreFilters.isEmpty {
                         Button(role: .destructive) { self.appliedGenreFilters = [] }
                         label: { Label("Remove all genre filters", systemImage: "xmark.circle") }
                         Divider()
-                            .padding(.horizontal)
                     }
 
                     ForEach(self.availableGenres.sorted(), id: \.self) { genre in
@@ -193,12 +192,11 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
                             .fixedSize(horizontal: true, vertical: false)
                     }
                 }
-                Menu {
+                Menu { // Maturity
                     if !self.appliedMaturityRatingFilters.isEmpty {
                         Button(role: .destructive) { self.appliedMaturityRatingFilters = [] }
                         label: { Label("Remove all maturity filters", systemImage: "xmark.circle") }
                         Divider()
-                            .padding(.horizontal)
                     }
 
                     ForEach(self.availableMaturityRatings.sorted(), id: \.self) { maturity in
@@ -224,12 +222,9 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
                     }
                 }
             }
-            if self.settings.showFilters && self.settings.showSorting {
-                Divider()
-                    .padding(.horizontal)
-            }
+            if self.settings.showFilters && self.settings.showSorting { Divider() }
             if self.settings.showSorting {
-                Menu {
+                Menu { // Sort by
                     ForEach(SortType.allCases, id: \.self) { sortBy in
                         Button {
                             // Reshuffle every time Random is chosen, even if it's already selected.
@@ -243,11 +238,11 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
                     }
                 }
                 label: { Text("Sort By: \(self.sortBy.rawValue)") }
-                if self.sortBy == .random {
+                if self.sortBy == .random { // Reshuffle
                     Button { self.randomSeed = .random(in: .min ... .max) }
                     label: { Text("Reshuffle") }
                 }
-                else {
+                else { // Sort order
                     Button { self.sortOrderAscending.toggle() }
                     label: {
                         if self.sortOrderAscending { Text("Sort Order: Ascending") }

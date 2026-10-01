@@ -63,6 +63,8 @@ Configure Stingray to look and feel how you want it.
 
 - Playback
   - Home video support
+- Bug Fixes
+  - Fix inconsistent padding around filter and sorting divider
 
 ## TO-DO List
 
