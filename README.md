@@ -65,6 +65,8 @@ Configure Stingray to look and feel how you want it.
   - Home video support
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
+- Cleanups
+  - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
 
 ## TO-DO List
 

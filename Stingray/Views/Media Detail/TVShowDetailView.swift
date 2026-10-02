@@ -18,7 +18,7 @@ public struct TVShowDetailView: View {
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
 
     /// Season download progress. The episode strip stays hidden until this is `.loaded`
-    public let seasons: TVSeasonsAvailable
+    public let seasons: TVSeasonsStatus
 
     /// App navigation, used to push the player
     @Binding public var navigation: NavigationPath
@@ -205,7 +205,7 @@ fileprivate struct PlayNavigationView: View {
     /// Sources for the next episode. Empty until seasons load
     private let mediaSources: [any MediaSourceProtocol]
     /// Season download progress
-    private let seasons: TVSeasonsAvailable
+    private let seasons: TVSeasonsStatus
 
     /// App navigation, used to push the player
     @Binding var navigation: NavigationPath
@@ -221,7 +221,7 @@ fileprivate struct PlayNavigationView: View {
     init(
         navigation: Binding<NavigationPath>,
         media: any MediaProtocol,
-        seasons seasonsAvailable: TVSeasonsAvailable,
+        seasons seasonsAvailable: TVSeasonsStatus,
         streamingService: PlayerProviding & MediaImageProviding
     ) {
         self._navigation = navigation

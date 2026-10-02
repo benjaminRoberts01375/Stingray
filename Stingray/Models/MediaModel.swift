@@ -30,7 +30,7 @@ public protocol MediaProtocol: Identifiable, MediaRepresentableProtocol, Hashabl
     /// Load special features for this media
     func loadSpecialFeatures(specialFeatures: [SpecialFeature])
     /// Load season data
-    func loadSeasons(_ newState: TVSeasonsAvailable)
+    func loadSeasons(_ newState: TVSeasonsStatus)
 }
 
 /// Media contains at least one media source, like different versions of the same movie. Each version of the movie needs their own video,
@@ -270,7 +270,7 @@ public final class MediaModel: MediaProtocol, Decodable {
         self.specialFeatures = .loaded(groupedFeatures)
     }
 
-    public func loadSeasons(_ newState: TVSeasonsAvailable) {
+    public func loadSeasons(_ newState: TVSeasonsStatus) {
         // Save the episodes
         self.mediaType = .tv(newState)
 
@@ -608,7 +608,7 @@ public enum StreamType: String, Decodable, Equatable {
 }
 
 /// Track the loading status of TV Seasons
-public enum TVSeasonsAvailable {
+public enum TVSeasonsStatus {
     /// Season downloads have yet to start
     case unloaded
     /// Seasons downloads have started for this media
@@ -622,7 +622,7 @@ public enum MediaType: Decodable {
     /// A movie (and its versions) with its media streams.
     case movies([any MediaSourceProtocol])
     /// TV type with the associated seasons. Nil indicates that media has not yet been loaded
-    case tv(TVSeasonsAvailable)
+    case tv(TVSeasonsStatus)
     /// The type failed to load media
     case error(RError)
     /// A single home video with its media streams
