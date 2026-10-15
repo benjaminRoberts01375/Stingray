@@ -21,6 +21,44 @@ public protocol TVShowProtocol: MediaRepresentableProtocol {
     func loadSeasons(_ newState: TVSeasonsStatus)
 }
 
+/// Describes how to hold information about a TV Season
+public protocol TVSeasonProtocol: Identifiable {
+    /// A generic ID - Not relevant to the ID of the season set by the server.
+    var id: String { get }
+    /// Name of the season. Ex: "Special", "Season 2 Cont.", or "Season 1".
+    var title: String { get }
+    /// Episodes associated with this season.
+    var episodes: [any TVEpisodeProtocol] { get set }
+}
+
+/// Describes how to hold information about a TV Episode.
+public protocol TVEpisodeProtocol: Displayable {
+    /// ID given by the server.
+    var id: String { get }
+    /// Name of the episode.
+    var title: String { get }
+    /// Episode number in a season.
+    var episodeNumber: Int { get }
+    /// Media streams for this episode.
+    var mediaSources: [any MediaSourceProtocol] { get }
+    /// Time it was last played. Nil if it was never played.
+    var lastPlayed: Date? { get set }
+    /// Longer description of the episode. Nil if none is provided.
+    var overview: String? { get }
+    /// People who were a part of this episode
+    var people: [any MediaPersonProtocol] { get }
+}
+
+/// Track the loading status of TV Seasons
+public enum TVSeasonsStatus {
+    /// Season downloads have yet to start
+    case unloaded
+    /// Seasons downloads have started for this media
+    case loading
+    /// Season downloading is complete
+    case loaded([any TVSeasonProtocol])
+}
+
 @Observable
 public final class TVShowModel: TVShowProtocol, Decodable {
     public var title: String
@@ -85,4 +123,178 @@ public final class TVShowModel: TVShowProtocol, Decodable {
     public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {  } // TODO: TV Show special features
 
     public func loadSeasons(_ newState: TVSeasonsStatus) {  } // TODO: TV Show load seasons - set state, aggregate genres and people
+}
+
+/// Holds information about a particular TV Season.
+@Observable
+public final class TVSeason: TVSeasonProtocol {
+    public var id: String
+    public var title: String
+    public var episodes: [any TVEpisodeProtocol]
+
+    /// Create a TVSeason with defined episodes.
+    /// - Parameters:
+    ///   - title: Name of the season. Ex: "Special", "Season 2 Cont.", or "Season 1".
+    ///   - episodes: Episodes associated with the season.
+    public init(title: String, episodes: [any TVEpisodeProtocol]) {
+        self.id = UUID().uuidString
+        self.title = title
+        self.episodes = episodes
+    }
+
+    /// Decodes an array of TV seasons from a JSON response containing episode data
+    /// - Parameter decoder: The decoder to read data from
+    /// - Returns: An array of TV seasons with episodes grouped appropriately
+    /// - Throws: JSONError if decoding fails
+    public static func decodeSeasons(from decoder: Decoder) throws(JSONError) -> [TVSeason] {
+        enum CodingKeys: String, CodingKey {
+            case items = "Items"
+        }
+
+        enum SeasonKeys: String, CodingKey {
+            case title = "Name"
+            case id = "Id"
+            case episodeRuntimeTicks = "RunTimeTicks"
+            case episodeNumber = "IndexNumber"
+            case episodeOverview = "Overview"
+            case seasonNumber = "ParentIndexNumber"
+            case blurHashes = "ImageBlurHashes"
+            case mediaSources = "MediaSources"
+            case userData = "UserData"
+            case people = "People"
+
+            case seasonID = "SeasonId" // The actual season ID
+            case seasonTitle = "SeasonName" // The actual season name
+            case seriesID = "SeriesId" // Fallback for seasonID if SeasonId is missing
+        }
+
+        enum UserData: String, CodingKey {
+            case lastPlayedDate = "LastPlayedDate"
+            case playbackPosition = "PlaybackPositionTicks"
+        }
+
+        do {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            var seasonsContainer = try container.nestedUnkeyedContainer(forKey: .items)
+            var tempSeasons: [TVSeason] = []
+            var standInEpisodeNumber: Int = 0
+            var lastSeasonID: String = ""
+
+            while !seasonsContainer.isAtEnd {
+                standInEpisodeNumber += 1 // Fallback episode number if it's not present
+                let episodeContainer = try seasonsContainer.nestedContainer(keyedBy: SeasonKeys.self)
+                let userDataContainer = try episodeContainer.nestedContainer(keyedBy: UserData.self, forKey: .userData)
+
+                let episode: TVEpisode = TVEpisode(
+                    id: try episodeContainer.decode(String.self, forKey: .id),
+                    blurHashes: try episodeContainer.decodeIfPresent(MediaImageBlurHashes.self, forKey: .blurHashes),
+                    title: try episodeContainer.decode(String.self, forKey: .title),
+                    episodeNumber: try episodeContainer.decodeIfPresent(Int.self, forKey: .episodeNumber) ?? standInEpisodeNumber,
+                    mediaSources: try episodeContainer.decodeIfPresent([MediaSource].self, forKey: .mediaSources) ?? [],
+                    lastPlayed: {
+                        guard let dateString = try? userDataContainer.decodeIfPresent(
+                            String.self,
+                            forKey: .lastPlayedDate
+                        ) else { return nil }
+                        return ISO8601DateFormatter.jellyfin.date(from: dateString)
+                    }(),
+                    overview: try episodeContainer.decodeIfPresent(String.self, forKey: .episodeOverview),
+                    people: try episodeContainer.decodeIfPresent([MediaPerson].self, forKey: .people) ?? []
+                )
+                let seasonID = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonID) ??
+                episodeContainer.decode(String.self, forKey: .seriesID)
+
+                if let playbackTicks = try userDataContainer.decodeIfPresent(Int.self, forKey: .playbackPosition) {
+                    for mediaSourceIndex in episode.mediaSources.indices {
+                        episode.mediaSources[mediaSourceIndex].startPoint = TimeInterval(ticks: playbackTicks)
+                    }
+                }
+
+                let seasonTitle = try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season"
+                if seasonTitle == "Specials" { // Episode is a special
+                    if tempSeasons.last?.title == "Special" { // Coalesce consecutive specials into one Specials season
+                        tempSeasons.last?.episodes.append(episode)
+                    }
+                    else {
+                        let newSeason = TVSeason(
+                            title: "Special",
+                            episodes: [episode]
+                        )
+                        tempSeasons.append(newSeason)
+                    }
+                }
+                else if seasonID == lastSeasonID && tempSeasons.last?.title == "Special" { // Season was split by specials
+                    lastSeasonID = seasonID
+                    let newSeason = TVSeason(
+                        title: (try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season") +
+                        " Cont.",
+                        episodes: [episode]
+                    )
+                    tempSeasons.append(newSeason)
+                }
+                else if seasonID == lastSeasonID, let lastSeason = tempSeasons.last { // Episode is in the last season
+                    lastSeason.episodes.append(episode)
+                }
+                else { // Episode needs a new season
+                    lastSeasonID = seasonID
+                    let newSeason = TVSeason(
+                        title: try episodeContainer.decodeIfPresent(String.self, forKey: .seasonTitle) ?? "Unknown Season",
+                        episodes: [episode]
+                    )
+                    tempSeasons.append(newSeason)
+                }
+            }
+            return tempSeasons
+        }
+        catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "TVSeason.decodeSeasons") }
+        catch DecodingError.valueNotFound(_, let context) {
+            if let key = context.codingPath.last { throw JSONError.missingContainer(key.stringValue, "TVSeason.decodeSeasons") }
+            else { throw JSONError.failedJSONDecode("Season Media", DecodingError.valueNotFound(Any.self, context)) }
+        }
+        catch { throw JSONError.failedJSONDecode("Season Media", error) }
+    }
+}
+
+/// Holds information about a particular TV Episode.
+@Observable
+public final class TVEpisode: TVEpisodeProtocol {
+    public var imageTags: (any MediaImagesProtocol)?
+    public var id: String
+    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    public var title: String
+    public var episodeNumber: Int
+    public var mediaSources: [any MediaSourceProtocol]
+    public var lastPlayed: Date?
+    public var overview: String?
+    public let people: [any MediaPersonProtocol]
+
+    /// Creates an episode. Built by `TVSeason.decodeSeasons(from:)` rather than decoded directly.
+    /// - Parameters:
+    ///   - id: ID given by the server
+    ///   - blurHashes: Hashes for rendering preview artwork before the real image loads
+    ///   - title: Name of the episode
+    ///   - episodeNumber: Episode number within its season
+    ///   - mediaSources: Playable sources for this episode
+    ///   - lastPlayed: When the episode was last watched. `nil` if never
+    ///   - overview: Longer description. `nil` if the server has none
+    ///   - people: Cast and crew credited on this episode
+    public init(
+        id: String,
+        blurHashes: MediaImageBlurHashes? = nil,
+        title: String,
+        episodeNumber: Int,
+        mediaSources: [any MediaSourceProtocol],
+        lastPlayed: Date? = nil,
+        overview: String? = nil,
+        people: [any MediaPersonProtocol]
+    ) {
+        self.id = id
+        self.imageBlurHashes = blurHashes
+        self.title = title
+        self.episodeNumber = episodeNumber
+        self.mediaSources = mediaSources
+        self.lastPlayed = lastPlayed
+        self.overview = overview
+        self.people = people
+    }
 }

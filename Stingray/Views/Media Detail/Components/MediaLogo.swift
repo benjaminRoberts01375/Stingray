@@ -51,12 +51,13 @@ public struct MediaLogoView: View {
                     .bold()
                     .foregroundStyle(self.theme.currentTheme.header1)
             }
-            if !self.media.tagline.isEmpty {
-                Text(media.tagline)
-                    .italic()
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 800, alignment: .center)
-            }
+            // TODO: Get the tag line working
+//            if !self.media.tagline.isEmpty {
+//                Text(media.tagline)
+//                    .italic()
+//                    .multilineTextAlignment(.center)
+//                    .frame(maxWidth: 800, alignment: .center)
+//            }
             MediaLogoHeader(media: self.media)
         }
     }
