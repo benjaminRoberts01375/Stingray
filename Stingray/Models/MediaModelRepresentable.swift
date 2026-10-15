@@ -53,8 +53,6 @@ public protocol MediaMetadataProtocol: Identifiable {
     var title: String { get }
     /// Title to use when running sorting algorithms
     var sortTitle: String { get }
-    /// Short descriptor of the media.
-    var tagline: String { get }
     /// Rating of this media provided by the server. Ex PG, PG-13, R.
     var maturity: String? { get }
     /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.

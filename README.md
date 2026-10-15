@@ -67,6 +67,7 @@ Configure Stingray to look and feel how you want it.
   - Fix inconsistent padding around filter and sorting divider
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
+  - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
 
 ## TO-DO List
 
