@@ -92,18 +92,20 @@ class ContentProvider: TVTopShelfContentProvider {
     ///   - imageStyle: Whether to request wide backdrop art or a vertical poster
     /// - Returns: The configured item
     private func createTopShelfItem(
-        from media: MediaModelRepresentable,
+        from media: MediaStorage,
         streamingModel: MediaImageProviding & RecommendationProviding,
         imageStyle: ImageStyle
     ) -> TVTopShelfSectionedItem? {
         // Create the content identifier for deep linking into your app
-        let mediaID = media.id
-        
+        guard let mediaID = media.id,
+              let parentID = media.parentID
+        else { return nil }
+
         let item = TVTopShelfSectionedItem(identifier: mediaID)
         
         // Set the title
-        item.title = media.title
-        
+        item.title = media.title ?? ""
+
         // Set the image based on the style
         switch imageStyle {
         case .landscape:
@@ -128,7 +130,7 @@ class ContentProvider: TVTopShelfContentProvider {
         
         // Set the display action to open your app with this content
         // URL scheme: stingray://media?id=<mediaID>&parentID=<parentID>
-        if let displayURL = URL(string: "stingray://media?id=\(mediaID)&parentID=\(media.parentID ?? "None")") {
+        if let displayURL = URL(string: "stingray://media?id=\(mediaID)&parentID=\(parentID)") {
             item.displayAction = TVTopShelfAction(url: displayURL)
         }
         

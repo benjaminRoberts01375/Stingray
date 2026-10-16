@@ -12,13 +12,10 @@ import SwiftUI
 // MARK: Main view
 /// A show's detail screen: logo over backdrop art, with a season selector, episode strip, metadata, and cast on the bottom shelf.
 public struct TVShowDetailView: View {
-    /// Media that contains content to play
-    public let media: any MediaProtocol
+    /// Show that contains content to play. The episode strip stays hidden until its seasons are `.loaded`
+    public let media: any TVShowProtocol
     /// Streaming service the user is using
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
-
-    /// Season download progress. The episode strip stays hidden until this is `.loaded`
-    public let seasons: TVSeasonsStatus
 
     /// App navigation, used to push the player
     @Binding public var navigation: NavigationPath
@@ -78,7 +75,7 @@ public struct TVShowDetailView: View {
                 PlayNavigationView(
                     navigation: $navigation,
                     media: media,
-                    seasons: self.seasons,
+                    seasons: self.media.seasons,
                     streamingService: streamingService
                 )
                 .id("play-button-view")
@@ -93,7 +90,7 @@ public struct TVShowDetailView: View {
                 }())
 
                 // TV Episodes
-                switch self.seasons {
+                switch self.media.seasons {
                 case .loaded(let seasons):
                     // Season selector
                     ScrollViewReader { svrProxy in
@@ -197,7 +194,7 @@ public struct TVShowDetailView: View {
 /// isn't known before then. Resolves "next up" once at init.
 fileprivate struct PlayNavigationView: View {
     /// Show being played
-    private let media: any MediaProtocol
+    private let media: any MediaMetadataProtocol
     /// Streaming service used to start playback
     private let streamingService: PlayerProviding & MediaImageProviding
     /// Button label, taken from the next episode's title
@@ -220,7 +217,7 @@ fileprivate struct PlayNavigationView: View {
     ///   - streamingService: Streaming service used to start playback
     init(
         navigation: Binding<NavigationPath>,
-        media: any MediaProtocol,
+        media: any MediaMetadataProtocol,
         seasons seasonsAvailable: TVSeasonsStatus,
         streamingService: PlayerProviding & MediaImageProviding
     ) {
@@ -435,7 +432,7 @@ fileprivate struct SeasonSelectorView: View {
 /// Every episode of every season, flattened into one continuous strip.
 fileprivate struct EpisodeSelectorView: View {
     /// Show the episodes belong to
-    let media: any MediaProtocol
+    let media: any MediaMetadataProtocol
     /// Seasons to flatten, in display order
     let seasons: [any TVSeasonProtocol]
     /// Streaming service used for artwork and playback
@@ -469,7 +466,7 @@ fileprivate struct EpisodeSelectorView: View {
 /// One episode in the strip: its thumbnail above a tappable summary that expands into a sheet.
 fileprivate struct EpisodeView: View {
     /// Show the episode belongs to
-    let media: any MediaProtocol
+    let media: any MediaMetadataProtocol
     /// Source to play when the thumbnail is selected
     let source: any MediaSourceProtocol
     /// Streaming service used for artwork and playback
@@ -569,7 +566,7 @@ fileprivate struct EpisodeView: View {
 /// An episode's thumbnail as a card button that starts playback from its saved resume point.
 fileprivate struct EpisodeNavigationView: View {
     /// Show the episode belongs to
-    let media: any MediaProtocol
+    let media: any MediaMetadataProtocol
     /// Source to play
     let mediaSource: any MediaSourceProtocol
     /// Streaming service used for artwork and playback

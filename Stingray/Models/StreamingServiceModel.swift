@@ -81,7 +81,7 @@ public protocol UserProviding {
 
 /// Loading media functions
 public protocol MediaProviding {
-    /// Link a media ID to a `MediaModel`.
+    /// Link a media ID to its `MediaStorage`.
     /// - Parameters:
     ///   - mediaID: Media ID to search for.
     ///   - parentID: Parent the Media ID is a part of (if available).
@@ -91,13 +91,13 @@ public protocol MediaProviding {
     /// Fetch any additional data (ex special features) for this media.
     /// - Parameter media: Media to fetch for.
     /// - Parameter priority: How prudent the info is to get right now
-    func getExtraMediaData(for media: any MediaProtocol, priority: RequestPriority)
+    func getExtraMediaData(for media: any SpecialFeaturesProtocol & MediaMetadataProtocol, priority: RequestPriority)
 }
 
 /// Denotes the availablity of a piece of media
 public enum MediaLookupStatus {
     /// The requested media was found
-    case found(any MediaProtocol)
+    case found(MediaStorage)
     /// The requested media was not found, but may be available once libraries finish downloading
     case temporarilyNotFound
     /// The requested media was not found despite all libraries being downloaded
@@ -367,7 +367,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.libraryStatus = .available(libraries)
 
         enum LibraryContent {
-            case success([MediaModel])
+            case success([MediaStorage])
             case error(RError)
         }
 
@@ -394,7 +394,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                     count: batchSize,
                                     sortOrder: .ascending,
                                     sortBy: .SortName,
-                                    mediaTypes: [.movies([]), .tv(.unloaded), .homeVideo([])]
+                                    mediaTypes: [.movie, .tvShow, .homeVideo]
                                 )
                             )
                         )
@@ -428,7 +428,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     case .waiting:
                         if newMedia.isEmpty { break } // Don't update the UI with blank media
                         library.media = .available(newMedia)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres })
+                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
                         library.maturityRatings.formUnion(newMedia.compactMap { media in
                             if let maturity = media.maturity {
                                 if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
@@ -441,7 +441,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         library.media = .waiting // Micro optimizing >:D
                         existingItems.append(contentsOf: newMedia)
                         library.media = .available(existingItems)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres })
+                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
                         library.maturityRatings.formUnion(newMedia.compactMap { media in
                             if let maturity = media.maturity {
                                 if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
@@ -462,12 +462,12 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
     }
 
-    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable] {
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage] {
         do { return try await networkAPI.getRecentlyAdded(contentType: contentType, accessToken: accessToken) }
         catch { return [] }
     }
 
-    public func retrieveUpNext() async -> [MediaModelRepresentable] {
+    public func retrieveUpNext() async -> [MediaStorage] {
         do { return try await networkAPI.getUpNext(accessToken: accessToken) }
         catch {
             Log.warning("Up next failed: \(error.rDescription())")
@@ -478,7 +478,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     // Based on retrieveLibraries
     public func resync(library: any LibraryProtocol) async {
         enum LibraryContent {
-            case success([MediaModel])
+            case success([MediaStorage])
             case error(RError)
         }
 
@@ -512,7 +512,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                     count: batchSize,
                                     sortOrder: .ascending,
                                     sortBy: .SortName,
-                                    mediaTypes: [.movies([]), .tv(.unloaded)]
+                                    mediaTypes: [.movie, .tvShow]
                                 )
                             )
                         )
@@ -542,7 +542,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     case .waiting:
                         if newMedia.isEmpty { break } // Don't update the UI with blank media
                         library.media = .available(newMedia)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres })
+                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
                         library.maturityRatings.formUnion(newMedia.compactMap { media in
                             if let maturity = media.maturity {
                                 if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
@@ -555,7 +555,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         library.media = .waiting // Micro optimizing >:D
                         existingItems.append(contentsOf: newMedia)
                         library.media = .available(existingItems)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres })
+                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
                         library.maturityRatings.formUnion(newMedia.compactMap { media in
                             if let maturity = media.maturity {
                                 if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
@@ -576,16 +576,14 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     public func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
         let libraries: [LibraryModel]
         switch self.libraryStatus {
-        case .available(let libs), .complete(let libs):
-            libraries = libs
-        default:
-            return .temporarilyNotFound
+        case .available(let libs), .complete(let libs): libraries = libs
+        default: return .temporarilyNotFound
         }
 
         // Check the parent library first (most likely location)
         if let parentID = parentID,
            let parentLibrary = libraries.first(where: { $0.id == parentID }) {
-            let allMedia: [MediaModel]?
+            let allMedia: [MediaStorage]?
             switch parentLibrary.media {
             case .available(let media): allMedia = media
             default: allMedia = nil
@@ -599,7 +597,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
 
         // Fallback: search all libraries
         for library in libraries {
-            let allMedia: [MediaModel]?
+            let allMedia: [MediaStorage]?
             switch library.media {
             case .available(let media): allMedia = media
             default: allMedia = nil
@@ -622,15 +620,14 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
     }
 
-    public func getExtraMediaData(for media: any MediaProtocol, priority: RequestPriority) {
-        switch media.mediaType { // Episodes
-        case .tv(let seasonsAvailable):
-            switch seasonsAvailable {
+    public func getExtraMediaData(for media: any SpecialFeaturesProtocol & MediaMetadataProtocol, priority: RequestPriority) {
+        if let show = media as? any TVShowProtocol { // Episodes
+            switch show.seasons {
             case .unloaded:
-                media.loadSeasons(.loading)
+                show.loadSeasons(.loading)
                 Task(priority: priority == .high ? .high : nil) {
                     do {
-                        media.loadSeasons(
+                        show.loadSeasons(
                             .loaded(try await self.networkAPI.getSeasonMedia(
                                 accessToken: self.accessToken,
                                 showID: media.id,
@@ -652,7 +649,6 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 }
             case .loading, .loaded: break
             }
-        default: break
         }
         Task(priority: priority == .high ? .high : nil) { // Special features
             switch media.specialFeatures {

@@ -7,16 +7,12 @@
 
 import SwiftUI
 
-public protocol TVShowProtocol: MediaRepresentableProtocol {
+public protocol TVShowProtocol: MediaMetadataProtocol, SpecialFeaturesProtocol {
     /// Short descriptor of the media.
     var tagline: String { get }
     /// Seasons for this TV Show, which contain episodes, which themselves contain media sources
     var seasons: TVSeasonsStatus { get }
-    /// Tracks if the special features have been fetched. If they have been successfully fetched, they'll available through this variable.
-    var specialFeatures: SpecialFeaturesStatus { get }
 
-    /// Load special features for this media
-    func loadSpecialFeatures(specialFeatures: [SpecialFeature])
     /// Load season data
     func loadSeasons(_ newState: TVSeasonsStatus)
 }
@@ -66,8 +62,9 @@ public final class TVShowModel: TVShowProtocol, Decodable {
     public var tagline: String
     public var description: String
     public var imageTags: (any MediaImagesProtocol)?
-    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    public var imageBlurHashes: (any MediaImagesProtocol)?
     public var id: String
+    public var parentID: String
     public var genres: [String]
     public var maturity: String?
     public var releaseDate: Date?
@@ -82,6 +79,9 @@ public final class TVShowModel: TVShowProtocol, Decodable {
 
     public enum CodingKeys: String, CodingKey {
         case id = "Id"
+        case parentID = "ParentId"
+        case seriesID = "SeriesId"
+        case seriesTitle = "SeriesName"
         case title = "Name"
         case sortTitle = "SortName"
         case taglines = "Taglines"
@@ -90,20 +90,29 @@ public final class TVShowModel: TVShowProtocol, Decodable {
         case imageBlurHashes = "ImageBlurHashes"
         case genres = "Genres"
         case maturity = "OfficialRating"
+        case releaseDate = "PremiereDate"
+        case duration = "RunTimeTicks"
         case people = "People"
     }
 
     /// Creates a TV show from JSON
     /// - Parameter decoder: JSON decoder
     /// - throws: `DecodingError.typeMismatch` if the encountered stored value is not a keyed container.
-    public init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws(JSONError) {
         let container: KeyedDecodingContainer<TVShowModel.CodingKeys>
         do { container = try decoder.container(keyedBy: CodingKeys.self) }
         catch { throw JSONError.missingContainer("Base Container", "TV Show Model") }
 
         // Decodable stuff
-        self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? UUID().uuidString
-        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? "Unknown Title"
+        // Prefer the series identity when present (e.g. NextUp returns episodes, but we want the containing show).
+        // Fallback to the actual ID
+        self.id = (try? container.decodeIfPresent(String.self, forKey: .seriesID)) ??
+        (try? container.decodeIfPresent(String.self, forKey: .id)) ??
+        UUID().uuidString
+        self.parentID = (try? container.decodeIfPresent(String.self, forKey: .parentID)) ?? UUID().uuidString
+        let title = (try? container.decodeIfPresent(String.self, forKey: .seriesTitle)) ??
+        (try? container.decodeIfPresent(String.self, forKey: .title)) ??
+        "Unknown Title"
         self.title = title
         self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
         self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first ?? ""
@@ -115,14 +124,50 @@ public final class TVShowModel: TVShowProtocol, Decodable {
         self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
         self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
 
+        // Runtime ticks need conversion
+        if let runtimeTicks = try? container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {
+            self.duration = .nanoseconds(100 * runtimeTicks)
+        }
+
+        // Date needs to be interpreted
+        if let dateString = try? container.decodeIfPresent(String.self, forKey: .releaseDate) {
+            self.releaseDate = ISO8601DateFormatter.jellyfin.date(from: dateString)
+        }
+
         // We can't yet load these since they're in a separate request
         self.seasons = .unloaded
         self.specialFeatures = .unloaded
     }
 
-    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {  } // TODO: TV Show special features
+    /// Stores and formats the special features for this show.
+    /// - Parameter specialFeatures: Special features to add.
+    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
+        self.specialFeatures = .loaded(SpecialFeature.formatAndGroup(specialFeatures))
+    }
 
-    public func loadSeasons(_ newState: TVSeasonsStatus) {  } // TODO: TV Show load seasons - set state, aggregate genres and people
+    /// Stores the show's seasons, and once loaded, merges every episode's people into the show's people.
+    /// - Parameter newState: New season loading state.
+    public func loadSeasons(_ newState: TVSeasonsStatus) {
+        // Save the episodes
+        self.seasons = newState
+
+        switch newState {
+        case .unloaded, .loading: return
+        case .loaded(let newSeasons):
+            // Save all the people
+            var people: [any MediaPersonProtocol] = self.people
+            // We don't use IDs here because people across a series can have different IDs. This prevents duplicates
+            var seenIDs: Set<String> = Set(self.people.map { $0.name + $0.role })
+            for season in newSeasons {
+                for episode in season.episodes {
+                    for person in episode.people where seenIDs.insert(person.name + person.role).inserted {
+                        people.append(person)
+                    }
+                }
+            }
+            self.people = people
+        }
+    }
 }
 
 /// Holds information about a particular TV Season.
@@ -260,7 +305,7 @@ public final class TVSeason: TVSeasonProtocol {
 public final class TVEpisode: TVEpisodeProtocol {
     public var imageTags: (any MediaImagesProtocol)?
     public var id: String
-    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    public var imageBlurHashes: (any MediaImagesProtocol)?
     public var title: String
     public var episodeNumber: Int
     public var mediaSources: [any MediaSourceProtocol]

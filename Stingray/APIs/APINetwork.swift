@@ -39,7 +39,7 @@ public protocol AdvancedNetworkProtocol {
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaType]?
-    ) async throws(LibraryErrors) -> [MediaModel]
+    ) async throws(LibraryErrors) -> [MediaStorage]
     /// Generates a URL for an image
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -100,12 +100,12 @@ public protocol AdvancedNetworkProtocol {
     func getRecentlyAdded(
         contentType: RecentlyAddedMediaType,
         accessToken: String
-    ) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable]
+    ) async throws(AdvancedNetworkErrors) -> [MediaStorage]
     
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
-    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable]
+    func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaStorage]
     /// Generates a URL to get the user's profile image
     /// - Parameters:
     ///   - userID: ID of the user
@@ -476,17 +476,16 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaType]?
-    ) async throws(LibraryErrors) -> [MediaModel] {
+    ) async throws(LibraryErrors) -> [MediaStorage] {
         struct Root: Decodable {
-            let items: [MediaModel]
-            
+            let items: [MediaStorage]
             enum CodingKeys: String, CodingKey {
                 case items = "Items"
             }
             
             init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                self.items = container.decodeAllAvailable([MediaModel].self, forKey: .items)
+                self.items = container.decodeAllAvailable([MediaStorage].self, forKey: .items)
             }
         }
         var params : [URLQueryItem] = [
@@ -509,7 +508,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
         }
 
-        var mediaItems: [MediaModel] = []
+        var mediaItems: [MediaStorage] = []
         do {
             let response: Root = try await network.request(
                 verb: .get,
@@ -523,30 +522,35 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
         catch let error { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
 
-        switch mediaItems.first?.mediaType {
-        case .tv:
+        let shows = mediaItems.compactMap {
+            switch $0 {
+            case .tvShow(let tvShow): return tvShow
+            default: return nil
+            }
+        }
+
+        if !shows.isEmpty {
             Task {
-                do { try await self.getMediasSeasons(accessToken: accessToken, media: mediaItems) }
+                do { try await self.getMediasSeasons(accessToken: accessToken, media: shows)}
                 catch let error as RError { Log.warning("Failed to get seasons for library \(libraryId): \(error.rDescription())") }
                 catch { Log.warning("Failed to get seasons for library \(libraryId): \(error.localizedDescription)") }
             }
-            return mediaItems
-        default: return mediaItems
         }
+        return mediaItems
     }
     
     /// Updates each media with their season data
     /// - Parameters:
     ///   - accessToken: Jellyfin access key
     ///   - media: All media to get seasons for
-    private func getMediasSeasons(accessToken: String, media: [MediaModel]) async throws(LibraryErrors) {
+    private func getMediasSeasons(accessToken: String, media: [any TVShowProtocol]) async throws(LibraryErrors) {
         enum SeasonContent {
             case success([TVSeason])
             case error(RError)
         }
             await withTaskGroup(of: (String, SeasonContent).self) { group in
                 var mediaIterator = media.makeIterator()
-                var activeMedia: MediaModel? = mediaIterator.next()
+                var activeMedia: (any TVShowProtocol)? = mediaIterator.next()
 
                 func getSeasonMedia(accessToken: String, showID: String?) { // A nice little wrapper around the actual getSeasonMedia func
                     guard let showID = showID
@@ -569,16 +573,11 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     }
                 }
 
-                @MainActor func getNextShow() -> MediaModel? { // Only pull unloaded media
-                    var media = mediaIterator.next()
-                    while media != nil {
-                        switch media?.mediaType {
-                        case .tv(let seasonsAvailable):
-                            switch seasonsAvailable {
-                            case .unloaded: return media
-                            case .loading, .loaded: media = mediaIterator.next()
-                            }
-                        default: media = mediaIterator.next()
+                @MainActor func getNextShow() -> (any TVShowProtocol)? { // Only pull unloaded media
+                    while let media = mediaIterator.next() {
+                        switch media.seasons {
+                        case .unloaded: return media
+                        case .loading, .loaded: continue
                         }
                     }
                     return nil
@@ -595,8 +594,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                         continue
                     }
                     switch response.1 {
-                    case .error(let error):
-                        media.mediaType = .error(error)
+                    case .error(let error): // Seasons stay unloaded so they can be retried when the show is opened
                         Log.warning("Failed to get content for show \(response.0): \(error.rDescription())")
                     case .success(let newSeasons): media.loadSeasons(.loaded(newSeasons))
                     }
@@ -839,7 +837,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
     public func getRecentlyAdded(
         contentType: RecentlyAddedMediaType,
         accessToken: String
-    ) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable] {
+    ) async throws(AdvancedNetworkErrors) -> [MediaStorage] {
         var params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
@@ -855,21 +853,21 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
         
         do {
-            return try await network.request(
+            let media: [MediaStorage] = try await network.request(
                 verb: .get,
                 path: "/Items/Latest",
                 headers: ["X-MediaBrowser-Token": accessToken],
                 urlParams: params,
                 body: nil
             )
-        } catch {
-            throw AdvancedNetworkErrors.failedRecentlyAdded(error)
+            return media
         }
+        catch { throw AdvancedNetworkErrors.failedRecentlyAdded(error) }
     }
     
-    public func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaModelRepresentable] {
+    public func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaStorage] {
         struct Root: Decodable {
-            let Items: [MediaModelRepresentable]
+            let Items: [MediaStorage]
         }
         
         let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]
@@ -883,9 +881,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
             return root.Items
-        } catch {
-            throw AdvancedNetworkErrors.failedRecentlyAdded(error)
         }
+        catch { throw AdvancedNetworkErrors.failedRecentlyAdded(error) }
     }
     
     public func getUserImageURL(userID: String) -> URL? {

@@ -16,7 +16,7 @@ public struct SpecialFeaturesView: View {
     /// Streaming service used to fetch the features and their artwork
     public let streamingService: PlayerProviding & MediaImageProviding & MediaProviding
     /// Media whose special features are shown. Fetching is kicked off lazily on first appearance
-    public let media: any MediaProtocol
+    public let media: any SpecialFeaturesProtocol & MediaMetadataProtocol
 
     public var body: some View {
         VStack {
@@ -44,7 +44,7 @@ fileprivate struct SpecialFeaturesRow: View {
     /// Row heading, taken from the first feature's type
     public let title: String
     /// Media these features belong to
-    public let media: any MediaProtocol
+    public let media: any MediaMetadataProtocol
 
     /// App navigation, forwarded to each feature's player
     @Binding public var navigation: NavigationPath
@@ -61,7 +61,7 @@ fileprivate struct SpecialFeaturesRow: View {
     public init(
         streamingService: MediaProviding & MediaImageProviding & PlayerProviding,
         rowData: [any SpecialFeatureProtocol],
-        media: any MediaProtocol,
+        media: any MediaMetadataProtocol,
         navigation: Binding<NavigationPath>
     ) {
         self.streamingService = streamingService
@@ -86,7 +86,7 @@ fileprivate struct SpecialFeaturesRow: View {
                                     MoviePlayerViewModel(
                                         settingsModel: self.settings,
                                         streamingService: self.streamingService,
-                                        media: media,
+                                        media: self.media,
                                         mediaSource: mediaSource,
                                         startTime: .zero
                                     )

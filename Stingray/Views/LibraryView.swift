@@ -63,7 +63,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     /// Streaming service used for card artwork
     public let streamingService: any MediaImageProviding
     /// Unfiltered, unsorted media. `filteredMedia` derives the displayed list from it
-    public let allMedia: [any MediaRepresentableProtocol]
+    public let allMedia: [MediaStorage]
     /// Extra buttons appended to the button row, ex. the library refresh button
     public var additionalButtons: () -> ButtonContent
     /// Selected genres. Media must match every one of them
@@ -85,12 +85,12 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     @State private var buttonRowContainerWidth: CGFloat = 0
 
     /// Media matching every applied genre filter. Computed so it always reflects the current`allMedia`
-    private var filteredMedia: [any MediaRepresentableProtocol] {
+    private var filteredMedia: [MediaStorage] {
         let filtered = self.allMedia
             .filter { model in
                 if appliedGenreFilters.isEmpty { return true }
                 // Keep only media that has every applied genre
-                return self.appliedGenreFilters.allSatisfy { model.genres.contains($0) }
+                return self.appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
             }
             .filter { model in
                 if self.appliedMaturityRatingFilters.isEmpty { return true }
@@ -105,12 +105,12 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         }
 
         // Create an on-the-fly sorting function
-        let areInOrder: (any MediaRepresentableProtocol, any MediaRepresentableProtocol) -> Bool
+        let areInOrder: (MediaStorage, MediaStorage) -> Bool
         switch (self.sortBy, self.sortOrderAscending) {
-        case (.sortTitle, true):  areInOrder = { $0.sortTitle < $1.sortTitle }
-        case (.sortTitle, false): areInOrder = { $0.sortTitle > $1.sortTitle }
-        case (.title, true): areInOrder = { $0.title < $1.title }
-        case (.title, false): areInOrder = { $0.title > $1.title }
+        case (.sortTitle, true):  areInOrder = { ($0.sortTitle ?? "") < ($1.sortTitle ?? "") }
+        case (.sortTitle, false): areInOrder = { ($0.sortTitle ?? "") > ($1.sortTitle ?? "") }
+        case (.title, true): areInOrder = { ($0.title ?? "") < ($1.title ?? "") }
+        case (.title, false): areInOrder = { ($0.title ?? "") > ($1.title ?? "") }
         case (.duration, true): areInOrder = { ($0.duration ?? .zero) < ($1.duration ?? .zero) }
         case (.duration, false): areInOrder = { ($0.duration ?? .zero) > ($1.duration ?? .zero) }
         case (.releaseDate, true): areInOrder = { ($0.releaseDate ?? .distantPast) < ($1.releaseDate ?? .distantPast) }
@@ -133,7 +133,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         availableGenres: Set<String>,
         availableMaturityRatings: Set<String>,
         streamingService: any MediaImageProviding,
-        allMedia: [any MediaRepresentableProtocol],
+        allMedia: [MediaStorage],
         navigation: Binding<NavigationPath>,
         @ViewBuilder additionalButtons: @escaping () -> ButtonContent = { EmptyView() }
     ) {
@@ -306,7 +306,7 @@ public struct MediaGridView: View {
     /// Gap between cards, horizontally and vertically
     public static let cardSpacing = 50.0
     /// Media to display, already filtered and sorted
-    public let allMedia: [any MediaRepresentableProtocol]
+    public let allMedia: [MediaStorage]
     /// Streaming service used for card artwork
     public let streamingService: any MediaImageProviding
 

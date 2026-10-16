@@ -12,12 +12,10 @@ import SwiftUI
 // MARK: Main view
 /// A movie's detail screen: logo over backdrop art, with a bottom shelf of metadata, special features, and cast that slides up on focus.
 public struct MovieDetailView: View {
-    /// Media that contains content to play
-    public let media: any MediaProtocol
+    /// Movie that contains content to play
+    public let media: any MovieProtocol
     /// Streaming service the user is using
     public let streamingService: MediaImageProviding & PlayerProviding & MediaProviding
-    /// All available content sources for this movie and its various versions
-    public let mediaSources: [any MediaSourceProtocol]
 
     /// App navigation, used to push the player
     @Binding public var navigation: NavigationPath
@@ -77,7 +75,7 @@ public struct MovieDetailView: View {
                 PlayNavigationView(
                     navigation: $navigation,
                     media: media,
-                    mediaSources: self.mediaSources,
+                    mediaSources: self.media.mediaSources,
                     streamingService: self.streamingService
                 )
                 .id("Play-button-view")
@@ -134,7 +132,7 @@ public struct MovieDetailView: View {
 /// Restart sections once any version has progress.
 fileprivate struct PlayNavigationView: View {
     /// Movie being played
-    private let media: any MediaProtocol
+    private let media: any MediaMetadataProtocol
     /// Streaming service used to start playback
     private let streamingService: PlayerProviding & MediaImageProviding
     /// Button label, taken from the movie's title
@@ -155,7 +153,7 @@ fileprivate struct PlayNavigationView: View {
     ///   - streamingService: Streaming service used to start playback
     init(
         navigation: Binding<NavigationPath>,
-        media: any MediaProtocol,
+        media: any MediaMetadataProtocol,
         mediaSources: [any MediaSourceProtocol],
         streamingService: PlayerProviding & MediaImageProviding
     ) {

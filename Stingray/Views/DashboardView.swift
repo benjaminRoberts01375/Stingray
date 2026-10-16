@@ -107,41 +107,17 @@ public struct DashboardView: View {
                 navigation: $navigationPath
             )
         }
-        .navigationDestination(for: MediaModelRepresentable.self) { representableMedia in
-            MediaDetailLoader(
-                mediaID: representableMedia.id,
-                parentID: representableMedia.parentID,
-                streamingService: self.streamingService,
-                navigation: $navigationPath
-            )
-        }
-        .navigationDestination(for: AnyMedia.self) { anyMedia in
-            switch anyMedia.media.mediaType {
-            case .tv(let seasonsAvailable):
-                TVShowDetailView(
-                    media: anyMedia.media,
-                    streamingService: self.streamingService,
-                    seasons: seasonsAvailable,
-                    navigation: $navigationPath
-                )
-            case .movies(let movies):
-                MovieDetailView(
-                    media: anyMedia.media,
-                    streamingService: self.streamingService,
-                    mediaSources: movies,
-                    navigation: $navigationPath
-                )
-            case .homeVideo(let homeVideo):
-                if let mediaSource = homeVideo.first {
-                    HomeVideoPlayerLauncher(
-                        media: anyMedia.media,
-                        mediaSource: mediaSource,
-                        streamingService: self.streamingService,
-                        navigation: $navigationPath
-                    )
-                }
-                else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
+        .navigationDestination(for: MediaStorage.self) { media in
+            switch media {
             case .error(let error): ErrorView(error: error, summary: (String(localized: "Failed to load library media")))
+            default:
+                // Always resolve through the libraries, since media from the dashboard is a slim copy without sources or seasons
+                MediaDetailLoader(
+                    mediaID: media.id ?? "",
+                    parentID: media.parentID,
+                    streamingService: self.streamingService,
+                    navigation: $navigationPath
+                )
             }
         }
         .navigationDestination(for: MoviePlayerViewModel.self) { vm in
@@ -152,20 +128,5 @@ public struct DashboardView: View {
             navigationPath.append(request) // Navigate to requested media
             deepLinkRequest = nil // Clear the request
         }
-    }
-}
-
-/// A type-erased wrapper for MediaProtocol that conforms to Hashable
-/// `NavigationPath` requires concrete `Hashable` values, which `any MediaProtocol` can't satisfy on its own.
-public struct AnyMedia: Hashable {
-    /// The wrapped media. Identity is its `id` alone
-    public let media: any MediaProtocol
-
-    public static func == (lhs: AnyMedia, rhs: AnyMedia) -> Bool {
-        lhs.media.id == rhs.media.id
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(media.id)
     }
 }

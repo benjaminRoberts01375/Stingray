@@ -17,7 +17,7 @@ public struct MediaBackgroundView: View {
     @Binding public var shouldBlurBackground: Bool
 
     /// Media to pull background info from
-    public let media: any MediaProtocol
+    public let media: any MediaMetadataProtocol
     /// URL to get the image from
     public let backgroundImageURL: URL?
 
@@ -26,7 +26,7 @@ public struct MediaBackgroundView: View {
     ///   - media: Media to load blur from
     ///   - streamingService: Location to load the image from
     ///   - shouldBlurBackground: Track if the loaded image should be blurred
-    public init(media: any MediaProtocol, streamingService: MediaImageProviding, shouldBlurBackground: Binding<Bool>) {
+    public init(media: any MediaMetadataProtocol, streamingService: MediaImageProviding, shouldBlurBackground: Binding<Bool>) {
         self.fadeBackgroundIn = 0
         self._shouldBlurBackground = shouldBlurBackground
         self.media = media
@@ -36,7 +36,7 @@ public struct MediaBackgroundView: View {
     public var body: some View {
         ZStack {
             AsyncBlurImage(
-                blurHash: self.media.imageBlurHashes?.backdrop,
+                blurHash: self.media.imageBlurHashes?.thumbnail,
                 blurSize: CGSize(width: 32, height: 18),
                 imageURL: backgroundImageURL
             )

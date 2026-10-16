@@ -77,7 +77,7 @@ public struct SearchView: View {
     /// Search results
     public enum SearchStatus {
         /// Found search results
-        case found([any MediaProtocol])
+        case found([MediaStorage])
         /// None were found, but some may be found soon
         case temporarilyNotFound
         /// Nothing was found, and nothing will be found
@@ -105,32 +105,30 @@ public struct SearchView: View {
                 switch library {
                 case .available(let medias):
                     scoredMedia += medias
-                        .map {
+                        .compactMap { media -> MediaScore? in
+                            guard var sortTitle = media.title else { return nil }
                             var score: Int
-                            var sortTitle = $0.title
-                            if $0.title.lowercased().contains(self.searchText.lowercased()) { score = 0 }
-                            else { score = $0.title.slidingLevenshteinDistance(to: self.searchText) }
+
+                            if sortTitle.lowercased().contains(self.searchText.lowercased()) { score = 0 }
+                            else { score = sortTitle.slidingLevenshteinDistance(to: self.searchText) }
 
                             // If it's not already a perfect match, search the episodes if there are any
-                            if score != 0 && self.settings.searchEpisodeTitles {
-                                switch $0.mediaType {
-                                case .tv(let seasonsAvailable):
-                                    switch seasonsAvailable {
-                                    case .loaded(let seasons):
-                                        for season in seasons {
-                                            for episode in season.episodes {
-                                                score = min(score, episode.title.slidingLevenshteinDistance(to: self.searchText))
-                                                sortTitle = episode.title
-                                                if score == 0 { break } // If it's not already a perfect match, search more episodes
-                                            }
-                                            if score == 0 { break } // If it's not already a perfect match, search more episodes
+                            if score != 0 && self.settings.searchEpisodeTitles,
+                               case .tvShow(let tvShow) = media,
+                               case .loaded(let seasons) = tvShow.seasons {
+                                for season in seasons {
+                                    for episode in season.episodes {
+                                        let episodeScore = episode.title.slidingLevenshteinDistance(to: self.searchText)
+                                        if episodeScore < score {
+                                            score = episodeScore
+                                            sortTitle = episode.title
                                         }
-                                    default: return MediaScore(media: $0, score: score, sortTitle: $0.title)
+                                        if score == 0 { break } // Stop searching once a perfect match is found
                                     }
-                                default: return MediaScore(media: $0, score: score, sortTitle: $0.title)
+                                    if score == 0 { break } // Stop searching once a perfect match is found
                                 }
                             }
-                            return MediaScore(media: $0, score: score, sortTitle: sortTitle)
+                            return MediaScore(media: media, score: score, sortTitle: sortTitle)
                         }
                         .filter { $0.score <= 2 && $0.sortTitle.count >= self.searchText.count }
                 default: break
@@ -222,7 +220,7 @@ fileprivate extension String {
 /// Scores a piece of media based on the sortTitle for searching
 public struct MediaScore {
     /// Associated media
-    public let media: any MediaProtocol
+    public let media: MediaStorage
     /// Score of the media
     public let score: Int
     /// Title the score is based on

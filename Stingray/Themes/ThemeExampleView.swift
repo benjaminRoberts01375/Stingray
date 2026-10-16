@@ -11,7 +11,7 @@ import SwiftUI
 /// Reads the theme from the environment, so wrapping it in `.environment(someThemeModel)` renders that theme instead of the user's.
 public struct ThemeExampleView: View {
     /// Placeholder media so the card has a title and artwork to render
-    private let exampleMedia = ExampleMedia(title: "Example")
+    private let exampleMedia = MediaStorage.movie(ExampleMedia(title: "Example"))
     /// Serves bundled sample posters in place of a real server
     private let exampleService = ExampleStreamingService()
     
@@ -45,6 +45,53 @@ public struct ThemeExampleView: View {
         .allowsHitTesting(false)
         .focusable(false)
     }
+}
+
+/// Some media designed to be displayed as an example
+fileprivate final class ExampleMedia: MovieProtocol {
+    public let sortTitle: String
+    public let tagline: String
+    public let maturity: String?
+    public let releaseDate: Date?
+    public let genres: [String]
+    public let duration: Duration?
+    public let description: String
+    public let people: [any MediaPersonProtocol]
+    public let id: String
+    public let parentID: String
+    public let title: String
+    public let imageBlurHashes: (any MediaImagesProtocol)?
+    public let imageTags: (any MediaImagesProtocol)?
+    public let mediaSources: [any MediaSourceProtocol]
+    public let specialFeatures: SpecialFeaturesStatus
+
+    public static func == (lhs: ExampleMedia, rhs: ExampleMedia) -> Bool {
+        return lhs.id == rhs.id
+    }
+
+    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
+
+    /// Creates example media with fixed placeholder metadata, used by the theme previews.
+    /// - Parameter title: Title to display
+    public init(title: String) {
+        self.title = title
+        self.sortTitle = title
+        self.tagline = "A short tagline"
+        self.maturity = "NA"
+        self.releaseDate = Date.now
+        self.genres = ["Drama", "Fantasy"]
+        self.duration = .seconds(90 * 60) // 90 minutes
+        self.description = "A wonderful story"
+        self.people = []
+        self.id = UUID().uuidString
+        self.parentID = UUID().uuidString
+        self.imageBlurHashes = nil
+        self.imageTags = MediaImages(thumbnail: "Example", logo: "Example", primary: "Example")
+        self.mediaSources = []
+        self.specialFeatures = .loaded([])
+    }
+
+    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) { } // Example media has no special features
 }
 
 /// Load example art work

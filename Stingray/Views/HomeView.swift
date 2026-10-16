@@ -13,7 +13,7 @@ public struct HomeView: View {
     public let streamingService: RecommendationProviding & MediaImageProviding & SystemInfoProviding & LibraryProviding
 
     /// Fetched media keyed by `HomeRow.id`. Held here rather than in each row so that switching tabs doesn't refetch every row.
-    @State private var dashboardCache: [String: [MediaModelRepresentable]] = [:]
+    @State private var dashboardCache: [String: [MediaStorage]] = [:]
     /// App navigation, forwarded to each media card
     @Binding public var navigation: NavigationPath
 
@@ -108,11 +108,11 @@ fileprivate struct DashboardRow: View {
     /// Streaming service used for card artwork
     let streamingService: RecommendationProviding & MediaImageProviding
     /// Shared cache owned by `HomeView`. Checked before fetching, and written to after
-    @Binding var cache: [String: [MediaModelRepresentable]]
+    @Binding var cache: [String: [MediaStorage]]
     /// App navigation, forwarded to each media card
     @Binding var navigation: NavigationPath
     /// Fetches this row's media. Only called on a cache miss
-    let fetchMedia: () async -> [MediaModelRepresentable]
+    let fetchMedia: () async -> [MediaStorage]
 
     /// Progress of this row's fetch
     @State private var status: DashboardRowStatus = .unstarted
@@ -162,7 +162,7 @@ fileprivate struct DashboardRow: View {
         /// The fetch is in flight
         case retrieving
         /// Media is available and ready to display
-        case complete([MediaModelRepresentable])
+        case complete([MediaStorage])
         /// The fetch finished with nothing to show, so the whole row is hidden
         case empty
     }
@@ -173,7 +173,7 @@ fileprivate struct MediaPicker: View {
     /// Streaming service used for card artwork
     var streamingService: MediaImageProviding
     /// Media to lay out, in the order the server returned it
-    let pickerMedia: [MediaModelRepresentable]
+    let pickerMedia: [MediaStorage]
 
     /// App navigation, forwarded to each media card
     @Binding var navigation: NavigationPath
@@ -181,7 +181,7 @@ fileprivate struct MediaPicker: View {
     var body: some View {
         ScrollView(.horizontal) {
             LazyHStack {
-                ForEach(pickerMedia) { media in
+                ForEach(pickerMedia, id: \.id) { media in
                     MediaCard(media: media, streamingService: self.streamingService, navigation: $navigation)
                 }
             }
@@ -205,23 +205,21 @@ public struct MediaDetailLoader: View {
     public var body: some View {
         switch self.streamingService.lookup(mediaID: self.mediaID, parentID: self.parentID) {
         case .found(let foundMedia):
-            switch foundMedia.mediaType {
-            case .tv(let seasons): TVShowDetailView(
-                media: foundMedia,
+            switch foundMedia {
+            case .tvShow(let tvShow): TVShowDetailView(
+                media: tvShow,
                 streamingService: self.streamingService,
-                seasons: seasons,
                 navigation: $navigation
             )
-            case .movies(let movies): MovieDetailView(
-                media: foundMedia,
+            case .movie(let movie): MovieDetailView(
+                media: movie,
                 streamingService: self.streamingService,
-                mediaSources: movies,
                 navigation: $navigation
             )
             case .homeVideo(let homeVideo):
-                if let mediaSource = homeVideo.first {
+                if let mediaSource = homeVideo.mediaSources.first {
                     HomeVideoPlayerLauncher(
-                        media: foundMedia,
+                        media: homeVideo,
                         mediaSource: mediaSource,
                         streamingService: self.streamingService,
                         navigation: $navigation
@@ -349,13 +347,10 @@ public struct LibrariesInfoView: View {
             case .waiting, .error: continue
             case .available(let medias):
                 for media in medias {
-                    switch media.mediaType {
-                    case .movies:
-                        counters["Movies", default: 0] += 1
-                    case .tv:
-                        counters["TV Shows", default: 0] += 1
-                    case .homeVideo:
-                        counters["Home Video", default: 0] += 1
+                    switch media {
+                    case .movie: counters["Movies", default: 0] += 1
+                    case .tvShow: counters["TV Shows", default: 0] += 1
+                    case .homeVideo: counters["Home Video", default: 0] += 1
                     case .error: continue
                     }
                 }

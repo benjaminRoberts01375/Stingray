@@ -15,12 +15,12 @@ public protocol TopShelfNetworkProtocol {
     /// Retrieve recently added media of any type
     /// - Parameter accessToken: Access token for the server
     /// - Returns: A slim version of each media item
-    func getRecentlyAdded(accessToken: String) async throws -> [MediaModelRepresentable]
+    func getRecentlyAdded(accessToken: String) async throws -> [MediaStorage]
     
     /// Gets up next shows
     /// - Parameter accessToken: Access token for the server
     /// - Returns: Available media for up next
-    func getUpNext(accessToken: String) async throws -> [MediaModelRepresentable]
+    func getUpNext(accessToken: String) async throws -> [MediaStorage]
     
     /// Generates a URL for an image
     /// - Parameters:
@@ -37,24 +37,25 @@ public struct APINetwork: TopShelfNetworkProtocol {
     /// Transport used for every request
     var network: BasicNetworkProtocol
     
-    public func getRecentlyAdded(accessToken: String) async throws -> [MediaModelRepresentable] {
+    public func getRecentlyAdded(accessToken: String) async throws -> [MediaStorage] {
         let params: [URLQueryItem] = [
             URLQueryItem(name: "limit", value: "\(25)"),
             URLQueryItem(name: "fields", value: "ParentId")
         ]
         
-        return try await network.request(
+        let items: [MediaStorage] = try await network.request(
             verb: .get,
             path: "/Items/Latest",
             headers: ["X-MediaBrowser-Token": accessToken],
             urlParams: params,
             body: nil
         )
+        return items
     }
     
-    public func getUpNext(accessToken: String) async throws -> [MediaModelRepresentable] {
+    public func getUpNext(accessToken: String) async throws -> [MediaStorage] {
         struct Root: Decodable {
-            let Items: [MediaModelRepresentable]
+            let Items: [MediaStorage]
         }
         
         let params: [URLQueryItem] = [ URLQueryItem(name: "fields", value: "ParentId") ]

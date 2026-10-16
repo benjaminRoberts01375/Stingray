@@ -37,12 +37,12 @@ public final class StreamingServiceBasicModel: MediaImageProviding & Recommendat
     /// Get all the recently added media. contentType is ignored
     /// - Parameter contentType: Ignored
     /// - Returns: All recently added media
-    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable] {
+    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage] {
         do { return try await networkAPI.getRecentlyAdded(accessToken: accessToken) }
         catch { return [] }
     }
     
-    public func retrieveUpNext() async -> [MediaModelRepresentable] {
+    public func retrieveUpNext() async -> [MediaStorage] {
         do {
             guard let upNext = try await networkAPI.getUpNext(accessToken: accessToken).first else { return [] }
             return [upNext]

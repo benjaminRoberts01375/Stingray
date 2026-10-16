@@ -6,6 +6,88 @@
 //
 
 import Foundation
+
+/// A basic wrapper around media types for quickly determining what type of media is presented. These are meant to be quite finely
+/// defined, so a home video is separate from a home video, libraries are separate from playlists which are separate from collections, etc.
+@dynamicMemberLookup // Thanks AI for this little tip
+public enum MediaStorage: Decodable, Hashable {
+    /// Holds some movie type
+    case movie(any MovieProtocol)
+    /// Holds some tv show type
+    case tvShow(any TVShowProtocol)
+    /// Holds some home video type
+    case homeVideo(any HomeVideoProtocol)
+    /// Represents a failure to create this media
+    case error(RError)
+
+    public enum CodingKeys: String, CodingKey {
+        case mediaType = "Type"
+    }
+
+    /// A convenience variable for getting the underlying type
+    public var media: (any MediaMetadataProtocol)? {
+        switch self {
+        case .movie(let movie): return movie
+        case .tvShow(let tvShow): return tvShow
+        case .homeVideo(let homeVideo): return homeVideo
+        case .error: return nil
+        }
+    }
+
+    /// Forwards any property of `MediaProtocol` to the underlying value.
+    public subscript<T>(dynamicMember keyPath: KeyPath<any MediaMetadataProtocol, T>) -> T? {
+        self.media?[keyPath: keyPath]
+    }
+
+    /// Forwards any optional property of `MediaProtocol` to the underlying value, flattening the result to a single optional.
+    public subscript<T>(dynamicMember keyPath: KeyPath<any MediaMetadataProtocol, T?>) -> T? {
+        self.media?[keyPath: keyPath] ?? nil
+    }
+
+    // Hashable conformance
+    public static func == (lhs: MediaStorage, rhs: MediaStorage) -> Bool { lhs.id == rhs.id }
+    public func hash(into hasher: inout Hasher) { hasher.combine(self.media?.id) }
+
+    /// Creates the matching media type from JSON. Media that is an unknown type or fails to decode becomes `.error` rather than throwing,
+    /// so a single bad item doesn't take down the rest of a response.
+    /// - Parameter decoder: JSON decoder
+    /// - throws: `JSONError` if the media's type can't be determined at all.
+    public init(from decoder: Decoder) throws(JSONError) {
+        let container: KeyedDecodingContainer<MediaStorage.CodingKeys>
+        do { container = try decoder.container(keyedBy: CodingKeys.self) }
+        catch { throw JSONError.missingContainer("Base Container", "Media Storage") }
+
+        let mediaType: String
+        do { mediaType = try container.decode(String.self, forKey: .mediaType) }
+        catch { throw JSONError.missingKey(CodingKeys.mediaType.stringValue, "Media Storage") }
+
+        switch MediaType(rawValue: mediaType) {
+        case .movie:
+            do { self = .movie(try MovieModel(from: decoder)) }
+            catch { self = .error(error) }
+        case .tvShow, .episode: // Episodes (ex. from up next) are represented by the show they belong to
+            do { self = .tvShow(try TVShowModel(from: decoder)) }
+            catch { self = .error(error) }
+        case .homeVideo:
+            do { self = .homeVideo(try HomeVideoModel(from: decoder)) }
+            catch { self = .error(error) }
+        case nil: self = .error(MediaError.unknownMediaType(mediaType))
+        }
+    }
+}
+
+/// Media types as the server names them. Used for decoding media and requesting specific types from the server.
+public enum MediaType: String {
+    /// A movie
+    case movie = "Movie"
+    /// A TV show
+    case tvShow = "Series"
+    /// A single episode of a TV show
+    case episode = "Episode"
+    /// A home video
+    case homeVideo = "Video"
+}
+
 /// Holds information about a single person who worked on a piece of media.
 @Observable
 public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
@@ -43,10 +125,10 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
 
 /// Holds hashes used to generate preview images.
 @Observable
-public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHashesProtocol {
+public final class MediaImageBlurHashes: Decodable, Equatable, MediaImagesProtocol {
     public var primary: String?
     public var logo: String?
-    public var backdrop: String?
+    public var thumbnail: String?
 
     public enum CodingKeys: String, CodingKey {
         case primary = "Primary"
@@ -57,7 +139,7 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
     public static func == (lhs: MediaImageBlurHashes, rhs: MediaImageBlurHashes) -> Bool {
         lhs.primary == rhs.primary &&
         lhs.logo == rhs.logo &&
-        lhs.backdrop == rhs.backdrop
+        lhs.thumbnail == rhs.thumbnail
     }
 
     /// Create a `MediaImageBlurHashes` from JSON.
@@ -68,7 +150,7 @@ public final class MediaImageBlurHashes: Decodable, Equatable, MediaImageBlurHas
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.primary = try container.decodeIfPresent([String: String].self, forKey: .primary)?.values.first
             self.logo = try container.decodeIfPresent([String: String].self, forKey: .logo)?.values.first
-            self.backdrop = try container.decodeIfPresent([String: String].self, forKey: .backdrop)?.values.first
+            self.thumbnail = try container.decodeIfPresent([String: String].self, forKey: .backdrop)?.values.first
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "Media Image Blur Hash") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -133,7 +215,7 @@ public final class SpecialFeature: SpecialFeatureProtocol, Decodable {
     public let id: String
     public var featureType: String
     public let mediaSources: [any MediaSourceProtocol]
-    public var imageBlurHashes: (any MediaImageBlurHashesProtocol)?
+    public var imageBlurHashes: (any MediaImagesProtocol)?
     public var imageTags: (any MediaImagesProtocol)?
 
     public enum CodingKeys: String, CodingKey {
@@ -156,6 +238,27 @@ public final class SpecialFeature: SpecialFeatureProtocol, Decodable {
         self.mediaSources = try container.decode([MediaSource].self, forKey: .mediaSources)
         self.imageBlurHashes = try container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
         self.imageTags = try container.decodeIfPresent(MediaImages.self, forKey: .imageTags)
+    }
+
+    /// Formats each feature's type for display (ex. "BehindTheScenes" -> "Behind The Scenes"), then groups the features by that type.
+    /// - Parameter specialFeatures: Special features to group.
+    /// - Returns: One array per feature type.
+    public static func formatAndGroup(_ specialFeatures: [SpecialFeature]) -> [[any SpecialFeatureProtocol]] {
+        let specialFeatures = specialFeatures.map { feature in
+            if feature.featureType == "Unknown" { feature.featureType = "Extras" }
+            else {
+                feature.featureType =
+                feature.featureType.pascalCaseToSpaces()
+                if !feature.featureType.hasSuffix("s") && feature.featureType != "theme-music" { // Make plural
+                    feature.featureType += "s"
+                }
+            }
+            return feature
+        }
+        // Group by featureType
+        return Dictionary(grouping: specialFeatures, by: \.featureType)
+            .values
+            .map { $0 as [any SpecialFeatureProtocol] }
     }
 }
 

@@ -16,7 +16,7 @@ public struct MediaCard: View {
 
     public static let cardSize = CGSize(width: 200, height: 370)
 
-    public let media: any MediaRepresentableProtocol
+    public let media: MediaStorage
     public let url: URL?
     public let reserveTextSpace: Bool
     public let size: CGSize
@@ -30,27 +30,22 @@ public struct MediaCard: View {
     ///   - size: Visual size of the card. Defaults to `cardSize`.
     /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
     public init(
-        media: any MediaRepresentableProtocol,
+        media: MediaStorage,
         streamingService: MediaImageProviding,
         navigation: Binding<NavigationPath>? = nil,
         reserveTextSpace: Bool = true,
         size: CGSize = MediaCard.cardSize
     ) {
         self.media = media
-        self.url = streamingService.getImageURL(imageType: .primary, mediaID: media.id, width: 400)
+        if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
+        else { self.url = nil }
         self._navigation = navigation ?? .constant(NavigationPath())
         self.reserveTextSpace = reserveTextSpace
         self.size = size
     }
 
     public var body: some View {
-        Button {
-            if let media = self.media as? (any MediaProtocol) { // Shortcut
-                self.navigation.append(AnyMedia(media: media))
-                return
-            }
-            self.navigation.append(self.media)
-        }
+        Button { self.navigation.append(self.media) }
         label: {
             VStack(spacing: 0) {
                 if self.settings.loadThumbnailArt {
@@ -64,7 +59,7 @@ public struct MediaCard: View {
                     }
                     else { MediaCardNoImage() }
                     Spacer(minLength: 0)
-                    Text(self.media.title)
+                    Text(self.media.title ?? "")
                         .multilineTextAlignment(.center)
                         .lineLimit(2, reservesSpace: self.reserveTextSpace)
                         .truncationMode(.tail)
@@ -76,7 +71,7 @@ public struct MediaCard: View {
                 }
                 else {
                     Spacer(minLength: 0)
-                    Text(self.media.title)
+                    Text(self.media.title ?? "")
                         .font(.system(size: 30))
                         .bold()
                         .multilineTextAlignment(.center)

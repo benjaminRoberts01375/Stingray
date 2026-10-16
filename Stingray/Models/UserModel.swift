@@ -52,9 +52,10 @@ public protocol UserProtocol: AnyObject, Codable {
     /// Hands the user the storage it saves itself to whenever it changes. Pass `nil` to stop the user from saving.
     /// - Parameter storage: Storage to write changes to
     func attach(storage: UserStorageProtocol?)
-    /// Folds in settings that changed on another device, without writing them straight back out again
-    /// - Parameter other: A freshly loaded copy of this same user
-    func apply(from other: any UserProtocol)
+    /// Copies another instance's settings onto this one without writing them back to storage. By mutating in place, we don't have to worry
+    /// about views holding stale data.
+    /// - Parameter newUser: Apply one user's settings to another
+    func apply(from newUser: any UserProtocol)
 
     /// URL to the streaming service
     var serviceURL: URL { get }
@@ -270,9 +271,6 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
 
     public func attach(storage: UserStorageProtocol?) { self.storage = storage }
 
-    /// Copies another instance's settings onto this one without writing them back to storage. By mutating in place, we don't have to worry
-    /// about views holding stale data.
-    /// - Parameter other: A freshly loaded copy of this same user, carrying the incoming values
     public func apply(from newUser: any UserProtocol) {
         self.isApplyingExternalChange = true
         defer { self.isApplyingExternalChange = false }

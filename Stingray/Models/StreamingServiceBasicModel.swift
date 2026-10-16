@@ -32,12 +32,12 @@ public enum MediaImageType: String {
 public protocol RecommendationProviding {
     /// Retrieves a list of recently added media
     /// - Parameter contentType: The type of media to retrieve
-    /// - Returns: All slim versions of media found
-    func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaModelRepresentable]
+    /// - Returns: All media found. These are slim versions that lack details like media sources and seasons
+    func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage]
     
     /// Retrieves a list of the media slated for up next
-    /// - Returns: All slim versions of media found
-    func retrieveUpNext() async -> [MediaModelRepresentable]
+    /// - Returns: All media found. These are slim versions that lack details like media sources and seasons
+    func retrieveUpNext() async -> [MediaStorage]
 }
 
 /// Denotes types of desired media for recently added content

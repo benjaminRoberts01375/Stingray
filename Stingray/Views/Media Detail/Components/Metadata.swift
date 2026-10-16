@@ -13,7 +13,7 @@ public struct MediaOverview: View {
     @FocusState private var isFocused: Bool
 
     /// What to read the synopsis from
-    public let media: any MediaProtocol
+    public let media: any MediaMetadataProtocol
 
     public var body: some View {
         Button {} label: {
@@ -47,7 +47,7 @@ public struct MediaMetadata: View {
     @FocusState private var isFocused: Bool
 
     /// What to read metadata for
-    public let media: any MediaProtocol
+    public let media: any MediaMetadataProtocol
 
     public var body: some View {
         Button {} label: {

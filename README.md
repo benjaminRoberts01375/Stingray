@@ -65,9 +65,11 @@ Configure Stingray to look and feel how you want it.
   - Home video support
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
+  - Fix edge case where TV shows in a movie (or other type of) library don't load episodes
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
+  - Reworked library storage to make media types more expressive, utilizing an enum that holds protocols that define the type of media, instead of a single generic media item
 
 ## TO-DO List
 
