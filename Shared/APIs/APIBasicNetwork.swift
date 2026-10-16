@@ -5,7 +5,7 @@
 //  Created by Ben Roberts on 12/11/25.
 //
 
-import SwiftUI
+import UIKit
 
 /// A very basic network protocol for sending/receving requests, as well as formatting options
 public protocol BasicNetworkProtocol {

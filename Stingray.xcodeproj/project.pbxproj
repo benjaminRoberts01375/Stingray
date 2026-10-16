@@ -43,34 +43,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B54522B23082CFA200C6DE06 /* Exceptions for "Shared" folder in "TopShelf" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				APIs/APIBasicNetwork.swift,
+				APIs/StorageKeys.swift,
+				Extensions/URLExtension.swift,
+				Models/LoggerModel.swift,
+				Models/RErrorBaseModel.swift,
+			);
+			target = B593D4B22EEB58090015EB83 /* TopShelf */;
+		};
 		B593D4BE2EEB58090015EB83 /* Exceptions for "TopShelf" folder in "TopShelf" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-			);
-			target = B593D4B22EEB58090015EB83 /* TopShelf */;
-		};
-		B593D4C42EEB58590015EB83 /* Exceptions for "Stingray" folder in "TopShelf" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				APIs/APIBasicNetwork.swift,
-				APIs/APIBasicStorage.swift,
-				APIs/APIUserStorage.swift,
-				Extensions/ISO8601DateFormatterExtension.swift,
-				Extensions/StringExtension.swift,
-				Extensions/TimeIntervalExtension.swift,
-				Extensions/URLExtension.swift,
-				Models/LoggerModel.swift,
-				"Models/Media Models/HomeVideoModel.swift",
-				"Models/Media Models/MediaModelComponents.swift",
-				"Models/Media Models/MediaProtocols.swift",
-				"Models/Media Models/MovieModel.swift",
-				"Models/Media Models/TVShowModel.swift",
-				Models/RErrorModel.swift,
-				Models/StreamingServiceBasicModel.swift,
-				Models/UserModel.swift,
-				Themes/ThemeModel.swift,
-				Themes/Themes.swift,
 			);
 			target = B593D4B22EEB58090015EB83 /* TopShelf */;
 		};
@@ -84,11 +71,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		B54522B03082CF8F00C6DE06 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B54522B23082CFA200C6DE06 /* Exceptions for "Shared" folder in "TopShelf" target */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		B5625A4E2EC4EDF500C0507C /* Stingray */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				B5CB94A62EEB80FE00F5F9BD /* Exceptions for "Stingray" folder in "Stingray" target */,
-				B593D4C42EEB58590015EB83 /* Exceptions for "Stingray" folder in "TopShelf" target */,
 			);
 			path = Stingray;
 			sourceTree = "<group>";
@@ -126,6 +120,7 @@
 		B5625A432EC4EDF500C0507C = {
 			isa = PBXGroup;
 			children = (
+				B54522B03082CF8F00C6DE06 /* Shared */,
 				B5625A4E2EC4EDF500C0507C /* Stingray */,
 				B593D4B72EEB58090015EB83 /* TopShelf */,
 				B593D4B42EEB58090015EB83 /* Frameworks */,
@@ -169,6 +164,7 @@
 				B593D4BC2EEB58090015EB83 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				B54522B03082CF8F00C6DE06 /* Shared */,
 				B5625A4E2EC4EDF500C0507C /* Stingray */,
 			);
 			name = Stingray;

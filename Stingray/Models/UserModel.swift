@@ -307,12 +307,8 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         storage.upsertUser(user: self)
     }
 
-    /// Declared explicitly so that only the user's data is encoded
-    private enum CodingKeys: String, CodingKey {
-        case serviceURL, serviceType, serviceID, id, displayName, usesSubtitles, pin, autoplay, darkTheme, lightTheme, playbackSpeed
-        case loadThumbnailArt, loadMediaBackgroundArt, replaceLogosWithText, preferredLangauge, searchEpisodeTitles, showFilters
-        case showSorting, showRefreshLibrary
-    }
+    /// Declared explicitly so that only the user's data is encoded. Shared with extensions that read stored users
+    private typealias CodingKeys = StoredUserKeys
 
     public static func == (lhs: User, rhs: User) -> Bool { lhs.id == rhs.id }
 
@@ -507,9 +503,7 @@ public enum ServiceType: Codable, Hashable {
     }
 
     // Custom Codable implementation for enum with associated values
-    private enum CodingKeys: String, CodingKey {
-        case type, jellyfinData
-    }
+    private typealias CodingKeys = StoredServiceTypeKeys
 
     /// Encode the service type into JSON, tagging it so the matching case can be rebuilt.
     /// - Parameter encoder: JSON encoder
@@ -561,4 +555,7 @@ public struct UserJellyfin: Codable, Hashable {
     public let accessToken: String
     /// Server-issued session identifier, reported alongside playback progress
     public let sessionID: String
+
+    /// Shared with extensions that read stored users
+    private typealias CodingKeys = StoredJellyfinKeys
 }

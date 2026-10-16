@@ -7,48 +7,6 @@
 
 import Foundation
 
-/// Available keys for interacting with the permanent storage.
-public enum StorageKeys {
-    /// Active user
-    case defaultStreamingUserID
-    /// Key for all available userIDs
-    case userIDs
-    /// The user and userID to modify
-    case user(String)
-    /// A setting for how/when users should be switched
-    case userSwitchingMethod
-    /// A unique ID for the maximum bitrate option
-    case maxBitrate
-    
-    /// A string representation of the enum
-    public var rawValue: String {
-        switch self {
-        case .defaultStreamingUserID: return "defaultStreamingUserID"
-        case .userIDs: return "userIDs"
-        case .user(let id): return "user\(id)"
-        case .userSwitchingMethod: return "userSwitchingMethod"
-        case .maxBitrate: return "maxBitrate"
-        }
-    }
-    
-    /// Rebuilds a key from the string it was stored under.
-    /// iCloud change notifications report raw key names, so they have to be mapped back to cases before use.
-    /// - Parameter rawValue: The stored string form of a key
-    /// - Returns: The matching key, or `nil` when the string isn't one Stingray owns
-    public init?(rawValue: String) {
-        switch rawValue {
-        // Exact cases are matched first, since `userIDs` and `userSwitchingMethod` would otherwise parse as user IDs
-        case StorageKeys.defaultStreamingUserID.rawValue: self = .defaultStreamingUserID
-        case StorageKeys.userIDs.rawValue: self = .userIDs
-        case StorageKeys.userSwitchingMethod.rawValue: self = .userSwitchingMethod
-        case StorageKeys.maxBitrate.rawValue: self = .maxBitrate
-        default:
-            guard rawValue.hasPrefix("user") else { return nil }
-            self = .user(String(rawValue.dropFirst("user".count)))
-        }
-    }
-}
-
 /// A protocol for abstracting access to local storage via key-value pairs
 public protocol BasicStorageProtocol {
     /// Set a `String` into storage
@@ -173,7 +131,7 @@ public final class HybridBasicStorage: BasicStorageProtocol {
     /// Sets up storage for local and cloud syncing
     public init() throws(BasicStorageErrors) {
         // Setup local storage
-        guard let defaults = UserDefaults(suiteName: "group.com.benlab.stingray") // Use a group to sync with extensions (ex TopShelf)
+        guard let defaults = UserDefaults(suiteName: StorageKeys.appGroup) // Use a group to sync with extensions (ex TopShelf)
         else { throw .userDefaultsSetup }
         self.defaults = defaults
         

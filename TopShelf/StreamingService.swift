@@ -8,50 +8,44 @@
 import Foundation
 
 /// A cut-down streaming service for the Top Shelf extension.
-/// Implements only the two protocols the extension renders from, so it can be built and queried without the app's full library sync.
-public final class StreamingServiceBasicModel: MediaImageProviding & RecommendationProviding {
+/// Built from the credentials the app leaves behind, so it can be queried without the app's users or full library sync.
+final class TopShelfService {
     /// Network used to reach the server
-    private var networkAPI: TopShelfNetworkProtocol
+    private let networkAPI: TopShelfNetworkProtocol
     /// Access token for the active user
-    private var accessToken: String
-    
-    /// Builds a service for whichever user is currently active.
-    /// - Parameter userModel: Store to read the active user from
-    /// - Throws: `StreamingServiceErrors.initFailed` wrapping `.noDefaultUser` when nobody is signed in
-    init(userModel: UserModel) throws(StreamingServiceErrors) {
-        let defaultUser: any UserProtocol
-        do {
-            if let maybeUser = userModel.activeUser { defaultUser = maybeUser }
-            else { throw StreamingServiceErrors.noDefaultUser }
-        }
-        catch { throw StreamingServiceErrors.initFailed(error) }
-        
-        switch defaultUser.serviceType {
-        case .Jellyfin(let userJellyfin):
-            let network = APINetwork(network: JellyfinBasicNetwork(address: defaultUser.serviceURL))
-            self.networkAPI = network
-            self.accessToken = userJellyfin.accessToken
-        }
+    private let accessToken: String
+
+    /// Builds a service for whichever user was last active in the app.
+    /// - Parameter credentials: Server details for the active user
+    init(credentials: TopShelfCredentials) {
+        self.networkAPI = APINetwork(network: JellyfinBasicNetwork(address: credentials.serviceURL))
+        self.accessToken = credentials.accessToken
     }
-    
-    /// Get all the recently added media. contentType is ignored
-    /// - Parameter contentType: Ignored
-    /// - Returns: All recently added media
-    public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage] {
+
+    /// Get all the recently added media.
+    /// - Returns: All recently added media, or nothing if the request failed
+    func retrieveRecentlyAdded() async -> [TopShelfItem] {
         do { return try await networkAPI.getRecentlyAdded(accessToken: accessToken) }
         catch { return [] }
     }
-    
-    public func retrieveUpNext() async -> [MediaStorage] {
+
+    /// Get the next show to continue watching.
+    /// - Returns: The first up next item, or nothing if there isn't one or the request failed
+    func retrieveUpNext() async -> [TopShelfItem] {
         do {
             guard let upNext = try await networkAPI.getUpNext(accessToken: accessToken).first else { return [] }
             return [upNext]
-        } catch {
-            return []
         }
+        catch { return [] }
     }
-    
-    public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
-        return networkAPI.getMediaImageURL(accessToken: accessToken, imageType: imageType, mediaID: mediaID, width: width)
+
+    /// Formats a URL for a piece of media's artwork.
+    /// - Parameters:
+    ///   - imageType: Shape of image
+    ///   - mediaID: The media to get the image for
+    ///   - width: Target width of the image
+    /// - Returns: A formatted URL to the image
+    func getImageURL(imageType: TopShelfImageType, mediaID: String, width: Int) -> URL? {
+        return networkAPI.getMediaImageURL(imageType: imageType, mediaID: mediaID, width: width)
     }
 }

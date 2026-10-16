@@ -13,27 +13,17 @@ class ContentProvider: TVTopShelfContentProvider {
     /// Builds the Top Shelf content for the active user.
     /// - Returns: Sectioned content for whichever rows came back non-empty, or `nil` if setup failed or there is nothing to show
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
-        let streamingModel: MediaImageProviding & RecommendationProviding
-        let userModel: UserModel
-        do {
-            let storage = try HybridBasicStorage()
-            let userStorage = UserStorage(basicStorage: storage)
-            userModel = UserModel(storage: userStorage)
-        }
-        catch {
-            Log.error("Failed to initalize UserModel: \(error)")
+        guard let credentials = TopShelfCredentials.load()
+        else {
+            Log.warning("TopShelf: No active user to load content for")
             return nil
         }
-        do { streamingModel = try StreamingServiceBasicModel(userModel: userModel) }
-        catch {
-            Log.error("Failed to initialize StreamingServiceBasicModel: \(error)")
-            return nil
-        }
-        
+        let streamingModel = TopShelfService(credentials: credentials)
+
         // Fetch content concurrently
-        Log.info("TopShelf: Loading content for \(userModel.activeUser?.displayName ?? "Unknown") - \(userModel.activeUser?.id ?? "Unknown ID")")
+        Log.info("TopShelf: Loading content for user \(TopShelfCredentials.activeUserID ?? "Unknown ID")")
         async let upNextMedia = streamingModel.retrieveUpNext()
-        async let recentlyAddedMedia = streamingModel.retrieveRecentlyAdded(.all)
+        async let recentlyAddedMedia = streamingModel.retrieveRecentlyAdded()
         
         let (upNext, recentlyAdded) = await (upNextMedia, recentlyAddedMedia)
         
@@ -92,8 +82,8 @@ class ContentProvider: TVTopShelfContentProvider {
     ///   - imageStyle: Whether to request wide backdrop art or a vertical poster
     /// - Returns: The configured item
     private func createTopShelfItem(
-        from media: MediaStorage,
-        streamingModel: MediaImageProviding & RecommendationProviding,
+        from media: TopShelfItem,
+        streamingModel: TopShelfService,
         imageStyle: ImageStyle
     ) -> TVTopShelfSectionedItem? {
         // Create the content identifier for deep linking into your app

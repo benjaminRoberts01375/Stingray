@@ -70,6 +70,7 @@ Configure Stingray to look and feel how you want it.
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
   - Reworked library storage to make media types more expressive, utilizing an enum that holds protocols that define the type of media, instead of a single generic media item
+  - Reworked the TopShelf's access to code in the main Stingray application
 
 ## TO-DO List
 
