@@ -69,7 +69,7 @@ public struct MediaCard: View {
                         .offset(y: -5)
                     Spacer(minLength: 0)
                 }
-                else { MediaCardAccessibleText(title: self.media.title ?? "") }
+                else { MediaCardAccessibleText(title: self.media.title) }
             }
             .frame(width: self.size.width, height: self.size.height)
             .background(.ultraThinMaterial)

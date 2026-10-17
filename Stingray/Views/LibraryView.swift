@@ -107,10 +107,10 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         // Create an on-the-fly sorting function
         let areInOrder: (MediaStorage, MediaStorage) -> Bool
         switch (self.sortBy, self.sortOrderAscending) {
-        case (.sortTitle, true):  areInOrder = { ($0.sortTitle ?? "") < ($1.sortTitle ?? "") }
-        case (.sortTitle, false): areInOrder = { ($0.sortTitle ?? "") > ($1.sortTitle ?? "") }
-        case (.title, true): areInOrder = { ($0.title ?? "") < ($1.title ?? "") }
-        case (.title, false): areInOrder = { ($0.title ?? "") > ($1.title ?? "") }
+        case (.sortTitle, true):  areInOrder = { ($0.sortTitle) < ($1.sortTitle) }
+        case (.sortTitle, false): areInOrder = { ($0.sortTitle) > ($1.sortTitle) }
+        case (.title, true): areInOrder = { ($0.title) < ($1.title) }
+        case (.title, false): areInOrder = { ($0.title) > ($1.title) }
         case (.duration, true): areInOrder = { ($0.duration ?? .zero) < ($1.duration ?? .zero) }
         case (.duration, false): areInOrder = { ($0.duration ?? .zero) > ($1.duration ?? .zero) }
         case (.releaseDate, true): areInOrder = { ($0.releaseDate ?? .distantPast) < ($1.releaseDate ?? .distantPast) }

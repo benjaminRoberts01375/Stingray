@@ -44,6 +44,26 @@ public enum MediaStorage: Decodable, Hashable {
         self.media?[keyPath: keyPath] ?? nil
     }
 
+    /// The sort title of some media. Handles error case.
+    public var sortTitle: String {
+        switch self {
+        case .movie(let movie): return movie.sortTitle
+        case .tvShow(let tvShow): return tvShow.sortTitle
+        case .homeVideo(let homeVideo): return homeVideo.sortTitle
+        case .error: return String(localized: "Unknown Title")
+        }
+    }
+
+    /// The  title of some media. Handles error case.
+    public var title: String {
+        switch self {
+        case .movie(let movie): return movie.title
+        case .tvShow(let tvShow): return tvShow.title
+        case .homeVideo(let homeVideo): return homeVideo.title
+        case .error: return String(localized: "Unknown Title")
+        }
+    }
+
     // Hashable conformance
     public static func == (lhs: MediaStorage, rhs: MediaStorage) -> Bool { lhs.id == rhs.id }
     public func hash(into hasher: inout Hasher) { hasher.combine(self.media?.id) }

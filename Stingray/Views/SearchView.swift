@@ -106,7 +106,7 @@ public struct SearchView: View {
                 case .available(let medias):
                     scoredMedia += medias
                         .compactMap { media -> MediaScore? in
-                            guard var sortTitle = media.title else { return nil }
+                            var sortTitle = media.title
                             var score: Int
 
                             if sortTitle.lowercased().contains(self.searchText.lowercased()) { score = 0 }
