@@ -58,16 +58,7 @@ public struct MediaCard: View {
                         )
                     }
                     else { MediaCardNoImage() }
-                    Spacer(minLength: 0)
-                    Text(self.media.title ?? "")
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2, reservesSpace: self.reserveTextSpace)
-                        .truncationMode(.tail)
-                        .foregroundStyle(self.theme.currentTheme.header2)
-                        .padding(5)
-                        .frame(minHeight: 50)
-                        .offset(y: -5)
-                    Spacer(minLength: 0)
+                    MediaCardTitleText(title: self.media.title, reserveTextSpace: self.reserveTextSpace)
                 }
                 else { MediaCardAccessibleText(title: self.media.title) }
             }
@@ -75,6 +66,29 @@ public struct MediaCard: View {
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
+    }
+}
+
+fileprivate struct MediaCardTitleText: View {
+    @Environment(ThemeModel.self) private var theme
+
+    /// Title of the media being presented
+    var title: String
+
+    /// Reserve 2 lines of vertical space to display the title. False if we really need all the space we can get
+    var reserveTextSpace: Bool
+
+    var body: some View {
+        Spacer(minLength: 0)
+        Text(self.title)
+            .multilineTextAlignment(.center)
+            .lineLimit(2, reservesSpace: self.reserveTextSpace)
+            .truncationMode(.tail)
+            .foregroundStyle(self.theme.currentTheme.header2)
+            .padding(5)
+            .frame(minHeight: 50)
+            .offset(y: -5)
+        Spacer(minLength: 0)
     }
 }
 
