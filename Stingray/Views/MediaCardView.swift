@@ -14,12 +14,14 @@ public struct MediaCard: View {
 
     @Binding public var navigation: NavigationPath
 
-    public static let cardSize = CGSize(width: 200, height: 370)
+    public static let minimumDimension: CGFloat = 200
+    public static let maximumDimension: CGFloat = 370
 
     public let media: MediaStorage
     public let url: URL?
     public let reserveTextSpace: Bool
     public let size: CGSize
+    public let blurSize: CGSize
 
     /// Creates a button based on the media's available art. This button navigates to the media's detail view
     /// - Parameters:
@@ -33,26 +35,40 @@ public struct MediaCard: View {
         media: MediaStorage,
         streamingService: MediaImageProviding,
         navigation: Binding<NavigationPath>? = nil,
-        reserveTextSpace: Bool = true,
-        size: CGSize = MediaCard.cardSize
+        reserveTextSpace: Bool = true
     ) {
         self.media = media
-        if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
-        else { self.url = nil }
         self._navigation = navigation ?? .constant(NavigationPath())
         self.reserveTextSpace = reserveTextSpace
-        self.size = size
+
+        switch media {
+        case .movie, .tvShow:
+            self.size = CGSize(width: Self.minimumDimension, height: Self.maximumDimension)
+            self.blurSize = CGSize(width: 20, height: 30)
+            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
+            else { self.url = nil }
+        case .example:
+            self.size = CGSize(width: 150, height: 255)
+            self.blurSize = CGSize(width: 20, height: 30)
+            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
+            else { self.url = nil }
+        case .homeVideo, .error:
+            self.size = CGSize(width: Self.maximumDimension, height: Self.maximumDimension)
+            self.blurSize = CGSize(width: 30, height: 20)
+            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 740) }
+            else { self.url = nil }
+        }
     }
 
     public var body: some View {
         Button { self.navigation.append(self.media) }
         label: {
-            VStack(spacing: 0) {
+            VStack(alignment: .center, spacing: 0) {
                 if self.settings.loadThumbnailArt {
                     if media.imageTags?.primary != nil {
                         AsyncBlurImage(
                             blurHash: self.media.imageBlurHashes?.primary,
-                            blurSize: CGSize(width: 20, height: 30),
+                            blurSize: self.blurSize,
                             imageURL: self.url,
                             scaleType: .fill
                         )

@@ -13,6 +13,8 @@ import Foundation
 public enum MediaStorage: Decodable, Hashable {
     /// Holds some movie type
     case movie(any MovieProtocol)
+    /// Holds example media
+    case example(any MovieProtocol)
     /// Holds some tv show type
     case tvShow(any TVShowProtocol)
     /// Holds some home video type
@@ -28,6 +30,7 @@ public enum MediaStorage: Decodable, Hashable {
     public var media: (any MediaMetadataProtocol)? {
         switch self {
         case .movie(let movie): return movie
+        case .example(let example): return example
         case .tvShow(let tvShow): return tvShow
         case .homeVideo(let homeVideo): return homeVideo
         case .error: return nil
@@ -48,6 +51,7 @@ public enum MediaStorage: Decodable, Hashable {
     public var sortTitle: String {
         switch self {
         case .movie(let movie): return movie.sortTitle
+        case .example(let example): return example.sortTitle
         case .tvShow(let tvShow): return tvShow.sortTitle
         case .homeVideo(let homeVideo): return homeVideo.sortTitle
         case .error: return String(localized: "Unknown Title")
@@ -58,6 +62,7 @@ public enum MediaStorage: Decodable, Hashable {
     public var title: String {
         switch self {
         case .movie(let movie): return movie.title
+        case .example(let example): return example.title
         case .tvShow(let tvShow): return tvShow.title
         case .homeVideo(let homeVideo): return homeVideo.title
         case .error: return String(localized: "Unknown Title")

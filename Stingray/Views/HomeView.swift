@@ -211,7 +211,7 @@ public struct MediaDetailLoader: View {
                 streamingService: self.streamingService,
                 navigation: $navigation
             )
-            case .movie(let movie): MovieDetailView(
+            case .movie(let movie), .example(let movie): MovieDetailView(
                 media: movie,
                 streamingService: self.streamingService,
                 navigation: $navigation
@@ -348,9 +348,10 @@ public struct LibrariesInfoView: View {
             case .available(let medias):
                 for media in medias {
                     switch media {
-                    case .movie: counters["Movies", default: 0] += 1
-                    case .tvShow: counters["TV Shows", default: 0] += 1
-                    case .homeVideo: counters["Home Video", default: 0] += 1
+                    case .movie: counters[String(localized: "Movies"), default: 0] += 1
+                    case .example: counters[String(localized: "Examples"), default: 0] += 1
+                    case .tvShow: counters[String(localized: "TV Shows"), default: 0] += 1
+                    case .homeVideo: counters[String(localized: "Home Videos"), default: 0] += 1
                     case .error: continue
                     }
                 }

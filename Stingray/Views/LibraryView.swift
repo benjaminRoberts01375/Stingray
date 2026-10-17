@@ -314,13 +314,26 @@ public struct MediaGridView: View {
     @Binding public var navigation: NavigationPath
 
     /// Columns sized to exactly one card, so cards never stretch to fill the row
-    private static let columns = [
-        GridItem(.adaptive(minimum: MediaCard.cardSize.width, maximum: MediaCard.cardSize.width), spacing: Self.cardSpacing)
-    ]
+    private let columns: [GridItem]
+
+    public init(allMedia: [MediaStorage], streamingService: any MediaImageProviding, navigation: Binding<NavigationPath>) {
+        self.allMedia = allMedia
+        self.streamingService = streamingService
+        self._navigation = navigation
+
+        let columnDimension: CGFloat = allMedia.allSatisfy {
+            switch $0 {
+            case .movie, .example, .tvShow: return true // Displayed in portrait mode
+            case .homeVideo, .error: return false
+            }
+        } ? MediaCard.minimumDimension : MediaCard.maximumDimension
+
+        self.columns = [GridItem(.adaptive(minimum: columnDimension, maximum: columnDimension), spacing: Self.cardSpacing)]
+    }
 
     public var body: some View {
-        LazyVGrid(columns: Self.columns, spacing: Self.cardSpacing) {
-            ForEach(allMedia, id: \.id) { media in
+        LazyVGrid(columns: self.columns, spacing: Self.cardSpacing) {
+            ForEach(self.allMedia, id: \.id) { media in
                 MediaCard(media: media, streamingService: self.streamingService, navigation: $navigation)
             }
         }

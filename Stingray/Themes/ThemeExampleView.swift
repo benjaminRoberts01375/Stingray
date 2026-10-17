@@ -11,7 +11,7 @@ import SwiftUI
 /// Reads the theme from the environment, so wrapping it in `.environment(someThemeModel)` renders that theme instead of the user's.
 public struct ThemeExampleView: View {
     /// Placeholder media so the card has a title and artwork to render
-    private let exampleMedia = MediaStorage.movie(ExampleMedia(title: "Example"))
+    private let exampleMedia = MediaStorage.example(ExampleMedia(title: "Example"))
     /// Serves bundled sample posters in place of a real server
     private let exampleService = ExampleStreamingService()
     
@@ -22,8 +22,7 @@ public struct ThemeExampleView: View {
             MediaCard(
                 media: self.exampleMedia,
                 streamingService: self.exampleService,
-                reserveTextSpace: false,
-                size: CGSize(width: 150, height: 255)
+                reserveTextSpace: false
             )
             .padding(.horizontal, 17)
             VStack(alignment: .leading) {

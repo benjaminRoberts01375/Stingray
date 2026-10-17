@@ -63,9 +63,12 @@ Configure Stingray to look and feel how you want it.
 
 - Playback
   - Home video support
+- UI
+  - Allow `MediaCard`s to resize based on the type of content
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes
+  - Enable localizations for media types
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
