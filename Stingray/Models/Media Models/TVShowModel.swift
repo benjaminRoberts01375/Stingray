@@ -110,9 +110,11 @@ public final class TVShowModel: TVShowProtocol, Decodable {
         (try? container.decodeIfPresent(String.self, forKey: .id)) ??
         UUID().uuidString
         self.parentID = (try? container.decodeIfPresent(String.self, forKey: .parentID)) ?? UUID().uuidString
+
         let title = (try? container.decodeIfPresent(String.self, forKey: .seriesTitle)) ??
         (try? container.decodeIfPresent(String.self, forKey: .title)) ??
-        "Unknown Title"
+        String(localized: "Unknown TV Show")
+
         self.title = title
         self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
         self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first ?? ""

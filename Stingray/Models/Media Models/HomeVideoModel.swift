@@ -59,7 +59,7 @@ public final class HomeVideoModel: HomeVideoProtocol {
         // Easy decodable stuff
         self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? UUID().uuidString
         self.parentID = (try? container.decodeIfPresent(String.self, forKey: .parentID)) ?? UUID().uuidString
-        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? "Unknown Title"
+        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? String(localized: "Unknown Home Video")
         self.title = title
         self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
         self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
