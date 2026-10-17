@@ -134,4 +134,8 @@ public protocol MediaStreamProtocol: Identifiable {
     var codec: String { get }
     /// Is considered the default stream by the server.
     var isDefault: Bool { get }
+    /// Codec profile reported by the server. Ex. "DTS-HD MA" or "Dolby TrueHD + Dolby Atmos". Empty when the server reports none.
+    var profile: String { get }
+    /// Whether the stream comes from a separate file instead of the media source's own container. Ex. a sidecar subtitle file.
+    var isExternal: Bool { get }
 }

@@ -116,6 +116,9 @@ public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
 
         self.stopPlayer()
 
+        // A player without an item, as while spatial audio starts, has no time, but stopping saved where it was going to start
+        let startTime = startTime.isNumeric ? startTime : CMTime(seconds: self.mediaSource.startPoint, preferredTimescale: 600)
+
         // Create/update the player
         self.streamingService.playbackStart(
             mediaSource: self.mediaSource,
@@ -125,6 +128,7 @@ public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
             bitrate: bitrate ?? self.playerProgress?.bitrate,
             title: self.media.title,
             subtitle: self.mediaSource.name,
+            startTime: startTime,
             player: self.player
         )
 
@@ -138,7 +142,8 @@ public final class MoviePlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
-        streamingService.playbackEnd()
+        // Leave a newer player's session alone, as when this player's PiP ends after another title started
+        if streamingService.playerProgress?.player === self.player { streamingService.playbackEnd() }
     }
 
     public func changeSpeed(_ speed: PlaybackSpeed) {

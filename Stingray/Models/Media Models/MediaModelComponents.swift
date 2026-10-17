@@ -369,6 +369,8 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
     public var bitrate: Int
     public var codec: String
     public var isDefault: Bool
+    public var profile: String
+    public var isExternal: Bool
 
     public enum CodingKeys: String, CodingKey {
         case id = "Index"
@@ -377,6 +379,8 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         case bitrate = "BitRate"
         case codec = "Codec"
         case isDefault = "IsDefault"
+        case profile = "Profile"
+        case isExternal = "IsExternal"
     }
 
     /// Create a `MediaStream` from JSON.
@@ -395,6 +399,8 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
             title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unknown stream"
             codec = try container.decodeIfPresent(String.self, forKey: .codec) ?? ""
             isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
+            profile = try container.decodeIfPresent(String.self, forKey: .profile) ?? ""
+            isExternal = try container.decodeIfPresent(Bool.self, forKey: .isExternal) ?? false
             bitrate = try container.decodeIfPresent(Int.self, forKey: .bitrate) ?? 10000
             if codec == "av1" {
                 bitrate = Int(Double(bitrate) * 1.75) // AV1 isn't supported, but it's so good that we need way more bits
@@ -414,7 +420,9 @@ public final class MediaStream: Decodable, Equatable, MediaStreamProtocol {
         lhs.type == rhs.type &&
         lhs.bitrate == rhs.bitrate &&
         lhs.codec == rhs.codec &&
-        lhs.isDefault == rhs.isDefault
+        lhs.isDefault == rhs.isDefault &&
+        lhs.profile == rhs.profile &&
+        lhs.isExternal == rhs.isExternal
     }
 }
 

@@ -38,6 +38,8 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     @ObservationIgnored public private(set) var seasons: [(any TVSeasonProtocol)]
     /// Store and restore the current navigation path
     @ObservationIgnored public var navigationPath: NavigationPath?
+    /// Watches for the current item finishing, to autoplay the next episode
+    @ObservationIgnored private var playbackEndObserver: NSObjectProtocol?
 
     // Hashable Conformance
     public static func == (lhs: TVPlayerViewModel, rhs: TVPlayerViewModel) -> Bool {
@@ -140,6 +142,9 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         // We're done reading from the running player
         self.stopPlayer()
 
+        // A player without an item, as while spatial audio starts, has no time, but stopping saved where it was going to start
+        let startTime = startTime.isNumeric ? startTime : CMTime(seconds: self.mediaSource.startPoint, preferredTimescale: 600)
+
         // Create/update the player
         self.streamingService.playbackStart(
             mediaSource: self.mediaSource,
@@ -149,6 +154,7 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
             bitrate: bitrate ?? self.playerProgress?.bitrate,
             title: title,
             subtitle: subtitle,
+            startTime: startTime,
             player: self.player
         )
 
@@ -161,27 +167,26 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         self.settingsModel.usesSubtitles = self.playerProgress?.subtitleID != nil
 
         // Set up observer for when the current item finishes playing
-        if self.settingsModel.autoplay {
-            self.setupPlaybackEndObserver()
-        }
+        self.setupPlaybackEndObserver()
     }
 
+    // AI Generated
     /// Sets up an observer to detect when playback finishes and auto-advance to next episode
     private func setupPlaybackEndObserver() {
-        // Remove any existing observers first
-        NotificationCenter.default.removeObserver(
-            self,
-            name: .AVPlayerItemDidPlayToEndTime,
-            object: self.player.currentItem
-        )
+        // Remove any existing observer first
+        if let playbackEndObserver { NotificationCenter.default.removeObserver(playbackEndObserver) }
+        self.playbackEndObserver = nil
+        guard self.settingsModel.autoplay else { return }
 
-        // Add observer for the current item
-        NotificationCenter.default.addObserver(
+        // Match whichever item is current when one finishes: spatial audio's item arrives once its stream has started, and the Atmos
+        // output's silent items finish every two seconds
+        self.playbackEndObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
-            object: self.player.currentItem,
+            object: nil,
             queue: .main
-        ) { [weak self] _ in
-            self?.handlePlaybackEnded()
+        ) { [weak self] notification in
+            guard let self, notification.object as? AVPlayerItem === self.player.currentItem else { return }
+            self.handlePlaybackEnded()
         }
     }
 
@@ -235,7 +240,8 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     public func stopPlayer() {
         player.pause()
         self.playerProgress = nil
-        streamingService.playbackEnd()
+        // Leave a newer player's session alone, as when this player's PiP ends after another title started
+        if streamingService.playerProgress?.player === self.player { streamingService.playbackEnd() }
     }
 
     /// Marks the currently playing episode as watched now, and normalizes its resume point.
@@ -265,8 +271,9 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        if let playbackEndObserver { NotificationCenter.default.removeObserver(playbackEndObserver) }
         self.player.pause()
-        streamingService.playbackEnd()
+        // Leave a newer player's session alone
+        if streamingService.playerProgress?.player === self.player { streamingService.playbackEnd() }
     }
 }

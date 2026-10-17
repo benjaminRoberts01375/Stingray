@@ -71,6 +71,25 @@ public protocol AdvancedNetworkProtocol {
         title: String,
         subtitle: String?
     ) -> AVPlayerItem?
+    /// Generates the URLs for playing a TrueHD Atmos or DTS:X track through SpatialAudioBridge
+    /// - Parameters:
+    ///   - accessToken: Access token for the server
+    ///   - contentID: The media source ID
+    ///   - bitrate: Target video bitrate in bits per second
+    ///   - subtitleID: Subtitles to be used (nil for none)
+    ///   - audioID: Audio ID to be used
+    ///   - videoID: Video ID to be used
+    ///   - sessionID: A one-off token to not be reused when changing settings
+    /// - Returns: Where SpatialAudioBridge reads the media source from
+    func getSpatialAudioContent(
+        accessToken: String,
+        contentID: String,
+        bitrate: Int,
+        subtitleID: String?,
+        audioID: String,
+        videoID: String,
+        sessionID: String
+    ) -> SpatialAudioContent?
     /// Updates the server about the current playback status
     /// - Parameters:
     ///   - mediaSourceID: Media source ID of the currently played content
@@ -134,6 +153,16 @@ public protocol AdvancedNetworkProtocol {
     ///   - priority: How prudent the syncing is
     /// - Returns: Formatted seasons
     func getSeasonMedia(accessToken: String, showID: String, priority: RequestPriority) async throws -> [TVSeason]
+}
+
+/// Where SpatialAudioBridge reads a media source from, to play its TrueHD Atmos or DTS:X track
+public struct SpatialAudioContent {
+    /// The original file, which the audio is converted from
+    public let file: URL
+    /// HLS multivariant playlist for the video
+    public let videoPlaylist: URL
+    /// Authenticate the file, the playlist, and the video it references
+    public let headers: [String: String]
 }
 
 /// Direction the server should sort a library request in.
@@ -707,6 +736,41 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         item.canUseNetworkResourcesForLiveStreamingWhilePaused = true // Allow buffering while paused
         
         return item
+    }
+
+    // AI Generated
+    public func getSpatialAudioContent(
+        accessToken: String,
+        contentID: String,
+        bitrate: Int,
+        subtitleID: String?,
+        audioID: String,
+        videoID: String,
+        sessionID: String
+    ) -> SpatialAudioContent? {
+        var playlistParams = self.streamingParams(
+            contentID: contentID,
+            bitrate: bitrate,
+            subtitleID: subtitleID,
+            audioID: audioID,
+            videoID: videoID,
+            sessionID: sessionID
+        )
+        playlistParams.append(contentsOf: [
+            // SpatialAudioBridge replaces the server's audio, so keep it small
+            URLQueryItem(name: "audioCodec", value: "aac"),
+            URLQueryItem(name: "transcodingMaxAudioChannels", value: "2"),
+            URLQueryItem(name: "audioBitRate", value: "128000"),
+            URLQueryItem(name: "allowAudioStreamCopy", value: "false")
+        ])
+
+        guard let file = network.buildURL(
+            path: "/Videos/\(contentID)/stream",
+            urlParams: [URLQueryItem(name: "static", value: "true"), URLQueryItem(name: "mediaSourceID", value: contentID)]
+        ),
+              let videoPlaylist = network.buildURL(path: "/Videos/\(contentID)/master.m3u8", urlParams: playlistParams)
+        else { return nil }
+        return SpatialAudioContent(file: file, videoPlaylist: videoPlaylist, headers: self.streamingHeaders(accessToken: accessToken))
     }
 
     /// Headers that authenticate streaming requests
