@@ -69,22 +69,32 @@ public struct MediaCard: View {
                         .offset(y: -5)
                     Spacer(minLength: 0)
                 }
-                else {
-                    Spacer(minLength: 0)
-                    Text(self.media.title ?? "")
-                        .font(.system(size: 30))
-                        .bold()
-                        .multilineTextAlignment(.center)
-                        .truncationMode(.tail)
-                        .foregroundStyle(self.theme.currentTheme.header2)
-                        .padding(.horizontal)
-                    Spacer(minLength: 0)
-                }
+                else { MediaCardAccessibleText(title: self.media.title ?? "") }
             }
             .frame(width: self.size.width, height: self.size.height)
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
+    }
+}
+
+/// Large text used in the place of media art
+fileprivate struct MediaCardAccessibleText: View {
+    @Environment(ThemeModel.self) private var theme
+
+    /// Title of the media being presented
+    let title: String
+
+    var body: some View {
+        Spacer(minLength: 0)
+        Text(self.title)
+            .font(.system(size: 30))
+            .bold()
+            .multilineTextAlignment(.center)
+            .truncationMode(.tail)
+            .foregroundStyle(self.theme.currentTheme.header2)
+            .padding(.horizontal)
+        Spacer(minLength: 0)
     }
 }
 
