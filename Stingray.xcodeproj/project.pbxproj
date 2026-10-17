@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		215E175EFC38DCE52985ACCD /* SpatialAudioBridge in Frameworks */ = {isa = PBXBuildFile; productRef = B68D6BABD5B64C280E887658 /* SpatialAudioBridge */; };
+		A8162F9C036C2FD3FC838CDF /* SpatialAudioPlayback in Frameworks */ = {isa = PBXBuildFile; productRef = 2375F58DA8B3DEE18C3D5DEA /* SpatialAudioPlayback */; };
 		B506A9E22EC8341A0086F657 /* BlurHashKit in Frameworks */ = {isa = PBXBuildFile; productRef = B506A9E12EC8341A0086F657 /* BlurHashKit */; };
 		B593D4B62EEB58090015EB83 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B593D4B52EEB58090015EB83 /* TVServices.framework */; };
 		B593D4BD2EEB58090015EB83 /* TopShelf.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B593D4B32EEB58090015EB83 /* TopShelf.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -103,6 +105,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B506A9E22EC8341A0086F657 /* BlurHashKit in Frameworks */,
+				215E175EFC38DCE52985ACCD /* SpatialAudioBridge in Frameworks */,
+				A8162F9C036C2FD3FC838CDF /* SpatialAudioPlayback in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +174,8 @@
 			name = Stingray;
 			packageProductDependencies = (
 				B506A9E12EC8341A0086F657 /* BlurHashKit */,
+				B68D6BABD5B64C280E887658 /* SpatialAudioBridge */,
+				2375F58DA8B3DEE18C3D5DEA /* SpatialAudioPlayback */,
 			);
 			productName = Stingray;
 			productReference = B5625A4C2EC4EDF500C0507C /* Stingray.app */;
@@ -227,6 +233,7 @@
 			packageReferences = (
 				B506A9E02EC8341A0086F657 /* XCRemoteSwiftPackageReference "BlurHashKit" */,
 				B56CD24B2EE78EE600B1F21F /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
+				B31D7C40EB750327015CC538 /* XCRemoteSwiftPackageReference "SpatialAudioBridge" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B5625A4D2EC4EDF500C0507C /* Products */;
@@ -576,6 +583,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		B31D7C40EB750327015CC538 /* XCRemoteSwiftPackageReference "SpatialAudioBridge" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kristofferR/SpatialAudioBridge";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		B506A9E02EC8341A0086F657 /* XCRemoteSwiftPackageReference "BlurHashKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/LePips/BlurHashKit";
@@ -595,6 +610,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2375F58DA8B3DEE18C3D5DEA /* SpatialAudioPlayback */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B31D7C40EB750327015CC538 /* XCRemoteSwiftPackageReference "SpatialAudioBridge" */;
+			productName = SpatialAudioPlayback;
+		};
 		B506A9E12EC8341A0086F657 /* BlurHashKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B506A9E02EC8341A0086F657 /* XCRemoteSwiftPackageReference "BlurHashKit" */;
@@ -604,6 +624,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B56CD24B2EE78EE600B1F21F /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
 			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
+		B68D6BABD5B64C280E887658 /* SpatialAudioBridge */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B31D7C40EB750327015CC538 /* XCRemoteSwiftPackageReference "SpatialAudioBridge" */;
+			productName = SpatialAudioBridge;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
