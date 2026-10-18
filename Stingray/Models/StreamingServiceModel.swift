@@ -401,7 +401,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                     index: index * batchSize,
                                     count: batchSize,
                                     sortOrder: .ascending,
-                                    sortBy: .SortName,
+                                    sortBy: .sortName,
                                     mediaTypes: [.movie, .tvShow, .homeVideo]
                                 )
                             )
