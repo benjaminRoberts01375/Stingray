@@ -365,20 +365,28 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
 
         self.libraryStatus = .available(libraries)
+        await self.fetchMedia(for: libraries, batchSize: 100)
+        self.libraryStatus = .complete(libraries)
+    }
 
+    /// Page in media for a set of libraries, keeping several requests in flight at once.
+    /// Libraries are worked through in order, moving on once the current one returns a short page or an error.
+    /// - Parameters:
+    ///   - libraries: Libraries to fill. Their media should already be `.waiting`.
+    ///   - batchSize: Number of items to request per page.
+    private func fetchMedia(for libraries: [any LibraryProtocol], batchSize: Int) async {
         enum LibraryContent {
             case success([MediaStorage])
             case error(RError)
         }
 
         await withTaskGroup(of: (String, LibraryContent).self) { group in
-            let batchSize: Int = 100
             var pageTracker: [String : Int] = [:]
             var libraryIterator = libraries.makeIterator()
             var activeLibrary = libraryIterator.next()
 
             func getMedia(libraryID: String?) {
-                guard let libraryID = libraryID // If we don't have a library ID, skip it
+                guard let libraryID = libraryID // Every library has been fully requested
                 else { return }
                 let index = (pageTracker[libraryID] ?? -1) + 1
                 pageTracker[libraryID] = index
@@ -411,55 +419,52 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             for _ in 0..<8 { getMedia(libraryID: activeLibrary?.id) }
 
             // Read from the buffer and setup next request
-            for await response in group {
-                guard let library = libraries.first(where: { $0.id == response.0 })
-                else {
-                    getMedia(libraryID: activeLibrary?.id)
-                    continue
-                }
-                switch response.1 {
-                case .error(let error):
-                    Log.warning("Failed to get content for library \(response.0): \(error.rDescription())")
-                    library.media = .error(error)
-                    activeLibrary = libraryIterator.next()
-                case .success(let newMedia):
-                    switch library.media {
-                    case .error: break // We already errored this library, no need to log it again
-                    case .waiting:
-                        if newMedia.isEmpty { break } // Don't update the UI with blank media
-                        library.media = .available(newMedia)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
-                        library.maturityRatings.formUnion(newMedia.compactMap { media in
-                            if let maturity = media.maturity {
-                                if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
-                                return maturity
-                            }
-                            return "Not Rated"
-                        })
-                    case .available(var existingItems):
-                        if newMedia.isEmpty { break } // Don't update the UI with blank media
-                        library.media = .waiting // Micro optimizing >:D
-                        existingItems.append(contentsOf: newMedia)
-                        library.media = .available(existingItems)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
-                        library.maturityRatings.formUnion(newMedia.compactMap { media in
-                            if let maturity = media.maturity {
-                                if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
-                                return maturity
-                            }
-                            return "Not Rated"
-                        })
+            for await (libraryID, content) in group {
+                if let library = libraries.first(where: { $0.id == libraryID }) {
+                    let reachedEnd: Bool
+                    switch content {
+                    case .error(let error):
+                        Log.warning("Failed to get content for library \(libraryID): \(error.rDescription())")
+                        library.media = .error(error)
+                        reachedEnd = true
+                    case .success(let newMedia):
+                        self.append(newMedia, to: library)
+                        reachedEnd = newMedia.count < batchSize // A short page means there's nothing left to request
                     }
-                    // Advance to the next library
-                    if newMedia.count < batchSize && response.0 == activeLibrary?.id {
-                        activeLibrary = libraryIterator.next()
-                    }
+                    // Advance to the next library. Stragglers from a library we've already moved past shouldn't skip the current one
+                    if reachedEnd && libraryID == activeLibrary?.id { activeLibrary = libraryIterator.next() }
                 }
                 getMedia(libraryID: activeLibrary?.id) // Startup next task
                 // When we finish with the tasks, we simply fall out of the loop
             }
-            self.libraryStatus = .complete(libraries)
         }
+
+        // Every page came back blank, so the library really is empty. Leaving it as `.waiting` would spin forever.
+        for library in libraries {
+            if case .waiting = library.media { library.media = .available([]) }
+        }
+    }
+
+    /// Add a freshly fetched page of media to a library, keeping its filter options up to date.
+    /// - Parameters:
+    ///   - newMedia: Page of media from the server.
+    ///   - library: Library to add the media to.
+    private func append(_ newMedia: [MediaStorage], to library: any LibraryProtocol) {
+        if newMedia.isEmpty { return } // Don't update the UI with blank media
+        switch library.media {
+        case .error: return // We already errored this library, no need to log it again
+        case .waiting: library.media = .available(newMedia)
+        case .available(var existingItems):
+            library.media = .waiting // Micro optimizing >:D
+            existingItems.append(contentsOf: newMedia)
+            library.media = .available(existingItems)
+        }
+        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
+        library.maturityRatings.formUnion(newMedia.map { media in
+            guard let maturity = media.maturity, maturity != "NR", maturity != "Unknown"
+            else { return "Not Rated" }
+            return maturity
+        })
     }
 
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage] {
@@ -475,102 +480,15 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
     }
 
-    // Based on retrieveLibraries
     public func resync(library: any LibraryProtocol) async {
-        enum LibraryContent {
-            case success([MediaStorage])
-            case error(RError)
-        }
-
         Log.info("Reloading the library \"\(library.title)\"...")
         // Dump all the existing media
         library.media = .waiting
         library.genres = Set()
         library.maturityRatings = Set()
 
-        await withTaskGroup(of: (String, LibraryContent).self) { group in
-            let batchSize: Int = 200 // A bit more aggressive than retrieveLibraries since there'll be fewer requests
-            let libraryID = library.id // Helping with thread isolation
-            var mediaIndex: Int = 0
-            // Set once the server hands back a short (or empty) page, meaning there's nothing left to request.
-            var foundEnd = false
-
-            func getMedia() {
-                guard !foundEnd
-                else { return }
-                let index = mediaIndex // Request the current page before advancing, so the first request starts at 0
-                mediaIndex += batchSize
-                group.addTask {
-                    do {
-                        return (
-                            libraryID,
-                            LibraryContent.success(
-                                try await self.networkAPI.getLibraryMedia(
-                                    accessToken: self.accessToken,
-                                    libraryId: libraryID,
-                                    index: index,
-                                    count: batchSize,
-                                    sortOrder: .ascending,
-                                    sortBy: .SortName,
-                                    mediaTypes: [.movie, .tvShow]
-                                )
-                            )
-                        )
-                    }
-                    catch let error as RError { return (libraryID, LibraryContent.error(LibraryErrors.gettingLibraries(error))) }
-                    catch { return (libraryID, LibraryContent.error(LibraryErrors.unknown(error.localizedDescription))) }
-                }
-            }
-
-            // Spin up tasks to download content from this library.
-            // If we have too many requests hitting the library, that's fine. We don't really know how many items are in this library
-            // without making additional requests (maybe in the future?!?!??!).
-            for _ in 0..<8 { getMedia() }
-
-            // Read from the buffer and setup next request
-            for await response in group {
-                switch response.1 {
-                case .error(let error):
-                    Log.warning("Failed to get content for library \(response.0): \(error.rDescription())")
-                    library.media = .error(error)
-                    foundEnd = true
-                case .success(let newMedia):
-                    // A short page means we've hit the end of the library, so stop asking for more
-                    if newMedia.count < batchSize { foundEnd = true }
-                    switch library.media {
-                    case .error: break // We already errored this library, no need to log it again
-                    case .waiting:
-                        if newMedia.isEmpty { break } // Don't update the UI with blank media
-                        library.media = .available(newMedia)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
-                        library.maturityRatings.formUnion(newMedia.compactMap { media in
-                            if let maturity = media.maturity {
-                                if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
-                                return maturity
-                            }
-                            return "Not Rated"
-                        })
-                    case .available(var existingItems):
-                        if newMedia.isEmpty { break } // Don't update the UI with blank media
-                        library.media = .waiting // Micro optimizing >:D
-                        existingItems.append(contentsOf: newMedia)
-                        library.media = .available(existingItems)
-                        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
-                        library.maturityRatings.formUnion(newMedia.compactMap { media in
-                            if let maturity = media.maturity {
-                                if maturity == "NR" || maturity == "Unknown" { return "Not Rated" }
-                                return maturity
-                            }
-                            return "Not Rated"
-                        })
-                    }
-                }
-                getMedia() // Start up the next page
-            }
-
-            // Every page came back blank, so the library really is empty. Leaving it as `.waiting` would spin forever.
-            if case .waiting = library.media { library.media = .available([]) }
-        }
+        // A bit more aggressive than retrieveLibraries since there'll be fewer requests
+        await self.fetchMedia(for: [library], batchSize: 200)
     }
 
     public func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
