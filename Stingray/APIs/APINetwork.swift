@@ -141,7 +141,7 @@ public enum LibraryMediaSortOrder: String {
     /// A→Z, oldest first, smallest first
     case ascending = "Ascending"
     /// Z→A, newest first, largest first
-    case Descending = "Descending"
+    case descending = "Descending"
 }
 
 /// Raw values are the server's field names, so cases must not be renamed without checking the API
