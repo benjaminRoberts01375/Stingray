@@ -52,7 +52,7 @@ fileprivate final class ExampleMedia: MovieProtocol {
     public let tagline: String
     public let maturity: String?
     public let releaseDate: Date?
-    public let genres: [String]
+    public var genres: Set<String>
     public let duration: Duration?
     public let description: String
     public let people: [any MediaPersonProtocol]

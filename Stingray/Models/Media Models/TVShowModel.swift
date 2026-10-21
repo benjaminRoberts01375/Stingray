@@ -65,7 +65,7 @@ public final class TVShowModel: TVShowProtocol, Decodable {
     public var imageBlurHashes: (any MediaImagesProtocol)?
     public var id: String
     public var parentID: String
-    public var genres: [String]
+    public var genres: Set<String>
     public var maturity: String?
     public var releaseDate: Date?
     public var duration: Duration?
@@ -122,7 +122,7 @@ public final class TVShowModel: TVShowProtocol, Decodable {
         self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)
         self.imageBlurHashes = try? container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
-        self.genres = (try? container.decodeIfPresent([String].self, forKey: .genres)) ?? []
+        self.genres = (try? container.decodeIfPresent(Set<String>.self, forKey: .genres)) ?? []
         self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
         self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
 

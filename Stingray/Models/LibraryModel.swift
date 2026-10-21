@@ -8,17 +8,24 @@
 import Foundation
 
 /// A single library on the server, along with the media downloaded into it so far.
-public protocol LibraryProtocol: AnyObject, Identifiable {
+public protocol LibraryProtocol: AnyObject, Identifiable, GroupMetadataProtocol {
     /// User-facing name of the library
     var title: String { get }
     /// ID provided by the server
     var id: String { get }
+
+    // Swift is overly aggressive about setters in nested protocols, so putting this down twice to fix it
+    var genres: Set<String> { get set }
+    var maturity: Set<String> { get set }
+    var media: MediaStatus { get set }
+}
+
+/// The descriptive metadata shared by every kind of group of media.
+public protocol GroupMetadataProtocol: Identifiable, MetadataProtocol {
+    /// Rating of the content in this group provided by the server. Ex. PG, PG-13, R.
+    var maturity: Set<String> { get set }
     /// Fetch progress for this library's media. Holds the media itself once any is available
     var media: MediaStatus { get set }
-    /// Every genre seen across this library's media, accumulated as pages arrive. Drives the genre filter
-    var genres: Set<String> { get set }
-    /// Every maturity rating seen across this library's media, accumulated as pages arrive. Drives the maturity filter
-    var maturityRatings: Set<String> { get set }
 }
 
 /// Denotes the current status of loading media in a library
@@ -35,27 +42,19 @@ public enum MediaStatus {
 @Observable
 public final class LibraryModel: LibraryProtocol, Decodable {
     public var title: String
+    public var sortTitle: String
     public var media: MediaStatus
     public var id: String
+    public var parentID: String
     public var genres: Set<String>
-    public var maturityRatings: Set<String>
-    
-    /// Create a model for storing a single Library's data
-    /// - Parameters:
-    ///   - title: User-facing name of the library
-    ///   - id: Unique ID of this library
-    public init(title: String, id: String) {
-        self.title = title
-        self.media = .waiting
-        self.id = id
-        self.genres = []
-        self.maturityRatings = []
-    }
+    public var maturity: Set<String>
     
     public enum CodingKeys: String, CodingKey {
         case title = "Name"
+        case sortTitle = "SortName"
         case media = "media"
         case id = "Id"
+        case parentID = "ParentId"
         case libraryType = "CollectionType"
     }
     
@@ -66,10 +65,12 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             
             self.title = try container.decode(String.self, forKey: .title)
+            self.sortTitle = try container.decode(String.self, forKey: .sortTitle)
             self.id = try container.decode(String.self, forKey: .id)
+            self.parentID = try container.decode(String.self, forKey: .parentID)
             self.media = .waiting
             self.genres = []
-            self.maturityRatings = []
+            self.maturity = []
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }
         catch DecodingError.valueNotFound(_, let context) {

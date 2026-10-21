@@ -461,7 +461,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             library.media = .available(existingItems)
         }
         library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
-        library.maturityRatings.formUnion(newMedia.map { media in
+        library.maturity.formUnion(newMedia.map { media in
             guard let maturity = media.maturity, maturity != "NR", maturity != "Unknown"
             else { return "Not Rated" }
             return maturity
@@ -498,7 +498,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         // Dump all the existing media
         library.media = .waiting
         library.genres = Set()
-        library.maturityRatings = Set()
+        library.maturity = Set()
 
         // A bit more aggressive than retrieveLibraries since there'll be fewer requests
         await self.fetchMedia(for: [library], batchSize: 200)

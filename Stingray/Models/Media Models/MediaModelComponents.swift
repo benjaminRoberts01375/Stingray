@@ -29,7 +29,7 @@ public enum MediaStorage: Decodable, Hashable {
     }
 
     /// A convenience variable for getting the underlying type
-    public var media: (any MediaMetadataProtocol)? {
+    public var media: (any MetadataProtocol)? {
         switch self {
         case .movie(let movie): return movie
         case .example(let example): return example
@@ -41,12 +41,12 @@ public enum MediaStorage: Decodable, Hashable {
     }
 
     /// Forwards any property of `MediaProtocol` to the underlying value.
-    public subscript<T>(dynamicMember keyPath: KeyPath<any MediaMetadataProtocol, T>) -> T? {
+    public subscript<T>(dynamicMember keyPath: KeyPath<any MetadataProtocol, T>) -> T? {
         self.media?[keyPath: keyPath]
     }
 
     /// Forwards any optional property of `MediaProtocol` to the underlying value, flattening the result to a single optional.
-    public subscript<T>(dynamicMember keyPath: KeyPath<any MediaMetadataProtocol, T?>) -> T? {
+    public subscript<T>(dynamicMember keyPath: KeyPath<any MetadataProtocol, T?>) -> T? {
         self.media?[keyPath: keyPath] ?? nil
     }
 

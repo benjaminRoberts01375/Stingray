@@ -41,7 +41,7 @@ public struct SearchView: View {
             var maturityReating: Set<String> = []
             for library in libraries {
                 genres.formUnion(library.genres)
-                maturityReating.formUnion(library.maturityRatings)
+                maturityReating.formUnion(library.maturity)
             }
             self.availableGenres = genres
             self.availableMaturityRatings = maturityReating

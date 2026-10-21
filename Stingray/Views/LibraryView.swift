@@ -27,7 +27,7 @@ public struct LibraryView: View {
                 if !allMedia.isEmpty {
                     FilteredMediaGridView(
                         availableGenres: self.library.genres,
-                        availableMaturityRatings: self.library.maturityRatings,
+                        availableMaturityRatings: self.library.maturity,
                         streamingService: self.streamingService,
                         allMedia: allMedia,
                         navigation: $navigation

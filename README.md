@@ -78,6 +78,7 @@ Configure Stingray to look and feel how you want it.
   - Reworked the TopShelf's access to code in the main Stingray application
   - Split the media card large title text into a separate view
   - Merge functionality between resyncing and initial library synching
+  - Create a base `MetadataProtocol` and new `GroupMetadataProtocol`
 
 ## TO-DO List
 

@@ -7,29 +7,32 @@
 
 import Foundation
 
-/// The descriptive metadata shared by every kind of media, independent of how it is played.
-public protocol MediaMetadataProtocol: Identifiable, Displayable {
+/// General metadata that all media and media storage should have
+public protocol MetadataProtocol: Identifiable {
     /// Unique identifier for this media
     var id: String { get }
     /// The owner of this media
     var parentID: String { get }
-    /// The name of the series
+    /// The name of the data
     var title: String { get }
     /// Title to use when running sorting algorithms
     var sortTitle: String { get }
+    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
+    var genres: Set<String> { get set }
+}
+
+/// The descriptive metadata shared by every kind of media, independent of how it is played.
+public protocol MediaMetadataProtocol: Identifiable, Displayable, MetadataProtocol {
     /// Rating of this media provided by the server. Ex PG, PG-13, R.
     var maturity: String? { get }
     /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
     var releaseDate: Date? { get }
-    /// List of genres that describe the media. Ex `["Action", "Adventure", "Drama"]`
-    var genres: [String] { get }
     /// Estimated runtime of the movie or per-episode.
     var duration: Duration? { get }
     /// A longer descriptor of the series
     var description: String { get }
     /// Those involved with the media in its entirety
     var people: [any MediaPersonProtocol] { get }
-    /// Full-resolution image references
 }
 
 /// Media that can have special features. Ex. movies and TV shows, but not home videos.

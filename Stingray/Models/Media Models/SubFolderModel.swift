@@ -7,21 +7,21 @@
 
 import SwiftUI
 
-public protocol SubFolderProtocol: AnyObject, MediaMetadataProtocol {
-    /// Media within this folder
-    var media: [MediaStorage] { get set }
+public protocol SubFolderProtocol: AnyObject, GroupMetadataProtocol {
+    // Swift is overly aggressive about setters in nested protocols, so putting this down twice to fix it
+    var media: MediaStatus { get set }
 }
 
 @Observable
 public final class SubFolderModel: SubFolderProtocol, Decodable {
-    public var media: [MediaStorage]
+    public var media: MediaStatus
     public let id: String
     public let parentID: String
     public let title: String
     public let sortTitle: String
-    public let maturity: String?
+    public var maturity: Set<String>
     public let releaseDate: Date?
-    public let genres: [String]
+    public var genres: Set<String>
     public let duration: Duration?
     public let description: String
     public let people: [any MediaPersonProtocol]
@@ -60,12 +60,12 @@ public final class SubFolderModel: SubFolderProtocol, Decodable {
         self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)
         self.imageBlurHashes = try? container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
-        self.genres = (try? container.decodeIfPresent([String].self, forKey: .genres)) ?? []
-        self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
+        self.genres = (try? container.decodeIfPresent(Set<String>.self, forKey: .genres)) ?? []
+        self.maturity = (try? container.decodeIfPresent(Set<String>.self, forKey: .maturity)) ?? []
         self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
 
         // Setup later
-        self.media = []
+        self.media = .waiting
 
         // Doesn't matter
         self.duration = nil
