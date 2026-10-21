@@ -24,7 +24,7 @@ public protocol AdvancedNetworkProtocol {
     /// Gets all media for a given library in chunks
     /// - Parameters:
     ///   - accessToken: Access token for the server
-    ///   - parentId: ID of the parent that holds media (ex. the ID of a library or subfolder)
+    ///   - parentID: ID of the parent that holds media (ex. the ID of a library or subfolder)
     ///   - index: Start of a chunk
     ///   - count: How much to request in a single request
     ///   - sortOrder: Ascending/descending

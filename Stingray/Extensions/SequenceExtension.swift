@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Simple creation of an AppendableIterator from any sequence, like an array
 extension Sequence {
     /// Creates an `AppendableIterator` with this sequence's elements.
     /// - Returns: An iterator that more elements can be appended to as it's consumed.

@@ -29,7 +29,6 @@ public struct MediaCard: View {
     ///   - streamingService: Streaming service to derrive URLs from
     ///   - navigation: The app's `NavigationPath`
     ///   - reserveTextSpace: Allow the MediaCard to reserve the maximum amount of space for text
-    ///   - size: Visual size of the card. Defaults to `cardSize`.
     /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
     public init(
         media: MediaStorage,
