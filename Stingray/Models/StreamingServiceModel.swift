@@ -449,22 +449,33 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     /// Add a freshly fetched page of media to a library, keeping its filter options up to date.
     /// - Parameters:
     ///   - newMedia: Page of media from the server.
-    ///   - library: Library to add the media to.
-    private func append(_ newMedia: [MediaStorage], to library: any LibraryProtocol) {
+    ///   - group: Group to add media to
+    private func append(_ newMedia: [MediaStorage], to group: any GroupMetadataProtocol) {
         if newMedia.isEmpty { return } // Don't update the UI with blank media
-        switch library.media {
-        case .error: return // We already errored this library, no need to log it again
-        case .waiting: library.media = .available(newMedia)
+        switch group.media {
+        case .error: return // We already errored this group, no need to log it again
+        case .waiting: group.media = .available(newMedia)
         case .available(var existingItems):
-            library.media = .waiting // Micro optimizing >:D
+            group.media = .waiting // Micro optimizing >:D
             existingItems.append(contentsOf: newMedia)
-            library.media = .available(existingItems)
+            group.media = .available(existingItems)
         }
-        library.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
-        library.maturity.formUnion(newMedia.map { media in
-            guard let maturity = media.maturity, maturity != "NR", maturity != "Unknown"
-            else { return "Not Rated" }
-            return maturity
+        group.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
+        group.maturity.formUnion(newMedia.flatMap { media -> Set<String> in
+            // Individual media carry a single rating, while sub-folders have already gathered the ratings of their contents
+            let ratings: Set<String?>
+            switch media {
+            case .movie(let movie), .example(let movie): ratings = [movie.maturity]
+            case .tvShow(let tvShow): ratings = [tvShow.maturity]
+            case .homeVideo(let homeVideo): ratings = [homeVideo.maturity]
+            case .subfolder(let subfolder): ratings = Set(subfolder.maturity)
+            case .error: ratings = [nil]
+            }
+            return Set(ratings.map { maturity in
+                guard let maturity, maturity != "NR", maturity != "Unknown"
+                else { return "Not Rated" }
+                return maturity
+            })
         })
     }
 
@@ -556,7 +567,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         for item in media {
             if item.id == mediaID { return item }
             if case .subfolder(let subFolder) = item,
-               let found = find(mediaID: mediaID, in: subFolder.media) {
+               case .available(let subFolderMedia) = subFolder.media,
+               let found = find(mediaID: mediaID, in: subFolderMedia) {
                 return found
             }
         }
