@@ -1,5 +1,5 @@
 //
-//  Iterator.swift
+//  AppendableIterator.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 10/20/26.
