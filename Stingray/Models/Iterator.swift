@@ -16,7 +16,11 @@ public final class AppendableIterator<Element>: IteratorProtocol, Sequence {
     private var head: Int = 0
     /// Gets the current element
     /// - Returns: Get the current element
-    public var current: Element? { return self.storage[self.head] }
+    public var current: Element? {
+        if self.storage.isEmpty { return nil }
+        else if self.head >= self.storage.count { return nil }
+        return self.storage[self.head]
+    }
 
     public init<S: Sequence>(_ initial: S) where S.Element == Element {
         self.storage = Array(initial)
@@ -37,8 +41,8 @@ public final class AppendableIterator<Element>: IteratorProtocol, Sequence {
 
     /// Returns the next new value, or `nil` if the buffer is empty
     public func next() -> Element? {
-        if self.head >= storage.count { return nil }
-        let element = storage[self.head]
+        if self.head >= self.storage.count { return nil }
+        let element = self.storage[self.head]
         self.head += 1
         return element
     }
