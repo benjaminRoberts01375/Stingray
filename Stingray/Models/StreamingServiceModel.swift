@@ -369,24 +369,23 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.libraryStatus = .complete(libraries)
     }
 
-    /// Page in media for a set of libraries, keeping several requests in flight at once.
-    /// Libraries are worked through in order, moving on once the current one returns a short page or an error.
+    /// Page in media for a set of groups, keeping several requests in flight at once.
+    /// Groups are worked through in order, moving on once the current one returns a short page or an error.
     /// - Parameters:
-    ///   - libraries: Libraries to fill. Their media should already be `.waiting`.
+    ///   - groups: Groups to fill with media. Their media should already be `.waiting`.
     ///   - batchSize: Number of items to request per page.
-    private func fetchMedia(for libraries: [any LibraryProtocol], batchSize: Int) async {
-        enum LibraryContent {
+    private func fetchMedia(for groups: [any GroupMetadataProtocol], batchSize: Int) async {
+        enum GroupContent {
             case success([MediaStorage])
             case error(RError)
         }
 
-        await withTaskGroup(of: (String, LibraryContent).self) { group in
+        await withTaskGroup(of: (String, GroupContent).self) { group in
             var pageTracker: [String : Int] = [:]
-            var libraryIterator = libraries.makeIterator()
-            var activeParent = libraryIterator.next()
+            var groupsIterator = groups.makeAppendableIterator()
 
             func getMedia(parentID: String?) {
-                guard let parentID = parentID // Every library has been fully requested
+                guard let parentID = parentID // Every group has been fully requested
                 else { return }
                 let index = (pageTracker[parentID] ?? -1) + 1
                 pageTracker[parentID] = index
@@ -394,7 +393,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     do {
                         return (
                             parentID,
-                            LibraryContent.success(
+                            GroupContent.success(
                                 try await self.networkAPI.getMedia(
                                     accessToken: self.accessToken,
                                     parentID: parentID,
@@ -403,46 +402,53 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                     sortOrder: .ascending,
                                     sortBy: .sortName,
                                     mediaTypes: [.movie, .tvShow, .homeVideo, .subFolder],
-                                    recursive: true
+                                    recursive: false
                                 )
                             )
                         )
                     }
-                    catch let error as RError { return (parentID, LibraryContent.error(LibraryErrors.gettingLibraries(error))) }
-                    catch { return (parentID, LibraryContent.error(LibraryErrors.unknown(error.localizedDescription))) }
+                    catch let error as RError { return (parentID, GroupContent.error(LibraryErrors.gettingLibraries(error))) }
+                    catch { return (parentID, GroupContent.error(LibraryErrors.unknown(error.localizedDescription))) }
                 }
             }
 
-            // Spin up tasks to download content from each library.
+            // Spin up tasks to download content from each group.
             // We'll almost defintely have too many requests hitting a library at first, but that's fine
             // since we can't know how many items are in each library, and they'll return fast to be
             // reused in the next loop
-            for _ in 0..<8 { getMedia(parentID: activeParent?.id) }
+            for _ in 0..<8 { getMedia(parentID: groupsIterator.current?.id) }
 
             // Read from the buffer and setup next request
-            for await (libraryID, content) in group {
-                if let library = libraries.first(where: { $0.id == libraryID }) {
+            for await (groupID, content) in group {
+                if let group = groupsIterator.storage.first(where: { $0.id == groupID }) {
                     let reachedEnd: Bool
                     switch content {
                     case .error(let error):
-                        Log.warning("Failed to get content for library \(libraryID): \(error.rDescription())")
-                        library.media = .error(error)
+                        Log.warning("Failed to get content for group \(groupID): \(error.rDescription())")
+                        group.media = .error(error)
                         reachedEnd = true
                     case .success(let newMedia):
-                        self.append(newMedia, to: library)
+                        self.append(newMedia, to: group)
+                        // Is there a group in this array we need to get media for?
+                        for media in newMedia where media.isGroup {
+                            switch media {
+                            case .subfolder(let subfolder): groupsIterator.append(subfolder)
+                            case .error, .example, .homeVideo, .movie, .tvShow: break
+                            }
+                        }
                         reachedEnd = newMedia.count < batchSize // A short page means there's nothing left to request
                     }
-                    // Advance to the next library. Stragglers from a library we've already moved past shouldn't skip the current one
-                    if reachedEnd && libraryID == activeParent?.id { activeParent = libraryIterator.next() }
+                    // Advance to the next group. Stragglers from a group we've already moved past shouldn't skip the current one
+                    if reachedEnd && groupID == groupsIterator.current?.id { _ = groupsIterator.next() }
                 }
-                getMedia(parentID: activeParent?.id) // Startup next task
+                getMedia(parentID: groupsIterator.current?.id) // Startup next task
                 // When we finish with the tasks, we simply fall out of the loop
             }
         }
 
-        // Every page came back blank, so the library really is empty. Leaving it as `.waiting` would spin forever.
-        for library in libraries {
-            if case .waiting = library.media { library.media = .available([]) }
+        // Every page came back blank, so the group really is empty. Leaving it as `.waiting` would spin forever.
+        for group in groups {
+            if case .waiting = group.media { group.media = .available([]) }
         }
     }
 

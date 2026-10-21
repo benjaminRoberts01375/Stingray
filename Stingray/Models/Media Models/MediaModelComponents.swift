@@ -50,6 +50,14 @@ public enum MediaStorage: Decodable, Hashable {
         case .subfolder, .error: return nil
         }
     }
+    
+    /// Returns true if this media is a group of other media
+    public var isGroup: Bool {
+        switch self {
+        case .movie, .example, .tvShow, .homeVideo, .error: return false
+        case .subfolder: return true
+        }
+    }
 
     /// Forwards any property of `MediaProtocol` to the underlying value.
     public subscript<T>(dynamicMember keyPath: KeyPath<any MetadataProtocol, T>) -> T? {
