@@ -40,6 +40,17 @@ public enum MediaStorage: Decodable, Hashable {
         }
     }
 
+    /// The underlying media's descriptive metadata. `nil` for media without it, like subfolders.
+    public var mediaMetadata: (any MediaMetadataProtocol)? {
+        switch self {
+        case .movie(let movie): return movie
+        case .example(let example): return example
+        case .tvShow(let tvShow): return tvShow
+        case .homeVideo(let homeVideo): return homeVideo
+        case .subfolder, .error: return nil
+        }
+    }
+
     /// Forwards any property of `MediaProtocol` to the underlying value.
     public subscript<T>(dynamicMember keyPath: KeyPath<any MetadataProtocol, T>) -> T? {
         self.media?[keyPath: keyPath]

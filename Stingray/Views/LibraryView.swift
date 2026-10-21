@@ -94,7 +94,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
             }
             .filter { model in
                 if self.appliedMaturityRatingFilters.isEmpty { return true }
-                return self.appliedMaturityRatingFilters.contains(model.maturity ?? "")
+                return self.appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
             }
 
         // Random can't be expressed as a comparator (it would violate the strict weak ordering
@@ -111,10 +111,12 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         case (.sortTitle, false): areInOrder = { ($0.sortTitle) > ($1.sortTitle) }
         case (.title, true): areInOrder = { ($0.title) < ($1.title) }
         case (.title, false): areInOrder = { ($0.title) > ($1.title) }
-        case (.duration, true): areInOrder = { ($0.duration ?? .zero) < ($1.duration ?? .zero) }
-        case (.duration, false): areInOrder = { ($0.duration ?? .zero) > ($1.duration ?? .zero) }
-        case (.releaseDate, true): areInOrder = { ($0.releaseDate ?? .distantPast) < ($1.releaseDate ?? .distantPast) }
-        case (.releaseDate, false): areInOrder = { ($0.releaseDate ?? .distantPast) > ($1.releaseDate ?? .distantPast) }
+        case (.duration, true): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) < ($1.mediaMetadata?.duration ?? .zero) }
+        case (.duration, false): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) > ($1.mediaMetadata?.duration ?? .zero) }
+        case (.releaseDate, true):
+            areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) < ($1.mediaMetadata?.releaseDate ?? .distantPast) }
+        case (.releaseDate, false):
+            areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) > ($1.mediaMetadata?.releaseDate ?? .distantPast) }
         case (.random, _): return filtered // Handled above
         }
 
