@@ -227,13 +227,7 @@ public struct MediaDetailLoader: View {
                 }
                 else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
             case .subfolder(let subfolder):
-                FilteredMediaGridView(
-                    availableGenres: [],
-                    availableMaturityRatings: [],
-                    streamingService: self.streamingService,
-                    allMedia: subfolder.media,
-                    navigation: $navigation
-                )
+                MediaGroupLoader(subfolder: subfolder, streamingService: self.streamingService, navigation: $navigation)
             case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load media"))
             }
         case .temporarilyNotFound:
@@ -242,6 +236,31 @@ public struct MediaDetailLoader: View {
             Text("Media Not Found")
             Text("It may not have been compatible with Stingray")
                 .foregroundStyle(.tertiary)
+        }
+    }
+}
+
+/// Displays all media in a group
+fileprivate struct MediaGroupLoader: View {
+    /// Media group to display
+    let subfolder: any GroupMetadataProtocol
+    /// Containing streaming service
+    let streamingService: any MediaImageProviding
+    /// App navigation
+    @Binding var navigation: NavigationPath
+
+    var body: some View {
+        switch self.subfolder.media {
+        case .waiting: ProgressView()
+        case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load folder"))
+        case .available(let loadedMedia):
+            FilteredMediaGridView(
+                availableGenres: self.subfolder.genres,
+                availableMaturityRatings: self.subfolder.maturity,
+                streamingService: self.streamingService,
+                allMedia: loadedMedia,
+                navigation: $navigation
+            )
         }
     }
 }
@@ -369,7 +388,11 @@ public struct LibrariesInfoView: View {
             case .example: counters[String(localized: "Examples"), default: 0] += 1
             case .tvShow: counters[String(localized: "TV Shows"), default: 0] += 1
             case .homeVideo: counters[String(localized: "Home Videos"), default: 0] += 1
-            case .subfolder(let subfolder): self.count(media: subfolder.media, into: &counters)
+            case .subfolder(let subfolder):
+                switch subfolder.media {
+                case .waiting, .error: break
+                case .available(let media): self.count(media: media, into: &counters)
+                }
             case .error: continue
             }
         }
