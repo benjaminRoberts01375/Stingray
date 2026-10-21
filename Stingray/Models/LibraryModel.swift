@@ -21,11 +21,14 @@ public protocol LibraryProtocol: AnyObject, Identifiable, GroupMetadataProtocol 
 }
 
 /// The descriptive metadata shared by every kind of group of media.
-public protocol GroupMetadataProtocol: Identifiable, MetadataProtocol {
+public protocol GroupMetadataProtocol: AnyObject, Identifiable, MetadataProtocol {
     /// Rating of the content in this group provided by the server. Ex. PG, PG-13, R.
     var maturity: Set<String> { get set }
     /// Fetch progress for this library's media. Holds the media itself once any is available
     var media: MediaStatus { get set }
+
+    // Swift is overly aggressive about setters in nested protocols, so putting this down twice to fix it
+    var genres: Set<String> { get set }
 }
 
 /// Denotes the current status of loading media in a library
@@ -48,7 +51,9 @@ public final class LibraryModel: LibraryProtocol, Decodable {
     public var parentID: String
     public var genres: Set<String>
     public var maturity: Set<String>
-    
+    public let imageBlurHashes: (any MediaImagesProtocol)?
+    public let imageTags: (any MediaImagesProtocol)?
+
     public enum CodingKeys: String, CodingKey {
         case title = "Name"
         case sortTitle = "SortName"
@@ -56,6 +61,8 @@ public final class LibraryModel: LibraryProtocol, Decodable {
         case id = "Id"
         case parentID = "ParentId"
         case libraryType = "CollectionType"
+        case imageTags = "ImageTags"
+        case imageBlurHashes = "ImageBlurHashes"
     }
     
     /// Create a `LibraryModel` from JSON. Media always starts empty, since libraries are paged in separately.
@@ -71,6 +78,9 @@ public final class LibraryModel: LibraryProtocol, Decodable {
             self.media = .waiting
             self.genres = []
             self.maturity = []
+            self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
+            MediaImages(thumbnail: nil, logo: nil, primary: nil)
+            self.imageBlurHashes = try? container.decodeIfPresent(MediaImageBlurHashes.self, forKey: .imageBlurHashes)
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "LibraryModel") }
         catch DecodingError.valueNotFound(_, let context) {

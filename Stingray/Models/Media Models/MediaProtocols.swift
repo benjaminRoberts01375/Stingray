@@ -8,7 +8,7 @@
 import Foundation
 
 /// General metadata that all media and media storage should have
-public protocol MetadataProtocol: Identifiable {
+public protocol MetadataProtocol: Identifiable, Displayable {
     /// Unique identifier for this media
     var id: String { get }
     /// The owner of this media
@@ -22,7 +22,7 @@ public protocol MetadataProtocol: Identifiable {
 }
 
 /// The descriptive metadata shared by every kind of media, independent of how it is played.
-public protocol MediaMetadataProtocol: Identifiable, Displayable, MetadataProtocol {
+public protocol MediaMetadataProtocol: Identifiable, MetadataProtocol {
     /// Rating of this media provided by the server. Ex PG, PG-13, R.
     var maturity: String? { get }
     /// Date the series first released. For shows with multiple episodes, this will be the date of the first episode.
