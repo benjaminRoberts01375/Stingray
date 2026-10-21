@@ -383,32 +383,33 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         await withTaskGroup(of: (String, LibraryContent).self) { group in
             var pageTracker: [String : Int] = [:]
             var libraryIterator = libraries.makeIterator()
-            var activeLibrary = libraryIterator.next()
+            var activeParent = libraryIterator.next()
 
-            func getMedia(libraryID: String?) {
-                guard let libraryID = libraryID // Every library has been fully requested
+            func getMedia(parentID: String?) {
+                guard let parentID = parentID // Every library has been fully requested
                 else { return }
-                let index = (pageTracker[libraryID] ?? -1) + 1
-                pageTracker[libraryID] = index
+                let index = (pageTracker[parentID] ?? -1) + 1
+                pageTracker[parentID] = index
                 group.addTask {
                     do {
                         return (
-                            libraryID,
+                            parentID,
                             LibraryContent.success(
-                                try await self.networkAPI.getLibraryMedia(
+                                try await self.networkAPI.getMedia(
                                     accessToken: self.accessToken,
-                                    libraryId: libraryID,
+                                    parentID: parentID,
                                     index: index * batchSize,
                                     count: batchSize,
                                     sortOrder: .ascending,
                                     sortBy: .sortName,
-                                    mediaTypes: [.movie, .tvShow, .homeVideo]
+                                    mediaTypes: [.movie, .tvShow, .homeVideo, .subFolder],
+                                    recursive: true
                                 )
                             )
                         )
                     }
-                    catch let error as RError { return (libraryID, LibraryContent.error(LibraryErrors.gettingLibraries(error))) }
-                    catch { return (libraryID, LibraryContent.error(LibraryErrors.unknown(error.localizedDescription))) }
+                    catch let error as RError { return (parentID, LibraryContent.error(LibraryErrors.gettingLibraries(error))) }
+                    catch { return (parentID, LibraryContent.error(LibraryErrors.unknown(error.localizedDescription))) }
                 }
             }
 
@@ -416,7 +417,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             // We'll almost defintely have too many requests hitting a library at first, but that's fine
             // since we can't know how many items are in each library, and they'll return fast to be
             // reused in the next loop
-            for _ in 0..<8 { getMedia(libraryID: activeLibrary?.id) }
+            for _ in 0..<8 { getMedia(parentID: activeParent?.id) }
 
             // Read from the buffer and setup next request
             for await (libraryID, content) in group {
@@ -432,9 +433,9 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         reachedEnd = newMedia.count < batchSize // A short page means there's nothing left to request
                     }
                     // Advance to the next library. Stragglers from a library we've already moved past shouldn't skip the current one
-                    if reachedEnd && libraryID == activeLibrary?.id { activeLibrary = libraryIterator.next() }
+                    if reachedEnd && libraryID == activeParent?.id { activeParent = libraryIterator.next() }
                 }
-                getMedia(libraryID: activeLibrary?.id) // Startup next task
+                getMedia(parentID: activeParent?.id) // Startup next task
                 // When we finish with the tasks, we simply fall out of the loop
             }
         }
@@ -465,6 +466,18 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             else { return "Not Rated" }
             return maturity
         })
+    }
+
+    /// Remove media from the top level of a library, such as once it's been moved into a sub-folder.
+    /// - Parameters:
+    ///   - mediaIDs: IDs of the media to remove.
+    ///   - library: Library to remove the media from.
+    private func remove(mediaIDs: Set<String>, from library: any LibraryProtocol) {
+        guard case .available(var existingItems) = library.media
+        else { return }
+        library.media = .waiting // Micro optimizing >:D
+        existingItems.removeAll { $0.id.map(mediaIDs.contains) ?? false }
+        library.media = .available(existingItems)
     }
 
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage] {
@@ -508,7 +521,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             }
 
             if let allMedia = allMedia,
-               let found = allMedia.first(where: { $0.id == mediaID }) {
+               let found = Self.find(mediaID: mediaID, in: allMedia) {
                 return .found(found)
             }
         }
@@ -522,7 +535,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             }
 
             if let allMedia = allMedia,
-               let found = allMedia.first(where: { $0.id == mediaID }) {
+               let found = Self.find(mediaID: mediaID, in: allMedia) {
                 return .found(found)
             }
         }
@@ -532,6 +545,22 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         default:
             return .temporarilyNotFound
         }
+    }
+
+    /// Search for media by ID, descending into sub-folders.
+    /// - Parameters:
+    ///   - mediaID: Media ID to search for.
+    ///   - media: Media to search through.
+    /// - Returns: The matching media, if found.
+    private static func find(mediaID: String, in media: [MediaStorage]) -> MediaStorage? {
+        for item in media {
+            if item.id == mediaID { return item }
+            if case .subfolder(let subFolder) = item,
+               let found = find(mediaID: mediaID, in: subFolder.media) {
+                return found
+            }
+        }
+        return nil
     }
 
     public func getImageURL(imageType: MediaImageType, mediaID: String, width: Int) -> URL? {

@@ -226,6 +226,14 @@ public struct MediaDetailLoader: View {
                     )
                 }
                 else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
+            case .subfolder(let subfolder):
+                FilteredMediaGridView(
+                    availableGenres: [],
+                    availableMaturityRatings: [],
+                    streamingService: self.streamingService,
+                    allMedia: subfolder.media,
+                    navigation: $navigation
+                )
             case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load media"))
             }
         case .temporarilyNotFound:
@@ -341,22 +349,29 @@ public struct LibrariesInfoView: View {
     /// - Returns: Found media types and their associated counts
     public func countMedia(libraries: [LibraryModel]) -> [String : Int] {
         var counters: [String : Int] = [:]
-
         for library in libraries {
             switch library.media {
             case .waiting, .error: continue
-            case .available(let medias):
-                for media in medias {
-                    switch media {
-                    case .movie: counters[String(localized: "Movies"), default: 0] += 1
-                    case .example: counters[String(localized: "Examples"), default: 0] += 1
-                    case .tvShow: counters[String(localized: "TV Shows"), default: 0] += 1
-                    case .homeVideo: counters[String(localized: "Home Videos"), default: 0] += 1
-                    case .error: continue
-                    }
-                }
+            case .available(let medias): self.count(media: medias, into: &counters)
             }
         }
         return counters
+    }
+    
+    /// Counts all the media provided in an array
+    /// - Parameter medias: Media to count
+    /// - Parameter counters: Counter dictionary to track entries with
+    /// - Returns: Counts per media type
+    private func count(media medias: [MediaStorage], into counters: inout [String : Int]) {
+        for media in medias {
+            switch media {
+            case .movie: counters[String(localized: "Movies"), default: 0] += 1
+            case .example: counters[String(localized: "Examples"), default: 0] += 1
+            case .tvShow: counters[String(localized: "TV Shows"), default: 0] += 1
+            case .homeVideo: counters[String(localized: "Home Videos"), default: 0] += 1
+            case .subfolder(let subfolder): self.count(media: subfolder.media, into: &counters)
+            case .error: continue
+            }
+        }
     }
 }

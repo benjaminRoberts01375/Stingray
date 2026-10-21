@@ -19,6 +19,8 @@ public enum MediaStorage: Decodable, Hashable {
     case tvShow(any TVShowProtocol)
     /// Holds some home video type
     case homeVideo(any HomeVideoProtocol)
+    /// Holds multiple pieces of media
+    case subfolder(any SubFolderProtocol)
     /// Represents a failure to create this media
     case error(RError)
 
@@ -33,6 +35,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example
         case .tvShow(let tvShow): return tvShow
         case .homeVideo(let homeVideo): return homeVideo
+        case .subfolder(let subfolder): return subfolder
         case .error: return nil
         }
     }
@@ -54,6 +57,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example.sortTitle
         case .tvShow(let tvShow): return tvShow.sortTitle
         case .homeVideo(let homeVideo): return homeVideo.sortTitle
+        case .subfolder(let subfolder): return subfolder.sortTitle
         case .error: return String(localized: "Unknown Title")
         }
     }
@@ -65,6 +69,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example.title
         case .tvShow(let tvShow): return tvShow.title
         case .homeVideo(let homeVideo): return homeVideo.title
+        case .subfolder(let subfolder): return subfolder.title
         case .error: return String(localized: "Unknown Title")
         }
     }
@@ -96,6 +101,9 @@ public enum MediaStorage: Decodable, Hashable {
         case .homeVideo:
             do { self = .homeVideo(try HomeVideoModel(from: decoder)) }
             catch { self = .error(error) }
+        case .subFolder:
+            do { self = .subfolder(try SubFolderModel(from: decoder)) }
+            catch { self = .error(error) }
         case nil: self = .error(MediaError.unknownMediaType(mediaType))
         }
     }
@@ -111,6 +119,8 @@ public enum MediaType: String {
     case episode = "Episode"
     /// A home video
     case homeVideo = "Video"
+    /// A folder containing more media
+    case subFolder = "Folder"
 }
 
 /// Holds information about a single person who worked on a piece of media.

@@ -24,21 +24,23 @@ public protocol AdvancedNetworkProtocol {
     /// Gets all media for a given library in chunks
     /// - Parameters:
     ///   - accessToken: Access token for the server
-    ///   - libraryId: Library identifier
+    ///   - parentId: ID of the parent that holds media (ex. the ID of a library or subfolder)
     ///   - index: Start of a chunk
     ///   - count: How much to request in a single request
     ///   - sortOrder: Ascending/descending
     ///   - sortBy: Metadata to sort by
     ///   - mediaTypes: Allowed media types from the server
+    ///   - recursive: Should this request search sub-folders
     /// - Returns: Library media content
-    func getLibraryMedia(
+    func getMedia(
         accessToken: String,
-        libraryId: String,
+        parentID: String,
         index: Int,
         count: Int,
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
-        mediaTypes: [MediaType]?
+        mediaTypes: [MediaType]?,
+        recursive: Bool
     ) async throws(LibraryErrors) -> [MediaStorage]
     /// Generates a URL for an image
     /// - Parameters:
@@ -468,14 +470,15 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
     }
     
-    public func getLibraryMedia(
+    public func getMedia(
         accessToken: String,
-        libraryId: String,
+        parentID: String,
         index: Int,
         count: Int,
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
-        mediaTypes: [MediaType]?
+        mediaTypes: [MediaType]?,
+        recursive: Bool
     ) async throws(LibraryErrors) -> [MediaStorage] {
         struct Root: Decodable {
             let items: [MediaStorage]
@@ -493,15 +496,16 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             URLQueryItem(name: "sortBy", value: sortBy.rawValue),
             URLQueryItem(name: "startIndex", value: "\(index)"),
             URLQueryItem(name: "limit", value: "\(count)"),
-            URLQueryItem(name: "parentId", value: libraryId),
+            URLQueryItem(name: "parentId", value: parentID),
             URLQueryItem(name: "fields", value: "MediaSources"),
             URLQueryItem(name: "fields", value: "Taglines"),
             URLQueryItem(name: "fields", value: "SortName"),
             URLQueryItem(name: "fields", value: "Genres"),
             URLQueryItem(name: "fields", value: "Overview"),
             URLQueryItem(name: "fields", value: "people"),
+            URLQueryItem(name: "fields", value: "ParentId"),
             URLQueryItem(name: "enableUserData", value: "true"),
-            URLQueryItem(name: "recursive", value: "true")
+            URLQueryItem(name: "recursive", value: "\(recursive ? "true" : "false")")
         ]
 
         for mediaType in mediaTypes ?? [] {
@@ -519,8 +523,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
             )
             mediaItems = response.items
         }
-        catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
-        catch let error { throw LibraryErrors.gettingLibraryMedia(error, libraryId) }
+        catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, parentID) }
+        catch let error { throw LibraryErrors.gettingLibraryMedia(error, parentID) }
 
         let shows = mediaItems.compactMap {
             switch $0 {
@@ -532,8 +536,8 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         if !shows.isEmpty {
             Task {
                 do { try await self.getMediasSeasons(accessToken: accessToken, media: shows)}
-                catch let error as RError { Log.warning("Failed to get seasons for library \(libraryId): \(error.rDescription())") }
-                catch { Log.warning("Failed to get seasons for library \(libraryId): \(error.localizedDescription)") }
+                catch let error as RError { Log.warning("Failed to get seasons for library \(parentID): \(error.rDescription())") }
+                catch { Log.warning("Failed to get seasons for library \(parentID): \(error.localizedDescription)") }
             }
         }
         return mediaItems

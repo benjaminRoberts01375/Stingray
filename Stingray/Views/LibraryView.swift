@@ -321,10 +321,10 @@ public struct MediaGridView: View {
         self.streamingService = streamingService
         self._navigation = navigation
 
-        let columnDimension: CGFloat = allMedia.allSatisfy {
+        let columnDimension: CGFloat = allMedia.allSatisfy { // Figure out if everything's in portrait mode, or if some are horizontally big
             switch $0 {
             case .movie, .example, .tvShow: return true // Displayed in portrait mode
-            case .homeVideo, .error: return false
+            case .homeVideo, .subfolder, .error: return false
             }
         } ? MediaCard.minimumDimension : MediaCard.maximumDimension
 
