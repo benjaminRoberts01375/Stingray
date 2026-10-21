@@ -382,7 +382,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
 
         await withTaskGroup(of: (String, GroupContent).self) { group in
             var pageTracker: [String : Int] = [:]
-            var groupsIterator = groups.makeAppendableIterator()
+            let groupsIterator = groups.makeAppendableIterator()
 
             func getMedia(parentID: String?) {
                 guard let parentID = parentID // Every group has been fully requested
