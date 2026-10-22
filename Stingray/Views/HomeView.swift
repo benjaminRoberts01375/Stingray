@@ -254,13 +254,15 @@ fileprivate struct MediaGroupLoader: View {
         case .waiting: ProgressView()
         case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load folder"))
         case .available(let loadedMedia):
-            FilteredMediaGridView(
-                availableGenres: self.subfolder.genres,
-                availableMaturityRatings: self.subfolder.maturity,
-                streamingService: self.streamingService,
-                allMedia: loadedMedia,
-                navigation: $navigation
-            )
+            ScrollView {
+                FilteredMediaGridView(
+                    availableGenres: self.subfolder.genres,
+                    availableMaturityRatings: self.subfolder.maturity,
+                    streamingService: self.streamingService,
+                    allMedia: loadedMedia,
+                    navigation: $navigation
+                )
+            }
         }
     }
 }
