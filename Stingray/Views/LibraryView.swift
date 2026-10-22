@@ -64,6 +64,8 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     public let streamingService: any MediaImageProviding
     /// Unfiltered, unsorted media. `filteredMedia` derives the displayed list from it
     public let allMedia: [MediaStorage]
+    /// Unfiltered, unsorted media groups. `filteredMediaGroups` derives the displayed list from it
+    public let allMediaGroups: [MediaStorage]
     /// Extra buttons appended to the button row, ex. the library refresh button
     public var additionalButtons: () -> ButtonContent
     /// Selected genres. Media must match every one of them
@@ -84,9 +86,17 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     /// visible width has to be measured and fed back in as a minimum to keep short rows centered.
     @State private var buttonRowContainerWidth: CGFloat = 0
 
-    /// Media matching every applied genre filter. Computed so it always reflects the current`allMedia`
-    private var filteredMedia: [MediaStorage] {
-        let filtered = self.allMedia
+    /// Media matching every applied filter, in the selected order. Computed so it always reflects the current `allMedia`
+    private var filteredMedia: [MediaStorage] { self.filterAndSort(self.allMedia) }
+
+    /// Media groups matching every applied filter, in the selected order. Computed so it always reflects the current `allMediaGroups`
+    private var filteredMediaGroups: [MediaStorage] { self.filterAndSort(self.allMediaGroups) }
+
+    /// Applies the current genre and maturity filters, then the current sort, to some media.
+    /// - Parameter media: Unfiltered, unsorted media
+    /// - Returns: The filtered and sorted media
+    private func filterAndSort(_ media: [MediaStorage]) -> [MediaStorage] {
+        let filtered = media
             .filter { model in
                 if appliedGenreFilters.isEmpty { return true }
                 // Keep only media that has every applied genre
@@ -143,8 +153,18 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         self.availableMaturityRatings = availableMaturityRatings
         self.additionalButtons = additionalButtons
         self.streamingService = streamingService
-        self.allMedia = allMedia
         self._navigation = navigation
+
+        var normalMedia: [MediaStorage] = []
+        var groupedMedia: [MediaStorage] = []
+        for media in allMedia {
+            switch media {
+            case .subfolder: groupedMedia.append(media)
+            case .error, .example, .homeVideo, .movie, .tvShow: normalMedia.append(media)
+            }
+        }
+        self.allMedia = normalMedia
+        self.allMediaGroups = groupedMedia
     }
 
     public var body: some View {
