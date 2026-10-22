@@ -96,16 +96,19 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     /// - Parameter media: Unfiltered, unsorted media
     /// - Returns: The filtered and sorted media
     private func filterAndSort(_ media: [MediaStorage]) -> [MediaStorage] {
-        let filtered = media
-            .filter { model in
-                if appliedGenreFilters.isEmpty { return true }
-                // Keep only media that has every applied genre
-                return self.appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
+        var filtered = media
+        if !self.appliedGenreFilters.isEmpty {
+            // Keep only media that has every applied genre
+            filtered = filtered.filter { model in
+                self.appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
             }
-            .filter { model in
-                if self.appliedMaturityRatingFilters.isEmpty { return true }
-                return self.appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
+        }
+        if !self.appliedMaturityRatingFilters.isEmpty {
+            // Keep only media that has every applied maturity
+            filtered = filtered.filter { model in
+                self.appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
             }
+        }
 
         // Random can't be expressed as a comparator (it would violate the strict weak ordering
         // sorted(by:) requires), so shuffle with a seeded generator for a stable, repeatable order.
