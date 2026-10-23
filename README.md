@@ -65,6 +65,8 @@ Configure Stingray to look and feel how you want it.
   - Home video support
 - UI
   - Allow `MediaCard`s to resize based on the type of content
+  - Home videos and sub-folders have a more square layout
+  - Sub-folders sit in a top bar at the top of libraries
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes
@@ -98,7 +100,6 @@ Configure Stingray to look and feel how you want it.
 - [ ] Rework library structure to support more library types, like collections and group by actor.
 - [ ] Collections.
 - [ ] Playlists.
-- [ ] Subfolders.
 
 ### Playback
 

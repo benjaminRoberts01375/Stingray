@@ -82,6 +82,8 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     @Binding public var navigation: NavigationPath
 
     @Environment(SettingsModel.self) private var settings
+    @Environment(ThemeModel.self) private var theme
+
     /// Width of the button row's scroll view. A `ScrollView` proposes an unbounded width to its content, so the
     /// visible width has to be measured and fed back in as a minimum to keep short rows centered.
     @State private var buttonRowContainerWidth: CGFloat = 0
@@ -171,17 +173,43 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     }
 
     public var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            self.buttonRow
+        VStack(alignment: .leading) {
+            ScrollView(.horizontal) {
+                self.buttonRow
                 // Centers the row when it fits, and lets it grow past the container (and scroll) when it doesn't. AI generated
-                .frame(minWidth: self.buttonRowContainerWidth)
-        }
-        .scrollClipDisabled()
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { self.buttonRowContainerWidth = $0 }
-        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-        .focusSection()
-        MediaGridView(allMedia: self.filteredMedia, streamingService: self.streamingService, navigation: $navigation)
+                    .frame(minWidth: self.buttonRowContainerWidth)
+            }
+            .scrollClipDisabled()
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { self.buttonRowContainerWidth = $0 }
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .focusSection()
+            if !self.allMediaGroups.isEmpty {
+                if !self.allMedia.isEmpty {
+                    Text("Sub-Folders")
+                        .font(.title2.bold())
+                        .foregroundStyle(self.theme.currentTheme.header1)
+                }
+                ScrollView(.horizontal) {
+                    LazyHStack {
+                        ForEach(self.allMediaGroups, id: \.id) { group in
+                            MediaCard(media: group, streamingService: self.streamingService)
+                                .focusSection()
+                        }
+                    }
+                }
+                .scrollClipDisabled()
+            }
+            if !self.allMedia.isEmpty && !self.allMediaGroups.isEmpty {
+                Divider()
+                Text("Media")
+                    .font(.title2.bold())
+                    .foregroundStyle(self.theme.currentTheme.header1)
+            }
+            if !self.allMedia.isEmpty {
+                MediaGridView(allMedia: self.filteredMedia, streamingService: self.streamingService, navigation: $navigation)
+                    .focusSection()
+            }
+        }
     }
 
     @ViewBuilder private var buttonRow: some View {
