@@ -189,6 +189,12 @@ public final class SettingsModel {
         get { self.user?.preferredLangauge }
         set(newValue) { self.user?.preferredLangauge = newValue }
     }
+    
+    /// Should data media within the library maintain their sub-folders, or group all media together
+    public var flattenFolders: Bool {
+        get { self.user?.flattenFolders ?? false }
+        set(newValue) { self.user?.flattenFolders = newValue }
+    }
 
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:

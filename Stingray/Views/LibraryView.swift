@@ -10,13 +10,16 @@ import SwiftUI
 /// One library tab: a filterable, sortable grid of its media with a refresh button.
 public struct LibraryView: View {
     /// Library being displayed. Media streams into it while the view is open
-    @State public var library: any LibraryProtocol
+    public let library: any LibraryProtocol
 
     /// App navigation, forwarded to each media card
     @Binding public var navigation: NavigationPath
 
     /// Streaming service used for artwork and for resyncing the library
     public let streamingService: MediaImageProviding & LibraryProviding
+
+    /// Settings for deciding whether sub-folders get flattened on refresh
+    @Environment(SettingsModel.self) private var settings
 
     public var body: some View {
         ScrollView {
@@ -33,7 +36,7 @@ public struct LibraryView: View {
                         navigation: $navigation
                     ) {
                         Button {
-                            Task { await self.streamingService.resync(library: self.library) }
+                            Task { await self.streamingService.resync(library: self.library, flatten: self.settings.flattenFolders) }
                         }
                         label: { Text(String(localized: "Refresh")) }
 

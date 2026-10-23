@@ -40,15 +40,20 @@ public struct SettingsView: View {
     @State private var showResetSettings: Bool
 
     /// Current connection to the server, used to log the user out
-    public let streamingService: UserProviding
-    
+    public let streamingService: UserProviding & LibraryProviding
+
     /// Create a SettingsView view for altering user and app settings
     /// - Parameters:
     ///   - loginState: The login state machine
     ///   - userModel: Location where all users are stored
     ///   - user: User to load preferences for
     ///   - streamingService: Current connection to server
-    public init(loginState: Binding<LoginState>, userModel: UserModelProtocol, user: UserProtocol, streamingService: UserProviding) {
+    public init(
+        loginState: Binding<LoginState>,
+        userModel: UserModelProtocol,
+        user: UserProtocol,
+        streamingService: UserProviding & LibraryProviding
+    ) {
         self.showPinSetup = false
         self.showLogoutAlert = false
         self.showSupportStingray = false
@@ -214,6 +219,11 @@ public struct SettingsView: View {
                 }
                 DoubleButton(label: "Search TV Episode Titles", sublabel: self.settings.searchEpisodeTitles ? "Enabled" : "Disabled") {
                     self.settings.searchEpisodeTitles.toggle()
+                }
+                DoubleButton(label: "Flatten Folders", sublabel: self.settings.flattenFolders ? "Enabled" : "Disabled") {
+                    self.settings.flattenFolders.toggle()
+
+                    Task { await self.streamingService.retrieveLibraries(flatten: self.settings.flattenFolders) }
                 }
             }
 

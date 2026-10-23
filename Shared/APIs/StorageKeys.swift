@@ -60,7 +60,7 @@ public enum StorageKeys: RawRepresentable {
 public enum StoredUserKeys: String, CodingKey {
     case serviceURL, serviceType, serviceID, id, displayName, usesSubtitles, pin, autoplay, darkTheme, lightTheme, playbackSpeed
     case loadThumbnailArt, loadMediaBackgroundArt, replaceLogosWithText, preferredLangauge, searchEpisodeTitles, showFilters
-    case showSorting, showRefreshLibrary
+    case showSorting, showRefreshLibrary, flattenFolders
 }
 
 /// JSON keys of a stored `ServiceType`, which tags which service a user belongs to.

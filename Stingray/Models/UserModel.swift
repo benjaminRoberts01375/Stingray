@@ -97,6 +97,8 @@ public protocol UserProtocol: AnyObject, Codable {
     var showSorting: Bool { get set }
     /// Display a button for refreshing a library
     var showRefreshLibrary: Bool { get set }
+    /// When displaying media, should folders be shown, or should all media be shown together
+    var flattenFolders: Bool { get set }
 }
 
 /// Basic data to store about the user
@@ -212,7 +214,8 @@ public final class UserModel: UserModelProtocol {
             searchEpisodeTitles: false,
             showFilters: true,
             showSorting: true,
-            showRefreshLibrary: true
+            showRefreshLibrary: true,
+            flattenFolders: false
         )
         // Store the user
         self.storage.upsertUser(user: user)
@@ -268,6 +271,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
     public var showFilters: Bool { didSet { self.save() } }
     public var showSorting: Bool { didSet { self.save() } }
     public var showRefreshLibrary: Bool { didSet { self.save() } }
+    public var flattenFolders: Bool { didSet { self.save() } }
 
     public func attach(storage: UserStorageProtocol?) { self.storage = storage }
 
@@ -293,6 +297,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         if self.showFilters != newUser.showFilters { self.showFilters = newUser.showFilters }
         if self.showSorting != newUser.showSorting { self.showSorting = newUser.showSorting }
         if self.showRefreshLibrary != newUser.showRefreshLibrary { self.showRefreshLibrary = newUser.showRefreshLibrary }
+        if self.flattenFolders != newUser.flattenFolders { self.flattenFolders = newUser.flattenFolders }
     }
 
     /// Writes the user back to permanent storage. Called for every change, so no caller has to remember to save.
@@ -357,7 +362,8 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         searchEpisodeTitles: Bool,
         showFilters: Bool,
         showSorting: Bool,
-        showRefreshLibrary: Bool
+        showRefreshLibrary: Bool,
+        flattenFolders: Bool
     ) {
         self.id = id
         self.displayName = displayName
@@ -379,6 +385,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         self.showFilters = showFilters
         self.showSorting = showSorting
         self.showRefreshLibrary = showRefreshLibrary
+        self.flattenFolders = flattenFolders
     }
 
     /// Create a user from encoded JSON.
@@ -407,6 +414,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
             self.showFilters = (try? container.decodeIfPresent(Bool.self, forKey: .showFilters)) ?? true
             self.showSorting = (try? container.decodeIfPresent(Bool.self, forKey: .showSorting)) ?? true
             self.showRefreshLibrary = (try? container.decodeIfPresent(Bool.self, forKey: .showRefreshLibrary)) ?? true
+            self.flattenFolders = (try? container.decodeIfPresent(Bool.self, forKey: .flattenFolders)) ?? false
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -442,6 +450,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
             try container.encode(self.showFilters, forKey: .showFilters)
             try container.encode(self.showSorting, forKey: .showSorting)
             try container.encode(self.showRefreshLibrary, forKey: .showRefreshLibrary)
+            try container.encode(self.flattenFolders, forKey: .flattenFolders)
         }
         catch { throw JSONError.failedJSONEncode("User \(self.displayName)") }
     }

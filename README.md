@@ -61,8 +61,11 @@ Configure Stingray to look and feel how you want it.
 
 ## TO-Done
 
-- Playback
-  - Home video support
+- Features
+  - Playback
+    - Home video support
+  - Settings
+    - Optionally maintain media's sub-folder layout, or flatten sub-folders
 - UI
   - Allow `MediaCard`s to resize based on the type of content
   - Home videos and sub-folders have a more square layout

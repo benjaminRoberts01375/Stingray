@@ -117,7 +117,8 @@ public struct ProfilePickerView: View {
                     serviceID: user.serviceID,
                     accessToken: jellyfinData.accessToken,
                     sessionID: jellyfinData.sessionID,
-                    serviceURL: user.serviceURL
+                    serviceURL: user.serviceURL,
+                    flattenFolders: user.flattenFolders
                 ), user
             )
         }

@@ -23,7 +23,15 @@ public protocol LibraryProviding {
     /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
     var libraryStatus: LibraryStatus { get }
     /// Resync a given library with the server
-    func resync(library: any LibraryProtocol) async
+    /// - Parameters:
+    ///   - library: Library to resync
+    ///   - flatten: Should data media within the library maintain their sub-folders, or group all media together
+    func resync(library: any LibraryProtocol, flatten: Bool) async
+    
+    /// Fetch libraries and library media.
+    /// - Parameters:
+    ///   - flatten: Should media in sub-folders remain in sub-folders
+    func retrieveLibraries(flatten: Bool) async
 }
 
 /// Describes the current setup status for a downloaded library
@@ -186,13 +194,15 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - accessToken: Access token.
     ///   - sessionID: Validated session identifier.
     ///   - serviceURL: Base URL to the Jellyfin service.
+    ///   - flattenFolders: Should media in sub-folders be pulled up into their library
     public init(
         userDisplayName: String,
         userID: String,
         serviceID: String,
         accessToken: String,
         sessionID: String,
-        serviceURL: URL
+        serviceURL: URL,
+        flattenFolders: Bool
     ) {
         // APIs
         let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
@@ -224,7 +234,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 self.libraryStatus = .error(StreamingServiceErrors.serverVersionFailed(nil))
                 return
             }
-            await self.retrieveLibraries()
+            await self.retrieveLibraries(flatten: flattenFolders)
         }
     }
 
@@ -232,7 +242,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     /// - Parameters:
     ///   - response: Fetched data.
     ///   - serviceURL: Base URL.
-    private init(response: APILoginResponse, serviceURL: URL) {
+    ///   - flattenFolders: Should media in sub-folders be pulled up into their library
+    private init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool) {
         // APIs
         let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
         self.networkAPI = network
@@ -247,7 +258,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.serviceURL = serviceURL
         self.serverVersion = response.serverVersion
 
-        Task { await self.retrieveLibraries() }
+        Task { await self.retrieveLibraries(flatten: flattenFolders) }
     }
 
     /// Log into a Jellyfin server.
@@ -335,15 +346,17 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         // Sync the theme cache to the newly active user so we don't keep showing the previous user's theme
         settingsModel.themeDark = workingUser.darkTheme
         settingsModel.themeLight = workingUser.lightTheme
-        return (JellyfinModel(response: response, serviceURL: url), workingUser)
+        return (
+            JellyfinModel(response: response, serviceURL: url, flattenFolders: workingUser.flattenFolders),
+            workingUser
+        )
     }
 
     public func logout() async {
         await self.networkAPI.logoutUser(accessToken: self.accessToken)
     }
 
-    /// Fetch libraries and library media.
-    public func retrieveLibraries() async {
+    public func retrieveLibraries(flatten: Bool) async {
         // Get all libraries. They'll be empty for now
         let libraries: [LibraryModel]
         do {
@@ -365,7 +378,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
 
         self.libraryStatus = .available(libraries)
-        await self.fetchMedia(for: libraries, batchSize: 100)
+        await self.fetchMedia(for: libraries, batchSize: 100, flatten: flatten)
         self.libraryStatus = .complete(libraries)
     }
 
@@ -374,7 +387,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     /// - Parameters:
     ///   - groups: Groups to fill with media. Their media should already be `.waiting`.
     ///   - batchSize: Number of items to request per page.
-    private func fetchMedia(for groups: [any GroupMetadataProtocol], batchSize: Int) async {
+    ///   - flatten: Should media in sub-folders remain in sub-folders
+    private func fetchMedia(for groups: [any GroupMetadataProtocol], batchSize: Int, flatten: Bool) async {
         enum GroupContent {
             case success([MediaStorage])
             case error(RError)
@@ -401,8 +415,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                     count: batchSize,
                                     sortOrder: .ascending,
                                     sortBy: .sortName,
-                                    mediaTypes: [.movie, .tvShow, .homeVideo, .subFolder],
-                                    recursive: false
+                                    mediaTypes: [.movie, .tvShow, .homeVideo] + (flatten ? [] : [.subFolder]),
+                                    recursive: flatten
                                 )
                             )
                         )
@@ -510,7 +524,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
     }
 
-    public func resync(library: any LibraryProtocol) async {
+    public func resync(library: any LibraryProtocol, flatten: Bool) async {
         Log.info("Reloading the library \"\(library.title)\"...")
         // Dump all the existing media
         library.media = .waiting
@@ -518,7 +532,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         library.maturity = Set()
 
         // A bit more aggressive than retrieveLibraries since there'll be fewer requests
-        await self.fetchMedia(for: [library], batchSize: 200)
+        await self.fetchMedia(for: [library], batchSize: 200, flatten: flatten)
     }
 
     public func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
