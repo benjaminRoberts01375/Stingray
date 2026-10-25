@@ -172,11 +172,27 @@ public enum MediaStorage: Decodable, Hashable {
         /// Create a `MediaType` from the Jellyfin API
         /// - Parameter jellyfinAPI: Value used by the Jellyfin API
         public init?(jellyfinAPI: String) {
-            if jellyfinAPI == "Episode" { self = .episode }
-            else if jellyfinAPI == "Video" { self = .homeVideo }
-            else if jellyfinAPI == "Movie" { self = .movie }
-            else if jellyfinAPI == "Folder" { self = .subFolder }
-            else if jellyfinAPI == "Series" { self = .tvShow }
+            if jellyfinAPI == "Episode" {
+                self = .episode
+                return
+            }
+            else if jellyfinAPI == "Video" {
+                self = .homeVideo
+                return
+            }
+            else if jellyfinAPI == "Movie" {
+                self = .movie
+                return
+            }
+            else if jellyfinAPI == "Folder" {
+                self = .subFolder
+                return
+            }
+            else if jellyfinAPI == "Series" {
+                self = .tvShow
+                return
+            }
+            Log.warning("Unknown Media Type: \(jellyfinAPI)")
             return nil
         }
     }
