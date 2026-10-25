@@ -342,6 +342,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
     ///   - showFilters: Whether to show filter menus in library views
     ///   - showSorting: Whether to show sort menus in library views
     ///   - showRefreshLibrary: Whether to show the library refresh button
+    ///   - flattenFolders: Whether the folder structure of media should be preserved or flattened into a single group
     public init(
         serviceURL: URL,
         serviceType: ServiceType,
