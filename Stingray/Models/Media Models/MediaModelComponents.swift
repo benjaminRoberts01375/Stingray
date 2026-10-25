@@ -123,7 +123,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .subFolder:
             do { self = .subfolder(try SubFolderModel(from: decoder)) }
             catch { self = .error(error) }
-        case nil: self = .error(MediaError.unknownMediaType(mediaType))
+        case nil, .example, .error: self = .error(MediaError.unknownMediaType(mediaType))
         }
     }
 
@@ -139,21 +139,39 @@ public enum MediaStorage: Decodable, Hashable {
         case homeVideo
         /// A folder containing more media
         case subFolder
-        
+        /// An example piece of media based on the movie type
+        case example
+        /// Some media had a problem
+        case error
+
         /// Create a string for the Jellyfin API from a `MediaType`
-        var jellyfinAPI: String {
+        public var jellyfinAPI: String {
             switch self {
             case .episode: return "Epsiode"
             case .homeVideo: return "Video"
             case .movie: return "Movie"
             case .subFolder: return "Folder"
             case .tvShow: return "Series"
+            case .example: return "Examples"
+            case .error: return "Errors"
             }
         }
-        
+
+        public var readablePlural: String {
+            switch self {
+            case .movie: return String(localized: "Movies")
+            case .tvShow: return String(localized: "TV Shows")
+            case .episode: return String(localized: "Episodes")
+            case .homeVideo: return String(localized: "Home Videos")
+            case .subFolder: return String(localized: "Sub-Folders")
+            case .example: return String(localized: "Examples")
+            case .error: return String(localized: "Errors")
+            }
+        }
+
         /// Create a `MediaType` from the Jellyfin API
         /// - Parameter jellyfinAPI: Value used by the Jellyfin API
-        init?(jellyfinAPI: String) {
+        public init?(jellyfinAPI: String) {
             if jellyfinAPI == "Episode" { self = .episode }
             else if jellyfinAPI == "Video" { self = .homeVideo }
             else if jellyfinAPI == "Movie" { self = .movie }
