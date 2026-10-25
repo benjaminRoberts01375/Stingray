@@ -39,7 +39,7 @@ public protocol AdvancedNetworkProtocol {
         count: Int,
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
-        mediaTypes: [MediaType]?,
+        mediaTypes: [MediaStorage.MediaType]?,
         recursive: Bool
     ) async throws(LibraryErrors) -> [MediaStorage]
     /// Generates a URL for an image
@@ -477,7 +477,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         count: Int,
         sortOrder: LibraryMediaSortOrder,
         sortBy: LibraryMediaSortBy,
-        mediaTypes: [MediaType]?,
+        mediaTypes: [MediaStorage.MediaType]?,
         recursive: Bool
     ) async throws(LibraryErrors) -> [MediaStorage] {
         struct Root: Decodable {

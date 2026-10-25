@@ -126,20 +126,20 @@ public enum MediaStorage: Decodable, Hashable {
         case nil: self = .error(MediaError.unknownMediaType(mediaType))
         }
     }
-}
 
-/// Media types as the server names them. Used for decoding media and requesting specific types from the server.
-public enum MediaType: String {
-    /// A movie
-    case movie = "Movie"
-    /// A TV show
-    case tvShow = "Series"
-    /// A single episode of a TV show
-    case episode = "Episode"
-    /// A home video
-    case homeVideo = "Video"
-    /// A folder containing more media
-    case subFolder = "Folder"
+    /// Media types as the server names them. Used for decoding media and requesting specific types from the server.
+    public enum MediaType: String {
+        /// A movie
+        case movie = "Movie"
+        /// A TV show
+        case tvShow = "Series"
+        /// A single episode of a TV show
+        case episode = "Episode"
+        /// A home video
+        case homeVideo = "Video"
+        /// A folder containing more media
+        case subFolder = "Folder"
+    }
 }
 
 /// Holds information about a single person who worked on a piece of media.
