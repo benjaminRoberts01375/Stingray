@@ -86,6 +86,7 @@ Configure Stingray to look and feel how you want it.
   - Split the media card large title text into a separate view
   - Merge functionality between resyncing and initial library synching
   - Create a base `MetadataProtocol` and new `GroupMetadataProtocol`
+  - Moved `MediaType` into `MediaStorage`, and made the Jellyfin API strings explicit
 
 ## TO-DO List
 

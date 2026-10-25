@@ -509,7 +509,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         ]
 
         for mediaType in mediaTypes ?? [] {
-            params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.rawValue))
+            params.append(URLQueryItem(name: "includeItemTypes", value: mediaType.jellyfinAPI))
         }
 
         var mediaItems: [MediaStorage] = []

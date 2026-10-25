@@ -110,7 +110,7 @@ public enum MediaStorage: Decodable, Hashable {
         do { mediaType = try container.decode(String.self, forKey: .mediaType) }
         catch { throw JSONError.missingKey(CodingKeys.mediaType.stringValue, "Media Storage") }
 
-        switch MediaType(rawValue: mediaType) {
+        switch MediaType(jellyfinAPI: mediaType) {
         case .movie:
             do { self = .movie(try MovieModel(from: decoder)) }
             catch { self = .error(error) }
@@ -128,17 +128,39 @@ public enum MediaStorage: Decodable, Hashable {
     }
 
     /// Media types as the server names them. Used for decoding media and requesting specific types from the server.
-    public enum MediaType: String {
+    public enum MediaType {
         /// A movie
-        case movie = "Movie"
+        case movie
         /// A TV show
-        case tvShow = "Series"
+        case tvShow
         /// A single episode of a TV show
-        case episode = "Episode"
+        case episode
         /// A home video
-        case homeVideo = "Video"
+        case homeVideo
         /// A folder containing more media
-        case subFolder = "Folder"
+        case subFolder
+        
+        /// Create a string for the Jellyfin API from a `MediaType`
+        var jellyfinAPI: String {
+            switch self {
+            case .episode: return "Epsiode"
+            case .homeVideo: return "Video"
+            case .movie: return "Movie"
+            case .subFolder: return "Folder"
+            case .tvShow: return "Series"
+            }
+        }
+        
+        /// Create a `MediaType` from the Jellyfin API
+        /// - Parameter jellyfinAPI: Value used by the Jellyfin API
+        init?(jellyfinAPI: String) {
+            if jellyfinAPI == "Episode" { self = .episode }
+            else if jellyfinAPI == "Video" { self = .homeVideo }
+            else if jellyfinAPI == "Movie" { self = .movie }
+            else if jellyfinAPI == "Folder" { self = .subFolder }
+            else if jellyfinAPI == "Series" { self = .tvShow }
+            return nil
+        }
     }
 }
 
