@@ -195,7 +195,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
                 ScrollView(.horizontal) {
                     LazyHStack {
                         ForEach(self.allMediaGroups, id: \.id) { group in
-                            MediaCard(media: group, streamingService: self.streamingService, navigation: $navigation)
+                            MediaCard(media: group, streamingService: self.streamingService, navigation: $navigation, scale: .shelf)
                                 .focusSection()
                         }
                     }

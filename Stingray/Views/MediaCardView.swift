@@ -29,20 +29,26 @@ public struct MediaCard: View {
     ///   - streamingService: Streaming service to derrive URLs from
     ///   - navigation: The app's `NavigationPath`
     ///   - reserveTextSpace: Allow the MediaCard to reserve the maximum amount of space for text
+    ///   - scale: Desired size of this media card
     /// - Note: While navigation is optional, this is purely for display purposes and should be filled in.
     public init(
         media: MediaStorage,
         streamingService: MediaImageProviding,
         navigation: Binding<NavigationPath>? = nil,
-        reserveTextSpace: Bool = true
+        reserveTextSpace: Bool = true,
+        scale: Scale = .full
     ) {
         self.media = media
         self._navigation = navigation ?? .constant(NavigationPath())
         self.reserveTextSpace = reserveTextSpace
 
+        let scaleMultiplier: CGFloat = switch scale {
+        case .full: 1
+        case .shelf: 0.75
+        }
         switch media {
         case .movie, .tvShow:
-            self.size = CGSize(width: Self.minimumDimension, height: Self.maximumDimension)
+            self.size = CGSize(width: Self.minimumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
             self.blurSize = CGSize(width: 20, height: 30)
             if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
             else { self.url = nil }
@@ -52,16 +58,21 @@ public struct MediaCard: View {
             if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
             else { self.url = nil }
         case .homeVideo, .error:
-            self.size = CGSize(width: Self.maximumDimension, height: Self.maximumDimension)
+            self.size = CGSize(width: Self.maximumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
             self.blurSize = CGSize(width: 30, height: 20)
             if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 740) }
             else { self.url = nil }
         case .subfolder:
-            self.size = CGSize(width: Self.maximumDimension * 0.75, height: Self.maximumDimension * 0.75)
+            self.size = CGSize(width: Self.maximumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
             self.blurSize = CGSize(width: 30, height: 20)
             if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 555) }
             else { self.url = nil }
         }
+    }
+    
+    /// Dictates the desired scale of the MediaCard
+    public enum Scale {
+        case full, shelf
     }
 
     public var body: some View {
