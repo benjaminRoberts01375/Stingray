@@ -58,6 +58,7 @@ public struct MediaCard: View {
 
     /// Get the size for any media type
     /// - Parameter mediaType: Media type to get the size for
+    /// - Parameter size: Intended use case for this MediaCard
     /// - Returns: Size
     public static func size(for mediaType: MediaStorage.MediaType, size: Scale) -> CGSize {
         let baseHeight: Int = switch size {
