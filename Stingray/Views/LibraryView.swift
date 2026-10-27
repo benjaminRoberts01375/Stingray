@@ -66,9 +66,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     /// Streaming service used for card artwork
     public let streamingService: any MediaImageProviding
     /// Unfiltered, unsorted media. `filteredMedia` derives the displayed list from it
-    public let allMedia: [MediaStorage]
-    /// Unfiltered, unsorted media groups. `filteredMediaGroups` derives the displayed list from it
-    public let allMediaGroups: [MediaStorage]
+    private let allMedia: [MediaStorageSection]
     /// Extra buttons appended to the button row, ex. the library refresh button
     public var additionalButtons: () -> ButtonContent
     /// Selected genres. Media must match every one of them
@@ -92,55 +90,91 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     @State private var buttonRowContainerWidth: CGFloat = 0
 
     /// Media matching every applied filter, in the selected order. Computed so it always reflects the current `allMedia`
-    private var filteredMedia: [MediaStorage] { self.filterAndSort(self.allMedia) }
-
-    /// Media groups matching every applied filter, in the selected order. Computed so it always reflects the current `allMediaGroups`
-    private var filteredMediaGroups: [MediaStorage] { self.filterAndSort(self.allMediaGroups) }
-
-    /// Applies the current genre and maturity filters, then the current sort, to some media.
-    /// - Parameter media: Unfiltered, unsorted media
-    /// - Returns: The filtered and sorted media
-    private func filterAndSort(_ media: [MediaStorage]) -> [MediaStorage] {
-        var filtered = media
-        if !self.appliedGenreFilters.isEmpty {
-            // Keep only media that has every applied genre
-            filtered = filtered.filter { model in
-                self.appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
-            }
+    private var filteredMedia: [MediaStorageSection] {
+        var sortedMedia: [MediaStorageSection] = []
+        for media in self.allMedia {
+            sortedMedia
+                .append(
+                    media
+                        .filterAndSort(
+                            sortBy: self.sortBy,
+                            appliedGenreFilters: self.appliedGenreFilters,
+                            appliedMaturityRatingFilters: self.appliedMaturityRatingFilters,
+                            randomSeed: self.randomSeed,
+                            sortOrderAscending: self.sortOrderAscending
+                        )
+                )
         }
-        if !self.appliedMaturityRatingFilters.isEmpty {
-            // Keep only media that has every applied maturity
-            filtered = filtered.filter { model in
-                self.appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
-            }
-        }
-
-        // Random can't be expressed as a comparator (it would violate the strict weak ordering
-        // sorted(by:) requires), so shuffle with a seeded generator for a stable, repeatable order.
-        if self.sortBy == .random {
-            var generator = SeededGenerator(seed: self.randomSeed)
-            return filtered.shuffled(using: &generator)
-        }
-
-        // Create an on-the-fly sorting function
-        let areInOrder: (MediaStorage, MediaStorage) -> Bool
-        switch (self.sortBy, self.sortOrderAscending) {
-        case (.sortTitle, true):  areInOrder = { ($0.sortTitle) < ($1.sortTitle) }
-        case (.sortTitle, false): areInOrder = { ($0.sortTitle) > ($1.sortTitle) }
-        case (.title, true): areInOrder = { ($0.title) < ($1.title) }
-        case (.title, false): areInOrder = { ($0.title) > ($1.title) }
-        case (.duration, true): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) < ($1.mediaMetadata?.duration ?? .zero) }
-        case (.duration, false): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) > ($1.mediaMetadata?.duration ?? .zero) }
-        case (.releaseDate, true):
-            areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) < ($1.mediaMetadata?.releaseDate ?? .distantPast) }
-        case (.releaseDate, false):
-            areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) > ($1.mediaMetadata?.releaseDate ?? .distantPast) }
-        case (.random, _): return filtered // Handled above
-        }
-
-        return filtered.sorted(by: areInOrder)
+        return sortedMedia
     }
-    
+
+    /// A convienent way of storing, sorting, and filtering media
+    private struct MediaStorageSection: Identifiable {
+        /// Items to of this type
+        public private(set) var items: [MediaStorage]
+        /// There should be one `MediaType` per `MediaStorageSection`
+        public var id: MediaStorage.MediaType
+        
+        /// Create a `MediaStorageSection` with known items
+        /// - Parameters:
+        ///   - items: Items to store
+        ///   - id: Media type the items are
+        public init(items: [MediaStorage], id: MediaStorage.MediaType) {
+            self.items = items
+            self.id = id
+        }
+
+        /// Applies the current genre and maturity filters, then the current sort, to some media.
+        /// - Parameter media: Unfiltered, unsorted media
+        /// - Returns: The filtered and sorted media
+        public func filterAndSort(
+            sortBy: SortType,
+            appliedGenreFilters: Set<String>,
+            appliedMaturityRatingFilters: Set<String>,
+            randomSeed: UInt64,
+            sortOrderAscending: Bool
+        ) -> MediaStorageSection {
+            var filtered = self.items
+            if !appliedGenreFilters.isEmpty {
+                // Keep only media that has every applied genre
+                filtered = filtered.filter { model in
+                    appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
+                }
+            }
+            if !appliedMaturityRatingFilters.isEmpty {
+                // Keep only media that has every applied maturity
+                filtered = filtered.filter { model in
+                    appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
+                }
+            }
+
+            // Random can't be expressed as a comparator (it would violate the strict weak ordering
+            // sorted(by:) requires), so shuffle with a seeded generator for a stable, repeatable order.
+            if sortBy == .random {
+                var generator = SeededGenerator(seed: randomSeed)
+                return MediaStorageSection(items: filtered.shuffled(using: &generator), id: self.id)
+            }
+
+            // Create an on-the-fly sorting function
+            let areInOrder: (MediaStorage, MediaStorage) -> Bool
+            switch (sortBy, sortOrderAscending) {
+            case (.sortTitle, true):  areInOrder = { ($0.sortTitle) < ($1.sortTitle) }
+            case (.sortTitle, false): areInOrder = { ($0.sortTitle) > ($1.sortTitle) }
+            case (.title, true): areInOrder = { ($0.title) < ($1.title) }
+            case (.title, false): areInOrder = { ($0.title) > ($1.title) }
+            case (.duration, true): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) < ($1.mediaMetadata?.duration ?? .zero) }
+            case (.duration, false): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) > ($1.mediaMetadata?.duration ?? .zero) }
+            case (.releaseDate, true):
+                areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) < ($1.mediaMetadata?.releaseDate ?? .distantPast) }
+            case (.releaseDate, false):
+                areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) > ($1.mediaMetadata?.releaseDate ?? .distantPast) }
+            case (.random, _): return MediaStorageSection(items: filtered, id: self.id) // Handled above
+            }
+
+            return MediaStorageSection(items: filtered.sorted(by: areInOrder), id: self.id)
+        }
+    }
+
     /// Display media in a grid
     /// - Parameters:
     ///   - availableGenres: All genres in the media
@@ -163,16 +197,23 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         self.streamingService = streamingService
         self._navigation = navigation
 
-        var normalMedia: [MediaStorage] = []
-        var groupedMedia: [MediaStorage] = []
-        for media in allMedia {
-            switch media {
-            case .subFolder: groupedMedia.append(media)
-            case .error, .example, .homeVideo, .movie, .tvShow: normalMedia.append(media)
+        func rankMedia(_ mediaType: MediaStorage.MediaType) -> Int {
+            switch mediaType {
+            case .error: return 0
+            case .example: return 1
+            case .subFolder: return 2
+            case .homeVideo: return 3
+            case .movie: return 4
+            case .episode: return 5
+            case .tvShow: return 6
             }
         }
-        self.allMedia = normalMedia
-        self.allMediaGroups = groupedMedia
+
+        var mediaGroups: [MediaStorageSection] = []
+        for (mediaType, groupedMedia) in Dictionary(grouping: allMedia, by: \.mediaType) {
+            mediaGroups.append(MediaStorageSection(items: groupedMedia, id: mediaType))
+        }
+        self.allMedia = mediaGroups.sorted(by: { rankMedia($0.id) < rankMedia($1.id) })
     }
 
     public var body: some View {
@@ -186,31 +227,32 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { self.buttonRowContainerWidth = $0 }
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .focusSection()
-            if !self.allMediaGroups.isEmpty {
-                if !self.allMedia.isEmpty {
-                    Text("Sub-Folders")
+            ForEach(Array(self.filteredMedia.enumerated()), id: \.element.id) { index, mediaGroup in
+                if self.filteredMedia.count > 1 { // Section titles
+                    Text(mediaGroup.id.readablePlural)
                         .font(.title2.bold())
                         .foregroundStyle(self.theme.currentTheme.header1)
                 }
-                ScrollView(.horizontal) {
-                    LazyHStack {
-                        ForEach(self.allMediaGroups, id: \.id) { group in
-                            MediaCard(media: group, streamingService: self.streamingService, navigation: $navigation, scale: .shelf)
-                                .focusSection()
+                if index == self.filteredMedia.count - 1 {
+                    MediaGridView(allMedia: mediaGroup.items, streamingService: self.streamingService, navigation: $navigation)
+                        .focusSection()
+                }
+                else {
+                    ScrollView(.horizontal) {
+                        LazyHStack {
+                            ForEach(mediaGroup.items, id: \.id) { mediaStore in
+                                MediaCard(
+                                    media: mediaStore,
+                                    streamingService: self.streamingService,
+                                    navigation: $navigation,
+                                    scale: .shelf
+                                )
+                            }
                         }
                     }
-                }
-                .scrollClipDisabled()
-            }
-            if !self.allMedia.isEmpty && !self.allMediaGroups.isEmpty {
-                Divider()
-                Text("Media")
-                    .font(.title2.bold())
-                    .foregroundStyle(self.theme.currentTheme.header1)
-            }
-            if !self.allMedia.isEmpty {
-                MediaGridView(allMedia: self.filteredMedia, streamingService: self.streamingService, navigation: $navigation)
+                    .scrollClipDisabled()
                     .focusSection()
+                }
             }
         }
     }

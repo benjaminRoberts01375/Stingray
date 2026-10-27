@@ -128,7 +128,7 @@ public enum MediaStorage: Decodable, Hashable {
     }
 
     /// Media types as the server names them. Used for decoding media and requesting specific types from the server.
-    public enum MediaType {
+    public enum MediaType: CaseIterable {
         /// A movie
         case movie
         /// A TV show
@@ -194,6 +194,17 @@ public enum MediaStorage: Decodable, Hashable {
             }
             Log.warning("Unknown Media Type: \(jellyfinAPI)")
             return nil
+        }
+    }
+
+    public var mediaType: MediaType {
+        switch self {
+        case .movie: return .movie
+        case .example: return .example
+        case .tvShow: return .tvShow
+        case .homeVideo: return .homeVideo
+        case .subFolder: return .subFolder
+        case .error: return .error
         }
     }
 }
