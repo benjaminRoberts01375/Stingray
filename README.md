@@ -87,6 +87,7 @@ Configure Stingray to look and feel how you want it.
   - Merge functionality between resyncing and initial library synching
   - Create a base `MetadataProtocol` and new `GroupMetadataProtocol`
   - Moved `MediaType` into `MediaStorage`, and made the Jellyfin API strings explicit
+  - `MediaCard` sizes now refer to the art instead of the whole `MediaCard`, allowing for explicit aspect ratios
 
 ## TO-DO List
 

@@ -15,13 +15,14 @@ public struct MediaCard: View {
     @Binding public var navigation: NavigationPath
 
     public static let minimumDimension: CGFloat = 200
-    public static let maximumDimension: CGFloat = 370
+    /// Does not include height of text
+    public static let maximumDimension: CGFloat = 300
 
     public let media: MediaStorage
     public let url: URL?
     public let reserveTextSpace: Bool
     public let size: CGSize
-    public let blurSize: CGSize
+    private var blurSize: CGSize { self.size / 10 }
 
     /// Creates a button based on the media's available art. This button navigates to the media's detail view
     /// - Parameters:
@@ -42,37 +43,34 @@ public struct MediaCard: View {
         self._navigation = navigation ?? .constant(NavigationPath())
         self.reserveTextSpace = reserveTextSpace
 
-        let scaleMultiplier: CGFloat = switch scale {
-        case .full: 1
-        case .shelf: 0.75
+        let cardSize = Self.size(for: media.mediaType, size: scale)
+        self.size = cardSize
+        if let mediaID = media.id {
+            self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: Int(cardSize.width * 2))
         }
-        switch media {
-        case .movie, .tvShow:
-            self.size = CGSize(width: Self.minimumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
-            self.blurSize = CGSize(width: 20, height: 30)
-            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
-            else { self.url = nil }
-        case .example:
-            self.size = CGSize(width: 150, height: 255)
-            self.blurSize = CGSize(width: 20, height: 30)
-            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 400) }
-            else { self.url = nil }
-        case .homeVideo, .error:
-            self.size = CGSize(width: Self.maximumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
-            self.blurSize = CGSize(width: 30, height: 20)
-            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 740) }
-            else { self.url = nil }
-        case .subFolder:
-            self.size = CGSize(width: Self.maximumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
-            self.blurSize = CGSize(width: 30, height: 20)
-            if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 555) }
-            else { self.url = nil }
-        }
+        else { self.url = nil }
     }
     
     /// Dictates the desired scale of the MediaCard
     public enum Scale {
         case full, shelf
+    }
+
+    /// Get the size for any media type
+    /// - Parameter mediaType: Media type to get the size for
+    /// - Returns: Size
+    public static func size(for mediaType: MediaStorage.MediaType, size: Scale) -> CGSize {
+        let baseHeight: Int = switch size {
+        case .full: 300
+        case .shelf: 225
+        }
+
+        switch mediaType {
+        case .movie, .tvShow: return CGSize(width: baseHeight / 3 * 2, height: baseHeight) // 2:3
+        case .subFolder, .homeVideo, .error: return CGSize(width: baseHeight / 3 * 4, height: baseHeight) // 4:3
+        case .episode: return CGSize(width: baseHeight / 16 * 9, height: baseHeight) // 16:9
+        case .example: return CGSize(width: 150, height: 200) // Different height since this doesn't go in libraries
+        }
     }
 
     public var body: some View {
@@ -87,13 +85,20 @@ public struct MediaCard: View {
                             imageURL: self.url,
                             scaleType: .fill
                         )
+                        .frame(width: self.size.width, height: self.size.height)
                     }
-                    else { MediaCardNoImage() }
+                    else {
+                        MediaCardNoImage()
+                            .frame(width: self.size.width, height: self.size.height)
+                    }
                     MediaCardTitleText(title: self.media.title, reserveTextSpace: self.reserveTextSpace)
+                        .frame(width: self.size.width)
                 }
-                else { MediaCardAccessibleText(title: self.media.title) }
+                else {
+                    MediaCardAccessibleText(title: self.media.title)
+                        .frame(width: self.size.width, height: self.size.height)
+                }
             }
-            .frame(width: self.size.width, height: self.size.height)
             .background(.ultraThinMaterial)
         }
         .buttonStyle(.card)
@@ -116,9 +121,7 @@ fileprivate struct MediaCardTitleText: View {
             .lineLimit(2, reservesSpace: self.reserveTextSpace)
             .truncationMode(.tail)
             .foregroundStyle(self.theme.currentTheme.header2)
-            .padding(5)
             .frame(minHeight: 50)
-            .offset(y: -5)
         Spacer(minLength: 0)
     }
 }

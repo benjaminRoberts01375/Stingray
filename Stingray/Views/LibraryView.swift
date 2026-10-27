@@ -114,7 +114,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         public private(set) var items: [MediaStorage]
         /// There should be one `MediaType` per `MediaStorageSection`
         public var id: MediaStorage.MediaType
-        
+
         /// Create a `MediaStorageSection` with known items
         /// - Parameters:
         ///   - items: Items to store
@@ -233,11 +233,16 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
                         .font(.title2.bold())
                         .foregroundStyle(self.theme.currentTheme.header1)
                 }
-                if index == self.filteredMedia.count - 1 {
-                    MediaGridView(allMedia: mediaGroup.items, streamingService: self.streamingService, navigation: $navigation)
-                        .focusSection()
+                if index == self.filteredMedia.count - 1 {  // Main grid view
+                    MediaGridView(
+                        allMedia: mediaGroup.items,
+                        streamingService: self.streamingService,
+                        size: mediaGroup.id,
+                        navigation: $navigation
+                    )
+                    .focusSection()
                 }
-                else {
+                else { // Shelf
                     ScrollView(.horizontal) {
                         LazyHStack {
                             ForEach(mediaGroup.items, id: \.id) { mediaStore in
@@ -414,19 +419,18 @@ public struct MediaGridView: View {
     /// Columns sized to exactly one card, so cards never stretch to fill the row
     private let columns: [GridItem]
 
-    public init(allMedia: [MediaStorage], streamingService: any MediaImageProviding, navigation: Binding<NavigationPath>) {
+    public init(
+        allMedia: [MediaStorage],
+        streamingService: any MediaImageProviding,
+        size: MediaStorage.MediaType,
+        navigation: Binding<NavigationPath>
+    ) {
         self.allMedia = allMedia
         self.streamingService = streamingService
         self._navigation = navigation
 
-        let columnDimension: CGFloat = allMedia.allSatisfy { // Figure out if everything's in portrait mode, or if some are horizontally big
-            switch $0 {
-            case .movie, .example, .tvShow: return true // Displayed in portrait mode
-            case .homeVideo, .subFolder, .error: return false
-            }
-        } ? MediaCard.minimumDimension : MediaCard.maximumDimension
-
-        self.columns = [GridItem(.adaptive(minimum: columnDimension, maximum: columnDimension), spacing: Self.cardSpacing)]
+        let gridSize = MediaCard.size(for: allMedia.first?.mediaType ?? .movie, size: .full).width
+        self.columns = [GridItem(.adaptive(minimum: gridSize, maximum: gridSize), spacing: Self.cardSpacing)]
     }
 
     public var body: some View {
