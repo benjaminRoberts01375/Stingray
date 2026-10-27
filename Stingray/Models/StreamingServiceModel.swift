@@ -446,7 +446,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         // Is there a group in this array we need to get media for?
                         for media in newMedia where media.isGroup {
                             switch media {
-                            case .subfolder(let subfolder): groupsIterator.append(subfolder)
+                            case .subFolder(let subfolder): groupsIterator.append(subfolder)
                             case .error, .example, .homeVideo, .movie, .tvShow: break
                             }
                         }
@@ -488,7 +488,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             case .movie(let movie), .example(let movie): ratings = [movie.maturity]
             case .tvShow(let tvShow): ratings = [tvShow.maturity]
             case .homeVideo(let homeVideo): ratings = [homeVideo.maturity]
-            case .subfolder(let subfolder): ratings = Set(subfolder.maturity)
+            case .subFolder(let subfolder): ratings = Set(subfolder.maturity)
             case .error: ratings = [nil]
             }
             return Set(ratings.map { maturity in
@@ -586,7 +586,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     private static func find(mediaID: String, in media: [MediaStorage]) -> MediaStorage? {
         for item in media {
             if item.id == mediaID { return item }
-            if case .subfolder(let subFolder) = item,
+            if case .subFolder(let subFolder) = item,
                case .available(let subFolderMedia) = subFolder.media,
                let found = find(mediaID: mediaID, in: subFolderMedia) {
                 return found

@@ -167,7 +167,7 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         var groupedMedia: [MediaStorage] = []
         for media in allMedia {
             switch media {
-            case .subfolder: groupedMedia.append(media)
+            case .subFolder: groupedMedia.append(media)
             case .error, .example, .homeVideo, .movie, .tvShow: normalMedia.append(media)
             }
         }
@@ -380,7 +380,7 @@ public struct MediaGridView: View {
         let columnDimension: CGFloat = allMedia.allSatisfy { // Figure out if everything's in portrait mode, or if some are horizontally big
             switch $0 {
             case .movie, .example, .tvShow: return true // Displayed in portrait mode
-            case .homeVideo, .subfolder, .error: return false
+            case .homeVideo, .subFolder, .error: return false
             }
         } ? MediaCard.minimumDimension : MediaCard.maximumDimension
 

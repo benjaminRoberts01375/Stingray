@@ -62,7 +62,7 @@ public struct MediaCard: View {
             self.blurSize = CGSize(width: 30, height: 20)
             if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 740) }
             else { self.url = nil }
-        case .subfolder:
+        case .subFolder:
             self.size = CGSize(width: Self.maximumDimension * scaleMultiplier, height: Self.maximumDimension * scaleMultiplier)
             self.blurSize = CGSize(width: 30, height: 20)
             if let mediaID = media.id { self.url = streamingService.getImageURL(imageType: .primary, mediaID: mediaID, width: 555) }

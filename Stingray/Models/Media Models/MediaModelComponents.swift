@@ -20,7 +20,7 @@ public enum MediaStorage: Decodable, Hashable {
     /// Holds some home video type
     case homeVideo(any HomeVideoProtocol)
     /// Holds multiple pieces of media
-    case subfolder(any SubFolderProtocol)
+    case subFolder(any SubFolderProtocol)
     /// Represents a failure to create this media
     case error(RError)
 
@@ -35,7 +35,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example
         case .tvShow(let tvShow): return tvShow
         case .homeVideo(let homeVideo): return homeVideo
-        case .subfolder(let subfolder): return subfolder
+        case .subFolder(let subfolder): return subfolder
         case .error: return nil
         }
     }
@@ -47,7 +47,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example
         case .tvShow(let tvShow): return tvShow
         case .homeVideo(let homeVideo): return homeVideo
-        case .subfolder, .error: return nil
+        case .subFolder, .error: return nil
         }
     }
     
@@ -55,7 +55,7 @@ public enum MediaStorage: Decodable, Hashable {
     public var isGroup: Bool {
         switch self {
         case .movie, .example, .tvShow, .homeVideo, .error: return false
-        case .subfolder: return true
+        case .subFolder: return true
         }
     }
 
@@ -76,7 +76,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example.sortTitle
         case .tvShow(let tvShow): return tvShow.sortTitle
         case .homeVideo(let homeVideo): return homeVideo.sortTitle
-        case .subfolder(let subfolder): return subfolder.sortTitle
+        case .subFolder(let subfolder): return subfolder.sortTitle
         case .error: return String(localized: "Unknown Title")
         }
     }
@@ -88,7 +88,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example.title
         case .tvShow(let tvShow): return tvShow.title
         case .homeVideo(let homeVideo): return homeVideo.title
-        case .subfolder(let subfolder): return subfolder.title
+        case .subFolder(let subfolder): return subfolder.title
         case .error: return String(localized: "Unknown Title")
         }
     }
@@ -121,7 +121,7 @@ public enum MediaStorage: Decodable, Hashable {
             do { self = .homeVideo(try HomeVideoModel(from: decoder)) }
             catch { self = .error(error) }
         case .subFolder:
-            do { self = .subfolder(try SubFolderModel(from: decoder)) }
+            do { self = .subFolder(try SubFolderModel(from: decoder)) }
             catch { self = .error(error) }
         case nil, .example, .error: self = .error(MediaError.unknownMediaType(mediaType))
         }
