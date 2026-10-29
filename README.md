@@ -70,6 +70,8 @@ Configure Stingray to look and feel how you want it.
     - Allow `MediaCard`s to resize based on the type of content
     - Home videos and sub-folders have a more square layout
     - Sub-folders sit in a top bar at the top of libraries
+      - By default they're collapsed but can be expanded
+      - They show their titles conditionally to save space
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes

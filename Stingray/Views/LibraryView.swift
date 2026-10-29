@@ -108,73 +108,6 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
         return sortedMedia
     }
 
-    /// A convienent way of storing, sorting, and filtering media
-    private struct MediaStorageSection: Identifiable {
-        /// Items to of this type
-        public private(set) var items: [MediaStorage]
-        /// There should be one `MediaType` per `MediaStorageSection`
-        public var id: MediaStorage.MediaType
-
-        /// Create a `MediaStorageSection` with known items
-        /// - Parameters:
-        ///   - items: Items to store
-        ///   - id: Media type the items are
-        public init(items: [MediaStorage], id: MediaStorage.MediaType) {
-            self.items = items
-            self.id = id
-        }
-
-        /// Applies the current genre and maturity filters, then the current sort, to some media.
-        /// - Parameter media: Unfiltered, unsorted media
-        /// - Returns: The filtered and sorted media
-        public func filterAndSort(
-            sortBy: SortType,
-            appliedGenreFilters: Set<String>,
-            appliedMaturityRatingFilters: Set<String>,
-            randomSeed: UInt64,
-            sortOrderAscending: Bool
-        ) -> MediaStorageSection {
-            var filtered = self.items
-            if !appliedGenreFilters.isEmpty {
-                // Keep only media that has every applied genre
-                filtered = filtered.filter { model in
-                    appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
-                }
-            }
-            if !appliedMaturityRatingFilters.isEmpty {
-                // Keep only media that has every applied maturity
-                filtered = filtered.filter { model in
-                    appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
-                }
-            }
-
-            // Random can't be expressed as a comparator (it would violate the strict weak ordering
-            // sorted(by:) requires), so shuffle with a seeded generator for a stable, repeatable order.
-            if sortBy == .random {
-                var generator = SeededGenerator(seed: randomSeed)
-                return MediaStorageSection(items: filtered.shuffled(using: &generator), id: self.id)
-            }
-
-            // Create an on-the-fly sorting function
-            let areInOrder: (MediaStorage, MediaStorage) -> Bool
-            switch (sortBy, sortOrderAscending) {
-            case (.sortTitle, true):  areInOrder = { ($0.sortTitle) < ($1.sortTitle) }
-            case (.sortTitle, false): areInOrder = { ($0.sortTitle) > ($1.sortTitle) }
-            case (.title, true): areInOrder = { ($0.title) < ($1.title) }
-            case (.title, false): areInOrder = { ($0.title) > ($1.title) }
-            case (.duration, true): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) < ($1.mediaMetadata?.duration ?? .zero) }
-            case (.duration, false): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) > ($1.mediaMetadata?.duration ?? .zero) }
-            case (.releaseDate, true):
-                areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) < ($1.mediaMetadata?.releaseDate ?? .distantPast) }
-            case (.releaseDate, false):
-                areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) > ($1.mediaMetadata?.releaseDate ?? .distantPast) }
-            case (.random, _): return MediaStorageSection(items: filtered, id: self.id) // Handled above
-            }
-
-            return MediaStorageSection(items: filtered.sorted(by: areInOrder), id: self.id)
-        }
-    }
-
     /// Display media in a grid
     /// - Parameters:
     ///   - availableGenres: All genres in the media
@@ -228,34 +161,23 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .focusSection()
             ForEach(Array(self.filteredMedia.enumerated()), id: \.element.id) { index, mediaGroup in
-                if self.filteredMedia.count > 1 { // Section titles
-                    Text(mediaGroup.id.readablePlural)
-                        .font(.title2.bold())
-                        .foregroundStyle(self.theme.currentTheme.header1)
-                }
                 if index == self.filteredMedia.count - 1 {  // Main grid view
-                    MediaGridView(
-                        allMedia: mediaGroup.items,
+                    MediaGridToggleView(
+                        showLabels: self.filteredMedia.count > 1,
+                        startExpanded: true,
+                        media: mediaGroup,
                         streamingService: self.streamingService,
-                        size: mediaGroup.id,
                         navigation: $navigation
                     )
-                    .focusSection()
                 }
-                else { // Shelf
-                    ScrollView(.horizontal) {
-                        LazyHStack {
-                            ForEach(mediaGroup.items, id: \.id) { mediaStore in
-                                MediaCard(
-                                    media: mediaStore,
-                                    streamingService: self.streamingService,
-                                    navigation: $navigation,
-                                    scale: .shelf
-                                )
-                            }
-                        }
-                    }
-                    .scrollClipDisabled()
+                else { // Shelves
+                    MediaGridToggleView(
+                        showLabels: true,
+                        startExpanded: false,
+                        media: mediaGroup,
+                        streamingService: self.streamingService,
+                        navigation: $navigation
+                    )
                     .focusSection()
                 }
             }
@@ -359,6 +281,73 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
     }
 }
 
+/// A convienent way of storing, sorting, and filtering media
+fileprivate struct MediaStorageSection: Identifiable {
+    /// Items to of this type
+    public private(set) var items: [MediaStorage]
+    /// There should be one `MediaType` per `MediaStorageSection`
+    public var id: MediaStorage.MediaType
+
+    /// Create a `MediaStorageSection` with known items
+    /// - Parameters:
+    ///   - items: Items to store
+    ///   - id: Media type the items are
+    public init(items: [MediaStorage], id: MediaStorage.MediaType) {
+        self.items = items
+        self.id = id
+    }
+
+    /// Applies the current genre and maturity filters, then the current sort, to some media.
+    /// - Parameter media: Unfiltered, unsorted media
+    /// - Returns: The filtered and sorted media
+    public func filterAndSort(
+        sortBy: SortType,
+        appliedGenreFilters: Set<String>,
+        appliedMaturityRatingFilters: Set<String>,
+        randomSeed: UInt64,
+        sortOrderAscending: Bool
+    ) -> MediaStorageSection {
+        var filtered = self.items
+        if !appliedGenreFilters.isEmpty {
+            // Keep only media that has every applied genre
+            filtered = filtered.filter { model in
+                appliedGenreFilters.allSatisfy { model.genres?.contains($0) ?? false }
+            }
+        }
+        if !appliedMaturityRatingFilters.isEmpty {
+            // Keep only media that has every applied maturity
+            filtered = filtered.filter { model in
+                appliedMaturityRatingFilters.contains(model.mediaMetadata?.maturity ?? "")
+            }
+        }
+
+        // Random can't be expressed as a comparator (it would violate the strict weak ordering
+        // sorted(by:) requires), so shuffle with a seeded generator for a stable, repeatable order.
+        if sortBy == .random {
+            var generator = SeededGenerator(seed: randomSeed)
+            return MediaStorageSection(items: filtered.shuffled(using: &generator), id: self.id)
+        }
+
+        // Create an on-the-fly sorting function
+        let areInOrder: (MediaStorage, MediaStorage) -> Bool
+        switch (sortBy, sortOrderAscending) {
+        case (.sortTitle, true):  areInOrder = { ($0.sortTitle) < ($1.sortTitle) }
+        case (.sortTitle, false): areInOrder = { ($0.sortTitle) > ($1.sortTitle) }
+        case (.title, true): areInOrder = { ($0.title) < ($1.title) }
+        case (.title, false): areInOrder = { ($0.title) > ($1.title) }
+        case (.duration, true): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) < ($1.mediaMetadata?.duration ?? .zero) }
+        case (.duration, false): areInOrder = { ($0.mediaMetadata?.duration ?? .zero) > ($1.mediaMetadata?.duration ?? .zero) }
+        case (.releaseDate, true):
+            areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) < ($1.mediaMetadata?.releaseDate ?? .distantPast) }
+        case (.releaseDate, false):
+            areInOrder = { ($0.mediaMetadata?.releaseDate ?? .distantPast) > ($1.mediaMetadata?.releaseDate ?? .distantPast) }
+        case (.random, _): return MediaStorageSection(items: filtered, id: self.id) // Handled above
+        }
+
+        return MediaStorageSection(items: filtered.sorted(by: areInOrder), id: self.id)
+    }
+}
+
 /// Orderings offered by the library and search sort menu.
 fileprivate enum SortType: CaseIterable {
     /// The server's sort title, which honors user-set aliases. The default
@@ -404,8 +393,96 @@ fileprivate struct SeededGenerator: RandomNumberGenerator {
     }
 }
 
+private struct MediaGridToggleView: View {
+    @Environment(ThemeModel.self) var theme
+
+    @State private var isExpanded: Bool
+    @State private var maxFits: Int
+    @State private var showShowAll: Bool
+
+    @Binding public var navigation: NavigationPath
+
+    private let media: MediaStorageSection
+    private let showLabels: Bool
+    public let streamingService: MediaImageProviding
+    
+    /// Horizontal spacing between cards when collapsed into a shelf
+    public static let shelfCardSpacing: CGFloat = 50
+
+    /// Create a MediaGridToggleView that can show and hide media with controls and type label
+    /// - Parameters:
+    ///   - showLabels: Whether or not to show a label
+    ///   - startExpanded: Should this toggle start expanded
+    ///   - media: Media to display
+    ///   - streamingService: Streaming service that hosts the images
+    ///   - navigation: App navigation
+    public init(
+        showLabels: Bool,
+        startExpanded: Bool,
+        media: MediaStorageSection,
+        streamingService: MediaImageProviding,
+        navigation: Binding<NavigationPath>
+    ) {
+        self.isExpanded = startExpanded
+        self.media = media
+        self.showLabels = showLabels
+        self.streamingService = streamingService
+        self._navigation = navigation
+        self.maxFits = 0
+        self.showShowAll = false
+    }
+
+    var body: some View {
+        VStack {
+            HStack(spacing: 0) {
+                if self.showLabels {
+                    Text(self.media.id.readablePlural)
+                        .font(.title2.bold())
+                        .foregroundStyle(self.theme.currentTheme.header1)
+                }
+                if self.media.items.count > self.maxFits {
+                    Button { self.isExpanded.toggle() }
+                    label: { Text(self.isExpanded ? "Show Less" : "Show All") }
+                        .padding(.horizontal)
+                }
+                Spacer(minLength: 0)
+            }
+            .focusSection()
+            if self.isExpanded { // Expanded grid-mode
+                MediaGridView(
+                    allMedia: self.media.items,
+                    streamingService: self.streamingService,
+                    size: self.media.id,
+                    navigation: $navigation
+                )
+            }
+            else { // Shelf-mode
+                ScrollView(.horizontal) { // Only shows one row of items
+                    LazyHStack(spacing: Self.shelfCardSpacing) {
+                        ForEach(Array(self.media.items.prefix(self.maxFits)), id: \.id) { mediaStore in
+                            MediaCard(
+                                media: mediaStore,
+                                streamingService: self.streamingService,
+                                navigation: $navigation,
+                                scale: .shelf
+                            )
+                        }
+                    }
+                }
+                .scrollClipDisabled()
+                .focusSection()
+            }
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } // Calculate the available space for MediaCards
+        action: { _, newWidth in
+            let mediaDimension = MediaCard.size(for: self.media.id, size: .shelf).width
+            self.maxFits = Int(newWidth / (mediaDimension + Self.shelfCardSpacing))
+        }
+    }
+}
+
 /// A lazily loaded, adaptive grid of media cards.
-public struct MediaGridView: View {
+private struct MediaGridView: View {
     /// Gap between cards, horizontally and vertically
     public static let cardSpacing = 50.0
     /// Media to display, already filtered and sorted
