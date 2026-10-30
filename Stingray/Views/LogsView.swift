@@ -57,6 +57,7 @@ public struct LogsView: View {
                             }
                         }
                     }
+                    .scrollClipDisabled()
                 }
             }
             else {

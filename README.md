@@ -76,6 +76,7 @@ Configure Stingray to look and feel how you want it.
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes
   - Enable localizations for media types
+  - Fixed clipping of top log entry when viewing logs
 - Performance
   - Reduced number of checks for library filters and maturity settings
 - Cleanups
