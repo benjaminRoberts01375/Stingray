@@ -71,7 +71,7 @@ public final class HomeVideoModel: HomeVideoProtocol {
         self.genres = (try? container.decodeIfPresent(Set<String>.self, forKey: .genres)) ?? []
         self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
         self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
-        self.tagline = (try? container.decodeIfPresent(String.self, forKey: .taglines))
+        self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first
 
         // Runtime ticks need conversion
         if let runtimeTicks = try? container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {
