@@ -115,7 +115,7 @@ fileprivate struct DashboardRow: View {
     let fetchMedia: () async -> [MediaStorage]
 
     /// Progress of this row's fetch
-    @State private var status: DashboardRowStatus = .unstarted
+    @State private var status: DashboardRowStatus = .waiting
 
     @Environment(ThemeModel.self) private var theme
 
@@ -142,8 +142,8 @@ fileprivate struct DashboardRow: View {
                     }
             }
 
-            switch status {
-            case .unstarted, .retrieving:
+            switch self.status {
+            case .waiting, .retrieving:
                 MediaNavigationLoadingPicker()
             case .complete(let newMedia):
                 MediaPicker(streamingService: self.streamingService, pickerMedia: newMedia, navigation: $navigation)
@@ -158,7 +158,7 @@ fileprivate struct DashboardRow: View {
     /// Progress of a row's media fetch
     enum DashboardRowStatus {
         /// The fetch has not been kicked off yet
-        case unstarted
+        case waiting
         /// The fetch is in flight
         case retrieving
         /// Media is available and ready to display
