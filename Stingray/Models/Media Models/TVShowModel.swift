@@ -8,8 +8,6 @@
 import SwiftUI
 
 public protocol TVShowProtocol: MediaMetadataProtocol, SpecialFeaturesProtocol {
-    /// Short descriptor of the media.
-    var tagline: String { get }
     /// Seasons for this TV Show, which contain episodes, which themselves contain media sources
     var seasons: TVSeasonsStatus { get }
 
@@ -59,7 +57,7 @@ public enum TVSeasonsStatus {
 public final class TVShowModel: TVShowProtocol, Decodable {
     public var title: String
     public var sortTitle: String
-    public var tagline: String
+    public var tagline: String?
     public var description: String
     public var imageTags: (any MediaImagesProtocol)?
     public var imageBlurHashes: (any MediaImagesProtocol)?
@@ -117,7 +115,7 @@ public final class TVShowModel: TVShowProtocol, Decodable {
 
         self.title = title
         self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
-        self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first ?? ""
+        self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first
         self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
         self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)

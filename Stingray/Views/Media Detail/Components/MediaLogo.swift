@@ -47,17 +47,15 @@ public struct MediaLogoView: View {
             }
             else {
                 Text(self.media.title)
-                    .font(.title)
-                    .bold()
+                    .font(.title.bold())
                     .foregroundStyle(self.theme.currentTheme.header1)
             }
-            // TODO: Get the tag line working
-//            if !self.media.tagline.isEmpty {
-//                Text(media.tagline)
-//                    .italic()
-//                    .multilineTextAlignment(.center)
-//                    .frame(maxWidth: 800, alignment: .center)
-//            }
+            if let tagline = self.media.tagline {
+                Text(tagline)
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 800, alignment: .center)
+            }
             MediaLogoHeader(media: self.media)
         }
     }

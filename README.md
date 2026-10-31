@@ -72,6 +72,7 @@ Configure Stingray to look and feel how you want it.
     - Sub-folders sit in a top bar at the top of libraries
       - By default they're collapsed but can be expanded
       - They show their titles conditionally to save space
+    - Media without a tagline no longer takes up the space for a tagline
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes

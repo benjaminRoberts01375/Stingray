@@ -27,6 +27,7 @@ public final class HomeVideoModel: HomeVideoProtocol {
     public var duration: Duration?
     public var people: [any MediaPersonProtocol]
     public var mediaSources: [any MediaSourceProtocol]
+    public var tagline: String?
 
     // Hashable conformance
     public func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -46,6 +47,7 @@ public final class HomeVideoModel: HomeVideoProtocol {
         case releaseDate = "PremiereDate"
         case duration = "RunTimeTicks"
         case people = "People"
+        case tagline = "Tagline"
     }
 
     /// Creates a home video from JSON
@@ -69,6 +71,7 @@ public final class HomeVideoModel: HomeVideoProtocol {
         self.genres = (try? container.decodeIfPresent(Set<String>.self, forKey: .genres)) ?? []
         self.maturity = try? container.decodeIfPresent(String.self, forKey: .maturity)
         self.people = (try? container.decodeIfPresent([MediaPerson].self, forKey: .people)) ?? []
+        self.tagline = (try? container.decodeIfPresent(String.self, forKey: .tagline))
 
         // Runtime ticks need conversion
         if let runtimeTicks = try? container.decodeIfPresent(Int.self, forKey: .duration), runtimeTicks != 0 {

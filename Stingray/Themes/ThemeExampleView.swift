@@ -49,7 +49,7 @@ public struct ThemeExampleView: View {
 /// Some media designed to be displayed as an example
 fileprivate final class ExampleMedia: MovieProtocol {
     public let sortTitle: String
-    public let tagline: String
+    public let tagline: String?
     public let maturity: String?
     public let releaseDate: Date?
     public var genres: Set<String>

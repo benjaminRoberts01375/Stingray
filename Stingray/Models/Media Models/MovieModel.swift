@@ -8,8 +8,6 @@
 import SwiftUI
 
 public protocol MovieProtocol: MediaMetadataProtocol, SpecialFeaturesProtocol {
-    /// Short descriptor of the media.
-    var tagline: String { get }
     /// All available content sources for this movie and its various versions
     var mediaSources: [any MediaSourceProtocol] { get }
 }
@@ -18,7 +16,7 @@ public protocol MovieProtocol: MediaMetadataProtocol, SpecialFeaturesProtocol {
 public final class MovieModel: MovieProtocol {
     public var title: String
     public var sortTitle: String
-    public var tagline: String
+    public var tagline: String?
     public var description: String
     public var imageTags: (any MediaImagesProtocol)?
     public var imageBlurHashes: (any MediaImagesProtocol)?
@@ -68,7 +66,7 @@ public final class MovieModel: MovieProtocol {
         let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? String(localized: "Unknown Movie")
         self.title = title
         self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
-        self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first ?? ""
+        self.tagline = (try? container.decodeIfPresent([String].self, forKey: .taglines))?.first
         self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
         self.imageTags = (try? container.decodeIfPresent(MediaImages.self, forKey: .imageTags)) ??
         MediaImages(thumbnail: nil, logo: nil, primary: nil)

@@ -33,6 +33,8 @@ public protocol MediaMetadataProtocol: Identifiable, MetadataProtocol {
     var description: String { get }
     /// Those involved with the media in its entirety
     var people: [any MediaPersonProtocol] { get }
+    /// Short descriptor of the media.
+    var tagline: String? { get }
 }
 
 /// Media that can have special features. Ex. movies and TV shows, but not home videos.
