@@ -55,7 +55,7 @@ public protocol MediaPersonProtocol {
     /// How they contributed to the media.
     var role: String { get }
     /// Preview hashes
-    var imageHashes: MediaImageBlurHashes? { get } // TODO: This should probably be a protocol
+    var imageHashes: (any MediaImagesProtocol)? { get }
 }
 
 /// Track image IDs for a piece of media

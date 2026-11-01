@@ -92,6 +92,7 @@ Configure Stingray to look and feel how you want it.
   - Create a base `MetadataProtocol` and new `GroupMetadataProtocol`
   - Moved `MediaType` into `MediaStorage`, and made the Jellyfin API strings explicit
   - `MediaCard` sizes now refer to the art instead of the whole `MediaCard`, allowing for explicit aspect ratios
+  - `MediaPersonProtocol` now requires a `MediaImagesProtocol` instead of a concrete `MediaImageBlurHashes`
 
 ## TO-DO List
 

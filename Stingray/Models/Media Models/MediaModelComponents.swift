@@ -215,7 +215,7 @@ public final class MediaPerson: MediaPersonProtocol, Identifiable, Decodable {
     public var id: String
     public var name: String
     public var role: String
-    public var imageHashes: MediaImageBlurHashes?
+    public var imageHashes: (any MediaImagesProtocol)?
 
     public enum CodingKeys: String, CodingKey {
         case id = "Id"
