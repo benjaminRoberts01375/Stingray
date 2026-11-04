@@ -439,11 +439,11 @@ private struct MediaGridToggleView: View {
                     Text(self.media.id.readablePlural)
                         .font(.title2.bold())
                         .foregroundStyle(self.theme.currentTheme.header1)
-                }
-                if self.media.items.count > self.maxFits {
-                    Button { self.isExpanded.toggle() }
-                    label: { Text(self.isExpanded ? "Show Less" : "Show All") }
-                        .padding(.horizontal)
+                    if self.media.items.count > self.maxFits {
+                        Button { self.isExpanded.toggle() }
+                        label: { Text(self.isExpanded ? "Show Less" : "Show All") }
+                            .padding(.horizontal)
+                    }
                 }
                 Spacer(minLength: 0)
             }
