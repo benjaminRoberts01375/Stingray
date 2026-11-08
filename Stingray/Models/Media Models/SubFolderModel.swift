@@ -53,7 +53,7 @@ public final class SubFolderModel: SubFolderProtocol, Decodable {
         // Easy decodable stuff
         self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? UUID().uuidString
         self.parentID = (try? container.decodeIfPresent(String.self, forKey: .parentID)) ?? UUID().uuidString
-        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? String(localized: "Unknown Movie")
+        let title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? String(localized: "Unknown Sub-Folder")
         self.title = title
         self.sortTitle = (try? container.decodeIfPresent(String.self, forKey: .sortTitle)) ?? title
         self.description = (try? container.decodeIfPresent(String.self, forKey: .description)) ?? ""
