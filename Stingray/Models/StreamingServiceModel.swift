@@ -499,18 +499,6 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         })
     }
 
-    /// Remove media from the top level of a library, such as once it's been moved into a sub-folder.
-    /// - Parameters:
-    ///   - mediaIDs: IDs of the media to remove.
-    ///   - library: Library to remove the media from.
-    private func remove(mediaIDs: Set<String>, from library: any LibraryProtocol) {
-        guard case .available(var existingItems) = library.media
-        else { return }
-        library.media = .waiting // Micro optimizing >:D
-        existingItems.removeAll { $0.id.map(mediaIDs.contains) ?? false }
-        library.media = .available(existingItems)
-    }
-
     public func retrieveRecentlyAdded(_ contentType: RecentlyAddedMediaType) async -> [MediaStorage] {
         do { return try await networkAPI.getRecentlyAdded(contentType: contentType, accessToken: accessToken) }
         catch { return [] }
