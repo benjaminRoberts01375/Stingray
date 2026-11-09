@@ -134,11 +134,12 @@ public struct FilteredMediaGridView<ButtonContent: View>: View {
             switch mediaType {
             case .error: return 0
             case .example: return 1
-            case .subFolder: return 2
-            case .homeVideo: return 3
-            case .movie: return 4
-            case .episode: return 5
-            case .tvShow: return 6
+            case .collection: return 2
+            case .subFolder: return 3
+            case .homeVideo: return 4
+            case .movie: return 5
+            case .episode: return 6
+            case .tvShow: return 7
             }
         }
 

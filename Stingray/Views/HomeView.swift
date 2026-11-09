@@ -228,6 +228,8 @@ public struct MediaDetailLoader: View {
                 else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
             case .subFolder(let subfolder):
                 MediaGroupLoader(subfolder: subfolder, streamingService: self.streamingService, navigation: $navigation)
+            case .collection(let collection):
+                MediaGroupLoader(subfolder: collection, streamingService: self.streamingService, navigation: $navigation)
             case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load media"))
             }
         case .temporarilyNotFound:
@@ -390,6 +392,7 @@ public struct LibrariesInfoView: View {
             case .example: counters[String(localized: "Examples"), default: 0] += 1
             case .tvShow: counters[String(localized: "TV Shows"), default: 0] += 1
             case .homeVideo: counters[String(localized: "Home Videos"), default: 0] += 1
+            case .collection: counters[String(localized: "Collections"), default: 0] += 1
             case .subFolder(let subfolder):
                 switch subfolder.media {
                 case .waiting, .error: break

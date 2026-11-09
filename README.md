@@ -68,7 +68,8 @@ Configure Stingray to look and feel how you want it.
     - Optionally maintain media's sub-folder layout, or flatten sub-folders
   - UI
     - Allow `MediaCard`s to resize based on the type of content
-    - Home videos and sub-folders have a more square layout
+      - Home videos and sub-folders have a 4:3 layout instead of 2:3 (2x in width)
+    - Support Jellyfin Collections
     - Sub-folders sit in a top bar at the top of libraries
       - By default they're collapsed but can be expanded
       - They show their titles conditionally to save space
@@ -108,7 +109,6 @@ Configure Stingray to look and feel how you want it.
 ### Libraries
 
 - [ ] Rework library structure to support more library types, like collections and group by actor.
-- [ ] Collections.
 - [ ] Playlists.
 
 ### Playback

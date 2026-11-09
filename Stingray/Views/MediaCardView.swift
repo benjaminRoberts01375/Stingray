@@ -67,7 +67,7 @@ public struct MediaCard: View {
         }
 
         switch mediaType {
-        case .movie, .tvShow: return CGSize(width: baseHeight / 3 * 2, height: baseHeight) // 2:3
+        case .movie, .tvShow, .collection: return CGSize(width: baseHeight / 3 * 2, height: baseHeight) // 2:3
         case .subFolder, .homeVideo, .error: return CGSize(width: baseHeight / 3 * 4, height: baseHeight) // 4:3
         case .episode: return CGSize(width: baseHeight / 16 * 9, height: baseHeight) // 16:9
         case .example: return CGSize(width: 150, height: 200) // Different height since this doesn't go in libraries

@@ -415,7 +415,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                     count: batchSize,
                                     sortOrder: .ascending,
                                     sortBy: .sortName,
-                                    mediaTypes: [.movie, .tvShow, .homeVideo] + (flatten ? [] : [.subFolder]),
+                                    mediaTypes: [.movie, .tvShow, .homeVideo, .collection] + (flatten ? [] : [.subFolder]),
                                     recursive: flatten
                                 )
                             )
@@ -447,6 +447,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         for media in newMedia where media.isGroup {
                             switch media {
                             case .subFolder(let subfolder): groupsIterator.append(subfolder)
+                            case .collection(let collection): groupsIterator.append(collection)
                             case .error, .example, .homeVideo, .movie, .tvShow: break
                             }
                         }
@@ -483,15 +484,16 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         group.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
         group.maturity.formUnion(newMedia.flatMap { media -> Set<String> in
             // Individual media carry a single rating, while sub-folders have already gathered the ratings of their contents
-            let ratings: Set<String?>
+            let maturity: Set<String?>
             switch media {
-            case .movie(let movie), .example(let movie): ratings = [movie.maturity]
-            case .tvShow(let tvShow): ratings = [tvShow.maturity]
-            case .homeVideo(let homeVideo): ratings = [homeVideo.maturity]
-            case .subFolder(let subfolder): ratings = Set(subfolder.maturity)
-            case .error: ratings = [nil]
+            case .movie(let movie), .example(let movie): maturity = [movie.maturity]
+            case .tvShow(let tvShow): maturity = [tvShow.maturity]
+            case .homeVideo(let homeVideo): maturity = [homeVideo.maturity]
+            case .subFolder(let subfolder): maturity = Set(subfolder.maturity)
+            case .collection(let collection): maturity = Set(collection.maturity)
+            case .error: maturity = [nil]
             }
-            return Set(ratings.map { maturity in
+            return Set(maturity.map { maturity in
                 guard let maturity, maturity != "NR", maturity != "Unknown"
                 else { return "Not Rated" }
                 return maturity

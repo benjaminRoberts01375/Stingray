@@ -21,6 +21,8 @@ public enum MediaStorage: Decodable, Hashable {
     case homeVideo(any HomeVideoProtocol)
     /// Holds multiple pieces of media
     case subFolder(any SubFolderProtocol)
+    /// Holds multiple pieces of media to be proxied
+    case collection(any CollectionProtocol)
     /// Represents a failure to create this media
     case error(RError)
 
@@ -36,6 +38,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .tvShow(let tvShow): return tvShow
         case .homeVideo(let homeVideo): return homeVideo
         case .subFolder(let subfolder): return subfolder
+        case .collection(let collection): return collection
         case .error: return nil
         }
     }
@@ -47,7 +50,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .example(let example): return example
         case .tvShow(let tvShow): return tvShow
         case .homeVideo(let homeVideo): return homeVideo
-        case .subFolder, .error: return nil
+        case .subFolder, .collection, .error: return nil
         }
     }
     
@@ -55,7 +58,7 @@ public enum MediaStorage: Decodable, Hashable {
     public var isGroup: Bool {
         switch self {
         case .movie, .example, .tvShow, .homeVideo, .error: return false
-        case .subFolder: return true
+        case .subFolder, .collection: return true
         }
     }
 
@@ -77,6 +80,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .tvShow(let tvShow): return tvShow.sortTitle
         case .homeVideo(let homeVideo): return homeVideo.sortTitle
         case .subFolder(let subfolder): return subfolder.sortTitle
+        case .collection(let collection): return collection.sortTitle
         case .error: return String(localized: "Unknown Title")
         }
     }
@@ -89,6 +93,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .tvShow(let tvShow): return tvShow.title
         case .homeVideo(let homeVideo): return homeVideo.title
         case .subFolder(let subfolder): return subfolder.title
+        case .collection(let collection): return collection.title
         case .error: return String(localized: "Unknown Title")
         }
     }
@@ -123,6 +128,9 @@ public enum MediaStorage: Decodable, Hashable {
         case .subFolder:
             do { self = .subFolder(try SubFolderModel(from: decoder)) }
             catch { self = .error(error) }
+        case .collection:
+            do { self = .collection(try CollectionModel(from: decoder)) }
+            catch { self = .error(error) }
         case nil, .example, .error: self = .error(MediaError.unknownMediaType(mediaType))
         }
     }
@@ -139,6 +147,8 @@ public enum MediaStorage: Decodable, Hashable {
         case homeVideo
         /// A folder containing more media
         case subFolder
+        /// Groups of related media
+        case collection
         /// An example piece of media based on the movie type
         case example
         /// Some media had a problem
@@ -151,6 +161,7 @@ public enum MediaStorage: Decodable, Hashable {
             case .homeVideo: return "Video"
             case .movie: return "Movie"
             case .subFolder: return "Folder"
+            case .collection: return "BoxSet"
             case .tvShow: return "Series"
             case .example: return "Examples"
             case .error: return "Errors"
@@ -164,6 +175,7 @@ public enum MediaStorage: Decodable, Hashable {
             case .episode: return String(localized: "Episodes")
             case .homeVideo: return String(localized: "Home Videos")
             case .subFolder: return String(localized: "Sub-Folders")
+            case .collection: return String(localized: "Collections")
             case .example: return String(localized: "Examples")
             case .error: return String(localized: "Errors")
             }
@@ -172,28 +184,16 @@ public enum MediaStorage: Decodable, Hashable {
         /// Create a `MediaType` from the Jellyfin API
         /// - Parameter jellyfinAPI: Value used by the Jellyfin API
         public init?(jellyfinAPI: String) {
-            if jellyfinAPI == "Episode" {
-                self = .episode
-                return
+            if jellyfinAPI == "Video" { self = .homeVideo }
+            else if jellyfinAPI == "Movie" { self = .movie }
+            else if jellyfinAPI == "Folder" { self = .subFolder }
+            else if jellyfinAPI == "Series" { self = .tvShow }
+            else if jellyfinAPI == "BoxSet" { self = .collection }
+            else if jellyfinAPI == "Episode" { self = .episode }
+            else {
+                Log.warning("Unknown Media Type: \(jellyfinAPI)")
+                return nil
             }
-            else if jellyfinAPI == "Video" {
-                self = .homeVideo
-                return
-            }
-            else if jellyfinAPI == "Movie" {
-                self = .movie
-                return
-            }
-            else if jellyfinAPI == "Folder" {
-                self = .subFolder
-                return
-            }
-            else if jellyfinAPI == "Series" {
-                self = .tvShow
-                return
-            }
-            Log.warning("Unknown Media Type: \(jellyfinAPI)")
-            return nil
         }
     }
 
@@ -204,6 +204,7 @@ public enum MediaStorage: Decodable, Hashable {
         case .tvShow: return .tvShow
         case .homeVideo: return .homeVideo
         case .subFolder: return .subFolder
+        case .collection: return .collection
         case .error: return .error
         }
     }
