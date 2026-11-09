@@ -39,6 +39,9 @@ public struct SettingsView: View {
     /// Controls when to show a dialog box for resetting settings
     @State private var showResetSettings: Bool
 
+    /// Visible width of the library visibility row, so its buttons can stretch to fill it
+    @State private var libraryRowWidth: CGFloat
+
     /// Current connection to the server, used to log the user out
     public let streamingService: UserProviding & LibraryProviding
 
@@ -60,6 +63,7 @@ public struct SettingsView: View {
         self.showLogs = false
         self.showRefreshLogin = false
         self.showResetSettings = false
+        self.libraryRowWidth = 0
         self._loginState = loginState
         self.userModel = userModel
         self.user = user
@@ -225,6 +229,42 @@ public struct SettingsView: View {
 
                     Task { await self.streamingService.retrieveLibraries(flatten: self.settings.flattenFolders) }
                 }
+            }
+
+            // MARK: Show and Hide Libraries
+            switch self.streamingService.libraryStatus {
+            case .available(let libraries), .complete(let libraries):
+                Section(header: Text(String(localized: "Show and Hide Libraries")).bold()) {
+                    // Only libraries the server returns are listed, so stale hidden IDs never appear
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 5) {
+                            ForEach(libraries, id: \.id) { library in
+                                let isHidden = self.settings.hiddenLibraryIDs.contains(library.id)
+                                Button {
+                                    if isHidden { self.settings.hiddenLibraryIDs.removeAll { $0 == library.id } }
+                                    else { self.settings.hiddenLibraryIDs.append(library.id) }
+                                }
+                                label: {
+                                    Text(library.title)
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(StingrayFormButtonStyle())
+                                .padding(.horizontal, 20) // We're kinda working around a minor StingrayFormButtonStyle limitation
+                                .opacity(isHidden ? 0.4 : 1)
+                                .accessibilityValue(isHidden ? Text("Hidden") : Text("Visible"))
+                            }
+                        }
+                        // Scrollviews don't have a set width, so stretch to at least the visible width to let the buttons fill that
+                        // If there are too many libraries, we just scroll
+                        .frame(minWidth: self.libraryRowWidth)
+                    }
+                    .scrollClipDisabled()
+                    .onGeometryChange(for: CGFloat.self) { proxy in proxy.size.width }
+                    action: { width in self.libraryRowWidth = width }
+                    .focusSection()
+                }
+                .listRowBackground(Color.clear)
+            case .retrieving, .error: EmptyView()
             }
 
             // MARK: Themes

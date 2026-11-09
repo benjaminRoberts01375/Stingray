@@ -196,6 +196,12 @@ public final class SettingsModel {
         set(newValue) { self.user?.flattenFolders = newValue }
     }
 
+    /// IDs of libraries the user has chosen not to display
+    public var hiddenLibraryIDs: [String] {
+        get { self.user?.hiddenLibraryIDs ?? [] }
+        set(newValue) { self.user?.hiddenLibraryIDs = newValue }
+    }
+
     /// Create a SettingsModel from some kind of storage
     /// - Parameters:
     ///   - user: User settings to read and write from

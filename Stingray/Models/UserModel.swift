@@ -99,6 +99,8 @@ public protocol UserProtocol: AnyObject, Codable {
     var showRefreshLibrary: Bool { get set }
     /// When displaying media, should folders be shown, or should all media be shown together
     var flattenFolders: Bool { get set }
+    /// IDs of libraries the user has chosen not to display
+    var hiddenLibraryIDs: [String] { get set }
 }
 
 /// Basic data to store about the user
@@ -215,7 +217,8 @@ public final class UserModel: UserModelProtocol {
             showFilters: true,
             showSorting: true,
             showRefreshLibrary: true,
-            flattenFolders: false
+            flattenFolders: false,
+            hiddenLibraryIDs: []
         )
         // Store the user
         self.storage.upsertUser(user: user)
@@ -272,6 +275,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
     public var showSorting: Bool { didSet { self.save() } }
     public var showRefreshLibrary: Bool { didSet { self.save() } }
     public var flattenFolders: Bool { didSet { self.save() } }
+    public var hiddenLibraryIDs: [String] { didSet { self.save() } }
 
     public func attach(storage: UserStorageProtocol?) { self.storage = storage }
 
@@ -298,6 +302,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         if self.showSorting != newUser.showSorting { self.showSorting = newUser.showSorting }
         if self.showRefreshLibrary != newUser.showRefreshLibrary { self.showRefreshLibrary = newUser.showRefreshLibrary }
         if self.flattenFolders != newUser.flattenFolders { self.flattenFolders = newUser.flattenFolders }
+        if self.hiddenLibraryIDs != newUser.hiddenLibraryIDs { self.hiddenLibraryIDs = newUser.hiddenLibraryIDs }
     }
 
     /// Writes the user back to permanent storage. Called for every change, so no caller has to remember to save.
@@ -343,6 +348,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
     ///   - showSorting: Whether to show sort menus in library views
     ///   - showRefreshLibrary: Whether to show the library refresh button
     ///   - flattenFolders: Whether the folder structure of media should be preserved or flattened into a single group
+    ///   - hiddenLibraryIDs: IDs of libraries the user has chosen not to display
     public init(
         serviceURL: URL,
         serviceType: ServiceType,
@@ -364,7 +370,8 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         showFilters: Bool,
         showSorting: Bool,
         showRefreshLibrary: Bool,
-        flattenFolders: Bool
+        flattenFolders: Bool,
+        hiddenLibraryIDs: [String]
     ) {
         self.id = id
         self.displayName = displayName
@@ -387,6 +394,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
         self.showSorting = showSorting
         self.showRefreshLibrary = showRefreshLibrary
         self.flattenFolders = flattenFolders
+        self.hiddenLibraryIDs = hiddenLibraryIDs
     }
 
     /// Create a user from encoded JSON.
@@ -416,6 +424,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
             self.showSorting = (try? container.decodeIfPresent(Bool.self, forKey: .showSorting)) ?? true
             self.showRefreshLibrary = (try? container.decodeIfPresent(Bool.self, forKey: .showRefreshLibrary)) ?? true
             self.flattenFolders = (try? container.decodeIfPresent(Bool.self, forKey: .flattenFolders)) ?? false
+            self.hiddenLibraryIDs = (try? container.decodeIfPresent([String].self, forKey: .hiddenLibraryIDs)) ?? []
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "User") }
         catch DecodingError.valueNotFound(_, let context) {
@@ -452,6 +461,7 @@ public final class User: UserProtocol, Codable, Identifiable, Hashable {
             try container.encode(self.showSorting, forKey: .showSorting)
             try container.encode(self.showRefreshLibrary, forKey: .showRefreshLibrary)
             try container.encode(self.flattenFolders, forKey: .flattenFolders)
+            try container.encode(self.hiddenLibraryIDs, forKey: .hiddenLibraryIDs)
         }
         catch { throw JSONError.failedJSONEncode("User \(self.displayName)") }
     }

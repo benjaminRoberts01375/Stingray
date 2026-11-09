@@ -92,10 +92,12 @@ public struct DashboardView: View {
                     }
                     label: { Text("Home") }
                     ForEach(libraries.indices, id: \.self) { index in
-                        Tab(value: libraries[index].id) {
-                            LibraryView(library: libraries[index], navigation: $navigationPath, streamingService: self.streamingService)
+                        if !self.settings.hiddenLibraryIDs.contains(libraries[index].id) {
+                            Tab(value: libraries[index].id) {
+                                LibraryView(library: libraries[index], navigation: $navigationPath, streamingService: self.streamingService)
+                            }
+                            label: { Text(libraries[index].title) }
                         }
-                        label: { Text(libraries[index].title) }
                     }
                 }
             }

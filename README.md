@@ -66,15 +66,15 @@ Configure Stingray to look and feel how you want it.
     - Home video support
   - Settings
     - Optionally maintain media's sub-folder layout, or flatten sub-folders
+    - Show and hide libraries from the UI
   - UI
     - Allow `MediaCard`s to resize based on the type of content
       - Home videos and sub-folders have a 4:3 layout instead of 2:3 (2x in width)
     - Support Jellyfin Collections
-    - Sub-folders sit in a top bar at the top of libraries
-      - By default they're collapsed but can be expanded
-      - They show their titles conditionally to save space
+    - Support Jellyfin sub-folders
+    - Support mixed media types in library views
     - Media without a tagline no longer takes up the space for a tagline
-    - Show library media counter digit separators between digits
+    - Show library media counter digit separators
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes
