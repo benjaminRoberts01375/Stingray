@@ -71,7 +71,7 @@ Configure Stingray to look and feel how you want it.
     - Allow `MediaCard`s to resize based on the type of content
       - Home videos and sub-folders have a 4:3 layout instead of 2:3 (2x in width)
     - Support Jellyfin Collections
-    - Support Jellyfin sub-folders
+    - Support Jellyfin Sub-Folders
     - Support mixed media types in library views
     - Media without a tagline no longer takes up the space for a tagline
     - Show library media counter digit separators
@@ -82,6 +82,7 @@ Configure Stingray to look and feel how you want it.
   - Fixed clipping of top log entry when viewing logs
 - Performance
   - Reduced number of checks for library filters and maturity settings
+  - Cache profile images
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`

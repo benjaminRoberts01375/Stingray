@@ -166,12 +166,25 @@ fileprivate struct ProfilePickerImage: View {
     /// Whether the enclosing profile button (the nearest focusable ancestor) has focus
     @Environment(\.isFocused) private var isFocused
 
+    /// A global cache to store images at a given URL to help deal with reloading `AsyncImage`s every time it reappears
+    private static var loadedImages: [URL: Image] = [:]
+
     /// URL of the user's profile image, precomputed by the parent so focus changes don't recompute it
     let url: URL?
     /// Display name, used for the fallback icon's accessibility label
     let displayName: String
 
     var body: some View {
+        if let url, let image = Self.loadedImages[url] {
+            image
+                .resizable()
+                .scaledToFit()
+        }
+        else { self.asyncImage }
+    }
+
+    /// Downloads the profile image, remembering it once loaded
+    private var asyncImage: some View {
         AsyncImage(url: url) { phase in
             switch phase {
             case .empty:
@@ -181,6 +194,7 @@ fileprivate struct ProfilePickerImage: View {
                 image
                     .resizable()
                     .scaledToFit()
+                    .onAppear { url.map { Self.loadedImages[$0] = image } } // Store the loaded image to the cache }
             default:
                 // Handle the error here
                 Image(systemName: "person.fill")
