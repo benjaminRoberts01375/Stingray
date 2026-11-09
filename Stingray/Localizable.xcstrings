@@ -54,6 +54,20 @@
         }
       }
     },
+    "%@ Item" : {
+      "comment" : "A singular label displaying the number of items in a group. The argument is the number of items in the library.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Einträge"
+          }
+        }
+      }
+    },
+    "%@ Items" : {
+      "comment" : "A plural label displaying the number of items in a group. The argument is the number of items in the library."
+    },
     "%@, Episode %lld" : {
       "comment" : "Season Name, Episode Number",
       "localizations" : {
@@ -101,23 +115,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld bits per second"
-          }
-        }
-      }
-    },
-    "%lld Items" : {
-      "comment" : "Number of items",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Einträge"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Items"
           }
         }
       }

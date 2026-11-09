@@ -529,7 +529,9 @@ public struct LibraryInfoView: View {
     public var body: some View {
         HStack(spacing: 0) {
             switch self.library.media {
-            case .available(let media): Text("\(media.count) Items")
+            case .available(let media):
+                if media.count == 1 { Text("\(media.count.formatted()) Item") }
+                else { Text("\(media.count.formatted()) Items") }
             default: Text("0 Items")
             }
         }

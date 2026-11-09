@@ -358,7 +358,7 @@ public struct LibrariesInfoView: View {
                         .foregroundStyle(.tertiary)
                 }
                 ForEach(Array(mediaCounts.keys.sorted()), id: \.self) { key in
-                    Text(" • " + "\(key): \(mediaCounts[key] ?? 0)")
+                    Text(" • " + "\(key): \((mediaCounts[key] ?? 0).formatted())")
                         .foregroundStyle(.tertiary)
                 }
             }
