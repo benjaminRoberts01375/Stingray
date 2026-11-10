@@ -101,7 +101,8 @@ Configure Stingray to look and feel how you want it.
     - It begins
     - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
     - `Array.chunked(init:)` with evenly even/oddly divisible, massive chunk sizes, empty starting array, and negative chunk sizes
-    - CGSize divided by CGFloat testing with every type of CGFloat
+    - `CGSize` divided by `CGFloat` testing with every type of `CGFloat`
+    - `KeyedDecodingContainer.decodeAllAvailable(:, forKey: )` with all valid elements, mix of good and bad, all invalid, missing key, missing required elements in within an object
 
 ## TO-DO List
 
