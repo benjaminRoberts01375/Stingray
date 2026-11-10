@@ -101,6 +101,7 @@ Configure Stingray to look and feel how you want it.
     - It begins
     - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
     - `Array.chunked(init:)` with evenly even/oddly divisible, massive chunk sizes, empty starting array, and negative chunk sizes
+    - CGSize divided by CGFloat testing with every type of CGFloat
 
 ## TO-DO List
 
