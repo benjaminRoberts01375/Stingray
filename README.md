@@ -100,6 +100,7 @@ Configure Stingray to look and feel how you want it.
   - Testing
     - It begins
     - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
+    - `Array.chunked(init:)` with evenly even/oddly divisible, massive chunk sizes, empty starting array, and negative chunk sizes
 
 ## TO-DO List
 
