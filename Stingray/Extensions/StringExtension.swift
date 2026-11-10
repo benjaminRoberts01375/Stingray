@@ -18,23 +18,30 @@ extension String {
      /// String(duration: 600)  // "10:00" (10 minutes)
      /// String(duration: 3900) // "1:05:00" (1 hour, 5 minutes)
      /// ```
-     /// - Parameter duration: The length of time to format, in seconds. Negative values are not supported and produce a malformed timecode
+     /// - Parameter duration: The length of time to format, in seconds. Negative values are prefixed with a minus sign ("-0:10"). NaN
+     /// and infinite values produce "0:00"
     public init(duration: TimeInterval) {
-        let seconds = Int(duration)
+        if !duration.isFinite { // Int(:) can't handle weird cases
+            self = "0:00"
+            return
+        }
+        let totalSeconds = Int(duration)
+        let sign = totalSeconds < 0 ? "-" : "" // Handle negatives
+        let seconds = abs(totalSeconds)
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         let secs = (seconds % 3600) % 60
         // Hours present: show every component, padding minutes and seconds to two digits
         if hours != .zero {
-            self = String(format: "%d:%02d:%02d", hours, minutes, secs)
+            self = sign + String(format: "%d:%02d:%02d", hours, minutes, secs)
             return
         }
         // Under ten minutes: leave the minutes component unpadded (0:10 rather than 00:10)
         if minutes < 10 {
-            self = String(format: "%d:%02d", minutes, secs)
+            self = sign + String(format: "%d:%02d", minutes, secs)
             return
         }
-        self = String(format: "%02d:%02d", minutes, secs)
+        self = sign + String(format: "%02d:%02d", minutes, secs)
     }
 }
 

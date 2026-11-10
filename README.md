@@ -80,6 +80,7 @@ Configure Stingray to look and feel how you want it.
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes
   - Enable localizations for media types
   - Fixed clipping of top log entry when viewing logs
+  - `String(duration:)` no longer crashes on `.nan` and `.infinity` and supports negative `TimeInterval`s
 - Performance
   - Reduced number of checks for library filters and maturity settings
   - Cache profile images
@@ -96,6 +97,9 @@ Configure Stingray to look and feel how you want it.
   - Moved `MediaType` into `MediaStorage`, and made the Jellyfin API strings explicit
   - `MediaCard` sizes now refer to the art instead of the whole `MediaCard`, allowing for explicit aspect ratios
   - `MediaPersonProtocol` now requires a `MediaImagesProtocol` instead of a concrete `MediaImageBlurHashes`
+  - Testing
+    - It begins
+    - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
 
 ## TO-DO List
 
