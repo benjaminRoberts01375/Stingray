@@ -9,7 +9,7 @@ import Foundation
 import Testing
 @testable import Stingray
 
-@Suite("String(duration: TimeInterval)")
+@Suite("String(from: TimeInterval)")
 struct StringTimeIntervalTests {
     /// Test conversion from duration to timecode with negative seconds
     /// - Parameters:
@@ -61,7 +61,7 @@ struct StringTimeIntervalTests {
     }
 }
 
-@Suite("String(duration: Duration)")
+@Suite("String(from: Duration)")
 struct StringDurationTests {
     /// Test formatting negative durations
     /// - Parameters:
@@ -139,5 +139,56 @@ struct StringDurationTests {
     func returnNil() {
         let duration: Duration? = nil
         #expect(String(from: duration) == nil)
+    }
+}
+
+@Suite("String(bits: Int?)")
+struct StringBitsTests {
+    /// Tests converting a postive `Int` bitrate (bits per second) to a `String` (megabits per second)
+    /// - Parameters:
+    ///   - bitrate: Postive bitrate in bits per second
+    ///   - expected: Megabits per second as a `String`
+    @Test(arguments: [
+        (Int(0), "0 Mbps"),
+        (1, "0.000001 Mbps"),
+        (10, "0.00001 Mbps"),
+        (301, "0.000301 Mbps"),
+        (5_000, "0.005 Mbps"),
+        (91_531, "0.091531 Mbps"),
+        (100_000, "0.1 Mbps"),
+        (2_000_000, "2 Mbps"),
+        (10_000_000, "10 Mbps"),
+        (100_000_000, "100 Mbps"),
+        (1_000_000_000, "1000 Mbps"),
+    ])
+    func positive(bitrate: Int, expected: String) {
+        #expect(String(bitrate: bitrate) == expected)
+    }
+
+    /// Tests converting a negative `Int` bitrate (bits per second) to a `String` (megabits per second)
+    /// - Parameters:
+    ///   - bitrate: Negative bitrate in bits per second
+    ///   - expected: Megabits per second as a `String`
+    @Test(arguments: [
+        (Int(-0), "0 Mbps"),
+        (-1, "-0.000001 Mbps"),
+        (-10, "-0.00001 Mbps"),
+        (-301, "-0.000301 Mbps"),
+        (-5_000, "-0.005 Mbps"),
+        (-91_531, "-0.091531 Mbps"),
+        (-100_000, "-0.1 Mbps"),
+        (-2_000_000, "-2 Mbps"),
+        (-10_000_000, "-10 Mbps"),
+        (-100_000_000, "-100 Mbps"),
+        (-1_000_000_000, "-1000 Mbps"),
+    ])
+    func negative(bitrate: Int, expected: String) {
+        #expect(String(bitrate: bitrate) == expected)
+    }
+    
+    /// Checks the nil case for converting an `Int?` to Megabits per second (Mbps)
+    @Test
+    func returnNil() {
+        #expect(String(bitrate: nil) == nil)
     }
 }
