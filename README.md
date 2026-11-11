@@ -81,6 +81,7 @@ Configure Stingray to look and feel how you want it.
   - Enable localizations for media types
   - Fixed clipping of top log entry when viewing logs
   - `String(duration:)` no longer crashes on `.nan` and `.infinity` and supports negative `TimeInterval`s
+  - `String.pascalCaseToSpaces()` now correctly handles a sequence of uppercase letters, like in "HTTP", and resists adding extra spaces when a space already exists
 - Performance
   - Reduced number of checks for library filters and maturity settings
   - Cache profile images

@@ -48,23 +48,30 @@ extension String {
 /// Extend the `String` type to convert PascalCase to words separated by spaces. Ex. "MyName" -> "My Name"
 /// Made by an LLM - modified by a person
 extension String {
-    /// Inserts a space before every capital letter, splitting PascalCase into separate words.
+    /// Inserts a space at each word boundary, splitting PascalCase into separate words.
     /// Existing capitalization is preserved, so the first character is left exactly as it was found.
+    /// Runs of capitals, like HTTP stay together.
     /// ```swift
     /// "MyCoolMovieTitle".pascalCaseToSpaces() // "My Cool Movie Title"
     /// "myCoolMovieTitle".pascalCaseToSpaces() // "my Cool Movie Title"
+    /// "MyHTTPServer".pascalCaseToSpaces()     // "My HTTP Server"
     /// ```
     /// - Returns: The spaced-out string
     public func pascalCaseToSpaces() -> String {
         // Handle empty strings
         if self.isEmpty { return self }
         
+        let characters = Array(self)
         var result = ""
-        for (index, character) in self.enumerated() {
+        for (index, character) in characters.enumerated() {
             // Make sure we don't add a random space at the start of the string
-            let isFirst = index == 0
-            let isUppercase = character.isUppercase
-            if isUppercase && !isFirst { result.append(" ") }
+            if character.isUppercase && index > 0 {
+                let previousIsUppercase = characters[index - 1].isUppercase
+                let nextIsLowercase = index + 1 < characters.count && characters[index + 1].isLowercase
+                // Break after a non-capital, or where an acronym ends and a new word starts ("HTTPServer" -> "HTTP Server")
+                let previousIsSpace = characters[index - 1].isWhitespace
+                if !previousIsSpace && (!previousIsUppercase || nextIsLowercase) { result.append(" ") }
+            }
             
             // Add to string. Shouldn't be *too* bad since arrays grow by doubling the capacity
             result.append(character)
