@@ -176,7 +176,7 @@ public final class PlayerButtons {
 
         // Helper function to create a bitrate action
         func makeBitrateAction(bitrate: Int) -> UIAction {
-            let action = UIAction(title: Int.formatMegabitsPerSec(bitrate)) { _ in
+            let action = UIAction(title: String(bitrate: bitrate)) { _ in
                 vm.newPlayer(startTime: vm.player.currentTime(), videoID: .keep, audioID: .keep, subtitleID: .keep, bitrate: bitrate)
             }
             action.state = vm.playerProgress?.bitrate == bitrate ? .on : .off

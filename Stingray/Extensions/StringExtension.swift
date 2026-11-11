@@ -94,3 +94,21 @@ extension String {
         self.init(from: duration)
     }
 }
+
+/// Convert bits to megabits per second (printed as Mbps)
+extension String {
+    /// Convert bits to megabits per second (printed as Mbps)
+    /// - Parameter bitrate: Individual bits. Not megabits
+    public init(bitrate: Int) {
+        let mbps = Double(bitrate) / 1_000_000
+        let formatted = mbps.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", mbps) : String(mbps)
+        self = "\(formatted) Mbps"
+    }
+    
+    /// A wrapper around the init(bitrate:) to support nils. Convert bits to megabits per second (printed as Mbps)
+    /// - Parameter bitrate: Individual bits. Not megabits
+    public init?(bitrate: Int?) {
+        guard let bitrate else { return nil }
+        self.init(bitrate: bitrate)
+    }
+}

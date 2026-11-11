@@ -97,8 +97,9 @@ Configure Stingray to look and feel how you want it.
   - Moved `MediaType` into `MediaStorage`, and made the Jellyfin API strings explicit
   - `MediaCard` sizes now refer to the art instead of the whole `MediaCard`, allowing for explicit aspect ratios
   - `MediaPersonProtocol` now requires a `MediaImagesProtocol` instead of a concrete `MediaImageBlurHashes`
-  - Convert `Duration.roundedTime(:)` to a `String(from:)` init
+  - Convert `Duration.roundedTime()` to a `String(from:)` init
   - Rework custom String inits to require "from" as the input parameter
+  - Convert `Int.formatMegabitsPerSec(:)` to a `String(bits:)` init
   - Testing
     - It begins
     - `String(duration:)` with positive, negative, `.nan`, and `.infinity`

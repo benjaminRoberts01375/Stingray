@@ -187,15 +187,19 @@ public struct SettingsView: View {
                 }
                 DoubleMenu(
                     label: "Target Video Bitrate",
-                    sublabel: settings.bitrate == nil ? "Maximum" : "Limited to \(Int.formatMegabitsPerSec(settings.bitrate))"
+                    sublabel: {
+                        guard let bitrate = settings.bitrate
+                        else { return "Maximum" }
+                        return "Limited to \(String(bitrate: bitrate))"
+                    }()
                 ) {
                     ForEach([nil] + SettingsModel.bitrateOptions, id: \.self) { bitrateOption in
                         Button { settings.bitrate = bitrateOption }
                         label: {
                             if settings.bitrate == bitrateOption {
-                                Label(Int.formatMegabitsPerSec(bitrateOption), systemImage: "checkmark")
+                                Label(String(bitrate: bitrateOption) ?? "Maximum", systemImage: "checkmark")
                             }
-                            else { Text(Int.formatMegabitsPerSec(bitrateOption)) }
+                            else { Text(String(bitrate: bitrateOption) ?? "Maximum") }
                         }
                     }
                 }
