@@ -74,8 +74,9 @@ extension String {
     }
 }
 
+/// Formats a `Duration` into a worded format
 extension String {
-    /// Formats a duration into a worded format
+    /// Formats a `Duration` into a worded format
     /// - Parameter duration: Duration to convert
     public init(duration: Duration) {
         let totalSeconds = Int(abs(duration.components.seconds))
