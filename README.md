@@ -113,6 +113,7 @@ Configure Stingray to look and feel how you want it.
     - `Locale.languageDisplayName` testing with language, region, and nil tests
     - `String.pascalCaseToSpaces()` testing with uppercase, lowercase, punctuation, spaces, and non-ASCII characters
     - `TimeInterval` ticks for converting to and from Jellyfin ticks using negative, positive, and fractional numbers
+    - `AppendableIterator` for advancing, inserting mid-advance, empty, inserting after empty, and more
 
 ## TO-DO List
 
