@@ -100,6 +100,7 @@ Configure Stingray to look and feel how you want it.
   - Convert `Duration.roundedTime()` to a `String(from:)` init
   - Rework custom String inits to require "from" as the input parameter
   - Convert `Int.formatMegabitsPerSec(:)` to a `String(bits:)` init
+    - Avoid scientific notation on extremely low bitrates
   - Testing
     - It begins
     - `String(duration:)` with positive, negative, `.nan`, and `.infinity`

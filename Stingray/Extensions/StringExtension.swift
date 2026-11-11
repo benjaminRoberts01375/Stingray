@@ -101,7 +101,7 @@ extension String {
     /// - Parameter bitrate: Individual bits. Not megabits
     public init(bitrate: Int) {
         let mbps = Double(bitrate) / 1_000_000
-        let formatted = mbps.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", mbps) : String(mbps)
+        let formatted = mbps.formatted(.number.precision(.fractionLength(0...6)).grouping(.never)) // Avoids scientific notation
         self = "\(formatted) Mbps"
     }
     
