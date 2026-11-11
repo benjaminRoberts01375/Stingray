@@ -192,3 +192,24 @@ struct StringBitsTests {
         #expect(String(bitrate: nil) == nil)
     }
 }
+
+@Suite("String Pascal to Spaces")
+struct StringPascalCase {
+    /// Ensures that CamelCase can be have spaces inserted between words
+    /// - Parameters:
+    ///   - pascal: PascalCase example
+    ///   - expected: Corrected output
+    @Test(arguments: [
+        ("", ""),
+        ("PascalWorks", "Pascal Works"),
+        ("camel'sBetter", "camel's Better"),
+        ("all-lower", "all-lower"),
+        ("MyHTTPServer", "My HTTP Server"),
+        ("My SpaceyText", "My Spacey Text"),
+        (" LeadingSpace", " Leading Space"),
+        ("MarkiplierÉ", "Markiplier É")
+    ])
+    func pascalToSpacesTest(pascal: String, expected: String) {
+        #expect(pascal.pascalCaseToSpaces() == expected)
+    }
+}
