@@ -111,7 +111,8 @@ Configure Stingray to look and feel how you want it.
     - `String(from: Duration)` with positive and negative durations from a wide range of lengths
     - `String(bits: Int?)` with positive, negative, and nil cases
     - `Locale.languageDisplayName` testing with language, region, and nil tests
-    - `String.pascalCaseToSpaces()` testing with uppercase, lowercase, punctuation, spaces, and non-ASCII characters.
+    - `String.pascalCaseToSpaces()` testing with uppercase, lowercase, punctuation, spaces, and non-ASCII characters
+    - `TimeInterval` ticks for converting to and from Jellyfin ticks using negative, positive, and fractional numbers
 
 ## TO-DO List
 
