@@ -69,10 +69,10 @@ public struct MediaLogoHeader: View {
     public var body: some View {
         if self.media.maturity != nil || self.media.releaseDate != nil || !self.media.genres.isEmpty || self.media.duration != nil {
             let items: [String] = [
-                media.maturity,
-                media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
-                media.genres.isEmpty ? nil : media.genres.prefix(3).joined(separator: ", "),
-                media.duration?.roundedTime()
+                self.media.maturity,
+                self.media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
+                self.media.genres.isEmpty ? nil : self.media.genres.prefix(3).joined(separator: ", "),
+                String(duration: self.media.duration)
             ].compactMap { $0 }
             
             Text(items.joined(separator: " • "))

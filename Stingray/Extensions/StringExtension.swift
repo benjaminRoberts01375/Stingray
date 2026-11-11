@@ -73,3 +73,23 @@ extension String {
         return result
     }
 }
+
+extension String {
+    /// Formats a duration into a worded format
+    /// - Parameter duration: Duration to convert
+    public init(duration: Duration) {
+        let totalSeconds = Int(abs(duration.components.seconds))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let sign = duration < .zero && (hours > 0 || minutes > 0) ? "-" : "" // Handle negatives
+        if hours > 0 { self = "\(sign)\(hours)\(hours != 1 ? " hours" : " hour") \(minutes)\(minutes != 1 ? " minutes" : " minute")" }
+        else { self = "\(sign)\(minutes)\(minutes != 1 ? " minutes" : " minute")" }
+    }
+    
+    /// A wrapper around the init(duration:) to support nils. Formats a duration into a worded format
+    /// - Parameter duration: Duration to convert
+    public init?(duration: Duration?) {
+        guard let duration else { return nil }
+        self.init(duration: duration)
+    }
+}
