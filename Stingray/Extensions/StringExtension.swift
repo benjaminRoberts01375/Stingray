@@ -20,12 +20,12 @@ extension String {
      /// ```
      /// - Parameter duration: The length of time to format, in seconds. Negative values are prefixed with a minus sign ("-0:10"). NaN
      /// and infinite values produce "0:00"
-    public init(duration: TimeInterval) {
-        if !duration.isFinite { // Int(:) can't handle weird cases
+    public init(from interval: TimeInterval) {
+        if !interval.isFinite { // Int(:) can't handle weird cases
             self = "0:00"
             return
         }
-        let totalSeconds = Int(duration)
+        let totalSeconds = Int(interval)
         let sign = totalSeconds < 0 ? "-" : "" // Handle negatives
         let seconds = abs(totalSeconds)
         let hours = seconds / 3600
@@ -78,7 +78,7 @@ extension String {
 extension String {
     /// Formats a `Duration` into a worded format
     /// - Parameter duration: Duration to convert
-    public init(duration: Duration) {
+    public init(from duration: Duration) {
         let totalSeconds = Int(abs(duration.components.seconds))
         let hours = totalSeconds / 3600
         let minutes = (totalSeconds % 3600) / 60
@@ -89,8 +89,8 @@ extension String {
     
     /// A wrapper around the init(duration:) to support nils. Formats a duration into a worded format
     /// - Parameter duration: Duration to convert
-    public init?(duration: Duration?) {
+    public init?(from duration: Duration?) {
         guard let duration else { return nil }
-        self.init(duration: duration)
+        self.init(from: duration)
     }
 }

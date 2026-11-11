@@ -72,7 +72,7 @@ public struct MediaLogoHeader: View {
                 self.media.maturity,
                 self.media.releaseDate.map { String(Calendar.current.component(.year, from: $0)) },
                 self.media.genres.isEmpty ? nil : self.media.genres.prefix(3).joined(separator: ", "),
-                String(duration: self.media.duration)
+                String(from: self.media.duration)
             ].compactMap { $0 }
             
             Text(items.joined(separator: " • "))

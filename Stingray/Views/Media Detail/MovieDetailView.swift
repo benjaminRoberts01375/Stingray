@@ -190,7 +190,7 @@ fileprivate struct PlayNavigationView: View {
                     Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint) }
                     label: {
                         Label("Resume \(media.title)", systemImage: "play.fill")
-                        Text("Continue from \(String(duration: mediaSource.startPoint))")
+                        Text("Continue from \(String(from: mediaSource.startPoint))")
                     }
                     Button { navigateToPlayer(for: mediaSource, startPoint: .zero) }
                     label: { Label("Restart \(media.title)", systemImage: "memories") }
@@ -220,7 +220,7 @@ fileprivate struct PlayNavigationView: View {
                                 Button { navigateToPlayer(for: mediaSource, startPoint: mediaSource.startPoint)
                                 } label: {
                                     Label(mediaSource.name, systemImage: "play.fill")
-                                    Text("Continue from \(String(duration: mediaSource.startPoint))")
+                                    Text("Continue from \(String(from: mediaSource.startPoint))")
                                 }
                                 .id(mediaSource.id)
                             }

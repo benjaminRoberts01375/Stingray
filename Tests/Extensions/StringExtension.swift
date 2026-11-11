@@ -29,7 +29,7 @@ struct StringTimeIntervalTests {
         (-1000007.0, "-277:46:47"),
         ])
     func formatsNegative(seconds: TimeInterval, expected: String) {
-        #expect(String(duration: seconds) == expected)
+        #expect(String(from: seconds) == expected)
     }
 
     /// Test conversion from duration to timecode with positive seconds
@@ -50,14 +50,14 @@ struct StringTimeIntervalTests {
         (1000007.0, "277:46:47"),
     ])
     func formatsPositive(seconds: TimeInterval, expected: String) {
-        #expect(String(duration: seconds) == expected)
+        #expect(String(from: seconds) == expected)
     }
     
     /// Test against typically out-of-bounds inputs like infinity. Should result in "0:00".
     /// - Parameter seconds: Strange seconds to test
     @Test(arguments: [ Foundation.TimeInterval.nan, .infinity, -.infinity, ])
     func formatsTimecode(seconds: TimeInterval) {
-        #expect(String(duration: seconds) == "0:00")
+        #expect(String(from: seconds) == "0:00")
     }
 }
 
@@ -81,7 +81,7 @@ struct StringDurationTests {
         (.seconds(-90000), "-25 hours 0 minutes"),
     ])
     func formatsNegative(duration: Duration, expected: String) {
-        #expect(String(duration: duration) == expected)
+        #expect(String(from: duration) == expected)
     }
 
     /// Test formatting durations under an hour
@@ -99,7 +99,7 @@ struct StringDurationTests {
         (.seconds(3599), "59 minutes"),
     ])
     func formatsMinutes(duration: Duration, expected: String) {
-        #expect(String(duration: duration) == expected)
+        #expect(String(from: duration) == expected)
     }
 
     /// Test formatting durations of an hour or more
@@ -116,7 +116,7 @@ struct StringDurationTests {
         (.seconds(90000), "25 hours 0 minutes"),
     ])
     func formatsHours(duration: Duration, expected: String) {
-        #expect(String(duration: duration) == expected)
+        #expect(String(from: duration) == expected)
     }
 
     /// Test that sub-minute remainders are truncated rather than rounded
@@ -131,6 +131,13 @@ struct StringDurationTests {
         (.milliseconds(3_719_999), "1 hour 1 minute"),
     ])
     func truncatesSeconds(duration: Duration, expected: String) {
-        #expect(String(duration: duration) == expected)
+        #expect(String(from: duration) == expected)
+    }
+    
+    /// Test that passing nil as a duration returns nil
+    @Test
+    func returnNil() {
+        let duration: Duration? = nil
+        #expect(String(from: duration) == nil)
     }
 }
