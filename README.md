@@ -114,6 +114,7 @@ Configure Stingray to look and feel how you want it.
     - `String.pascalCaseToSpaces()` testing with uppercase, lowercase, punctuation, spaces, and non-ASCII characters
     - `TimeInterval` ticks for converting to and from Jellyfin ticks using negative, positive, and fractional numbers
     - `AppendableIterator` for advancing, inserting mid-advance, empty, inserting after empty, and more
+    - `LibraryModel` init with good and bad JSON
 
 ## TO-DO List
 
