@@ -139,20 +139,6 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - response: Fetched data.
     ///   - serviceURL: Base URL.
     ///   - flattenFolders: Should media in sub-folders be pulled up into their library
-    public convenience init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool) {
-        self.init(
-            response: response,
-            serviceURL: serviceURL,
-            flattenFolders: flattenFolders,
-            network: JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
-        )
-    }
-
-    /// Create a `JellyfinModel` based on fetched data.
-    /// - Parameters:
-    ///   - response: Fetched data.
-    ///   - serviceURL: Base URL.
-    ///   - flattenFolders: Should media in sub-folders be pulled up into their library
     ///   - network: How to reach out to Jellyfin
     private init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool, network: any AdvancedNetworkProtocol) {
         // APIs
@@ -193,7 +179,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         do { response = try await networkAPI.login(username: username, password: password) }
         catch { throw AccountErrors.loginFailed(error) }
 
-        return Self.baseLogin(userModel: userModel, settingsModel: settingsModel, response: response, url: url)
+        return Self.baseLogin(userModel: userModel, settingsModel: settingsModel, response: response, url: url, network: networkAPI)
     }
 
     /// Log into a Jellyfin server using the quick connect feature
@@ -215,7 +201,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         do { response = try await networkAPI.login(quickConnectSecret: quickConnectSecret) }
         catch { throw QuickConnectErrors.loginFailed(error) }
 
-        return Self.baseLogin(userModel: userModel, settingsModel: settingsModel, response: response, url: url)
+        return Self.baseLogin(userModel: userModel, settingsModel: settingsModel, response: response, url: url, network: networkAPI)
     }
 
     /// Handles the business logic of setting up new/existing users
@@ -229,7 +215,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         userModel: UserModelProtocol,
         settingsModel: SettingsModel,
         response: APILoginResponse,
-        url: URL
+        url: URL,
+        network: any AdvancedNetworkProtocol
     ) -> (JellyfinModel, User) {
         let workingUser: User
         if let existingUser = userModel.getUser(id: response.userId) { // User already exists, just update access
@@ -258,7 +245,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         settingsModel.themeDark = workingUser.darkTheme
         settingsModel.themeLight = workingUser.lightTheme
         return (
-            JellyfinModel(response: response, serviceURL: url, flattenFolders: workingUser.flattenFolders),
+            JellyfinModel(response: response, serviceURL: url, flattenFolders: workingUser.flattenFolders, network: network),
             workingUser
         )
     }
