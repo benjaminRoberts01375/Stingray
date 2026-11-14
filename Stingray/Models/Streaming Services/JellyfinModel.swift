@@ -8,110 +8,6 @@
 import AVKit
 import UIKit
 
-/// Basic information about the connected server
-public protocol SystemInfoProviding {
-    /// Name of the server
-    var serverName: String? { get }
-    /// Version of software the server is running
-    var serverVersion: String? { get }
-    /// Base path of the service.
-    var serviceURL: URL { get }
-}
-
-/// Holds information about the available libraries
-public protocol LibraryProviding {
-    /// Denote the current fetching status of this library. If (partially) complete this holds library data, otherwise may hold an error.
-    var libraryStatus: LibraryStatus { get }
-    /// Resync a given library with the server
-    /// - Parameters:
-    ///   - library: Library to resync
-    ///   - flatten: Should data media within the library maintain their sub-folders, or group all media together
-    func resync(library: any LibraryProtocol, flatten: Bool) async
-    
-    /// Fetch libraries and library media.
-    /// - Parameters:
-    ///   - flatten: Should media in sub-folders remain in sub-folders
-    func retrieveLibraries(flatten: Bool) async
-}
-
-/// Describes the current setup status for a downloaded library
-public enum LibraryStatus {
-    /// The library object has been created and is fetching
-    case retrieving
-    /// Some of the library's content is available, but we're still fetching
-    case available([LibraryModel])
-    /// All of this library's content has been downloaded
-    case complete([LibraryModel])
-    /// The library has errored out
-    case error(RError)
-}
-
-/// Holds info about media currently playing
-public protocol PlayerProviding {
-    /// Track the current playback progress.
-    var playerProgress: PlayerProtocol? { get }
-
-    /// Setup playback, informs the server about playback status
-    /// - Parameters:
-    ///   - mediaSource: Media source being watched.
-    ///   - videoID: Video stream ID.
-    ///   - audioID: Audio stream ID.
-    ///   - subtitleID: Subtitle stream ID. Nil = no subtitles.
-    ///   - bitrate: Target video bitrate of the stream. Nil = unlimited bitrate
-    ///   - title: Title of the media to put on the player.
-    ///   - subtitle: Subtitle, if available, to put on the player.
-    ///   - player: An AVPlayer instance to update and use.
-    func playbackStart(
-        mediaSource: any MediaSourceProtocol,
-        videoID: String,
-        audioID: String,
-        subtitleID: String?,
-        bitrate: Int?,
-        title: String,
-        subtitle: String?,
-        player: AVPlayer
-    )
-
-    /// Inform the server that playback has ended
-    func playbackEnd()
-}
-
-/// Provides user actions with the server
-public protocol UserProviding {
-    /// The name of the user.
-    var usersName: String { get }
-    /// The server ID of the user.
-    var userID: String { get }
-
-    /// Logout the current user
-    func logout() async
-}
-
-/// Loading media functions
-public protocol MediaProviding {
-    /// Link a media ID to its `MediaStorage`.
-    /// - Parameters:
-    ///   - mediaID: Media ID to search for.
-    ///   - parentID: Parent the Media ID is a part of (if available).
-    /// - Returns: The found media, noting if the library is not yet finished fetching.
-    func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus
-
-    /// Fetch any additional data (ex special features) for this media.
-    /// - Parameter media: Media to fetch for.
-    /// - Parameter priority: How prudent the info is to get right now
-    func getExtraMediaData(for media: any SpecialFeaturesProtocol & MediaMetadataProtocol, priority: RequestPriority)
-}
-
-/// Denotes the availablity of a piece of media
-public enum MediaLookupStatus {
-    /// The requested media was found
-    case found(MediaStorage)
-    /// The requested media was not found, but may be available once libraries finish downloading
-    case temporarilyNotFound
-    /// The requested media was not found despite all libraries being downloaded
-    case notFound
-}
-
 /// A harness for authenticating with quick connect
 public final class JellyfinQuickConnectModel {
     /// Network used to connect to jellyfin
@@ -243,7 +139,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - response: Fetched data.
     ///   - serviceURL: Base URL.
     ///   - flattenFolders: Should media in sub-folders be pulled up into their library
-    convenience init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool) {
+    public convenience init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool) {
         self.init(
             response: response,
             serviceURL: serviceURL,

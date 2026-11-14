@@ -85,7 +85,7 @@ Configure Stingray to look and feel how you want it.
 - Performance
   - Reduced number of checks for library filters and maturity settings
   - Cache profile images
-- Cleanups and Reworks
+- Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
     - Specify media type in missing titles
@@ -103,20 +103,20 @@ Configure Stingray to look and feel how you want it.
   - Convert `Int.formatMegabitsPerSec(:)` to a `String(bits:)` init
     - Avoid scientific notation on extremely low bitrates
   - Allow passing `any AdvancedNetworkProtocol` to the `JellyfinModel`
-  - Rename StreamingServiceModel.swift to JellyfinModel.swift
-  - Testing
-    - It begins
-    - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
-    - `Array.chunked(init:)` with evenly even/oddly divisible, massive chunk sizes, empty starting array, and negative chunk sizes
-    - `CGSize` divided by `CGFloat` testing with every type of `CGFloat`
-    - `KeyedDecodingContainer.decodeAllAvailable(:, forKey: )` with all valid elements, mix of good and bad, all invalid, missing key, missing required elements in within an object
-    - `String(from: Duration)` with positive and negative durations from a wide range of lengths
-    - `String(bits: Int?)` with positive, negative, and nil cases
-    - `Locale.languageDisplayName` testing with language, region, and nil tests
-    - `String.pascalCaseToSpaces()` testing with uppercase, lowercase, punctuation, spaces, and non-ASCII characters
-    - `TimeInterval` ticks for converting to and from Jellyfin ticks using negative, positive, and fractional numbers
-    - `AppendableIterator` for advancing, inserting mid-advance, empty, inserting after empty, and more
-    - `LibraryModel` init with good and bad JSON
+  - Reorganize streaming service file naming to more closely mirror the media models
+- Testing
+  - It begins
+  - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
+  - `Array.chunked(init:)` with evenly even/oddly divisible, massive chunk sizes, empty starting array, and negative chunk sizes
+  - `CGSize` divided by `CGFloat` testing with every type of `CGFloat`
+  - `KeyedDecodingContainer.decodeAllAvailable(:, forKey: )` with all valid elements, mix of good and bad, all invalid, missing key, missing required elements in within an object
+  - `String(from: Duration)` with positive and negative durations from a wide range of lengths
+  - `String(bits: Int?)` with positive, negative, and nil cases
+  - `Locale.languageDisplayName` testing with language, region, and nil tests
+  - `String.pascalCaseToSpaces()` testing with uppercase, lowercase, punctuation, spaces, and non-ASCII characters
+  - `TimeInterval` ticks for converting to and from Jellyfin ticks using negative, positive, and fractional numbers
+  - `AppendableIterator` for advancing, inserting mid-advance, empty, inserting after empty, and more
+  - `LibraryModel` init with good and bad JSON
 
 ## TO-DO List
 
