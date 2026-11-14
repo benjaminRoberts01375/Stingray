@@ -102,6 +102,8 @@ Configure Stingray to look and feel how you want it.
   - Rework custom String inits to require "from" as the input parameter
   - Convert `Int.formatMegabitsPerSec(:)` to a `String(bits:)` init
     - Avoid scientific notation on extremely low bitrates
+  - Allow passing `any AdvancedNetworkProtocol` to the `JellyfinModel`
+  - Rename StreamingServiceModel.swift to JellyfinModel.swift
   - Testing
     - It begins
     - `String(duration:)` with positive, negative, `.nan`, and `.infinity`

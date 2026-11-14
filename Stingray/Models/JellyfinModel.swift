@@ -1,5 +1,5 @@
 //
-//  StreamingServiceModel.swift
+//  JellyfinModel.swift
 //  Stingray
 //
 //  Created by Ben Roberts on 11/13/25.
