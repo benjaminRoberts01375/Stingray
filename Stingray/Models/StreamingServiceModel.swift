@@ -243,9 +243,24 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - response: Fetched data.
     ///   - serviceURL: Base URL.
     ///   - flattenFolders: Should media in sub-folders be pulled up into their library
-    private init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool) {
+    convenience init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool) {
+        self.init(
+            response: response,
+            serviceURL: serviceURL,
+            flattenFolders: flattenFolders,
+            network: JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        )
+    }
+
+    /// Create a `JellyfinModel` based on fetched data.
+    /// - Parameters:
+    ///   - response: Fetched data.
+    ///   - serviceURL: Base URL.
+    ///   - flattenFolders: Should media in sub-folders be pulled up into their library
+    ///   - network: How to reach out to Jellyfin
+    private init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool, network: any AdvancedNetworkProtocol) {
         // APIs
-        let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
+        let network = network
         self.networkAPI = network
 
         // Properties
