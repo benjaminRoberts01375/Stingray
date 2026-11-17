@@ -140,9 +140,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - serviceURL: Base URL.
     ///   - flattenFolders: Should media in sub-folders be pulled up into their library
     ///   - network: How to reach out to Jellyfin
-    private init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool, network: any AdvancedNetworkProtocol) {
+    public init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool, network: any AdvancedNetworkProtocol) {
         // APIs
-        let network = network
         self.networkAPI = network
 
         // Properties
