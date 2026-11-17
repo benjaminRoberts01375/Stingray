@@ -119,6 +119,7 @@ Configure Stingray to look and feel how you want it.
   - `TimeInterval` ticks for converting to and from Jellyfin ticks using negative, positive, and fractional numbers
   - `AppendableIterator` for advancing, inserting mid-advance, empty, inserting after empty, and more
   - `LibraryModel` init with good and bad JSON
+  - Add unique testing for each of the media model types, including grouped media
 
 ## TO-DO List
 
