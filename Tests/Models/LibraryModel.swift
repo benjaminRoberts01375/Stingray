@@ -9,47 +9,50 @@ import Foundation
 import Testing
 @testable import Stingray
 
+private extension LibraryModel {
+    /// Build a library by decoding JSON, since `LibraryModel` only has a decoding initializer.
+    /// Images are left absent, and media starts as `.waiting`.
+    convenience init(
+        title: String = "",
+        sortTitle: String = "",
+        id: String = UUID().uuidString,
+        parentID: String = UUID().uuidString
+    ) throws {
+        let json: [String: String] = ["Name": title, "SortName": sortTitle, "Id": id, "ParentId": parentID]
+        let data = try JSONEncoder().encode(json)
+        try self.init(from: try decoder(String(decoding: data, as: UTF8.self)))
+    }
+}
+
 @Suite("Library Model Init")
-@MainActor // We're decoding a lot, which must be on the main thread
+@MainActor // For decoding
 struct LibraryModelTests {
-    /// Build library JSON, letting a test override or remove individual entries
-    /// - Parameter overrides: Raw JSON values keyed by field. A `nil` value removes the field entirely.
-    /// - Returns: JSON data for a library
-    private func libraryJSON(_ overrides: [String: String?] = [:]) -> Data {
-        var fields: [String: String?] = [
-            "Name": "\"Movies\"",
-            "SortName": "\"movies\"",
-            "Id": "\"abc123\"",
-            "ParentId": "\"parent456\""
-        ]
-        fields.merge(overrides) { _, new in new }
-        let body = fields.compactMap { key, value in value.map { "\"\(key)\": \($0)" } }.joined(separator: ", ")
-        return Data("{\(body)}".utf8)
-    }
-
-    /// Decode a library, expecting it to throw
-    /// - Parameter data: JSON data
-    /// - Returns: The thrown `JSONError`, or `nil` if decoding succeeded or threw something else
-    private func decodeError(_ data: Data) -> JSONError? {
-        do {
-            _ = try JSONDecoder().decode(LibraryModel.self, from: data)
-            return nil
-        } catch {
-            return error as? JSONError
-        }
-    }
-
-    /// Test that every required field lands on the right property, and that media starts empty
+    /// Test that every field lands on the right property, and that media starts empty
     @Test
-    func decodesRequiredFields() throws {
-        let library = try JSONDecoder().decode(LibraryModel.self, from: self.libraryJSON())
+    func decodesAllFields() throws {
+        let library = try decode(LibraryModel.self, from: """
+        {
+            "Id": "library1",
+            "ParentId": "root1",
+            "Name": "Movies",
+            "SortName": "movies",
+            "ImageTags": {"Primary": "p", "Logo": "l", "Thumb": "t"},
+            "ImageBlurHashes": {"Primary": {"p": "hashP"}, "Logo": {"l": "hashL"}, "Backdrop": {"b": "hashB"}}
+        }
+        """)
 
+        #expect(library.id == "library1")
+        #expect(library.parentID == "root1")
         #expect(library.title == "Movies")
         #expect(library.sortTitle == "movies")
-        #expect(library.id == "abc123")
-        #expect(library.parentID == "parent456")
         #expect(library.genres.isEmpty)
         #expect(library.maturity.isEmpty)
+        #expect(library.imageTags?.primary == "p")
+        #expect(library.imageTags?.logo == "l")
+        #expect(library.imageTags?.thumbnail == "t")
+        #expect(library.imageBlurHashes?.primary == "hashP")
+        #expect(library.imageBlurHashes?.logo == "hashL")
+        #expect(library.imageBlurHashes?.thumbnail == "hashB")
         guard case .waiting = library.media
         else {
             Issue.record("Expected media to start as .waiting, got \(library.media)")
@@ -57,78 +60,93 @@ struct LibraryModelTests {
         }
     }
 
+    /// Test that absent images fall back to empty image tags and no blur hashes
+    @Test
+    func missingImagesFallBack() throws {
+        let library = try decode(LibraryModel.self, from: """
+        {"Id": "library1", "ParentId": "root1", "Name": "Movies", "SortName": "movies"}
+        """)
+
+        let tags = try #require(library.imageTags)
+        #expect(tags.primary == nil)
+        #expect(tags.logo == nil)
+        #expect(tags.thumbnail == nil)
+        #expect(library.imageBlurHashes == nil)
+    }
+
+    /// Test that malformed images fall back the same way, rather than failing the whole library
+    @Test
+    func malformedImagesFallBack() throws {
+        let library = try decode(LibraryModel.self, from: """
+        {"Id": "library1", "ParentId": "root1", "Name": "Movies", "SortName": "movies", "ImageTags": "oops", "ImageBlurHashes": [1, 2, 3]}
+        """)
+
+        #expect(library.id == "library1")
+        let tags = try #require(library.imageTags)
+        #expect(tags.primary == nil)
+        #expect(library.imageBlurHashes == nil)
+    }
+
     /// Test that a missing required key reports which key was missing
     /// - Parameter key: Required JSON key to remove
-    @Test(arguments: ["Name", "SortName", "Id", "ParentId"])
-    func missingRequiredKey(key: String) {
-        guard case .missingKey(let missing, let object) = self.decodeError(self.libraryJSON([key: nil]))
+    @Test(arguments: ["Id", "ParentId", "Name", "SortName"])
+    func missingRequiredKeyThrows(key: String) throws {
+        var fields = ["Id": "library1", "ParentId": "root1", "Name": "Movies", "SortName": "movies"]
+        fields[key] = nil
+        let json = String(decoding: try JSONEncoder().encode(fields), as: UTF8.self)
+
+        let error = #expect(throws: JSONError.self) { try decode(LibraryModel.self, from: json) }
+        guard case .missingKey(let missing, let object)? = error
         else {
-            Issue.record("Expected .missingKey when \(key) is absent")
+            Issue.record("Expected .missingKey, got \(String(describing: error))")
             return
         }
         #expect(missing == key)
         #expect(object == "LibraryModel")
     }
 
-    /// Test that a `null` required value reports a missing container
+    /// Test that a `null` required value reports which key was null
     @Test
-    func nullRequiredValue() {
-        guard case .missingContainer(let key, let object) = self.decodeError(self.libraryJSON(["Name": "null"]))
+    func nullRequiredValueThrows() {
+        let error = #expect(throws: JSONError.self) {
+            try decode(LibraryModel.self, from: """
+            {"Id": "library1", "ParentId": "root1", "Name": null, "SortName": "movies"}
+            """)
+        }
+        guard case .missingContainer(let key, let object)? = error
         else {
-            Issue.record("Expected .missingContainer when Name is null")
+            Issue.record("Expected .missingContainer, got \(String(describing: error))")
             return
         }
         #expect(key == "Name")
         #expect(object == "LibraryModel")
     }
 
-    /// Test that a value of the wrong type is reported as a general decode failure
+    /// Test that a required value of the wrong type is rejected
     @Test
-    func wrongTypeFailsDecode() {
-        guard case .failedJSONDecode(let object, _) = self.decodeError(self.libraryJSON(["Id": "5"]))
+    func wrongTypeThrows() {
+        let error = #expect(throws: JSONError.self) {
+            try decode(LibraryModel.self, from: """
+            {"Id": 5, "ParentId": "root1", "Name": "Movies", "SortName": "movies"}
+            """)
+        }
+        guard case .failedJSONDecode(let object, _)? = error
         else {
-            Issue.record("Expected .failedJSONDecode when Id is a number")
+            Issue.record("Expected .failedJSONDecode, got \(String(describing: error))")
             return
         }
         #expect(object == "LibraryModel")
     }
 
-    /// Test that absent image data decodes to empty tags and no blur hashes, rather than failing
+    /// Test that JSON that isn't an object is rejected
     @Test
-    func missingImagesAreTolerated() throws {
-        let library = try JSONDecoder().decode(LibraryModel.self, from: self.libraryJSON())
-
-        #expect(library.imageTags?.thumbnail == nil)
-        #expect(library.imageTags?.logo == nil)
-        #expect(library.imageTags?.primary == nil)
-        #expect(library.imageBlurHashes == nil)
-    }
-
-    /// Test that present image data is decoded into the image properties
-    @Test
-    func decodesImages() throws {
-        let data = self.libraryJSON([
-            "ImageTags": "{\"Primary\": \"p\", \"Logo\": \"l\", \"Thumb\": \"t\"}",
-            "ImageBlurHashes": "{\"Primary\": {\"p\": \"hashP\"}, \"Logo\": {\"l\": \"hashL\"}, \"Backdrop\": {\"b\": \"hashB\"}}"
-        ])
-        let library = try JSONDecoder().decode(LibraryModel.self, from: data)
-
-        #expect(library.imageTags?.primary == "p")
-        #expect(library.imageTags?.logo == "l")
-        #expect(library.imageTags?.thumbnail == "t")
-        #expect(library.imageBlurHashes?.primary == "hashP")
-        #expect(library.imageBlurHashes?.logo == "hashL")
-        #expect(library.imageBlurHashes?.thumbnail == "hashB")
-    }
-
-    /// Test that malformed image data doesn't prevent the library itself from decoding
-    @Test
-    func malformedImagesAreTolerated() throws {
-        let data = self.libraryJSON(["ImageTags": "\"oops\"", "ImageBlurHashes": "[1, 2, 3]"])
-        let library = try JSONDecoder().decode(LibraryModel.self, from: data)
-
-        #expect(library.id == "abc123")
-        #expect(library.imageTags?.primary == nil)
-        #expect(library.imageBlurHashes == nil)
+    func nonObjectThrows() {
+        let error = #expect(throws: JSONError.self) { try decode(LibraryModel.self, from: "[]") }
+        guard case .failedJSONDecode(let object, _)? = error
+        else {
+            Issue.record("Expected .failedJSONDecode, got \(String(describing: error))")
+            return
+        }
+        #expect(object == "LibraryModel")
     }
 }
