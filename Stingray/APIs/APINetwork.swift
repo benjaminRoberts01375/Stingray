@@ -216,25 +216,30 @@ public struct APILoginResponse: Decodable {
         case id = "Id"
         case userId = "UserId"
     }
-    
-    public init(from decoder: Decoder) throws(JSONError) {
+}
+
+/// Decode an `APILoginResponse` from JSON
+public extension APILoginResponse {
+    /// Decode an `APILoginResponse` from JSON
+    /// - Parameter decoder: JSON Decoder
+    init(from decoder: Decoder) throws(JSONError) {
         do {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            
+
             // Decode nested User
             let userContainer = try container.nestedContainer(keyedBy: UserKeys.self, forKey: .user)
-            userName = try userContainer.decode(String.self, forKey: .name)
-            
+            self.userName = try userContainer.decode(String.self, forKey: .name)
+
             // Decode nested SessionInfo
             let sessionContainer = try container.nestedContainer(keyedBy: SessionInfoKeys.self, forKey: .sessionInfo)
-            sessionId = try sessionContainer.decode(String.self, forKey: .id)
-            userId = try sessionContainer.decode(String.self, forKey: .userId)
-            
+            self.sessionId = try sessionContainer.decode(String.self, forKey: .id)
+            self.userId = try sessionContainer.decode(String.self, forKey: .userId)
+
             // Decode flat fields
-            accessToken = try container.decode(String.self, forKey: .accessToken)
-            serverId = try container.decode(String.self, forKey: .serverId)
-            
-            serverVersion = nil
+            self.accessToken = try container.decode(String.self, forKey: .accessToken)
+            self.serverId = try container.decode(String.self, forKey: .serverId)
+
+            self.serverVersion = nil
         }
         catch DecodingError.keyNotFound(let key, _) { throw JSONError.missingKey(key.stringValue, "APILoginResponse") }
         catch DecodingError.valueNotFound(_, let context) {

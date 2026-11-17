@@ -104,6 +104,7 @@ Configure Stingray to look and feel how you want it.
     - Avoid scientific notation on extremely low bitrates
   - Allow passing `any AdvancedNetworkProtocol` to the `JellyfinModel`
   - Reorganize streaming service file naming to more closely mirror the media models
+  - Preserve the default init for `APILoginResponse`
 - Testing
   - It begins
   - `String(duration:)` with positive, negative, `.nan`, and `.infinity`
