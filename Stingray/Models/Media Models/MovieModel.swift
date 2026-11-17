@@ -13,7 +13,7 @@ public protocol MovieProtocol: MediaMetadataProtocol, SpecialFeaturesProtocol {
 }
 
 @Observable
-public final class MovieModel: MovieProtocol {
+public final class MovieModel: MovieProtocol, Decodable {
     public var title: String
     public var sortTitle: String
     public var tagline: String?

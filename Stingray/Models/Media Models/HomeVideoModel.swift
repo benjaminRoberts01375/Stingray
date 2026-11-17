@@ -13,7 +13,7 @@ public protocol HomeVideoProtocol: MediaMetadataProtocol {
 }
 
 @Observable
-public final class HomeVideoModel: HomeVideoProtocol {
+public final class HomeVideoModel: HomeVideoProtocol, Decodable {
     public var title: String
     public var sortTitle: String
     public var description: String
