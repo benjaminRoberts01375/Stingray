@@ -9,8 +9,9 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for dividing a `CGSize` by a `CGFloat`
 @Suite("CGSize divided by CGFloat")
-struct CGSizeDivisionTests {
+public struct CGSizeDivisionTests {
     /// Test dividing sizes by positive divisors
     /// - Parameters:
     ///   - size: Size to divide
@@ -24,7 +25,7 @@ struct CGSizeDivisionTests {
         (CGSize(width: 10, height: 20), 0.5, CGSize(width: 20, height: 40)),
         (CGSize(width: 0, height: 0), 3, CGSize(width: 0, height: 0)),
     ] as [(CGSize, CGFloat, CGSize)])
-    func dividesPositive(size: CGSize, divisor: CGFloat, expected: CGSize) {
+    public func dividesPositive(size: CGSize, divisor: CGFloat, expected: CGSize) {
         #expect(size / divisor == expected)
     }
 
@@ -39,7 +40,7 @@ struct CGSizeDivisionTests {
         (CGSize(width: -10, height: -20), -2, CGSize(width: 5, height: 10)),
         (CGSize(width: 10, height: -20), -0.5, CGSize(width: -20, height: 40)),
     ] as [(CGSize, CGFloat, CGSize)])
-    func dividesNegative(size: CGSize, divisor: CGFloat, expected: CGSize) {
+    public func dividesNegative(size: CGSize, divisor: CGFloat, expected: CGSize) {
         #expect(size / divisor == expected)
     }
 
@@ -52,13 +53,13 @@ struct CGSizeDivisionTests {
         (CGSize(width: -10, height: -20), CGSize(width: -CGFloat.infinity, height: -.infinity)),
         (CGSize(width: 10, height: -20), CGSize(width: CGFloat.infinity, height: -.infinity)),
     ])
-    func dividesByZero(size: CGSize, expected: CGSize) {
+    public func dividesByZero(size: CGSize, expected: CGSize) {
         #expect(size / 0 == expected)
     }
 
     /// Test dividing a zero size by zero. Should result in NaN.
     @Test
-    func dividesZeroByZero() {
+    public func dividesZeroByZero() {
         let result = CGSize(width: 0, height: 0) / 0
         #expect(result.width.isNaN)
         #expect(result.height.isNaN)

@@ -9,12 +9,13 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for decoding `SubFolderModel` (main actor isolated for decoding)
 @Suite("Sub-Folder Model Init")
-@MainActor // For decoding
-struct SubFolderModelTests {
+@MainActor
+public struct SubFolderModelTests {
     /// Test that every field lands on the right property, and that media starts empty
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let folder = try decode(SubFolderModel.self, from: """
         {
             "Id": "folder1",
@@ -47,7 +48,7 @@ struct SubFolderModelTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let folder = try decode(SubFolderModel.self, from: "{}")
 
         #expect(!folder.id.isEmpty)
@@ -66,7 +67,7 @@ struct SubFolderModelTests {
 
     /// Test that JSON that isn't an object is rejected
     @Test
-    func nonObjectThrows() {
+    public func nonObjectThrows() {
         let error = #expect(throws: JSONError.self) { try decode(SubFolderModel.self, from: "[]") }
         guard case .missingContainer(let key, let object)? = error
         else {

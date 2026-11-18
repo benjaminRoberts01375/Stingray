@@ -9,6 +9,7 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for separating an array into smaller arrays of a fixed size
 @Suite("Array.chunked(into:)")
 struct ArrayChunkedTests {
     /// Test chunking arrays whose length is evenly divisible by the chunk size

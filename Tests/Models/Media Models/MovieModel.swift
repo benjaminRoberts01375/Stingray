@@ -9,12 +9,13 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for decoding `MovieModel` (main actor isolated for decoding)
 @Suite("Movie Model Init")
-@MainActor // For decoding
-struct MovieModelTests {
+@MainActor
+public struct MovieModelTests {
     /// Test that every field lands on the right property
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let movie = try decode(MovieModel.self, from: """
         {
             "Id": "movie1",
@@ -57,7 +58,7 @@ struct MovieModelTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let movie = try decode(MovieModel.self, from: "{}")
 
         #expect(!movie.id.isEmpty)
@@ -78,14 +79,14 @@ struct MovieModelTests {
 
     /// Test that the sort title falls back to the title rather than the placeholder
     @Test
-    func sortTitleFallsBackToTitle() throws {
+    public func sortTitleFallsBackToTitle() throws {
         let movie = try decode(MovieModel.self, from: #"{"Name": "Sintel"}"#)
         #expect(movie.sortTitle == "Sintel")
     }
 
     /// Test that values of the wrong shape are treated as missing, rather than failing the whole movie
     @Test
-    func invalidValuesFallBack() throws {
+    public func invalidValuesFallBack() throws {
         let movie = try decode(MovieModel.self, from: """
         {"Name": 5, "Genres": "Drama", "PremiereDate": "Yesterday", "RunTimeTicks": 0}
         """)
@@ -98,7 +99,7 @@ struct MovieModelTests {
 
     /// Test that the playback position is applied only to the version of the movie that was last played
     @Test
-    func resumesLastPlayedSource() throws {
+    public func resumesLastPlayedSource() throws {
         let movie = try decode(MovieModel.self, from: """
         {
             "MediaSources": [{"Id": "source1", "Name": "1080p"}, {"Id": "source2", "Name": "4K"}],
@@ -112,7 +113,7 @@ struct MovieModelTests {
 
     /// Test that a broken media source fails the movie, since it couldn't be played
     @Test
-    func invalidMediaSourceThrows() {
+    public func invalidMediaSourceThrows() {
         let error = #expect(throws: JSONError.self) {
             try decode(MovieModel.self, from: #"{"MediaSources": [{"Name": "No ID"}]}"#)
         }
@@ -126,7 +127,7 @@ struct MovieModelTests {
 
     /// Test that JSON that isn't an object is rejected
     @Test
-    func nonObjectThrows() {
+    public func nonObjectThrows() {
         let error = #expect(throws: JSONError.self) { try decode(MovieModel.self, from: "[]") }
         guard case .missingContainer(let key, let object)? = error
         else {

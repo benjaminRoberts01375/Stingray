@@ -9,9 +9,10 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for decoding `MediaStorage` (main actor isolated for decoding)
 @Suite("Media Storage Init")
-@MainActor // For decoding
-struct MediaStorageTests {
+@MainActor
+public struct MediaStorageTests {
     /// Test that each server media type is decoded into the matching model
     /// - Parameters:
     ///   - serverType: Media type as the server names it
@@ -25,14 +26,14 @@ struct MediaStorageTests {
         ("BoxSet", .collection),
         ("Playlist", .error)
     ])
-    func decodesMediaType(serverType: String, expected: MediaStorage.MediaType) throws {
+    public func decodesMediaType(serverType: String, expected: MediaStorage.MediaType) throws {
         let storage = try decode(MediaStorage.self, from: #"{"Type": "\#(serverType)", "Id": "media1"}"#)
         #expect(storage.mediaType == expected)
     }
 
     /// Test that media without a type is rejected, since there's no way to know what to build
     @Test
-    func missingTypeThrows() {
+    public func missingTypeThrows() {
         let error = #expect(throws: JSONError.self) { try decode(MediaStorage.self, from: #"{"Id": "media1"}"#) }
         guard case .missingKey(let key, let object)? = error
         else {
@@ -44,12 +45,13 @@ struct MediaStorageTests {
     }
 }
 
+/// Tests for decoding `MediaPerson` (main actor isolated for decoding)
 @Suite("Media Person Init")
-@MainActor // For decoding
-struct MediaPersonTests {
+@MainActor
+public struct MediaPersonTests {
     /// Test that every field lands on the right property
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let person = try decode(MediaPerson.self, from: """
         {"Id": "person1", "Name": "Sacha", "Role": "Director", "ImageBlurHashes": {"Primary": {"p": "hashP"}}}
         """)
@@ -62,7 +64,7 @@ struct MediaPersonTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let person = try decode(MediaPerson.self, from: "{}")
 
         #expect(!person.id.isEmpty)
@@ -72,12 +74,13 @@ struct MediaPersonTests {
     }
 }
 
+/// Tests for decoding `MediaImages` (main actor isolated for decoding)
 @Suite("Media Images Init")
-@MainActor // For decoding
-struct MediaImagesTests {
+@MainActor
+public struct MediaImagesTests {
     /// Test that each image tag lands on the right property
     @Test
-    func decodesImageTags() throws {
+    public func decodesImageTags() throws {
         let images = try decode(MediaImages.self, from: #"{"Primary": "p", "Logo": "l", "Thumb": "t"}"#)
 
         #expect(images.primary == "p")
@@ -87,7 +90,7 @@ struct MediaImagesTests {
 
     /// Test that the first hash of each image type is kept, with the backdrop used as the thumbnail
     @Test
-    func decodesBlurHashes() throws {
+    public func decodesBlurHashes() throws {
         let hashes = try decode(MediaImageBlurHashes.self, from: """
         {"Primary": {"p": "hashP"}, "Logo": {"l": "hashL"}, "Backdrop": {"b": "hashB"}}
         """)
@@ -99,7 +102,7 @@ struct MediaImagesTests {
 
     /// Test that missing images decode as absent, rather than failing
     @Test
-    func missingImagesAreNil() throws {
+    public func missingImagesAreNil() throws {
         let images = try decode(MediaImages.self, from: "{}")
         let hashes = try decode(MediaImageBlurHashes.self, from: "{}")
 
@@ -110,12 +113,13 @@ struct MediaImagesTests {
     }
 }
 
+/// Tests for decoding `MediaSource` (main actor isolated for decoding)
 @Suite("Media Source Init")
-@MainActor // For decoding
-struct MediaSourceTests {
+@MainActor
+public struct MediaSourceTests {
     /// Test that streams are split by type, and the server's default audio stream is the only default
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let source = try decode(MediaSource.self, from: """
         {
             "Id": "source1",
@@ -144,7 +148,7 @@ struct MediaSourceTests {
 
     /// Test that a source with only its required fields has no streams and no duration
     @Test
-    func missingOptionalFieldsFallBack() throws {
+    public func missingOptionalFieldsFallBack() throws {
         let source = try decode(MediaSource.self, from: #"{"Id": "source1", "Name": "1080p"}"#)
 
         #expect(source.duration == 0)
@@ -156,7 +160,7 @@ struct MediaSourceTests {
     /// Test that a missing required key reports which key was missing
     /// - Parameter key: Required JSON key to remove
     @Test(arguments: ["Id", "Name"])
-    func missingRequiredKey(key: String) {
+    public func missingRequiredKey(key: String) {
         var fields = ["\"Id\": \"source1\"", "\"Name\": \"1080p\""]
         fields.removeAll { $0.hasPrefix("\"\(key)\"") }
 
@@ -171,12 +175,13 @@ struct MediaSourceTests {
     }
 }
 
+/// Tests for decoding `MediaStream` (main actor isolated for decoding)
 @Suite("Media Stream Init")
-@MainActor // For decoding
-struct MediaStreamTests {
+@MainActor
+public struct MediaStreamTests {
     /// Test that every field lands on the right property
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let stream = try decode(MediaStream.self, from: """
         {"Index": 1, "DisplayTitle": "English", "Type": "Audio", "BitRate": 320000, "Codec": "aac", "IsDefault": true}
         """)
@@ -191,7 +196,7 @@ struct MediaStreamTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let stream = try decode(MediaStream.self, from: "{}")
 
         #expect(!stream.id.isEmpty)
@@ -204,18 +209,19 @@ struct MediaStreamTests {
 
     /// Test that AV1 streams ask for a higher bitrate, since they'll be transcoded
     @Test
-    func av1BoostsBitrate() throws {
+    public func av1BoostsBitrate() throws {
         let stream = try decode(MediaStream.self, from: #"{"Type": "Video", "BitRate": 1000, "Codec": "av1"}"#)
         #expect(stream.bitrate == 1750)
     }
 }
 
+/// Tests for decoding `SpecialFeature` (main actor isolated for decoding)
 @Suite("Special Feature Init")
-@MainActor // For decoding // For decoding
-struct SpecialFeatureTests {
+@MainActor
+public struct SpecialFeatureTests {
     /// Test that every field lands on the right property
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let feature = try decode(SpecialFeature.self, from: """
         {
             "Id": "feature1",
@@ -235,7 +241,7 @@ struct SpecialFeatureTests {
 
     /// Test that optional images decode as absent
     @Test
-    func missingImagesAreNil() throws {
+    public func missingImagesAreNil() throws {
         let feature = try decode(SpecialFeature.self, from: #"{"Id": "feature1", "ExtraType": "Trailer", "MediaSources": []}"#)
 
         #expect(feature.imageTags == nil)
@@ -245,7 +251,7 @@ struct SpecialFeatureTests {
     /// Test that a missing required key fails the feature
     /// - Parameter key: Required JSON key to remove
     @Test(arguments: ["Id", "ExtraType", "MediaSources"])
-    func missingRequiredKeyThrows(key: String) {
+    public func missingRequiredKeyThrows(key: String) {
         var fields = ["\"Id\": \"feature1\"", "\"ExtraType\": \"Trailer\"", "\"MediaSources\": []"]
         fields.removeAll { $0.hasPrefix("\"\(key)\"") }
 

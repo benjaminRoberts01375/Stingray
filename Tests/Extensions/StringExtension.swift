@@ -6,11 +6,12 @@
 //
 
 import Foundation
-import Testing
 @testable import Stingray
+import Testing
 
+/// Tests for creating a timecode `String` from a `TimeInterval`
 @Suite("String(from: TimeInterval)")
-struct StringTimeIntervalTests {
+public struct StringTimeIntervalTests {
     /// Test conversion from duration to timecode with negative seconds
     /// - Parameters:
     ///   - seconds: Negative seconds to test
@@ -26,9 +27,9 @@ struct StringTimeIntervalTests {
         (-610.0, "-10:10"),
         (-3934.0, "-1:05:34"),
         (-100005.0, "-27:46:45"),
-        (-1000007.0, "-277:46:47"),
+        (-1000007.0, "-277:46:47")
         ])
-    func formatsNegative(seconds: TimeInterval, expected: String) {
+    public func formatsNegative(seconds: TimeInterval, expected: String) {
         #expect(String(from: seconds) == expected)
     }
 
@@ -49,20 +50,21 @@ struct StringTimeIntervalTests {
         (100005.0, "27:46:45"),
         (1000007.0, "277:46:47"),
     ])
-    func formatsPositive(seconds: TimeInterval, expected: String) {
+    public func formatsPositive(seconds: TimeInterval, expected: String) {
         #expect(String(from: seconds) == expected)
     }
     
     /// Test against typically out-of-bounds inputs like infinity. Should result in "0:00".
     /// - Parameter seconds: Strange seconds to test
     @Test(arguments: [ Foundation.TimeInterval.nan, .infinity, -.infinity, ])
-    func formatsTimecode(seconds: TimeInterval) {
+    public func formatsTimecode(seconds: TimeInterval) {
         #expect(String(from: seconds) == "0:00")
     }
 }
 
+/// Tests for creating a `String` from a `Duration`
 @Suite("String(from: Duration)")
-struct StringDurationTests {
+public struct StringDurationTests {
     /// Test formatting negative durations
     /// - Parameters:
     ///   - duration: Negative duration to test
@@ -80,7 +82,7 @@ struct StringDurationTests {
         (.seconds(-7260), "-2 hours 1 minute"),
         (.seconds(-90000), "-25 hours 0 minutes"),
     ])
-    func formatsNegative(duration: Duration, expected: String) {
+    public func formatsNegative(duration: Duration, expected: String) {
         #expect(String(from: duration) == expected)
     }
 
@@ -98,7 +100,7 @@ struct StringDurationTests {
         (.seconds(1500), "25 minutes"),
         (.seconds(3599), "59 minutes"),
     ])
-    func formatsMinutes(duration: Duration, expected: String) {
+    public func formatsMinutes(duration: Duration, expected: String) {
         #expect(String(from: duration) == expected)
     }
 
@@ -115,7 +117,7 @@ struct StringDurationTests {
         (.seconds(9000), "2 hours 30 minutes"),
         (.seconds(90000), "25 hours 0 minutes"),
     ])
-    func formatsHours(duration: Duration, expected: String) {
+    public func formatsHours(duration: Duration, expected: String) {
         #expect(String(from: duration) == expected)
     }
 
@@ -130,20 +132,21 @@ struct StringDurationTests {
         (.seconds(3659), "1 hour 0 minutes"),
         (.milliseconds(3_719_999), "1 hour 1 minute"),
     ])
-    func truncatesSeconds(duration: Duration, expected: String) {
+    public func truncatesSeconds(duration: Duration, expected: String) {
         #expect(String(from: duration) == expected)
     }
     
     /// Test that passing nil as a duration returns nil
     @Test
-    func returnNil() {
+    public func returnNil() {
         let duration: Duration? = nil
         #expect(String(from: duration) == nil)
     }
 }
 
+/// Tests for creating a `String` from a bitrate
 @Suite("String(bits: Int?)")
-struct StringBitsTests {
+public struct StringBitsTests {
     /// Tests converting a postive `Int` bitrate (bits per second) to a `String` (megabits per second)
     /// - Parameters:
     ///   - bitrate: Postive bitrate in bits per second
@@ -161,7 +164,7 @@ struct StringBitsTests {
         (100_000_000, "100 Mbps"),
         (1_000_000_000, "1000 Mbps"),
     ])
-    func positive(bitrate: Int, expected: String) {
+    public func positive(bitrate: Int, expected: String) {
         #expect(String(bitrate: bitrate) == expected)
     }
 
@@ -182,19 +185,20 @@ struct StringBitsTests {
         (-100_000_000, "-100 Mbps"),
         (-1_000_000_000, "-1000 Mbps"),
     ])
-    func negative(bitrate: Int, expected: String) {
+    public func negative(bitrate: Int, expected: String) {
         #expect(String(bitrate: bitrate) == expected)
     }
     
     /// Checks the nil case for converting an `Int?` to Megabits per second (Mbps)
     @Test
-    func returnNil() {
+    public func returnNil() {
         #expect(String(bitrate: nil) == nil)
     }
 }
 
+/// Tests for inserting spaces into Pascal case strings
 @Suite("String Pascal to Spaces")
-struct StringPascalCase {
+public struct StringPascalCase {
     /// Ensures that CamelCase can be have spaces inserted between words
     /// - Parameters:
     ///   - pascal: PascalCase example
@@ -209,7 +213,7 @@ struct StringPascalCase {
         (" LeadingSpace", " Leading Space"),
         ("MarkiplierÉ", "Markiplier É")
     ])
-    func pascalToSpacesTest(pascal: String, expected: String) {
+    public func pascalToSpacesTest(pascal: String, expected: String) {
         #expect(pascal.pascalCaseToSpaces() == expected)
     }
 }

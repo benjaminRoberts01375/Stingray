@@ -1,0 +1,9 @@
+# Included paths
+included:
+  - Tests
+
+disabled_rules:
+  - large_tuple
+  - trailing_comma
+  - explicit_acl
+  - sorted_imports

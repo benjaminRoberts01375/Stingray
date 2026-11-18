@@ -9,12 +9,13 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for decoding `CollectionModel` (main actor isolated for decoding)
 @Suite("Collection Model Init")
-@MainActor // For decoding
-struct CollectionModelTests {
+@MainActor
+public struct CollectionModelTests {
     /// Test that every field lands on the right property, and that media starts empty
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let collection = try decode(CollectionModel.self, from: """
         {
             "Id": "collection1",
@@ -47,7 +48,7 @@ struct CollectionModelTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let collection = try decode(CollectionModel.self, from: "{}")
 
         #expect(!collection.id.isEmpty)
@@ -66,7 +67,7 @@ struct CollectionModelTests {
 
     /// Test that JSON that isn't an object is rejected
     @Test
-    func nonObjectThrows() {
+    public func nonObjectThrows() {
         let error = #expect(throws: JSONError.self) { try decode(CollectionModel.self, from: "[]") }
         guard case .missingContainer(let key, let object)? = error
         else {

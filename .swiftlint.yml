@@ -1,6 +1,7 @@
 # Included paths
 included:
   - Stingray
+  - Tests
 # Excluded paths
 excluded:
   - Carthage

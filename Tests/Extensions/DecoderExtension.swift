@@ -5,12 +5,13 @@
 //  Created by Ben Roberts on 11/9/26.
 //
 
+@testable import Stingray
 import Foundation
 import Testing
-@testable import Stingray
 
+/// Tests for decoding every available element of an array
 @Suite("KeyedDecodingContainer.decodeAllAvailable(_:forKey:)")
-struct DecodeAllAvailableTests {
+public struct DecodeAllAvailableTests {
     /// Minimal container that routes its `items` key through `decodeAllAvailable`
     private struct Wrapper<T: Decodable>: Decodable {
         let items: [T]
@@ -45,7 +46,7 @@ struct DecodeAllAvailableTests {
         (#"{"items": [1, 2, 3]}"#, [1, 2, 3]),
         (#"{"items": [-5, 0, 5]}"#, [-5, 0, 5]),
     ] as [(String, [Int])])
-    func decodesAllValid(json: String, expected: [Int]) throws {
+    public func decodesAllValid(json: String, expected: [Int]) throws {
         #expect(try decode(json, as: Int.self) == expected)
     }
 
@@ -61,7 +62,7 @@ struct DecodeAllAvailableTests {
         (#"{"items": [{}, 2, []]}"#, [2]),
         (#"{"items": [true, 1, "1", 2]}"#, [1, 2]),
     ] as [(String, [Int])])
-    func decodesSkippingInvalid(json: String, expected: [Int]) throws {
+    public func decodesSkippingInvalid(json: String, expected: [Int]) throws {
         #expect(try decode(json, as: Int.self) == expected)
     }
 
@@ -72,7 +73,7 @@ struct DecodeAllAvailableTests {
         #"{"items": ["a", "b"]}"#,
         #"{"items": [{}, [], 1.5]}"#,
     ])
-    func decodesAllInvalid(json: String) throws {
+    public func decodesAllInvalid(json: String) throws {
         #expect(try decode(json, as: Int.self).isEmpty)
     }
 
@@ -86,7 +87,7 @@ struct DecodeAllAvailableTests {
         #"{"items": "1, 2"}"#,
         #"{"items": {"0": 1}}"#,
     ])
-    func decodesMissingOrMistyped(json: String) throws {
+    public func decodesMissingOrMistyped(json: String) throws {
         #expect(try decode(json, as: Int.self).isEmpty)
     }
 
@@ -101,7 +102,7 @@ struct DecodeAllAvailableTests {
         (#"{"items": [{"id": 1, "extra": true}]}"#, [1]),
         (#"{"items": [{"id": 10000}, {"id": null}, {"id": 30000}]}"#, [10000, 30000]),
     ] as [(String, [Int])])
-    func decodesKeyedElements(json: String, expected: [Int]) throws {
+    public func decodesKeyedElements(json: String, expected: [Int]) throws {
         #expect(try decode(json, as: Item.self).map(\.id) == expected)
     }
 }

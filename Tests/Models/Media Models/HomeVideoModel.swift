@@ -9,12 +9,13 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for decoding `HomeVideoModel` (main actor isolated for decoding)
 @Suite("Home Video Model Init")
-@MainActor // For decoding
-struct HomeVideoModelTests {
+@MainActor
+public struct HomeVideoModelTests {
     /// Test that every field lands on the right property
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let video = try decode(HomeVideoModel.self, from: """
         {
             "Id": "video1",
@@ -52,7 +53,7 @@ struct HomeVideoModelTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let video = try decode(HomeVideoModel.self, from: "{}")
 
         #expect(!video.id.isEmpty)
@@ -73,7 +74,7 @@ struct HomeVideoModelTests {
 
     /// Test that values of the wrong shape are treated as missing, rather than failing the whole video
     @Test
-    func invalidValuesFallBack() throws {
+    public func invalidValuesFallBack() throws {
         let video = try decode(HomeVideoModel.self, from: """
         {"Name": 5, "Genres": "Family", "PremiereDate": "Yesterday", "RunTimeTicks": 0}
         """)
@@ -86,7 +87,7 @@ struct HomeVideoModelTests {
 
     /// Test that a broken media source fails the video, since it couldn't be played
     @Test
-    func invalidMediaSourceThrows() {
+    public func invalidMediaSourceThrows() {
         let error = #expect(throws: JSONError.self) {
             try decode(HomeVideoModel.self, from: #"{"MediaSources": [{"Name": "No ID"}]}"#)
         }
@@ -100,7 +101,7 @@ struct HomeVideoModelTests {
 
     /// Test that JSON that isn't an object is rejected
     @Test
-    func nonObjectThrows() {
+    public func nonObjectThrows() {
         let error = #expect(throws: JSONError.self) { try decode(HomeVideoModel.self, from: "[]") }
         guard case .missingContainer(let key, let object)? = error
         else {

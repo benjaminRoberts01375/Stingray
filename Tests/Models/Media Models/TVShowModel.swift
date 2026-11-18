@@ -10,12 +10,13 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Tests for decoding `TVShowModel` (main actor isolated for decoding)
 @Suite("TV Show Model Init")
-@MainActor // For decoding
-struct TVShowModelTests {
+@MainActor
+public struct TVShowModelTests {
     /// Test that every field lands on the right property
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let show = try decode(TVShowModel.self, from: """
         {
             "Id": "show1",
@@ -56,7 +57,7 @@ struct TVShowModelTests {
 
     /// Test that an episode (ex. from up next) is represented by the show it belongs to
     @Test
-    func prefersSeriesIdentity() throws {
+    public func prefersSeriesIdentity() throws {
         let show = try decode(TVShowModel.self, from: """
         {"Id": "episode1", "Name": "Pilot", "SeriesId": "show1", "SeriesName": "Cosmos Laundromat"}
         """)
@@ -68,7 +69,7 @@ struct TVShowModelTests {
 
     /// Test that an empty object still decodes, using a placeholder for every field
     @Test
-    func missingFieldsFallBack() throws {
+    public func missingFieldsFallBack() throws {
         let show = try decode(TVShowModel.self, from: "{}")
 
         #expect(!show.id.isEmpty)
@@ -88,7 +89,7 @@ struct TVShowModelTests {
 
     /// Test that values of the wrong shape are treated as missing, rather than failing the whole show
     @Test
-    func invalidValuesFallBack() throws {
+    public func invalidValuesFallBack() throws {
         let show = try decode(TVShowModel.self, from: """
         {"Name": 5, "Genres": "Drama", "PremiereDate": "Yesterday", "RunTimeTicks": 0}
         """)
@@ -101,7 +102,7 @@ struct TVShowModelTests {
 
     /// Test that JSON that isn't an object is rejected
     @Test
-    func nonObjectThrows() {
+    public func nonObjectThrows() {
         let error = #expect(throws: JSONError.self) { try decode(TVShowModel.self, from: "[]") }
         guard case .missingContainer(let key, let object)? = error
         else {
@@ -113,9 +114,10 @@ struct TVShowModelTests {
     }
 }
 
+/// Tests for decoding `TVSeason` (main actor isolated for decoding)
 @Suite("TV Season Decoding")
-@MainActor // For decoding
-struct TVSeasonTests {
+@MainActor
+public struct TVSeasonTests {
     /// Build the JSON for a minimal episode
     /// - Parameters:
     ///   - id: Episode ID
@@ -137,7 +139,7 @@ struct TVSeasonTests {
 
     /// Test that episodes are grouped into their seasons, in order
     @Test
-    func groupsEpisodesBySeason() throws {
+    public func groupsEpisodesBySeason() throws {
         let seasons = try self.seasons(
             self.episode("1", season: "Season 1", seasonID: "s1"),
             self.episode("2", season: "Season 1", seasonID: "s1"),
@@ -150,7 +152,7 @@ struct TVSeasonTests {
 
     /// Test that specials are gathered into one season, and the season they interrupt is continued afterwards
     @Test
-    func specialsSplitSeasons() throws {
+    public func specialsSplitSeasons() throws {
         let seasons = try self.seasons(
             self.episode("1", season: "Season 1", seasonID: "s1"),
             self.episode("sp1", season: "Specials", seasonID: "specials"),
@@ -164,7 +166,7 @@ struct TVSeasonTests {
 
     /// Test that every episode field lands on the right property
     @Test
-    func decodesEpisodeFields() throws {
+    public func decodesEpisodeFields() throws {
         let seasons = try self.seasons("""
         {
             "Id": "episode1",
@@ -193,7 +195,7 @@ struct TVSeasonTests {
 
     /// Test that optional episode fields fall back, with the episode number taken from the episode's position
     @Test
-    func episodeFieldsFallBack() throws {
+    public func episodeFieldsFallBack() throws {
         let seasons = try self.seasons(
             self.episode("1", season: "Season 1", seasonID: "s1"),
             #"{"Id": "2", "Name": "Episode 2", "SeriesId": "show1", "UserData": {}}"#
@@ -212,7 +214,7 @@ struct TVSeasonTests {
     /// Test that a missing required episode key reports which key was missing
     /// - Parameter key: Required JSON key to remove
     @Test(arguments: ["Id", "Name", "UserData"])
-    func missingRequiredKey(key: String) {
+    public func missingRequiredKey(key: String) {
         var fields = ["\"Id\": \"1\"", "\"Name\": \"Pilot\"", "\"SeasonId\": \"s1\"", "\"UserData\": {}"]
         fields.removeAll { $0.hasPrefix("\"\(key)\"") }
 

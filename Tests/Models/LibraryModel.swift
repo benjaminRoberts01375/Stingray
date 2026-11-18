@@ -9,6 +9,7 @@ import Foundation
 import Testing
 @testable import Stingray
 
+/// Test-only helpers for creating a `LibraryModel`
 private extension LibraryModel {
     /// Build a library by decoding JSON, since `LibraryModel` only has a decoding initializer.
     /// Images are left absent, and media starts as `.waiting`.
@@ -20,16 +21,17 @@ private extension LibraryModel {
     ) throws {
         let json: [String: String] = ["Name": title, "SortName": sortTitle, "Id": id, "ParentId": parentID]
         let data = try JSONEncoder().encode(json)
-        try self.init(from: try decoder(String(decoding: data, as: UTF8.self)))
+        try self.init(from: try decoder(String(data: data, encoding: .utf8) ?? ""))
     }
 }
 
+/// Tests for decoding `LibraryModel` (main actor isolated for decoding)
 @Suite("Library Model Init")
-@MainActor // For decoding
-struct LibraryModelTests {
+@MainActor
+public struct LibraryModelTests {
     /// Test that every field lands on the right property, and that media starts empty
     @Test
-    func decodesAllFields() throws {
+    public func decodesAllFields() throws {
         let library = try decode(LibraryModel.self, from: """
         {
             "Id": "library1",
@@ -62,7 +64,7 @@ struct LibraryModelTests {
 
     /// Test that absent images fall back to empty image tags and no blur hashes
     @Test
-    func missingImagesFallBack() throws {
+    public func missingImagesFallBack() throws {
         let library = try decode(LibraryModel.self, from: """
         {"Id": "library1", "ParentId": "root1", "Name": "Movies", "SortName": "movies"}
         """)
@@ -76,7 +78,7 @@ struct LibraryModelTests {
 
     /// Test that malformed images fall back the same way, rather than failing the whole library
     @Test
-    func malformedImagesFallBack() throws {
+    public func malformedImagesFallBack() throws {
         let library = try decode(LibraryModel.self, from: """
         {"Id": "library1", "ParentId": "root1", "Name": "Movies", "SortName": "movies", "ImageTags": "oops", "ImageBlurHashes": [1, 2, 3]}
         """)
@@ -90,10 +92,10 @@ struct LibraryModelTests {
     /// Test that a missing required key reports which key was missing
     /// - Parameter key: Required JSON key to remove
     @Test(arguments: ["Id", "ParentId", "Name", "SortName"])
-    func missingRequiredKeyThrows(key: String) throws {
+    public func missingRequiredKeyThrows(key: String) throws {
         var fields = ["Id": "library1", "ParentId": "root1", "Name": "Movies", "SortName": "movies"]
         fields[key] = nil
-        let json = String(decoding: try JSONEncoder().encode(fields), as: UTF8.self)
+        let json = try #require(String(data: JSONEncoder().encode(fields), encoding: .utf8))
 
         let error = #expect(throws: JSONError.self) { try decode(LibraryModel.self, from: json) }
         guard case .missingKey(let missing, let object)? = error
@@ -107,7 +109,7 @@ struct LibraryModelTests {
 
     /// Test that a `null` required value reports which key was null
     @Test
-    func nullRequiredValueThrows() {
+    public func nullRequiredValueThrows() {
         let error = #expect(throws: JSONError.self) {
             try decode(LibraryModel.self, from: """
             {"Id": "library1", "ParentId": "root1", "Name": null, "SortName": "movies"}
@@ -124,7 +126,7 @@ struct LibraryModelTests {
 
     /// Test that a required value of the wrong type is rejected
     @Test
-    func wrongTypeThrows() {
+    public func wrongTypeThrows() {
         let error = #expect(throws: JSONError.self) {
             try decode(LibraryModel.self, from: """
             {"Id": 5, "ParentId": "root1", "Name": "Movies", "SortName": "movies"}
@@ -140,7 +142,7 @@ struct LibraryModelTests {
 
     /// Test that JSON that isn't an object is rejected
     @Test
-    func nonObjectThrows() {
+    public func nonObjectThrows() {
         let error = #expect(throws: JSONError.self) { try decode(LibraryModel.self, from: "[]") }
         guard case .failedJSONDecode(let object, _)? = error
         else {

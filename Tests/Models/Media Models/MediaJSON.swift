@@ -21,13 +21,13 @@ private struct DecoderCapture: Decodable {
 ///   - type: Model to decode
 ///   - json: JSON text
 /// - Returns: The decoded model
-func decode<T: Decodable>(_ type: T.Type, from json: String) throws -> T {
+public func decode<T: Decodable>(_ type: T.Type, from json: String) throws -> T {
     try JSONDecoder().decode(type, from: Data(json.utf8))
 }
 
-/// Wrap JSON text in a `Decoder`, for types that decode through a static function rather than `init(from:)`
+/// Wrap JSON text in a `Decoder`, for types that decode through a static public function rather than `init(from:)`
 /// - Parameter json: JSON text
 /// - Returns: A decoder for the top level of the JSON
-func decoder(_ json: String) throws -> Decoder {
+public func decoder(_ json: String) throws -> Decoder {
     try JSONDecoder().decode(DecoderCapture.self, from: Data(json.utf8)).decoder
 }

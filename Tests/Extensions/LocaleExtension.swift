@@ -10,8 +10,9 @@ import SwiftUI
 import Testing
 @testable import Stingray
 
+/// Tests for naming a locale's language
 @Suite("Locale.languageDisplayName") // AI used to get special characters
-struct LocaleLanguageDisplayNameTests {
+public struct LocaleLanguageDisplayNameTests {
     /// Test that a locale's language is named in that locale's own language
     /// - Parameters:
     ///   - identifier: Locale identifier to test
@@ -24,7 +25,7 @@ struct LocaleLanguageDisplayNameTests {
         ("it", "italiano"),
         ("ja", "日本語"),
     ])
-    func namesOwnLanguage(identifier: String, expected: String) {
+    public func namesOwnLanguage(identifier: String, expected: String) {
         #expect(Locale(identifier: identifier).languageDisplayName == LocalizedStringKey(expected))
     }
 
@@ -40,13 +41,13 @@ struct LocaleLanguageDisplayNameTests {
         ("pt_BR", "português"),
         ("zh-Hans", "中文"),
     ])
-    func ignoresRegionAndScript(identifier: String, expected: String) {
+    public func ignoresRegionAndScript(identifier: String, expected: String) {
         #expect(Locale(identifier: identifier).languageDisplayName == LocalizedStringKey(expected))
     }
 
     /// Test that a locale without a language code returns nil
     @Test
-    func returnNil() {
+    public func returnNil() {
         #expect(Locale(identifier: "").languageDisplayName == nil)
     }
 }
