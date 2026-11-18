@@ -122,6 +122,12 @@ private func subFolder(_ id: String) throws -> MediaStorage {
     .subFolder(try decode(SubFolderModel.self, from: #"{"Id": "\#(id)"}"#))
 }
 
+/// Build a collection with the given ID
+@MainActor // For decoding
+private func collection(_ id: String) throws -> MediaStorage {
+    .collection(try decode(CollectionModel.self, from: #"{"Id": "\#(id)"}"#))
+}
+
 /// IDs of the media in a group, or `nil` if its media isn't available
 private func mediaIDs(_ status: MediaStatus) -> [String?]? {
     guard case .available(let media) = status else { return nil }
@@ -297,6 +303,46 @@ public struct JellyfinModelTests {
         }
         #expect(mediaIDs(folder.media) == ["m1"])
         #expect(!self.network.recursiveRequests.contains(true))
+    }
+
+    /// Test that groups found while loading a library end up empty when they have nothing in them, rather than waiting forever
+    @Test(arguments: [false, true])
+    public func emptyNestedGroupsBecomeAvailable(flatten: Bool) async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": [try subFolder("folder1"), try collection("collection1")], "folder1": [], "collection1": []]
+        _ = try await self.makeModel(flatten: flatten)
+
+        guard case .available(let media) = movies.media
+        else {
+            Issue.record("Expected the library to be available, got \(movies.media)")
+            return
+        }
+        for group in media {
+            switch group {
+            case .subFolder(let folder): #expect(mediaIDs(folder.media) == [], "\(folder.id) is \(folder.media)")
+            case .collection(let collection): #expect(mediaIDs(collection.media) == [], "\(collection.id) is \(collection.media)")
+            default: Issue.record("Unexpected media \(group.id)")
+            }
+        }
+    }
+
+    /// Test that empty groups found while resyncing a library end up empty, rather than waiting forever
+    @Test
+    public func resyncEmptyNestedGroupsBecomeAvailable() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        let model = try await self.makeModel()
+
+        self.network.media = ["movies": [try subFolder("folder1")], "folder1": []]
+        await model.resync(library: movies, flatten: false)
+
+        guard case .available(let media) = movies.media, case .subFolder(let folder)? = media.first
+        else {
+            Issue.record("Expected the library to hold a sub-folder, got \(movies.media)")
+            return
+        }
+        #expect(mediaIDs(folder.media) == [])
     }
 
     /// Test that flattening asks the server for media recursively

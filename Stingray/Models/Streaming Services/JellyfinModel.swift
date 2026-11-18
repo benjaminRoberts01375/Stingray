@@ -291,9 +291,10 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             case error(RError)
         }
 
+        // Lives outside the task group so sub-folders and collections found along the way can be finalized afterwards
+        let groupsIterator = groups.makeAppendableIterator()
         await withTaskGroup(of: (String, GroupContent).self) { group in
             var pageTracker: [String : Int] = [:]
-            let groupsIterator = groups.makeAppendableIterator()
 
             func getMedia(parentID: String?) {
                 guard let parentID = parentID // Every group has been fully requested
@@ -359,7 +360,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
 
         // Every page came back blank, so the group really is empty. Leaving it as `.waiting` would spin forever.
-        for group in groups {
+        // Includes the sub-folders and collections discovered while fetching, not just the groups passed in
+        for group in groupsIterator.storage {
             if case .waiting = group.media { group.media = .available([]) }
         }
     }
