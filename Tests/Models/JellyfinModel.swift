@@ -1,0 +1,431 @@
+//
+//  JellyfinModel.swift
+//  StingrayTVOSTests
+//
+//  Created by Ben Roberts on 11/16/26.
+//
+
+import AVKit
+import Foundation
+import Testing
+@testable import Stingray
+
+// MARK: Mocks
+
+/// An in-memory stand-in for a Jellyfin server
+private final class FakeNetwork: AdvancedNetworkProtocol {
+    /// Libraries on the server. `nil` makes the request fail
+    var libraries: [LibraryModel]? = []
+    /// Media held by each library or sub-folder, keyed by parent ID. Parents that aren't listed fail to load
+    var media: [String: [MediaStorage]] = [:]
+    /// Media returned for both recently added and up next. `nil` makes the request fail
+    var shelfMedia: [MediaStorage]? = []
+    /// Every `recursive` flag `getMedia` was called with
+    var recursiveRequests: [Bool] = []
+    /// Access token most recently logged out
+    var loggedOutToken: String?
+
+    public func getLibraries(accessToken: String, userID: String) async throws(LibraryErrors) -> [LibraryModel] {
+        guard let libraries else { throw .unknown("No libraries") }
+        return libraries
+    }
+
+    public func getMedia(
+        accessToken: String,
+        parentID: String,
+        index: Int,
+        count: Int,
+        sortOrder: LibraryMediaSortOrder,
+        sortBy: LibraryMediaSortBy,
+        mediaTypes: [MediaStorage.MediaType]?,
+        recursive: Bool
+    ) async throws(LibraryErrors) -> [MediaStorage] {
+        recursiveRequests.append(recursive)
+        guard let items = media[parentID] else { throw .unknown("No media for \(parentID)") }
+        return Array(items.dropFirst(index).prefix(count))
+    }
+
+    public func getRecentlyAdded(
+        contentType: RecentlyAddedMediaType,
+        accessToken: String
+    ) async throws(AdvancedNetworkErrors) -> [MediaStorage] {
+        guard let shelfMedia else { throw .failedRecentlyAdded(LibraryErrors.unknown("Offline")) }
+        return shelfMedia
+    }
+
+    public func getUpNext(accessToken: String) async throws(AdvancedNetworkErrors) -> [MediaStorage] {
+        guard let shelfMedia else { throw .failedUpNext(LibraryErrors.unknown("Offline")) }
+        return shelfMedia
+    }
+
+    public func getMediaImageURL(accessToken: String, imageType: MediaImageType, mediaID: String, width: Int) -> URL? {
+        URL(string: "https://jellyfin.test/\(mediaID)/\(imageType.rawValue)/\(width)")
+    }
+
+    public func logoutUser(accessToken: String) async {
+        loggedOutToken = accessToken
+    }
+
+    // Not used by these tests
+    public func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
+        throw .loginFailed(LibraryErrors.unknown("Unused"))
+    }
+    public func getStreamingContent(
+        accessToken: String,
+        contentID: String,
+        bitrate: Int,
+        subtitleID: String?,
+        audioID: String,
+        videoID: String,
+        sessionID: String,
+        title: String,
+        subtitle: String?
+    ) -> AVPlayerItem? { nil }
+    public func updatePlaybackStatus(
+        mediaSourceID: String,
+        audioStreamIndex: String,
+        subtitleStreamIndex: String?,
+        playbackPosition: Int,
+        playSessionID: String,
+        userSessionID: String,
+        playbackStatus: PlaybackStatus,
+        accessToken: String
+    ) async throws {}
+    public func getUserImageURL(userID: String) -> URL? { nil }
+    public func loadSpecialFeatures(
+        mediaID: String,
+        accessToken: String,
+        priority: RequestPriority
+    ) async throws(AdvancedNetworkErrors) -> [SpecialFeature] { [] }
+    public func getSeasonMedia(accessToken: String, showID: String, priority: RequestPriority) async throws -> [TVSeason] { [] }
+}
+
+// MARK: Helpers
+
+/// Build a library with the given ID
+@MainActor // For decoding
+private func library(_ id: String) throws -> LibraryModel {
+    try decode(LibraryModel.self, from: #"{"Id": "\#(id)", "ParentId": "root", "Name": "\#(id)", "SortName": "\#(id)"}"#)
+}
+
+/// Build a movie with the given ID, and optionally genres and a rating
+@MainActor // For decoding
+private func movie(_ id: String, genres: [String] = [], rating: String? = nil) throws -> MediaStorage {
+    let ratingJSON = rating.map { #", "OfficialRating": "\#($0)""# } ?? ""
+    let genresJSON = genres.map { "\"\($0)\"" }.joined(separator: ", ")
+    return .movie(try decode(MovieModel.self, from: #"{"Id": "\#(id)", "Genres": [\#(genresJSON)]\#(ratingJSON)}"#))
+}
+
+/// Build a sub-folder with the given ID
+@MainActor // For decoding
+private func subFolder(_ id: String) throws -> MediaStorage {
+    .subFolder(try decode(SubFolderModel.self, from: #"{"Id": "\#(id)"}"#))
+}
+
+/// IDs of the media in a group, or `nil` if its media isn't available
+private func mediaIDs(_ status: MediaStatus) -> [String?]? {
+    guard case .available(let media) = status else { return nil }
+    return media.map(\.id)
+}
+
+/// Tests for `JellyfinModel`
+@Suite("Jellyfin Model", .timeLimit(.minutes(1)))
+@MainActor
+public struct JellyfinModelTests {
+    /// Fake network that serves the test's libraries and media
+    private let network = FakeNetwork()
+    /// Login response used to create the model
+    public let login = APILoginResponse(
+        userName: "user",
+        sessionId: "session1",
+        userId: "user1",
+        accessToken: "token1",
+        serverId: "server1",
+        serverVersion: "10.11.0"
+    )
+
+    /// Create a model and wait for its libraries to finish loading
+    /// - Parameter flatten: Should media in sub-folders be pulled up into their library
+    /// - Returns: A model whose library status is either `.complete` or `.error`
+    public func makeModel(flatten: Bool = false) async throws -> JellyfinModel {
+        let url = try #require(URL(string: "https://jellyfin.test"))
+        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: flatten, network: network)
+        while true {
+            switch model.libraryStatus {
+            case .retrieving, .available: await Task.yield()
+            case .complete, .error: return model
+            }
+        }
+    }
+
+    // MARK: Init
+
+    /// Test that the login response lands on the right properties
+    @Test
+    public func copiesLoginResponse() async throws {
+        let model = try await self.makeModel()
+
+        #expect(model.usersName == "user")
+        #expect(model.userID == "user1")
+        #expect(model.sessionID == "session1")
+        #expect(model.accessToken == "token1")
+        #expect(model.serverID == "server1")
+        #expect(model.serverVersion == "10.11.0")
+        #expect(model.serviceURL.absoluteString == "https://jellyfin.test")
+    }
+
+    // MARK: Libraries
+
+    /// Test that a server without libraries finishes with none
+    @Test
+    public func noLibrariesCompletesEmpty() async throws {
+        let model = try await self.makeModel()
+
+        guard case .complete(let libraries) = model.libraryStatus
+        else {
+            Issue.record("Expected .complete, got \(model.libraryStatus)")
+            return
+        }
+        #expect(libraries.isEmpty)
+    }
+
+    /// Test that failing to get libraries puts the model in an error state
+    @Test
+    public func libraryFailureErrors() async throws {
+        self.network.libraries = nil
+        let model = try await self.makeModel()
+
+        guard case .error = model.libraryStatus
+        else {
+            Issue.record("Expected .error, got \(model.libraryStatus)")
+            return
+        }
+    }
+
+    /// Test that each library is filled with its own media
+    @Test
+    public func loadsMediaIntoEachLibrary() async throws {
+        let movies = try library("movies")
+        let shows = try library("shows")
+        self.network.libraries = [movies, shows]
+        self.network.media = ["movies": [try movie("m1"), try movie("m2")], "shows": [try movie("s1")]]
+        _ = try await self.makeModel()
+
+        #expect(mediaIDs(movies.media) == ["m1", "m2"])
+        #expect(mediaIDs(shows.media) == ["s1"])
+    }
+
+    /// Test that a library with nothing in it ends up empty, rather than waiting forever
+    @Test
+    public func emptyLibraryBecomesAvailable() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": []]
+        _ = try await self.makeModel()
+
+        #expect(mediaIDs(movies.media) == [])
+    }
+
+    /// Test that one library failing doesn't stop the others from loading
+    @Test
+    public func failedLibraryDoesNotAffectOthers() async throws {
+        let movies = try library("movies")
+        let broken = try library("broken")
+        self.network.libraries = [broken, movies]
+        self.network.media = ["movies": [try movie("m1")]]
+        let model = try await self.makeModel()
+
+        guard case .error = broken.media
+        else {
+            Issue.record("Expected the broken library to error, got \(broken.media)")
+            return
+        }
+        #expect(mediaIDs(movies.media) == ["m1"])
+        guard case .complete = model.libraryStatus
+        else {
+            Issue.record("Expected .complete, got \(model.libraryStatus)")
+            return
+        }
+    }
+
+    /// Test that libraries larger than a single page are fully loaded
+    @Test
+    public func pagesThroughLargeLibraries() async throws {
+        let movies = try library("movies")
+        let allMovies = try (1...250).map { try movie("m\($0)") }
+        self.network.libraries = [movies]
+        self.network.media = ["movies": allMovies]
+        _ = try await self.makeModel()
+
+        let loaded = try #require(mediaIDs(movies.media))
+        #expect(Set(loaded) == Set(allMovies.map(\.id)))
+        #expect(loaded.count == 250)
+    }
+
+    /// Test that genres and ratings are gathered from a library's media, with missing ratings shown as "Not Rated"
+    @Test
+    public func gathersGenresAndMaturity() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = [
+            "movies": [
+                try movie("m1", genres: ["Comedy"], rating: "PG"),
+                try movie("m2", genres: ["Drama", "Comedy"], rating: "NR"),
+                try movie("m3")
+            ]
+        ]
+        _ = try await self.makeModel()
+
+        #expect(movies.genres == ["Comedy", "Drama"])
+        #expect(movies.maturity == ["PG", "Not Rated"])
+    }
+
+    // MARK: Sub-folders
+
+    /// Test that sub-folders are kept and filled with their own media when not flattening
+    @Test
+    public func loadsSubFolders() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": [try subFolder("folder1")], "folder1": [try movie("m1")]]
+        _ = try await self.makeModel(flatten: false)
+
+        guard case .available(let media) = movies.media, case .subFolder(let folder)? = media.first
+        else {
+            Issue.record("Expected the library to hold a sub-folder, got \(movies.media)")
+            return
+        }
+        #expect(mediaIDs(folder.media) == ["m1"])
+        #expect(!self.network.recursiveRequests.contains(true))
+    }
+
+    /// Test that flattening asks the server for media recursively
+    @Test
+    public func flattenRequestsRecursively() async throws {
+        self.network.libraries = [try library("movies")]
+        self.network.media = ["movies": []]
+        _ = try await self.makeModel(flatten: true)
+
+        #expect(!self.network.recursiveRequests.isEmpty)
+        #expect(!self.network.recursiveRequests.contains(false))
+    }
+
+    // MARK: Resync
+
+    /// Test that resyncing replaces a library's media, genres, and ratings with the server's latest
+    @Test
+    public func resyncReplacesMedia() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": [try movie("old", genres: ["Horror"], rating: "R")]]
+        let model = try await self.makeModel()
+
+        self.network.media = ["movies": [try movie("new", genres: ["Comedy"], rating: "PG")]]
+        await model.resync(library: movies, flatten: false)
+
+        #expect(mediaIDs(movies.media) == ["new"])
+        #expect(movies.genres == ["Comedy"])
+        #expect(movies.maturity == ["PG"])
+    }
+
+    // MARK: Lookup
+
+    /// Test that media can be found in any library, regardless of the parent ID given
+    @Test(arguments: ["movies", "shows", nil])
+    public func lookupFindsMedia(parentID: String?) async throws {
+        self.network.libraries = [try library("movies"), try library("shows")]
+        self.network.media = ["movies": [try movie("m1")], "shows": [try movie("s1")]]
+        let model = try await self.makeModel()
+
+        guard case .found(let media) = model.lookup(mediaID: "s1", parentID: parentID)
+        else {
+            Issue.record("Expected to find s1")
+            return
+        }
+        #expect(media.id == "s1")
+    }
+
+    /// Test that media inside a sub-folder can be found
+    @Test
+    public func lookupSearchesSubFolders() async throws {
+        self.network.libraries = [try library("movies")]
+        self.network.media = ["movies": [try subFolder("folder1")], "folder1": [try movie("m1")]]
+        let model = try await self.makeModel()
+
+        guard case .found(let media) = model.lookup(mediaID: "m1", parentID: "movies")
+        else {
+            Issue.record("Expected to find m1 inside the sub-folder")
+            return
+        }
+        #expect(media.id == "m1")
+    }
+
+    /// Test that missing media is reported as not found once every library has loaded
+    @Test
+    public func lookupMissingMediaIsNotFound() async throws {
+        self.network.libraries = [try library("movies")]
+        self.network.media = ["movies": [try movie("m1")]]
+        let model = try await self.makeModel()
+
+        guard case .notFound = model.lookup(mediaID: "missing", parentID: nil)
+        else {
+            Issue.record("Expected .notFound")
+            return
+        }
+    }
+
+    /// Test that lookups made before libraries finish loading may succeed later
+    @Test
+    public func lookupWhileLoadingIsTemporarilyNotFound() throws {
+        let url = try #require(URL(string: "https://jellyfin.test"))
+        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: false, network: network)
+
+        guard case .temporarilyNotFound = model.lookup(mediaID: "m1", parentID: nil)
+        else {
+            Issue.record("Expected .temporarilyNotFound")
+            return
+        }
+    }
+
+    // MARK: Shelves
+
+    /// Test that recently added and up next pass along the server's media
+    @Test
+    public func shelvesReturnServerMedia() async throws {
+        self.network.shelfMedia = [try movie("m1"), try movie("m2")]
+        let model = try await self.makeModel()
+
+        #expect(await model.retrieveRecentlyAdded(.all).map(\.id) == ["m1", "m2"])
+        #expect(await model.retrieveUpNext().map(\.id) == ["m1", "m2"])
+    }
+
+    /// Test that recently added and up next fall back to empty when the server fails
+    @Test
+    public func shelvesAreEmptyOnFailure() async throws {
+        self.network.shelfMedia = nil
+        let model = try await self.makeModel()
+
+        #expect(await model.retrieveRecentlyAdded(.movie).isEmpty)
+        #expect(await model.retrieveUpNext().isEmpty)
+    }
+
+    // MARK: Misc
+
+    /// Test that image URLs come from the network
+    @Test
+    public func imageURLComesFromNetwork() async throws {
+        let model = try await self.makeModel()
+
+        let url = model.getImageURL(imageType: .backdrop, mediaID: "m1", width: 500)
+        #expect(url?.absoluteString == "https://jellyfin.test/m1/Backdrop/500")
+    }
+
+    /// Test that logging out expires the model's access token
+    @Test
+    public func logoutExpiresToken() async throws {
+        let model = try await self.makeModel()
+
+        await model.logout()
+        #expect(self.network.loggedOutToken == "token1")
+    }
+}

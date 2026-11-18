@@ -121,6 +121,7 @@ Configure Stingray to look and feel how you want it.
   - `AppendableIterator` for advancing, inserting mid-advance, empty, inserting after empty, and more
   - `LibraryModel` init with good and bad JSON
   - Add unique testing for each of the media model types, including grouped media
+  - Broad testing of the `JellyfinModel`
 
 ## TO-DO List
 
