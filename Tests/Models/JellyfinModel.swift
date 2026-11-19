@@ -423,6 +423,47 @@ public struct JellyfinModelTests {
 
     // MARK: Resync
 
+    /// Test that resyncing marks libraries as still syncing until it finishes
+    @Test
+    public func resyncReportsProgress() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": [try movie("m1")]]
+        let model = try await self.makeModel()
+
+        let resync = Task { await model.resync(library: movies, flatten: false) }
+        while self.network.mediaRequestCounts["movies"] != 2 { await Task.yield() } // Wait for the resync's request to start
+        guard case .available = model.libraryStatus
+        else {
+            Issue.record("Expected .available while resyncing, got \(model.libraryStatus)")
+            return
+        }
+
+        await resync.value
+        guard case .complete = model.libraryStatus
+        else {
+            Issue.record("Expected .complete after resyncing, got \(model.libraryStatus)")
+            return
+        }
+    }
+
+    /// Test that a resync requested while libraries are still loading is ignored, rather than loading the library twice
+    @Test
+    public func resyncWhileSyncingIsIgnored() async throws {
+        let url = try #require(URL(string: "https://jellyfin.test"))
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": [try movie("m1")]]
+        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: false, network: network)
+
+        await model.resync(library: movies, flatten: false)
+        while case .retrieving = model.libraryStatus { await Task.yield() }
+        while case .available = model.libraryStatus { await Task.yield() }
+
+        #expect(self.network.mediaRequestCounts["movies"] == 1)
+        #expect(mediaIDs(movies.media) == ["m1"])
+    }
+
     /// Test that resyncing replaces a library's media, genres, and ratings with the server's latest
     @Test
     public func resyncReplacesMedia() async throws {

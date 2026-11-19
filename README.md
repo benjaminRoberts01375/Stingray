@@ -75,6 +75,7 @@ Configure Stingray to look and feel how you want it.
     - Support mixed media types in library views
     - Media without a tagline no longer takes up the space for a tagline
     - Show library media counter digit separators
+    - Disable resync button while syncing
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes

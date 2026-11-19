@@ -21,6 +21,12 @@ public struct LibraryView: View {
     /// Settings for deciding whether sub-folders get flattened on refresh
     @Environment(SettingsModel.self) private var settings
 
+    /// Whether any library is still being fetched, in which case refreshing has to wait
+    private var isSyncing: Bool {
+        if case .complete = self.streamingService.libraryStatus { return false }
+        return true
+    }
+
     public var body: some View {
         ScrollView {
             switch self.library.media {
@@ -39,7 +45,7 @@ public struct LibraryView: View {
                             Task { await self.streamingService.resync(library: self.library, flatten: self.settings.flattenFolders) }
                         }
                         label: { Text(String(localized: "Refresh")) }
-
+                        .disabled(self.isSyncing)
                     }
                     LibraryInfoView(library: self.library)
                         .padding(.top)

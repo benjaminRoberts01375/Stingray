@@ -415,7 +415,14 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     }
 
     public func resync(library: any LibraryProtocol, flatten: Bool) async {
+        // Overlapping syncs would append into the same library twice
+        guard case .complete(let libraries) = self.libraryStatus
+        else {
+            Log.warning("Skipping reload of \"\(library.title)\" since libraries are still syncing")
+            return
+        }
         Log.info("Reloading the library \"\(library.title)\"...")
+        self.libraryStatus = .available(libraries)
         // Dump all the existing media
         library.media = .waiting
         library.genres = Set()
@@ -423,6 +430,11 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
 
         // A bit more aggressive than retrieveLibraries since there'll be fewer requests
         await self.fetchMedia(for: [library], batchSize: 200, flatten: flatten)
+
+        // Only finish if nothing else (ex. a full retrieveLibraries) replaced the libraries in the meantime
+        if case .available(let current) = self.libraryStatus, current.elementsEqual(libraries, by: ===) {
+            self.libraryStatus = .complete(libraries)
+        }
     }
 
     public func lookup(mediaID: String, parentID: String?) -> MediaLookupStatus {
