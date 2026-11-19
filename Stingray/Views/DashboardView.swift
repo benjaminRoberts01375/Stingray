@@ -58,7 +58,8 @@ public struct DashboardView: View {
                                             accessToken: userJellyfin.accessToken,
                                             sessionID: userJellyfin.sessionID,
                                             serviceURL: self.user.serviceURL,
-                                            flattenFolders: self.user.flattenFolders
+                                            flattenFolders: self.user.flattenFolders,
+                                            hiddenLibraryIDs: self.user.hiddenLibraryIDs
                                         ), self.user
                                     )
                                 }

@@ -91,6 +91,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - sessionID: Validated session identifier.
     ///   - serviceURL: Base URL to the Jellyfin service.
     ///   - flattenFolders: Should media in sub-folders be pulled up into their library
+    ///   - hiddenLibraryIDs: Libraries the user has hidden, which are loaded after the rest
     public init(
         userDisplayName: String,
         userID: String,
@@ -98,7 +99,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         accessToken: String,
         sessionID: String,
         serviceURL: URL,
-        flattenFolders: Bool
+        flattenFolders: Bool,
+        hiddenLibraryIDs: [String]
     ) {
         // APIs
         let network = JellyfinAdvancedNetwork(network: JellyfinBasicNetwork(address: serviceURL))
@@ -130,7 +132,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 self.libraryStatus = .error(StreamingServiceErrors.serverVersionFailed(nil))
                 return
             }
-            await self.retrieveLibraries(flatten: flattenFolders)
+            await self.retrieveLibraries(flatten: flattenFolders, hiddenLibraryIDs: hiddenLibraryIDs)
         }
     }
 
@@ -139,8 +141,15 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     ///   - response: Fetched data.
     ///   - serviceURL: Base URL.
     ///   - flattenFolders: Should media in sub-folders be pulled up into their library
+    ///   - hiddenLibraryIDs: Libraries the user has hidden, which are loaded after the rest
     ///   - network: How to reach out to Jellyfin
-    public init(response: APILoginResponse, serviceURL: URL, flattenFolders: Bool, network: any AdvancedNetworkProtocol) {
+    public init(
+        response: APILoginResponse,
+        serviceURL: URL,
+        flattenFolders: Bool,
+        hiddenLibraryIDs: [String],
+        network: any AdvancedNetworkProtocol
+    ) {
         // APIs
         self.networkAPI = network
 
@@ -154,7 +163,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.serviceURL = serviceURL
         self.serverVersion = response.serverVersion
 
-        Task { await self.retrieveLibraries(flatten: flattenFolders) }
+        Task { await self.retrieveLibraries(flatten: flattenFolders, hiddenLibraryIDs: hiddenLibraryIDs) }
     }
 
     /// Log into a Jellyfin server.
@@ -244,7 +253,13 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         settingsModel.themeDark = workingUser.darkTheme
         settingsModel.themeLight = workingUser.lightTheme
         return (
-            JellyfinModel(response: response, serviceURL: url, flattenFolders: workingUser.flattenFolders, network: network),
+            JellyfinModel(
+                response: response,
+                serviceURL: url,
+                flattenFolders: workingUser.flattenFolders,
+                hiddenLibraryIDs: workingUser.hiddenLibraryIDs,
+                network: network
+            ),
             workingUser
         )
     }
@@ -253,7 +268,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         await self.networkAPI.logoutUser(accessToken: self.accessToken)
     }
 
-    public func retrieveLibraries(flatten: Bool) async {
+    public func retrieveLibraries(flatten: Bool, hiddenLibraryIDs: [String]) async {
         // Get all libraries. They'll be empty for now
         let libraries: [LibraryModel]
         do {
@@ -275,7 +290,11 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
 
         self.libraryStatus = .available(libraries)
-        await self.fetchMedia(for: libraries, batchSize: 100, flatten: flatten)
+
+        // Fully load visible libraries before starting on hidden ones so the UI loads faster
+        let batchSize = 100
+        await self.fetchMedia(for: libraries.filter { !hiddenLibraryIDs.contains($0.id) }, batchSize: batchSize, flatten: flatten)
+        await self.fetchMedia(for: libraries.filter { hiddenLibraryIDs.contains($0.id) }, batchSize: batchSize, flatten: flatten)
         self.libraryStatus = .complete(libraries)
     }
 
@@ -306,6 +325,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
 
             // Start queued requests until 8 are in flight (as tvOS recommends), skipping pages for groups that have already failed
             @MainActor func startRequests() {
+                let mediaTypes: [MediaStorage.MediaType] = [.movie, .tvShow, .homeVideo, .collection] + (flatten ? [] : [.subFolder])
                 while requestsInFlight < 8, let request = requests.next() {
                     if case .error = request.group.media { continue }
                     let parentID = request.group.id
@@ -322,7 +342,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                                         count: batchSize,
                                         sortOrder: .ascending,
                                         sortBy: .sortName,
-                                        mediaTypes: [.movie, .tvShow, .homeVideo, .collection] + (flatten ? [] : [.subFolder]),
+                                        mediaTypes: mediaTypes,
                                         recursive: flatten
                                     )
                                 )

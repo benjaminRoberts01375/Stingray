@@ -168,7 +168,7 @@ public struct JellyfinModelTests {
     /// - Returns: A model whose library status is either `.complete` or `.error`
     public func makeModel(flatten: Bool = false) async throws -> JellyfinModel {
         let url = try #require(URL(string: "https://jellyfin.test"))
-        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: flatten, network: network)
+        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: flatten, hiddenLibraryIDs: [], network: network)
         while true {
             switch model.libraryStatus {
             case .retrieving, .available: await Task.yield()
@@ -454,7 +454,7 @@ public struct JellyfinModelTests {
         let movies = try library("movies")
         self.network.libraries = [movies]
         self.network.media = ["movies": [try movie("m1")]]
-        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: false, network: network)
+        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: false, hiddenLibraryIDs: [], network: network)
 
         await model.resync(library: movies, flatten: false)
         while case .retrieving = model.libraryStatus { await Task.yield() }
@@ -530,7 +530,7 @@ public struct JellyfinModelTests {
     @Test
     public func lookupWhileLoadingIsTemporarilyNotFound() throws {
         let url = try #require(URL(string: "https://jellyfin.test"))
-        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: false, network: network)
+        let model = JellyfinModel(response: self.login, serviceURL: url, flattenFolders: false, hiddenLibraryIDs: [], network: network)
 
         guard case .temporarilyNotFound = model.lookup(mediaID: "m1", parentID: nil)
         else {

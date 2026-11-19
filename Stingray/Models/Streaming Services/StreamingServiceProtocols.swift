@@ -53,7 +53,8 @@ public protocol LibraryProviding {
     /// Fetch libraries and library media.
     /// - Parameters:
     ///   - flatten: Should media in sub-folders remain in sub-folders
-    func retrieveLibraries(flatten: Bool) async
+    ///   - hiddenLibraryIDs: Libraries the user has hidden, which are loaded after the rest
+    func retrieveLibraries(flatten: Bool, hiddenLibraryIDs: [String]) async
 }
 
 /// Holds info about media currently playing

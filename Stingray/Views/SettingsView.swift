@@ -231,7 +231,12 @@ public struct SettingsView: View {
                 DoubleButton(label: "Flatten Folders", sublabel: self.settings.flattenFolders ? "Enabled" : "Disabled") {
                     self.settings.flattenFolders.toggle()
 
-                    Task { await self.streamingService.retrieveLibraries(flatten: self.settings.flattenFolders) }
+                    Task {
+                        await self.streamingService.retrieveLibraries(
+                            flatten: self.settings.flattenFolders,
+                            hiddenLibraryIDs: self.settings.hiddenLibraryIDs
+                        )
+                    }
                 }
             }
 

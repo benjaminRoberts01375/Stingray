@@ -184,7 +184,8 @@ public struct ContentView: View {
                         accessToken: userJellyfin.accessToken,
                         sessionID: userJellyfin.sessionID,
                         serviceURL: defaultUser.serviceURL,
-                        flattenFolders: defaultUser.flattenFolders
+                        flattenFolders: defaultUser.flattenFolders,
+                        hiddenLibraryIDs: defaultUser.hiddenLibraryIDs
                     ), defaultUser
                 )
             }
