@@ -279,90 +279,91 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         self.libraryStatus = .complete(libraries)
     }
 
-    /// Page in media for a set of groups, keeping several requests in flight at once.
-    /// Groups are worked through in order, moving on once the current one returns a short page or an error.
+    /// Page in media for a set of groups, along with any sub-folders and collections found inside them.
+    /// Each group's first page reports how much media it holds, so the rest of its pages can be requested up front.
     /// - Parameters:
     ///   - groups: Groups to fill with media. Their media should already be `.waiting`.
     ///   - batchSize: Number of items to request per page.
     ///   - flatten: Should media in sub-folders remain in sub-folders
     private func fetchMedia(for groups: [any GroupMetadataProtocol], batchSize: Int, flatten: Bool) async {
-        enum GroupContent {
-            case success([MediaStorage])
+        // A single page to request for a group
+        struct PageRequest {
+            // Group the page belongs to
+            let group: any GroupMetadataProtocol
+            // Which page of the group to request
+            let page: Int
+        }
+
+        enum PageContent {
+            case success(MediaPage)
             case error(RError)
         }
 
-        // Lives outside the task group so sub-folders and collections found along the way can be finalized afterwards
-        let groupsIterator = groups.makeAppendableIterator()
-        await withTaskGroup(of: (String, GroupContent).self) { group in
-            var pageTracker: [String : Int] = [:]
+        // Every group starts with its first page. The rest are queued once we know how many there are
+        let requests = groups.map { PageRequest(group: $0, page: 0) }.makeAppendableIterator()
+        await withTaskGroup(of: (PageRequest, PageContent).self) { taskGroup in
+            var requestsInFlight = 0
 
-            func getMedia(parentID: String?) {
-                guard let parentID = parentID // Every group has been fully requested
-                else { return }
-                let index = (pageTracker[parentID] ?? -1) + 1
-                pageTracker[parentID] = index
-                group.addTask {
-                    do {
-                        return (
-                            parentID,
-                            GroupContent.success(
-                                try await self.networkAPI.getMedia(
-                                    accessToken: self.accessToken,
-                                    parentID: parentID,
-                                    index: index * batchSize,
-                                    count: batchSize,
-                                    sortOrder: .ascending,
-                                    sortBy: .sortName,
-                                    mediaTypes: [.movie, .tvShow, .homeVideo, .collection] + (flatten ? [] : [.subFolder]),
-                                    recursive: flatten
+            // Start queued requests until 8 are in flight (as tvOS recommends), skipping pages for groups that have already failed
+            @MainActor func startRequests() {
+                while requestsInFlight < 8, let request = requests.next() {
+                    if case .error = request.group.media { continue }
+                    let parentID = request.group.id
+                    requestsInFlight += 1
+                    taskGroup.addTask {
+                        do {
+                            return (
+                                request,
+                                PageContent.success(
+                                    try await self.networkAPI.getMedia(
+                                        accessToken: self.accessToken,
+                                        parentID: parentID,
+                                        index: request.page * batchSize,
+                                        count: batchSize,
+                                        sortOrder: .ascending,
+                                        sortBy: .sortName,
+                                        mediaTypes: [.movie, .tvShow, .homeVideo, .collection] + (flatten ? [] : [.subFolder]),
+                                        recursive: flatten
+                                    )
                                 )
                             )
-                        )
-                    }
-                    catch let error as RError { return (parentID, GroupContent.error(LibraryErrors.gettingLibraries(error))) }
-                    catch { return (parentID, GroupContent.error(LibraryErrors.unknown(error.localizedDescription))) }
-                }
-            }
-
-            // Spin up tasks to download content from each group.
-            // We'll almost defintely have too many requests hitting a library at first, but that's fine
-            // since we can't know how many items are in each library, and they'll return fast to be
-            // reused in the next loop
-            for _ in 0..<8 { getMedia(parentID: groupsIterator.current?.id) }
-
-            // Read from the buffer and setup next request
-            for await (groupID, content) in group {
-                if let group = groupsIterator.storage.first(where: { $0.id == groupID }) {
-                    let reachedEnd: Bool
-                    switch content {
-                    case .error(let error):
-                        Log.warning("Failed to get content for group \(groupID): \(error.rDescription())")
-                        group.media = .error(error)
-                        reachedEnd = true
-                    case .success(let newMedia):
-                        self.append(newMedia, to: group)
-                        // Is there a group in this array we need to get media for?
-                        for media in newMedia where media.isGroup {
-                            switch media {
-                            case .subFolder(let subfolder): groupsIterator.append(subfolder)
-                            case .collection(let collection): groupsIterator.append(collection)
-                            case .error, .example, .homeVideo, .movie, .tvShow: break
-                            }
                         }
-                        reachedEnd = newMedia.count < batchSize // A short page means there's nothing left to request
+                        catch let error as RError { return (request, PageContent.error(LibraryErrors.gettingLibraries(error))) }
+                        catch { return (request, PageContent.error(LibraryErrors.unknown(error.localizedDescription))) }
                     }
-                    // Advance to the next group. Stragglers from a group we've already moved past shouldn't skip the current one
-                    if reachedEnd && groupID == groupsIterator.current?.id { _ = groupsIterator.next() }
                 }
-                getMedia(parentID: groupsIterator.current?.id) // Startup next task
-                // When we finish with the tasks, we simply fall out of the loop
             }
-        }
 
-        // Every page came back blank, so the group really is empty. Leaving it as `.waiting` would spin forever.
-        // Includes the sub-folders and collections discovered while fetching, not just the groups passed in
-        for group in groupsIterator.storage {
-            if case .waiting = group.media { group.media = .available([]) }
+            startRequests()
+            for await (request, content) in taskGroup {
+                requestsInFlight -= 1
+                let group = request.group
+                switch content {
+                case .error(let error):
+                    Log.warning("Failed to get content for group \(group.id): \(error.rDescription())")
+                    group.media = .error(error)
+                case .success(let page):
+                    if case .error = group.media { break } // Another page already failed this group, so its media is no longer wanted
+                    self.append(page.items, to: group)
+                    if request.page == 0 {
+                        // `append` skips blank pages, so an empty group has to be marked as done here
+                        if page.items.isEmpty { group.media = .available([]) }
+                        let pageCount = (page.totalCount + batchSize - 1) / batchSize
+                        for remainingPage in stride(from: 1, to: pageCount, by: 1) {
+                            requests.append(PageRequest(group: group, page: remainingPage))
+                        }
+                    }
+                    // Sub-folders and collections hold media of their own
+                    for media in page.items {
+                        switch media {
+                        case .subFolder(let subfolder): requests.append(PageRequest(group: subfolder, page: 0))
+                        case .collection(let collection): requests.append(PageRequest(group: collection, page: 0))
+                        case .error, .example, .homeVideo, .movie, .tvShow: break
+                        }
+                    }
+                }
+                startRequests() // Queue may have grown, so top back up to 8
+            }
         }
     }
 

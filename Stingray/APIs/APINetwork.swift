@@ -31,7 +31,7 @@ public protocol AdvancedNetworkProtocol {
     ///   - sortBy: Metadata to sort by
     ///   - mediaTypes: Allowed media types from the server
     ///   - recursive: Should this request search sub-folders
-    /// - Returns: Library media content
+    /// - Returns: A chunk of library media content, and how much content the parent holds in total
     func getMedia(
         accessToken: String,
         parentID: String,
@@ -41,7 +41,7 @@ public protocol AdvancedNetworkProtocol {
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaStorage.MediaType]?,
         recursive: Bool
-    ) async throws(LibraryErrors) -> [MediaStorage]
+    ) async throws(LibraryErrors) -> MediaPage
     /// Generates a URL for an image
     /// - Parameters:
     ///   - accessToken: Access token for the server
@@ -179,6 +179,23 @@ public enum LibraryMediaSortBy: String {
     case seriesDatePlayed = "SeriesDatePlayed"
     case parentIndexNumber = "ParentIndexNumber"
     case indexNumber = "IndexNumber"
+}
+
+/// One page of a parent's media, along with how much media the parent holds in total
+public struct MediaPage {
+    /// Media in this page
+    public let items: [MediaStorage]
+    /// Number of items the parent holds across every page
+    public let totalCount: Int
+
+    /// Create a page of media
+    /// - Parameters:
+    ///   - items: Media in this page
+    ///   - totalCount: Number of items the parent holds across every page
+    public init(items: [MediaStorage], totalCount: Int) {
+        self.items = items
+        self.totalCount = totalCount
+    }
 }
 
 /// A successful authentication response, flattened from Jellyfin's nested `User` and `SessionInfo` objects.
@@ -484,18 +501,23 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaStorage.MediaType]?,
         recursive: Bool
-    ) async throws(LibraryErrors) -> [MediaStorage] {
+    ) async throws(LibraryErrors) -> MediaPage {
         struct Root: Decodable {
             let items: [MediaStorage]
+            let totalCount: Int
             enum CodingKeys: String, CodingKey {
                 case items = "Items"
+                case totalCount = "TotalRecordCount"
             }
             
             init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 self.items = container.decodeAllAvailable([MediaStorage].self, forKey: .items)
+                // Jellyfin always sends this for /Items. If it ever doesn't, settle for what this page holds rather than failing it
+                self.totalCount = (try? container.decodeIfPresent(Int.self, forKey: .totalCount)) ?? self.items.count
             }
         }
+
         var params : [URLQueryItem] = [
             URLQueryItem(name: "sortOrder", value: sortOrder.rawValue),
             URLQueryItem(name: "sortBy", value: sortBy.rawValue),
@@ -518,6 +540,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
         }
 
         var mediaItems: [MediaStorage] = []
+        var totalCount = 0
         do {
             let response: Root = try await network.request(
                 verb: .get,
@@ -527,6 +550,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 body: nil
             )
             mediaItems = response.items
+            totalCount = response.totalCount
         }
         catch let error as RError { throw LibraryErrors.gettingLibraryMedia(error, parentID) }
         catch let error { throw LibraryErrors.gettingLibraryMedia(error, parentID) }
@@ -545,7 +569,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                 catch { Log.warning("Failed to get seasons for library \(parentID): \(error.localizedDescription)") }
             }
         }
-        return mediaItems
+        return MediaPage(items: mediaItems, totalCount: totalCount)
     }
     
     /// Updates each media with their season data

@@ -22,6 +22,12 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
     var shelfMedia: [MediaStorage]? = []
     /// Every `recursive` flag `getMedia` was called with
     var recursiveRequests: [Bool] = []
+    /// Number of `getMedia` calls made for each parent ID
+    var mediaRequestCounts: [String: Int] = [:]
+    /// Number of `getMedia` calls currently waiting on a response
+    private var mediaRequestsInFlight = 0
+    /// Most `getMedia` calls that were ever waiting on a response at once
+    var maxMediaRequestsInFlight = 0
     /// Access token most recently logged out
     var loggedOutToken: String?
 
@@ -39,10 +45,17 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
         sortBy: LibraryMediaSortBy,
         mediaTypes: [MediaStorage.MediaType]?,
         recursive: Bool
-    ) async throws(LibraryErrors) -> [MediaStorage] {
+    ) async throws(LibraryErrors) -> MediaPage {
         recursiveRequests.append(recursive)
+        mediaRequestCounts[parentID, default: 0] += 1
+        // Give other requests a chance to start, like a real network would
+        mediaRequestsInFlight += 1
+        maxMediaRequestsInFlight = max(maxMediaRequestsInFlight, mediaRequestsInFlight)
+        await Task.yield()
+        mediaRequestsInFlight -= 1
+
         guard let items = media[parentID] else { throw .unknown("No media for \(parentID)") }
-        return Array(items.dropFirst(index).prefix(count))
+        return MediaPage(items: Array(items.dropFirst(index).prefix(count)), totalCount: items.count)
     }
 
     public func getRecentlyAdded(
@@ -268,6 +281,36 @@ public struct JellyfinModelTests {
         #expect(loaded.count == 250)
     }
 
+    /// Test that each group is asked for exactly as many pages as it needs, including groups found along the way
+    @Test
+    public func requestsOnlyNeededPages() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = [
+            "movies": try (1...250).map { try movie("m\($0)") } + [try subFolder("empty"), try subFolder("small"), try subFolder("large")],
+            "empty": [],
+            "small": [try movie("s1")],
+            "large": try (1...150).map { try movie("l\($0)") }
+        ]
+        _ = try await self.makeModel()
+
+        // 253 items in the library is 3 pages, while 150 items in the large sub-folder is 2
+        #expect(self.network.mediaRequestCounts == ["movies": 3, "empty": 1, "small": 1, "large": 2])
+    }
+
+    /// Test that no more than 8 requests are waiting on the server at once, while still making use of all 8
+    @Test
+    public func keepsEightRequestsInFlight() async throws {
+        let movies = try library("movies")
+        let folderIDs = (1...20).map { "folder\($0)" }
+        self.network.libraries = [movies]
+        self.network.media = ["movies": try folderIDs.map { try subFolder($0) }]
+        for folderID in folderIDs { self.network.media[folderID] = [try movie("\(folderID)-movie")] }
+        _ = try await self.makeModel()
+
+        #expect(self.network.maxMediaRequestsInFlight == 8)
+    }
+
     /// Test that genres and ratings are gathered from a library's media, with missing ratings shown as "Not Rated"
     @Test
     public func gathersGenresAndMaturity() async throws {
@@ -324,6 +367,28 @@ public struct JellyfinModelTests {
             case .collection(let collection): #expect(mediaIDs(collection.media) == [], "\(collection.id) is \(collection.media)")
             default: Issue.record("Unexpected media \(group.id)")
             }
+        }
+    }
+
+    /// Test that a collection appearing in more than one library is fully loaded in each, including when it spans several pages
+    @Test(arguments: [1, 250])
+    public func sharedCollectionLoadsInEveryLibrary(count: Int) async throws {
+        let movies = try library("movies")
+        let shows = try library("shows")
+        let boxSetMedia = try (1...count).map { try movie("m\($0)") }
+        self.network.libraries = [movies, shows]
+        self.network.media = ["movies": [try collection("boxSet")], "shows": [try collection("boxSet")], "boxSet": boxSetMedia]
+        _ = try await self.makeModel()
+
+        for library in [movies, shows] {
+            guard case .available(let media) = library.media, case .collection(let boxSet)? = media.first
+            else {
+                Issue.record("Expected \(library.id) to hold the collection, got \(library.media)")
+                continue
+            }
+            let loaded = try #require(mediaIDs(boxSet.media), "\(library.id)'s collection is \(boxSet.media)")
+            #expect(loaded.count == count, "\(library.id)'s collection has \(loaded.count) items")
+            #expect(Set(loaded) == Set(boxSetMedia.map(\.id)))
         }
     }
 

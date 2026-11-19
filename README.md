@@ -85,6 +85,7 @@ Configure Stingray to look and feel how you want it.
 - Performance
   - Reduced number of checks for library filters and maturity settings
   - Cache profile images
+  - Improved real-world performance of library syncing
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
