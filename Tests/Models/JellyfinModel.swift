@@ -520,6 +520,28 @@ public struct JellyfinModelTests {
         #expect(media.id == "m1")
     }
 
+    /// Test that media only reachable through a collection can be found, including a collection nested in a sub-folder
+    @Test
+    public func lookupSearchesCollections() async throws {
+        self.network.libraries = [try library("movies")]
+        self.network.media = [
+            "movies": [try collection("boxSet"), try subFolder("folder1")],
+            "boxSet": [try movie("m1")],
+            "folder1": [try collection("nestedBoxSet")],
+            "nestedBoxSet": [try movie("m2")]
+        ]
+        let model = try await self.makeModel()
+
+        for mediaID in ["m1", "m2"] {
+            guard case .found(let media) = model.lookup(mediaID: mediaID, parentID: "movies")
+            else {
+                Issue.record("Expected to find \(mediaID) inside its collection")
+                continue
+            }
+            #expect(media.id == mediaID)
+        }
+    }
+
     /// Test that missing media is reported as not found once every library has loaded
     @Test
     public func lookupMissingMediaIsNotFound() async throws {

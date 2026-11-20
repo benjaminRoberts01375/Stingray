@@ -92,6 +92,7 @@ Configure Stingray to look and feel how you want it.
     - Visible libraries load first
   - Fix searching libraries twice when opening media
   - Fix potential double playback
+  - Fix lookup not searching collections
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`

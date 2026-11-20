@@ -498,7 +498,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         }
     }
 
-    /// Search for media by ID, descending into sub-folders.
+    /// Search for media by ID, descending into sub-folders and collections.
     /// - Parameters:
     ///   - mediaID: Media ID to search for.
     ///   - media: Media to search through.
@@ -506,9 +506,14 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     private static func find(mediaID: String, in media: [MediaStorage]) -> MediaStorage? {
         for item in media {
             if item.id == mediaID { return item }
-            if case .subFolder(let subFolder) = item,
-               case .available(let subFolderMedia) = subFolder.media,
-               let found = find(mediaID: mediaID, in: subFolderMedia) {
+            let groupMedia: MediaStatus
+            switch item {
+            case .subFolder(let subFolder): groupMedia = subFolder.media
+            case .collection(let collection): groupMedia = collection.media
+            case .error, .example, .homeVideo, .movie, .tvShow: continue
+            }
+            if case .available(let contents) = groupMedia,
+               let found = find(mediaID: mediaID, in: contents) {
                 return found
             }
         }
