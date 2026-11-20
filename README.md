@@ -89,6 +89,7 @@ Configure Stingray to look and feel how you want it.
   - Improved real-world performance of library syncing
     - Paging uses data gathered from the Jellyfin API instead of full-sending it on the first library
     - Visible libraries load first
+  - Fix searching libraries twice when opening media
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`

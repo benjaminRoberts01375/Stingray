@@ -479,8 +479,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             }
         }
 
-        // Fallback: search all libraries
-        for library in libraries {
+        // Fallback: search the remaining libraries, skipping the parent already checked above
+        for library in libraries where library.id != parentID {
             let allMedia: [MediaStorage]?
             switch library.media {
             case .available(let media): allMedia = media
@@ -493,10 +493,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             }
         }
         switch self.libraryStatus {
-        case .complete:
-            return .notFound
-        default:
-            return .temporarilyNotFound
+        case .complete: return .notFound
+        default: return .temporarilyNotFound
         }
     }
 
