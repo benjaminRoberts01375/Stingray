@@ -67,6 +67,7 @@ Configure Stingray to look and feel how you want it.
   - Settings
     - Optionally maintain media's sub-folder layout, or flatten sub-folders
     - Show and hide libraries from the UI
+      - Content from these libraries may still be discoverable
   - UI
     - Allow `MediaCard`s to resize based on the type of content
       - Home videos and sub-folders have a 4:3 layout instead of 2:3 (2x in width)

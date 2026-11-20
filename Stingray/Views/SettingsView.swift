@@ -243,7 +243,10 @@ public struct SettingsView: View {
             // MARK: Show and Hide Libraries
             switch self.streamingService.libraryStatus {
             case .available(let libraries), .complete(let libraries):
-                Section(header: Text(String(localized: "Show and Hide Libraries")).bold()) {
+                Section(
+                    header: Text(String(localized: "Library Visibility")).bold(),
+                    footer: Text(String(localized: "Content from hidden libraries still appear on the home tab and search results."))
+                ) {
                     // Only libraries the server returns are listed, so stale hidden IDs never appear
                     ScrollView(.horizontal) {
                         HStack(spacing: 5) {
