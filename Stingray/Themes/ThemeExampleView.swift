@@ -62,7 +62,7 @@ fileprivate final class ExampleMedia: MovieProtocol {
     public let imageBlurHashes: (any MediaImagesProtocol)?
     public let imageTags: (any MediaImagesProtocol)?
     public let mediaSources: [any MediaSourceProtocol]
-    public let specialFeatures: SpecialFeaturesStatus
+    public var specialFeatures: SpecialFeaturesStatus
 
     public static func == (lhs: ExampleMedia, rhs: ExampleMedia) -> Bool {
         return lhs.id == rhs.id
@@ -89,8 +89,6 @@ fileprivate final class ExampleMedia: MovieProtocol {
         self.mediaSources = []
         self.specialFeatures = .loaded([])
     }
-
-    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) { } // Example media has no special features
 }
 
 /// Load example art work

@@ -110,10 +110,4 @@ public final class MovieModel: MovieProtocol, Decodable {
         // We can't yet load these since they're in a separate request
         self.specialFeatures = .unloaded
     }
-
-    /// Stores and formats the special features for this movie.
-    /// - Parameter specialFeatures: Special features to add.
-    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
-        self.specialFeatures = .loaded(SpecialFeature.formatAndGroup(specialFeatures))
-    }
 }

@@ -139,12 +139,6 @@ public final class TVShowModel: TVShowProtocol, Decodable {
         self.specialFeatures = .unloaded
     }
 
-    /// Stores and formats the special features for this show.
-    /// - Parameter specialFeatures: Special features to add.
-    public func loadSpecialFeatures(specialFeatures: [SpecialFeature]) {
-        self.specialFeatures = .loaded(SpecialFeature.formatAndGroup(specialFeatures))
-    }
-
     /// Stores the show's seasons, and once loaded, merges every episode's people into the show's people.
     /// - Parameter newState: New season loading state.
     public func loadSeasons(_ newState: TVSeasonsStatus) {

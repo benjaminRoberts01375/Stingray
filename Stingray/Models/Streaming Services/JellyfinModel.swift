@@ -552,14 +552,15 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         Task(priority: priority == .high ? .high : nil) { // Special features
             switch media.specialFeatures {
             case .unloaded:
+                media.specialFeatures = .loading
                 do {
-                    media.loadSpecialFeatures(
-                        specialFeatures: try await self.networkAPI.loadSpecialFeatures(
+                    media.specialFeatures = .loaded(SpecialFeature.formatAndGroup(
+                        try await self.networkAPI.loadSpecialFeatures(
                             mediaID: media.id,
                             accessToken: self.accessToken,
                             priority: .high
                         )
-                    )
+                    ))
                 }
                 catch let error as RError {
                     Log.warning(

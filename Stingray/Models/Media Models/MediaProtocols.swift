@@ -38,12 +38,9 @@ public protocol MediaMetadataProtocol: Identifiable, MetadataProtocol {
 }
 
 /// Media that can have special features. Ex. movies and TV shows, but not home videos.
-public protocol SpecialFeaturesProtocol {
+public protocol SpecialFeaturesProtocol: AnyObject {
     /// Tracks if the special features have been fetched. If they have been successfully fetched, they'll available through this variable.
-    var specialFeatures: SpecialFeaturesStatus { get }
-
-    /// Load special features for this media
-    func loadSpecialFeatures(specialFeatures: [SpecialFeature])
+    var specialFeatures: SpecialFeaturesStatus { get set }
 }
 
 /// Describes how to hold data about a person for a piece of media
