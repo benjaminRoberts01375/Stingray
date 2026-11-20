@@ -28,6 +28,8 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
     private var mediaRequestsInFlight = 0
     /// Most `getMedia` calls that were ever waiting on a response at once
     var maxMediaRequestsInFlight = 0
+    /// Every playback status reported, along with the playback session it was for
+    var playbackReports: [(sessionID: String, status: PlaybackStatus)] = []
     /// Access token most recently logged out
     var loggedOutToken: String?
 
@@ -79,10 +81,6 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
         loggedOutToken = accessToken
     }
 
-    // Not used by these tests
-    public func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
-        throw .loginFailed(LibraryErrors.unknown("Unused"))
-    }
     public func getStreamingContent(
         accessToken: String,
         contentID: String,
@@ -93,7 +91,10 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
         sessionID: String,
         title: String,
         subtitle: String?
-    ) -> AVPlayerItem? { nil }
+    ) -> AVPlayerItem? {
+        URL(string: "https://jellyfin.test/\(contentID)/stream").map { AVPlayerItem(url: $0) }
+    }
+
     public func updatePlaybackStatus(
         mediaSourceID: String,
         audioStreamIndex: String,
@@ -103,7 +104,14 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
         userSessionID: String,
         playbackStatus: PlaybackStatus,
         accessToken: String
-    ) async throws {}
+    ) async throws {
+        playbackReports.append((playSessionID, playbackStatus))
+    }
+
+    // Not used by these tests
+    public func login(username: String, password: String) async throws(AccountErrors) -> APILoginResponse {
+        throw .loginFailed(LibraryErrors.unknown("Unused"))
+    }
     public func getUserImageURL(userID: String) -> URL? { nil }
     public func loadSpecialFeatures(
         mediaID: String,
@@ -559,6 +567,45 @@ public struct JellyfinModelTests {
 
         #expect(await model.retrieveRecentlyAdded(.movie).isEmpty)
         #expect(await model.retrieveUpNext().isEmpty)
+    }
+
+    // MARK: Playback
+
+    /// Test that starting playback while a session is still running ends that session, rather than leaving it reporting to the server
+    @Test
+    public func playbackStartEndsPreviousSession() async throws {
+        let source = try decode(MediaSource.self, from: """
+        {"Id": "source1", "Name": "1080p", "MediaStreams": [{"Index": 0, "Type": "Video"}, {"Index": 1, "Type": "Audio"}]}
+        """)
+        let model = try await self.makeModel()
+        let player = AVPlayer()
+
+        // Start playback on the shared player
+        func start() {
+            model.playbackStart(
+                mediaSource: source,
+                videoID: "0",
+                audioID: "1",
+                subtitleID: nil,
+                bitrate: nil,
+                title: "Movie",
+                subtitle: nil,
+                player: player
+            )
+        }
+        start()
+        start() // No playbackEnd in between
+
+        // Wait for both sessions to report they've started, plus the first one's stop
+        for _ in 0..<100 where self.network.playbackReports.filter({ $0.status == .play }).count < 2 ||
+            !self.network.playbackReports.contains(where: { $0.status == .stop }) {
+            await Task.yield()
+        }
+        let sessions = self.network.playbackReports.filter { $0.status == .play }.map(\.sessionID)
+        try #require(sessions.count == 2 && sessions[0] != sessions[1], "Expected two separate sessions, got \(sessions)")
+        let stopped = self.network.playbackReports.filter { $0.status == .stop }.map(\.sessionID)
+        #expect(stopped == [sessions[0]]) // Only the replaced session is over
+        #expect(model.playerProgress != nil)
     }
 
     // MARK: Misc

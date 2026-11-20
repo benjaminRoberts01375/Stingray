@@ -588,6 +588,9 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         subtitle: String?,
         player: AVPlayer
     ) {
+        // A session that's still running is being replaced. End it so its progress loop stops and the server hears it's over
+        self.playbackEnd()
+
         let sessionID = UUID().uuidString
         guard let videoStream = mediaSource.videoStreams.first(where: { $0.id == videoID })
         else {

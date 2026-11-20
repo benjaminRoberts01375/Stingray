@@ -83,6 +83,7 @@ Configure Stingray to look and feel how you want it.
   - Fixed clipping of top log entry when viewing logs
   - `String(duration:)` no longer crashes on `.nan` and `.infinity` and supports negative `TimeInterval`s
   - `String.pascalCaseToSpaces()` now correctly handles a sequence of uppercase letters, like in "HTTP", and resists adding extra spaces when a space already exists
+  - When loading special features, set the special features status to loading
 - Performance
   - Reduced number of checks for library filters and maturity settings
   - Cache profile images
@@ -90,6 +91,7 @@ Configure Stingray to look and feel how you want it.
     - Paging uses data gathered from the Jellyfin API instead of full-sending it on the first library
     - Visible libraries load first
   - Fix searching libraries twice when opening media
+  - Fix potential double playback
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
