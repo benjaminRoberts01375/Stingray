@@ -63,3 +63,7 @@ fastlane/test_output
 
 #macOS files
 .DS_Store
+
+# Offline Jellyfin recordings (Tools/offline_jellyfin.py)
+Stingray-Request-Cache/
+*__pycache__

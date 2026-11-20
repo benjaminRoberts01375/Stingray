@@ -131,6 +131,9 @@ Configure Stingray to look and feel how you want it.
   - `LibraryModel` init with good and bad JSON
   - Add unique testing for each of the media model types, including grouped media
   - Broad testing of the `JellyfinModel`
+- Tooling
+  - It begins
+  - Record/replay API tool to capture requests and responses, useful for offline development
 
 ## TO-DO List
 
