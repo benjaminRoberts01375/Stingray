@@ -77,6 +77,8 @@ Configure Stingray to look and feel how you want it.
     - Media without a tagline no longer takes up the space for a tagline
     - Show library media counter digit separators
     - Disable resync button while syncing
+    - Support displaying multiple errors
+    - Introduce a pill-shaped error button
 - Bug Fixes
   - Fix inconsistent padding around filter and sorting divider
   - Fix edge case where TV shows in a movie (or other type of) library don't load episodes

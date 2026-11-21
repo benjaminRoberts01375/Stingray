@@ -655,6 +655,9 @@
         }
       }
     },
+    "Error #%lld:" : {
+      "comment" : "An enumerated list of errors"
+    },
     "Error loading products" : {
       "comment" : "How long an episode is",
       "localizations" : {
@@ -715,6 +718,12 @@
           }
         }
       }
+    },
+    "Failed to load some media" : {
+      "comment" : "Notify the user that a library failed to load all of its media"
+    },
+    "Failed to load this library" : {
+      "comment" : "Error message displayed when a library fails to load at all."
     },
     "Filters and Sorting" : {
       "comment" : "Header for filters and sorting options",

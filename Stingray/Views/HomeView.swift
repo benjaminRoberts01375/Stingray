@@ -225,7 +225,7 @@ public struct MediaDetailLoader: View {
                         navigation: $navigation
                     )
                 }
-                else { ErrorSummaryView(summary: String(localized: "No home video source available")) }
+                else { Text(String(localized: "No home video source available")) }
             case .subFolder(let subfolder):
                 MediaGroupLoader(subfolder: subfolder, streamingService: self.streamingService, navigation: $navigation)
             case .collection(let collection):
