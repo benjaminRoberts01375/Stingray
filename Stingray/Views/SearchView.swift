@@ -103,7 +103,7 @@ public struct SearchView: View {
             let libraries = libraries.compactMap(\.media)
             for library in libraries {
                 switch library {
-                case .available(let medias):
+                case .available(let medias), .partial(let medias, _):
                     scoredMedia += medias
                         .compactMap { media -> MediaScore? in
                             var sortTitle = media.title

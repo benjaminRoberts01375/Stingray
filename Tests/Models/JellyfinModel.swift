@@ -28,6 +28,8 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
     var recursiveRequests: [Bool] = []
     /// Number of `getMedia` calls made for each parent ID
     var mediaRequestCounts: [String: Int] = [:]
+    /// How many more times a page should fail before succeeding, keyed by `"<parent ID>@<start index>"`
+    var pageFailures: [String: Int] = [:]
     /// Number of `getMedia` calls currently waiting on a response
     private var mediaRequestsInFlight = 0
     /// Most `getMedia` calls that were ever waiting on a response at once
@@ -60,6 +62,10 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
         await Task.yield()
         mediaRequestsInFlight -= 1
 
+        if let failuresLeft = self.pageFailures["\(parentID)@\(index)"], failuresLeft > 0 {
+            self.pageFailures["\(parentID)@\(index)"] = failuresLeft - 1
+            throw .unknown("Page \(index) of \(parentID) dropped")
+        }
         guard let items = media[parentID] else { throw .unknown("No media for \(parentID)") }
         return MediaPage(items: Array(items.dropFirst(index).prefix(count)), totalCount: items.count)
     }
@@ -325,6 +331,72 @@ public struct JellyfinModelTests {
         _ = try await self.makeModel()
 
         #expect(self.network.maxMediaRequestsInFlight == 8)
+    }
+
+    // MARK: Failed pages
+
+    /// Test that a failing page is retried up to 3 times, and the library loads fully without any error if one of them works
+    @Test(arguments: [1, 3])
+    public func droppedPageIsRetried(failures: Int) async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": try (1...250).map { try movie("m\($0)") }]
+        self.network.pageFailures = ["movies@100": failures]
+        _ = try await self.makeModel()
+
+        #expect(try #require(mediaIDs(movies.media)).count == 250)
+        #expect(self.network.mediaRequestCounts["movies"] == 3 + failures) // 3 pages, plus a retry for each failure
+    }
+
+    /// Test that pages failing every retry leave the library partly loaded, keeping the media that did arrive and every error
+    @Test
+    public func failedPagesKeepLoadedMedia() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": try (1...350).map { try movie("m\($0)") }]
+        self.network.pageFailures = ["movies@100": 4, "movies@200": 4] // The first attempt plus all 3 retries
+        _ = try await self.makeModel()
+
+        guard case .partial(let items, let errors) = movies.media
+        else {
+            Issue.record("Expected .partial, got \(movies.media)")
+            return
+        }
+        #expect(items.count == 150) // Pages 0 and 3
+        #expect(errors.count == 2)
+    }
+
+    /// Test that the first page failing every retry errors the group, since there's nothing to show
+    @Test
+    public func failedFirstPageErrors() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": [try movie("m1")]]
+        self.network.pageFailures = ["movies@0": 4]
+        _ = try await self.makeModel()
+
+        guard case .error = movies.media
+        else {
+            Issue.record("Expected .error, got \(movies.media)")
+            return
+        }
+        #expect(self.network.mediaRequestCounts["movies"] == 4) // The first attempt plus 3 retries, and no more
+    }
+
+    /// Test that media in a partly loaded library can still be looked up
+    @Test
+    public func lookupSearchesPartialLibraries() async throws {
+        let movies = try library("movies")
+        self.network.libraries = [movies]
+        self.network.media = ["movies": try (1...150).map { try movie("m\($0)") }]
+        self.network.pageFailures = ["movies@100": 4]
+        let model = try await self.makeModel()
+
+        guard case .found = model.lookup(mediaID: "m1", parentID: "movies")
+        else {
+            Issue.record("Expected to find m1 in the partly loaded library")
+            return
+        }
     }
 
     /// Test that genres and ratings are gathered from a library's media, with missing ratings shown as "Not Rated"
@@ -601,7 +673,7 @@ public struct JellyfinModelTests {
 
     // MARK: Extra data
 
-    /// Test that a failed seasons load goes back to unloaded so it can be retried, rather than staying stuck loading
+    /// Test that a failed seasons load is marked as failed, rather than staying stuck loading, and can then be retried
     @Test
     public func failedSeasonsLoadCanBeRetried() async throws {
         let show = try decode(TVShowModel.self, from: #"{"Id": "show1"}"#)
@@ -618,9 +690,9 @@ public struct JellyfinModelTests {
         self.network.seasons = nil
         model.getExtraMediaData(for: show, priority: .high)
         await waitForSeasons()
-        guard case .unloaded = show.seasons
+        guard case .failed = show.seasons
         else {
-            Issue.record("Expected .unloaded after a failed load, got \(show.seasons)")
+            Issue.record("Expected .failed after a failed load, got \(show.seasons)")
             return
         }
 

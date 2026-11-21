@@ -255,7 +255,7 @@ fileprivate struct MediaGroupLoader: View {
         switch self.subfolder.media {
         case .waiting: ProgressView()
         case .error(let error): ErrorView(error: error, summary: String(localized: "Failed to load folder"))
-        case .available(let loadedMedia):
+        case .available(let loadedMedia), .partial(let loadedMedia, _):
             ScrollView {
                 FilteredMediaGridView(
                     availableGenres: self.subfolder.genres,
@@ -263,7 +263,11 @@ fileprivate struct MediaGroupLoader: View {
                     streamingService: self.streamingService,
                     allMedia: loadedMedia,
                     navigation: $navigation
-                )
+                ) {
+                    if case .partial(_, let errors) = self.subfolder.media {
+                        ErrorButtonView(errors: errors, summary: String(localized: "Failed to load some media"))
+                    }
+                }
             }
         }
     }
@@ -375,7 +379,7 @@ public struct LibrariesInfoView: View {
         for library in libraries {
             switch library.media {
             case .waiting, .error: continue
-            case .available(let medias): self.count(media: medias, into: &counters)
+            case .available(let medias), .partial(let medias, _): self.count(media: medias, into: &counters)
             }
         }
         return counters
@@ -396,7 +400,7 @@ public struct LibrariesInfoView: View {
             case .subFolder(let subfolder):
                 switch subfolder.media {
                 case .waiting, .error: break
-                case .available(let media): self.count(media: media, into: &counters)
+                case .available(let media), .partial(let media, _): self.count(media: media, into: &counters)
                 }
             case .error: continue
             }

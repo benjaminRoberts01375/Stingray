@@ -37,6 +37,8 @@ public enum MediaStatus {
     case waiting
     /// Some library content is available, and some may still be downloading
     case available([MediaStorage])
+    /// Some library content is available, but at least one page of it failed to load, so it's incomplete
+    case partial([MediaStorage], [RError])
     /// Loading library content failed with an error
     case error(RError)
 }

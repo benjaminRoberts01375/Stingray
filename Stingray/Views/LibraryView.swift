@@ -31,8 +31,8 @@ public struct LibraryView: View {
         ScrollView {
             switch self.library.media {
             case .waiting: ProgressView()
-            case .error(let err): ErrorView(error: err, summary: "The server formatted the library's media unexpectedly.")
-            case .available(let allMedia):
+            case .error(let err): ErrorView(error: err, summary: String(localized: "Failed to load this library"))
+            case .available(let allMedia), .partial(let allMedia, _):
                 if !allMedia.isEmpty {
                     FilteredMediaGridView(
                         availableGenres: self.library.genres,
@@ -46,6 +46,9 @@ public struct LibraryView: View {
                         }
                         label: { Text(String(localized: "Refresh")) }
                         .disabled(self.isSyncing)
+                        if case .partial(_, let errors) = self.library.media {
+                            ErrorButtonView(errors: errors, summary: String(localized: "Failed to load some media"))
+                        }
                     }
                     LibraryInfoView(library: self.library)
                         .padding(.top)
@@ -535,7 +538,7 @@ public struct LibraryInfoView: View {
     public var body: some View {
         HStack(spacing: 0) {
             switch self.library.media {
-            case .available(let media):
+            case .available(let media), .partial(let media, _):
                 if media.count == 1 { Text("\(media.count.formatted()) Item") }
                 else { Text("\(media.count.formatted()) Items") }
             default: Text("0 Items")

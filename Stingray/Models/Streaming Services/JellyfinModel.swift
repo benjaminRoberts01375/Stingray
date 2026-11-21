@@ -311,7 +311,11 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             let group: any GroupMetadataProtocol
             // Which page of the group to request
             let page: Int
+            // How many times this page has already failed and been requested again
+            var retries = 0
         }
+        // Times a failed page is requested again before it's reported as missing
+        let maxRetries = 3
 
         enum PageContent {
             case success(MediaPage)
@@ -331,6 +335,8 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     let parentID = request.group.id
                     requestsInFlight += 1
                     taskGroup.addTask {
+                        // Give whatever went wrong a moment to clear up before trying again
+                        if request.retries > 0 { try? await Task.sleep(for: .seconds(request.retries)) }
                         do {
                             return (
                                 request,
@@ -359,9 +365,24 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                 requestsInFlight -= 1
                 let group = request.group
                 switch content {
+                case .error(let error) where request.retries < maxRetries:
+                    // A dropped request usually recovers, so try the page again before showing an error
+                    Log.warning(
+                        "Failed to get page \(request.page) of group \(group.id), retry \(request.retries + 1) of \(maxRetries): " +
+                        error.rDescription()
+                    )
+                    var retry = request
+                    retry.retries += 1
+                    requests.append(retry)
                 case .error(let error):
-                    Log.warning("Failed to get content for group \(group.id): \(error.rDescription())")
-                    group.media = .error(error)
+                    Log.warning("Failed to get page \(request.page) of group \(group.id): \(error.rDescription())")
+                    // Keep whatever media already arrived, and note what's missing
+                    switch group.media {
+                    case .waiting: group.media = .error(error)
+                    case .available(let items): group.media = .partial(items, [error])
+                    case .partial(let items, let errors): group.media = .partial(items, errors + [error])
+                    case .error: break
+                    }
                 case .success(let page):
                     if case .error = group.media { break } // Another page already failed this group, so its media is no longer wanted
                     self.append(page.items, to: group)
@@ -400,6 +421,10 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             group.media = .waiting // Micro optimizing >:D
             existingItems.append(contentsOf: newMedia)
             group.media = .available(existingItems)
+        case .partial(var existingItems, let errors): // Other pages failed, but this one is still worth showing
+            group.media = .waiting
+            existingItems.append(contentsOf: newMedia)
+            group.media = .partial(existingItems, errors)
         }
         group.genres.formUnion(newMedia.flatMap { $0.genres ?? [] })
         group.maturity.formUnion(newMedia.flatMap { media -> Set<String> in
@@ -469,7 +494,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
            let parentLibrary = libraries.first(where: { $0.id == parentID }) {
             let allMedia: [MediaStorage]?
             switch parentLibrary.media {
-            case .available(let media): allMedia = media
+            case .available(let media), .partial(let media, _): allMedia = media
             default: allMedia = nil
             }
 
@@ -483,7 +508,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
         for library in libraries where library.id != parentID {
             let allMedia: [MediaStorage]?
             switch library.media {
-            case .available(let media): allMedia = media
+            case .available(let media), .partial(let media, _): allMedia = media
             default: allMedia = nil
             }
 
@@ -512,9 +537,10 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
             case .collection(let collection): groupMedia = collection.media
             case .error, .example, .homeVideo, .movie, .tvShow: continue
             }
-            if case .available(let contents) = groupMedia,
-               let found = find(mediaID: mediaID, in: contents) {
-                return found
+            switch groupMedia {
+            case .available(let contents), .partial(let contents, _):
+                if let found = find(mediaID: mediaID, in: contents) { return found }
+            case .waiting, .error: break
             }
         }
         return nil
@@ -527,7 +553,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
     public func getExtraMediaData(for media: any SpecialFeaturesProtocol & MediaMetadataProtocol, priority: RequestPriority) {
         if let show = media as? any TVShowProtocol { // Episodes
             switch show.seasons {
-            case .unloaded:
+            case .unloaded, .failed: // A failed load is worth retrying, ex. when the show is opened again
                 show.loadSeasons(.loading)
                 Task(priority: priority == .high ? .high : nil) {
                     do {
@@ -553,7 +579,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                         return
                     }
                 }
-            case .loading, .loaded, .failed: break
+            case .loading, .loaded: break
             }
         }
         Task(priority: priority == .high ? .high : nil) { // Special features
