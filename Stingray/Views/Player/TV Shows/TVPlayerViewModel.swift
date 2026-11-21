@@ -137,6 +137,9 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
         case .newID(let id): finalSubtitleID = id
         }
 
+        // Read before stopping since stopping clears the bitrate, too
+        let finalBitrate = bitrate ?? self.playerProgress?.bitrate
+
         // We're done reading from the running player
         self.stopPlayer()
 
@@ -146,7 +149,7 @@ public final class TVPlayerViewModel: AVPlayerViewModelProtocol, Hashable {
             videoID: finalVideoID,
             audioID: finalAudioID,
             subtitleID: finalSubtitleID,
-            bitrate: bitrate ?? self.playerProgress?.bitrate,
+            bitrate: finalBitrate,
             title: title,
             subtitle: subtitle,
             player: self.player

@@ -100,6 +100,7 @@ Configure Stingray to look and feel how you want it.
   - Fix searching libraries twice when opening media
   - Fix potential double playback
   - Fix lookup not searching collections
+  - Fix maximum bitrate getting reset when the player gets stopped
 - Cleanups
   - Renamed `TVSeasonsAvailable` to `TVSeasonsStatus`
   - Split out the `MediaModel` into `MovieModel`, `TVShowModel`, and `HomeVideoModel`
