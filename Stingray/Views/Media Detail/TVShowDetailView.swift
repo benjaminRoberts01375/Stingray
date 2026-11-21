@@ -88,6 +88,13 @@ public struct TVShowDetailView: View {
                         return true
                     }
                 }())
+                .task {
+                    // Seasons usually load with the library, but if that (or an earlier attempt) failed, try again once per visit
+                    switch self.media.seasons {
+                    case .unloaded, .failed: self.streamingService.getExtraMediaData(for: self.media, priority: .high)
+                    case .loading, .loaded: break
+                    }
+                }
 
                 // TV Episodes
                 switch self.media.seasons {
@@ -129,7 +136,8 @@ public struct TVShowDetailView: View {
                         .padding(.bottom)
                         .offset(y: shouldRevealBottomShelf ? 0 : -100)
                     }
-                default: EmptyView()
+                case .unloaded, .loading: ProgressView("Loading Seasons...")
+                case .failed(let error): ErrorView(error: error, summary: "Failed to load seasons")
                 }
 
                 // Metadata
@@ -229,6 +237,9 @@ fileprivate struct PlayNavigationView: View {
         case .unloaded, .loading:
             self.mediaSources = []
             self.title = String(localized: "Loading...")
+        case .failed:
+            self.title = String(localized: "Failed to Load")
+            self.mediaSources = []
         case .loaded(let seasons):
             guard let nextEpisode = seasons.nextUp()
             else {
@@ -341,7 +352,7 @@ fileprivate struct PlayNavigationView: View {
     ///   - startPoint: Where to begin, in seconds. Pass `.zero` to restart
     func navigateToPlayer(for mediaSource: any MediaSourceProtocol, startPoint: TimeInterval) {
         switch self.seasons {
-        case .unloaded, .loading: break
+        case .unloaded, .loading, .failed: break
         case .loaded(let seasons):
             self.navigation.append(
                 TVPlayerViewModel(

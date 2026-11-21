@@ -610,7 +610,7 @@ public final class JellyfinAdvancedNetwork: AdvancedNetworkProtocol {
                     while let media = mediaIterator.next() {
                         switch media.seasons {
                         case .unloaded: return media
-                        case .loading, .loaded: continue
+                        case .loading, .loaded, .failed: continue
                         }
                     }
                     return nil

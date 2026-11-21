@@ -541,6 +541,7 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                     }
                     catch let error as RError {
                         Log.warning("Failed to load seasons: \(LibraryErrors.gettingSeasons(error, media.id).rDescription())")
+                        show.loadSeasons(.failed(error))
                         return
                     }
                     catch {
@@ -548,10 +549,11 @@ public final class JellyfinModel: SystemInfoProviding, LibraryProviding, PlayerP
                             "Failed to generate correct error for failed seasons load: " +
                             LibraryErrors.gettingSeasons(nil, media.id).rDescription()
                         )
+                        show.loadSeasons(.failed(MediaError.unknownSeasonError(error)))
                         return
                     }
                 }
-            case .loading, .loaded: break
+            case .loading, .loaded, .failed: break
             }
         }
         Task(priority: priority == .high ? .high : nil) { // Special features

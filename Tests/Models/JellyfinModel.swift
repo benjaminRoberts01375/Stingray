@@ -20,6 +20,10 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
     var media: [String: [MediaStorage]] = [:]
     /// Media returned for both recently added and up next. `nil` makes the request fail
     var shelfMedia: [MediaStorage]? = []
+    /// Seasons returned for every show. `nil` makes the request fail
+    var seasons: [TVSeason]? = []
+    /// Number of `getSeasonMedia` calls made
+    var seasonRequestCount = 0
     /// Every `recursive` flag `getMedia` was called with
     var recursiveRequests: [Bool] = []
     /// Number of `getMedia` calls made for each parent ID
@@ -118,7 +122,11 @@ private final class FakeNetwork: AdvancedNetworkProtocol {
         accessToken: String,
         priority: RequestPriority
     ) async throws(AdvancedNetworkErrors) -> [SpecialFeature] { [] }
-    public func getSeasonMedia(accessToken: String, showID: String, priority: RequestPriority) async throws -> [TVSeason] { [] }
+    public func getSeasonMedia(accessToken: String, showID: String, priority: RequestPriority) async throws -> [TVSeason] {
+        seasonRequestCount += 1
+        guard let seasons else { throw LibraryErrors.unknown("No seasons for \(showID)") }
+        return seasons
+    }
 }
 
 // MARK: Helpers
@@ -589,6 +597,42 @@ public struct JellyfinModelTests {
 
         #expect(await model.retrieveRecentlyAdded(.movie).isEmpty)
         #expect(await model.retrieveUpNext().isEmpty)
+    }
+
+    // MARK: Extra data
+
+    /// Test that a failed seasons load goes back to unloaded so it can be retried, rather than staying stuck loading
+    @Test
+    public func failedSeasonsLoadCanBeRetried() async throws {
+        let show = try decode(TVShowModel.self, from: #"{"Id": "show1"}"#)
+        let model = try await self.makeModel()
+
+        // Wait for the request to come back, however it ends
+        func waitForSeasons() async {
+            for _ in 0..<100 {
+                guard case .loading = show.seasons else { return }
+                await Task.yield()
+            }
+        }
+
+        self.network.seasons = nil
+        model.getExtraMediaData(for: show, priority: .high)
+        await waitForSeasons()
+        guard case .unloaded = show.seasons
+        else {
+            Issue.record("Expected .unloaded after a failed load, got \(show.seasons)")
+            return
+        }
+
+        self.network.seasons = []
+        model.getExtraMediaData(for: show, priority: .high)
+        await waitForSeasons()
+        guard case .loaded = show.seasons
+        else {
+            Issue.record("Expected .loaded after retrying, got \(show.seasons)")
+            return
+        }
+        #expect(self.network.seasonRequestCount == 2)
     }
 
     // MARK: Playback

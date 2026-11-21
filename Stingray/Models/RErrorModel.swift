@@ -75,11 +75,14 @@ public enum JSONError: RError {
 public enum MediaError: RError {
     /// The media is an unknown type. The `String` value is the type attempted to be made
     case unknownMediaType(String)
+    /// An unknown error occured
+    case unknownSeasonError(Error)
 
     public var errorDescription: String {
         switch self {
         case .unknownMediaType(let mediaType):
             return "Unknown media type \"\(mediaType)\""
+        case .unknownSeasonError(let error): return "Failed to get seasons: \(error.localizedDescription)"
         }
     }
 

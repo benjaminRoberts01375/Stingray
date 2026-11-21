@@ -85,6 +85,8 @@ Configure Stingray to look and feel how you want it.
   - `String(duration:)` no longer crashes on `.nan` and `.infinity` and supports negative `TimeInterval`s
   - `String.pascalCaseToSpaces()` now correctly handles a sequence of uppercase letters, like in "HTTP", and resists adding extra spaces when a space already exists
   - When loading special features, set the special features status to loading
+  - If seasons fail to load, inform the user instead of showing a spinner forever
+    - When the detail media view becomes loaded, and seasons previously failed to load, try again
 - Performance
   - Reduced number of checks for library filters and maturity settings
   - Cache profile images

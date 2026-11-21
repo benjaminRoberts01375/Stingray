@@ -51,6 +51,8 @@ public enum TVSeasonsStatus {
     case loading
     /// Season downloading is complete
     case loaded([any TVSeasonProtocol])
+    /// Seasons failed to load with an error
+    case failed(RError)
 }
 
 @Observable
@@ -146,7 +148,7 @@ public final class TVShowModel: TVShowProtocol, Decodable {
         self.seasons = newState
 
         switch newState {
-        case .unloaded, .loading: return
+        case .unloaded, .loading, .failed: return
         case .loaded(let newSeasons):
             // Save all the people
             var people: [any MediaPersonProtocol] = self.people
